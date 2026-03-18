@@ -244,36 +244,170 @@ export const jobs: JobAssignment[] = [
   },
 ];
 
-export const pricingPlans = [
+export const pricingSummary = [
   {
-    name: "Free",
-    price: "$0",
-    description: "Onboarding path for new interpreters testing the platform.",
+    audience: "Individuals",
+    price: "From $10/mo",
+    description:
+      "One monthly membership for ongoing training, with one-off readiness checks and assessment add-ons when needed.",
+  },
+  {
+    audience: "Organizations",
+    price: "$3-$5 / candidate / month",
+    description:
+      "Per-candidate licensing for LSPs and training providers, with volume discounts and extra usage layered on top.",
+  },
+] as const;
+
+export const individualPricing = [
+  {
+    name: "Xingo Subscription",
+    price: "$10/mo",
+    description:
+      "Core monthly membership for interpreters who want repeated practice across multiple scenarios and a NAATI-style practice assessment.",
     features: [
-      "Access to free modules",
-      "Basic progress dashboard",
-      "Starter transcript history",
+      "Access to a block of 7-10 training modules",
+      "NAATI practice assessment with assessment result",
+      "Optional opt-in to the Xingo Marketplace",
     ],
+    note: "Additional practice minutes or extra role-plays are paid separately.",
+  },
+  {
+    name: "NAATI Readiness Role-Play",
+    price: "$50 one-off",
+    description:
+      "Single pre-assessment practice role-play for candidates who want a quick readiness signal before booking the real assessment.",
+    features: [
+      "One-off assessment preparation role-play",
+      "Readiness insight stored on the user profile",
+      "Optional marketplace visibility after completion",
+    ],
+    note: "Subsequent attempts can be discounted later if you want to introduce retake pricing.",
+  },
+  {
+    name: "Human-Led Assessment",
+    price: "$50 / assessment",
+    description:
+      "Human assessor review for candidates who want a qualified evaluator rather than AI-only scoring.",
+    features: [
+      "Reviewed by a qualified assessor",
+      "Human-assessed check mark on profile",
+      "Commercial split noted as $30 assessor / $20 XINGO",
+    ],
+    note: "Useful as a premium feedback layer after automated practice.",
+  },
+  {
+    name: "International Certification",
+    price: "£600",
+    description:
+      "Full certification-style pathway that mirrors regional certification flows, including modules and a formal assessment stage.",
+    features: [
+      "Structured module path",
+      "Certification assessment",
+      "Available to self-funded individuals or sponsored candidates",
+    ],
+    note: "Same price point applies whether paid by the candidate or a corporate sponsor.",
+  },
+] as const;
+
+export const corporatePricingTiers = [
+  {
+    name: "Basic",
+    price: "$5",
+    candidateVolume: "1-99 candidates",
+    trainingMinutes: "Base allowance",
+    extraUsage: "Additional minutes and role-plays paid individually",
+    customModules: "Pay per module",
+    scenarioUploads: "No",
+    reporting: "Standard reporting",
+    marketplace: "No",
+    support: "Standard support",
   },
   {
     name: "Professional",
-    price: "$39/mo",
-    description: "Full simulation access for interpreters building repeatable practice routines.",
-    features: [
-      "Unlimited premium modules",
-      "Performance scoring and transcripts",
-      "Micro-credential tracking",
-    ],
+    price: "$4",
+    candidateVolume: "100-499 candidates",
+    trainingMinutes: "Increased cap",
+    extraUsage: "Discounted minutes and role-plays",
+    customModules: "Discounted pay per module",
+    scenarioUploads: "Yes",
+    reporting: "Advanced analytics",
+    marketplace: "Marketplace access included",
+    support: "Priority support",
   },
   {
-    name: "Organization",
-    price: "Custom",
-    description: "Cohort management, reporting, and job assignment for training providers.",
-    features: [
-      "Bulk student onboarding",
-      "Organization dashboards",
-      "Interpreter discovery and assignments",
-    ],
+    name: "Enterprise",
+    price: "$3",
+    candidateVolume: "500+ candidates",
+    trainingMinutes: "Highest cap",
+    extraUsage: "Discounted rates with bundled minutes",
+    customModules: "Included or discounted",
+    scenarioUploads: "Yes",
+    reporting: "Full analytics dashboard",
+    marketplace: "Premium marketplace access",
+    support: "Dedicated account manager",
+  },
+] as const;
+
+export const pricingAddOns = [
+  {
+    name: "Additional Minutes & Role-Plays",
+    description:
+      "Individuals can buy more practice time, and organizations can either fund it centrally or leave it as a candidate-paid add-on.",
+    price: "Usage-based",
+  },
+  {
+    name: "Custom Training Modules",
+    description:
+      "Organizations can assign extra upskilling content, either as pay-per-module work or folded into higher licensing tiers.",
+    price: "Custom / pay per module",
+  },
+  {
+    name: "Self-Built Modules",
+    description:
+      "Phase 3 self-built scenarios for companies or individuals that need training content tailored to their exact operating context.",
+    price: "Custom quote",
+  },
+] as const;
+
+export const marketplaceRules = [
+  "Individuals can opt into the Xingo Marketplace once they hold an active subscription and complete practice or assessment work.",
+  "Corporate customers on Professional and Enterprise tiers can access the marketplace for recruitment and workforce discovery.",
+  "One-off NAATI readiness users can keep assessment results on their profile, but recurring marketplace visibility should stay tied to the monthly membership.",
+] as const;
+
+export const futurePricing = [
+  {
+    phase: "Phase 2",
+    audience: "Corporate",
+    name: "Certification Integration",
+    price: "% of certifier cost",
+    description:
+      "Licensing or revenue-share model for certifying bodies such as NAATI using XINGO as part of formal training delivery.",
+  },
+  {
+    phase: "Phase 2",
+    audience: "Corporate",
+    name: "Education Providers",
+    price: "TBD",
+    description:
+      "University and training-provider licensing for students who need structured practice during interpreter qualifications.",
+  },
+  {
+    phase: "Phase 3",
+    audience: "Corporate",
+    name: "Automated Quality Assurance",
+    price: "TBD subscription or API pricing",
+    description:
+      "AI-driven evaluation of uploaded interpreting recordings for tenders, QA workflows, and ongoing workforce measurement.",
+  },
+  {
+    phase: "Phase 3",
+    audience: "Individual",
+    name: "Advanced Assessor Marketplace",
+    price: "Extends $50 human assessment model",
+    description:
+      "Broader pool of qualified assessors, more feedback products, and profile badges tied to verified reviews.",
   },
 ] as const;
 
