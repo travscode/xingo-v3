@@ -1,13 +1,16 @@
 # XINGO
 
-XINGO is an AI interpreter training platform built on Next.js. This repository now contains a live foundation matching the supplied PRD: marketing site, Clerk auth, Convex-backed dashboard data, protected routes, Stripe billing endpoints, and the initial module/scenario catalog seeded into Convex.
+XINGO is an AI interpreter training platform built on Next.js. This repository now contains a live foundation matching the supplied PRD: marketing site, Clerk auth, Convex-backed dashboard data, protected routes, Stripe billing endpoints, seeded module/scenario data, and a realtime OpenAI-powered practice flow with transcript assessment.
 
 ## Stack
 
 - Next.js App Router
 - TypeScript
 - Tailwind CSS v4
-- Planned integrations: Clerk, Convex, Stripe, external voice AI
+- Clerk
+- Convex
+- Stripe
+- OpenAI Realtime + assessment pipeline
 
 ## Available routes
 
@@ -40,12 +43,18 @@ XINGO is an AI interpreter training platform built on Next.js. This repository n
 
 ## Environment
 
-Copy `.env.example` and provide the values required for Clerk, Convex, Stripe, and voice AI.
+Copy `.env.example` and provide the values required for Clerk, Convex, Stripe, and OpenAI.
 
 For a fully live billing flow, you still need Stripe price IDs:
 
 - `STRIPE_PROFESSIONAL_PRICE_ID`
 - `STRIPE_ORGANIZATION_PRICE_ID`
+
+For live practice sessions and post-assessment you also need:
+
+- `OPENAI_API_KEY`
+- `OPENAI_REALTIME_MODEL` (optional, defaults to `gpt-realtime-1.5`)
+- `OPENAI_ASSESSMENT_MODEL` (optional, defaults to `gpt-4.1-mini`)
 
 ## Scripts
 
@@ -61,4 +70,4 @@ npm run build
 1. Replace the authentication placeholder pages with Clerk components and middleware.
 2. Expand the live Convex model into organization admin workflows, credentials, and notifications.
 3. Add Stripe price IDs and test checkout plus webhook flows end to end.
-4. Build the live voice practice session flow and scoring pipeline.
+4. Expand the realtime runner into richer scenario orchestration, admin-authored prompts, and organization analytics.

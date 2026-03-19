@@ -13,6 +13,8 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
     return <div className="surface-card h-96 rounded-[2rem] animate-pulse" />;
   }
 
+  const completedSessions = sessions.filter((session) => session.completionStatus !== "in_progress");
+
   if (!learningModule) {
     return (
       <section className="surface-card rounded-[2rem] p-6">
@@ -70,13 +72,18 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
       <section className="surface-card rounded-[2rem] p-6">
         <p className="eyebrow">Recent performance</p>
         <div className="mt-5 grid gap-4 md:grid-cols-3">
-          {sessions.map((session) => (
+          {completedSessions.map((session) => (
             <div key={session._id} className="rounded-[1.5rem] border border-line bg-white/70 p-4">
               <div className="text-sm text-muted">{session.timestamp.slice(0, 10)}</div>
               <div className="mt-2 text-3xl font-semibold">{session.score}%</div>
               <div className="mt-2 text-sm text-muted">{session.completionStatus}</div>
             </div>
           ))}
+          {completedSessions.length === 0 ? (
+            <div className="rounded-[1.5rem] border border-line bg-white/70 p-4 text-sm text-muted">
+              No completed attempts yet.
+            </div>
+          ) : null}
         </div>
       </section>
     </div>

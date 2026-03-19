@@ -29,9 +29,49 @@ const industryCategory = v.union(
 );
 
 const voiceAgent = v.object({
+  name: v.optional(v.string()),
   role: v.string(),
   voice: v.string(),
   goal: v.string(),
+  language: v.optional(v.string()),
+  demeanor: v.optional(v.string()),
+  instructions: v.optional(v.string()),
+  openingLine: v.optional(v.string()),
+});
+
+const practiceRuntime = v.object({
+  interpreterRole: v.string(),
+  sourceLanguage: v.string(),
+  targetLanguage: v.string(),
+  openingSpeaker: v.union(v.literal("agent_a"), v.literal("agent_b")),
+  briefing: v.string(),
+  assessmentFocus: v.array(v.string()),
+});
+
+const transcriptEntry = v.object({
+  id: v.string(),
+  role: v.union(v.literal("assistant"), v.literal("user"), v.literal("system")),
+  speaker: v.string(),
+  text: v.string(),
+  createdAt: v.string(),
+});
+
+const assessmentBreakdown = v.object({
+  accuracy: v.number(),
+  terminology: v.number(),
+  fluency: v.number(),
+  turnManagement: v.number(),
+  professionalism: v.number(),
+});
+
+const sessionAssessment = v.object({
+  overallScore: v.number(),
+  summary: v.string(),
+  strengths: v.array(v.string()),
+  improvementAreas: v.array(v.string()),
+  recommendedNextStep: v.string(),
+  completionDecision: v.union(v.literal("completed"), v.literal("needs_review")),
+  breakdown: assessmentBreakdown,
 });
 
 export default defineSchema({
@@ -91,6 +131,7 @@ export default defineSchema({
     description: v.string(),
     aiAgentA: voiceAgent,
     aiAgentB: voiceAgent,
+    practiceRuntime: v.optional(practiceRuntime),
     expectedSkills: v.array(v.string()),
     difficultyLevel,
   })
@@ -102,6 +143,9 @@ export default defineSchema({
     clerkId: v.string(),
     moduleId: v.string(),
     scenarioId: v.string(),
+    startedAt: v.optional(v.string()),
+    endedAt: v.optional(v.string()),
+    durationSeconds: v.optional(v.number()),
     durationMinutes: v.number(),
     score: v.number(),
     completionStatus: v.union(
@@ -110,6 +154,8 @@ export default defineSchema({
       v.literal("needs_review"),
     ),
     transcriptSummary: v.string(),
+    transcriptEntries: v.optional(v.array(transcriptEntry)),
+    assessment: v.optional(sessionAssessment),
     timestamp: v.string(),
   })
     .index("by_public_id", ["id"])

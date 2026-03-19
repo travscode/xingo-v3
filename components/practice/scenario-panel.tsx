@@ -12,11 +12,21 @@ export function ScenarioPanel({ scenario }: ScenarioPanelProps) {
         <p className="eyebrow">Scenario</p>
         <h2 className="mt-3 text-3xl font-semibold tracking-tight">{scenario.title}</h2>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">{scenario.description}</p>
+        <div className="mt-6 flex flex-wrap gap-3 text-sm text-muted">
+          <span>{scenario.practiceRuntime.sourceLanguage}</span>
+          <span>↔</span>
+          <span>{scenario.practiceRuntime.targetLanguage}</span>
+          <span>•</span>
+          <span>{scenario.practiceRuntime.interpreterRole}</span>
+        </div>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           {[scenario.aiAgentA, scenario.aiAgentB].map((agent) => (
             <div key={agent.role} className="rounded-[1.5rem] border border-line bg-white/70 p-5">
               <div className="text-sm font-semibold">{agent.role}</div>
-              <div className="mt-2 text-sm text-muted">{agent.voice}</div>
+              <div className="mt-2 text-sm text-muted">
+                {agent.name} • {agent.language} • voice: {agent.voice}
+              </div>
+              <div className="mt-2 text-sm text-muted">{agent.demeanor}</div>
               <p className="mt-4 text-sm leading-6 text-muted">{agent.goal}</p>
             </div>
           ))}

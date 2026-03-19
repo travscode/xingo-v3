@@ -24,6 +24,12 @@ export const seedBaseData = mutation({
     for (const scenario of seedScenarios) {
       await ctx.db.insert("scenarios", {
         ...scenario,
+        aiAgentA: { ...scenario.aiAgentA },
+        aiAgentB: { ...scenario.aiAgentB },
+        practiceRuntime: {
+          ...scenario.practiceRuntime,
+          assessmentFocus: [...scenario.practiceRuntime.assessmentFocus],
+        },
         expectedSkills: [...scenario.expectedSkills],
       });
     }
@@ -33,5 +39,39 @@ export const seedBaseData = mutation({
     }
 
     return { seeded: true };
+  },
+});
+
+export const syncScenarioRuntime = mutation({
+  args: {},
+  handler: async (ctx) => {
+    let updated = 0;
+
+    for (const seededScenario of seedScenarios) {
+      const existingScenario = await ctx.db
+        .query("scenarios")
+        .withIndex("by_public_id", (q) => q.eq("id", seededScenario.id))
+        .unique();
+
+      if (!existingScenario) {
+        continue;
+      }
+
+      await ctx.db.patch(existingScenario._id, {
+        title: seededScenario.title,
+        description: seededScenario.description,
+        aiAgentA: { ...seededScenario.aiAgentA },
+        aiAgentB: { ...seededScenario.aiAgentB },
+        practiceRuntime: {
+          ...seededScenario.practiceRuntime,
+          assessmentFocus: [...seededScenario.practiceRuntime.assessmentFocus],
+        },
+        expectedSkills: [...seededScenario.expectedSkills],
+        difficultyLevel: seededScenario.difficultyLevel,
+      });
+      updated += 1;
+    }
+
+    return { updated };
   },
 });

@@ -10,6 +10,8 @@ export function LiveProgress() {
     return <div className="surface-card h-64 rounded-[2rem] animate-pulse" />;
   }
 
+  const completedSessions = sessions.filter((session) => session.completionStatus !== "in_progress");
+
   return (
     <section className="section-frame rounded-[2rem] p-6">
       <p className="eyebrow">Progress</p>
@@ -24,7 +26,7 @@ export function LiveProgress() {
             </tr>
           </thead>
           <tbody className="divide-y divide-line bg-white/40">
-            {sessions.map((session) => (
+            {completedSessions.map((session) => (
               <tr key={session._id}>
                 <td className="px-4 py-4">{session.scenarioId}</td>
                 <td className="px-4 py-4">{session.durationMinutes} min</td>
@@ -32,6 +34,13 @@ export function LiveProgress() {
                 <td className="px-4 py-4 capitalize">{session.completionStatus.replace("_", " ")}</td>
               </tr>
             ))}
+            {completedSessions.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-4 py-8 text-center text-muted">
+                  No completed practice attempts yet.
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>

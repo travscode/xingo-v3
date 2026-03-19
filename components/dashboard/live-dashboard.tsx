@@ -10,6 +10,7 @@ export function LiveDashboard() {
   const modules = useQuery(api.modules.list, {});
   const sessions = useQuery(api.sessions.listForCurrentUser, {});
   const jobs = useQuery(api.jobs.listVisible, {});
+  const completedSessions = sessions?.filter((session) => session.completionStatus !== "in_progress") ?? [];
 
   const cards = metrics
     ? [
@@ -46,7 +47,7 @@ export function LiveDashboard() {
           <section className="surface-card rounded-[2rem] p-6">
             <p className="eyebrow">Recent sessions</p>
             <div className="mt-5 space-y-4">
-              {(sessions ?? []).map((session) => (
+              {completedSessions.map((session) => (
                 <div key={session._id} className="rounded-[1.5rem] border border-line bg-white/70 p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="font-semibold">{session.scenarioId}</div>
@@ -55,6 +56,9 @@ export function LiveDashboard() {
                   <p className="mt-2 text-sm leading-6 text-muted">{session.transcriptSummary}</p>
                 </div>
               ))}
+              {sessions && completedSessions.length === 0 ? (
+                <p className="text-sm text-muted">No completed practice sessions yet.</p>
+              ) : null}
             </div>
           </section>
 

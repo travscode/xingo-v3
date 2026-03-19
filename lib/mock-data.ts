@@ -3,6 +3,24 @@ import type { LearningModule } from "@/types/module";
 import type { Scenario } from "@/types/scenario";
 import type { PracticeSession } from "@/types/session";
 
+function createVoiceAgent(
+  role: string,
+  voice: string,
+  goal: string,
+  language: string,
+  demeanor: string,
+) {
+  return {
+    name: role,
+    role,
+    voice,
+    goal,
+    language,
+    demeanor,
+    instructions: `You are the ${role} in an interpreter training scenario. Stay in role, speak in short turns, and never act as the interpreter.`,
+  };
+}
+
 export const learningModules: LearningModule[] = [
   {
     id: "medical-er-intake",
@@ -91,15 +109,27 @@ export const scenarios: Scenario[] = [
     title: "Emergency Room Triage",
     description:
       "A doctor assesses chest pain, prior medication use, and symptom onset while the patient is distressed.",
-    aiAgentA: {
-      role: "Doctor",
-      voice: "Analytical and calm",
-      goal: "Extract symptom details and determine urgency",
-    },
-    aiAgentB: {
-      role: "Patient",
-      voice: "Short breaths, anxious, fragmented",
-      goal: "Describe symptoms while under stress",
+    aiAgentA: createVoiceAgent(
+      "Doctor",
+      "cedar",
+      "Extract symptom details and determine urgency",
+      "English",
+      "Analytical and calm",
+    ),
+    aiAgentB: createVoiceAgent(
+      "Patient",
+      "sage",
+      "Describe symptoms while under stress",
+      "Spanish",
+      "Short breaths, anxious, fragmented",
+    ),
+    practiceRuntime: {
+      interpreterRole: "Consecutive medical interpreter",
+      sourceLanguage: "English",
+      targetLanguage: "Spanish",
+      openingSpeaker: "agent_a",
+      briefing: "Preserve symptom chronology, medication details, and urgency.",
+      assessmentFocus: ["Medical terminology", "Clarification control", "Latency management"],
     },
     expectedSkills: ["Medical terminology", "Clarification control", "Latency management"],
     difficultyLevel: "intermediate",
@@ -110,15 +140,27 @@ export const scenarios: Scenario[] = [
     title: "Pediatric Consultation",
     description:
       "A pediatrician and caregiver discuss fever history, dosage timing, and allergy risk.",
-    aiAgentA: {
-      role: "Pediatrician",
-      voice: "Warm and structured",
-      goal: "Confirm dosing, allergy triggers, and escalation signs",
-    },
-    aiAgentB: {
-      role: "Parent",
-      voice: "Protective and detail-heavy",
-      goal: "Explain sequence of symptoms and prior actions",
+    aiAgentA: createVoiceAgent(
+      "Pediatrician",
+      "cedar",
+      "Confirm dosing, allergy triggers, and escalation signs",
+      "English",
+      "Warm and structured",
+    ),
+    aiAgentB: createVoiceAgent(
+      "Parent",
+      "sage",
+      "Explain sequence of symptoms and prior actions",
+      "Spanish",
+      "Protective and detail-heavy",
+    ),
+    practiceRuntime: {
+      interpreterRole: "Consecutive medical interpreter",
+      sourceLanguage: "English",
+      targetLanguage: "Spanish",
+      openingSpeaker: "agent_a",
+      briefing: "Capture child health timing, medication, and allergy details accurately.",
+      assessmentFocus: ["Medication accuracy", "Chronology tracking", "Family communication"],
     },
     expectedSkills: ["Medication accuracy", "Chronology tracking", "Family communication"],
     difficultyLevel: "beginner",
@@ -129,15 +171,27 @@ export const scenarios: Scenario[] = [
     title: "Bail Hearing",
     description:
       "A magistrate, prosecutor, and defendant review prior appearances, risks, and release conditions.",
-    aiAgentA: {
-      role: "Magistrate",
-      voice: "Direct and procedural",
-      goal: "Issue a ruling with explicit conditions",
-    },
-    aiAgentB: {
-      role: "Defendant",
-      voice: "Guarded and reactive",
-      goal: "Respond to allegations and confirm understanding",
+    aiAgentA: createVoiceAgent(
+      "Magistrate",
+      "cedar",
+      "Issue a ruling with explicit conditions",
+      "English",
+      "Direct and procedural",
+    ),
+    aiAgentB: createVoiceAgent(
+      "Defendant",
+      "sage",
+      "Respond to allegations and confirm understanding",
+      "Spanish",
+      "Guarded and reactive",
+    ),
+    practiceRuntime: {
+      interpreterRole: "Consecutive legal interpreter",
+      sourceLanguage: "English",
+      targetLanguage: "Spanish",
+      openingSpeaker: "agent_a",
+      briefing: "Keep legal conditions, dates, and obligations fully intact.",
+      assessmentFocus: ["Legal register", "Conditional phrasing", "Formal tone retention"],
     },
     expectedSkills: ["Legal register", "Conditional phrasing", "Formal tone retention"],
     difficultyLevel: "advanced",
@@ -148,15 +202,27 @@ export const scenarios: Scenario[] = [
     title: "Visa Eligibility Interview",
     description:
       "An officer reviews travel history, supporting documents, and timeline consistency.",
-    aiAgentA: {
-      role: "Case Officer",
-      voice: "Measured and skeptical",
-      goal: "Test credibility through detailed questioning",
-    },
-    aiAgentB: {
-      role: "Applicant",
-      voice: "Respectful but tense",
-      goal: "Explain purpose, supporting evidence, and chronology",
+    aiAgentA: createVoiceAgent(
+      "Case Officer",
+      "cedar",
+      "Test credibility through detailed questioning",
+      "English",
+      "Measured and skeptical",
+    ),
+    aiAgentB: createVoiceAgent(
+      "Applicant",
+      "sage",
+      "Explain purpose, supporting evidence, and chronology",
+      "Spanish",
+      "Respectful but tense",
+    ),
+    practiceRuntime: {
+      interpreterRole: "Consecutive immigration interpreter",
+      sourceLanguage: "English",
+      targetLanguage: "Spanish",
+      openingSpeaker: "agent_a",
+      briefing: "Protect timeline fidelity, document terminology, and neutral tone.",
+      assessmentFocus: ["Timeline fidelity", "Document terminology", "Neutral delivery"],
     },
     expectedSkills: ["Timeline fidelity", "Document terminology", "Neutral delivery"],
     difficultyLevel: "advanced",
@@ -167,15 +233,27 @@ export const scenarios: Scenario[] = [
     title: "Housing Support Assessment",
     description:
       "A case worker reviews tenancy risk, household makeup, and next-step referrals.",
-    aiAgentA: {
-      role: "Case Worker",
-      voice: "Empathetic and methodical",
-      goal: "Collect facts and explain service pathways",
-    },
-    aiAgentB: {
-      role: "Resident",
-      voice: "Tired but cooperative",
-      goal: "Share current circumstances and urgent needs",
+    aiAgentA: createVoiceAgent(
+      "Case Worker",
+      "cedar",
+      "Collect facts and explain service pathways",
+      "English",
+      "Empathetic and methodical",
+    ),
+    aiAgentB: createVoiceAgent(
+      "Resident",
+      "sage",
+      "Share current circumstances and urgent needs",
+      "Spanish",
+      "Tired but cooperative",
+    ),
+    practiceRuntime: {
+      interpreterRole: "Consecutive community interpreter",
+      sourceLanguage: "English",
+      targetLanguage: "Spanish",
+      openingSpeaker: "agent_a",
+      briefing: "Keep housing facts, names, and service explanations clear.",
+      assessmentFocus: ["Plain-language delivery", "Address accuracy", "Empathy without drift"],
     },
     expectedSkills: ["Plain-language delivery", "Address accuracy", "Empathy without drift"],
     difficultyLevel: "beginner",
@@ -188,10 +266,14 @@ export const sessions: PracticeSession[] = [
     userId: "user_1",
     moduleId: "medical-er-intake",
     scenarioId: "er-triage",
+    startedAt: "2026-03-15T08:15:00Z",
+    endedAt: "2026-03-15T08:33:00Z",
+    durationSeconds: 1080,
     durationMinutes: 18,
     score: 82,
     completionStatus: "completed",
     transcriptSummary: "Strong terminology control with two minor omissions in medication timing.",
+    transcriptEntries: [],
     timestamp: "2026-03-15T08:15:00Z",
   },
   {
@@ -199,10 +281,14 @@ export const sessions: PracticeSession[] = [
     userId: "user_1",
     moduleId: "courtroom-hearings",
     scenarioId: "bail-hearing",
+    startedAt: "2026-03-16T10:30:00Z",
+    endedAt: "2026-03-16T10:56:00Z",
+    durationSeconds: 1560,
     durationMinutes: 26,
     score: 74,
     completionStatus: "needs_review",
     transcriptSummary: "Good register, but release conditions were condensed too aggressively.",
+    transcriptEntries: [],
     timestamp: "2026-03-16T10:30:00Z",
   },
   {
@@ -210,10 +296,14 @@ export const sessions: PracticeSession[] = [
     userId: "user_1",
     moduleId: "community-services",
     scenarioId: "housing-assessment",
+    startedAt: "2026-03-17T13:00:00Z",
+    endedAt: "2026-03-17T13:14:00Z",
+    durationSeconds: 840,
     durationMinutes: 14,
     score: 91,
     completionStatus: "completed",
     transcriptSummary: "Clear turn management and strong accuracy across names and addresses.",
+    transcriptEntries: [],
     timestamp: "2026-03-17T13:00:00Z",
   },
 ];
