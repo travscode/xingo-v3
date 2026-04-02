@@ -35,6 +35,7 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
   const { isLoaded: isClerkLoaded, isSignedIn } = useAuth();
   const { isAuthenticated: isConvexAuthenticated, isLoading: isConvexAuthLoading } =
     useConvexAuth();
+  const overallMetrics = useQuery(api.sessions.metricsForCurrentUser, {});
   const sessionHistory = useQuery(api.sessions.listByScenarioForCurrentUser, {
     scenarioId: scenario.id,
   });
@@ -47,6 +48,7 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
   const [textRelay, setTextRelay] = useState("");
   const [transcriptEntries, setTranscriptEntries] = useState<TranscriptEntry[]>([]);
   const [assessment, setAssessment] = useState<SessionAssessment | null>(null);
+  const [latestAttemptStamp, setLatestAttemptStamp] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [audioNotice, setAudioNotice] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
@@ -388,13 +390,14 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
       }
 
       const nextAssessment = (await response.json()) as SessionAssessment;
+      const endedAt = new Date().toISOString();
       const durationSeconds = Math.max(30, Math.round((Date.now() - sessionStartedAt) / 1000));
       const durationMinutes = formatMinutes(durationSeconds);
       const transcriptSummary = summarizeTranscript(transcriptEntries);
 
       await completeAttempt({
         id: attemptId,
-        endedAt: new Date().toISOString(),
+        endedAt,
         durationSeconds,
         durationMinutes,
         score: Math.round(nextAssessment.overallScore),
@@ -411,6 +414,7 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
         ...nextAssessment,
         overallScore: Math.round(nextAssessment.overallScore),
       });
+      setLatestAttemptStamp(endedAt);
       setAttemptId(null);
       setSessionStartedAt(null);
     } catch (caughtError) {
@@ -430,6 +434,58 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
     transcriptEntries,
   ]);
 
+  const recentAttempts = useMemo(() => {
+    const baseAttempts: Array<{
+      key: string;
+      timestamp: string;
+      score: number;
+      completionStatus: "in_progress" | "completed" | "needs_review";
+      transcriptSummary: string;
+    }> = (sessionHistory ?? []).map((attempt) => ({
+      key: attempt._id,
+      timestamp: attempt.timestamp,
+      score: attempt.score,
+      completionStatus: attempt.completionStatus,
+      transcriptSummary: attempt.transcriptSummary,
+    }));
+
+    if (
+      assessment &&
+      latestAttemptStamp &&
+      !baseAttempts.some((attempt) => attempt.timestamp === latestAttemptStamp)
+    ) {
+      baseAttempts.unshift({
+        key: `local_${latestAttemptStamp}`,
+        timestamp: latestAttemptStamp,
+        score: assessment.overallScore,
+        completionStatus: assessment.completionDecision,
+        transcriptSummary: assessment.summary,
+      });
+    }
+
+    return baseAttempts.slice(0, 4);
+  }, [assessment, latestAttemptStamp, sessionHistory]);
+
+  const scenarioSummary = useMemo(() => {
+    const attempts = recentAttempts.filter((attempt) => attempt.completionStatus !== "in_progress");
+
+    if (attempts.length === 0) {
+      return {
+        attempts: 0,
+        averageScore: 0,
+        bestScore: 0,
+        latestScore: 0,
+      };
+    }
+
+    return {
+      attempts: attempts.length,
+      averageScore: Math.round(attempts.reduce((sum, attempt) => sum + attempt.score, 0) / attempts.length),
+      bestScore: Math.max(...attempts.map((attempt) => attempt.score)),
+      latestScore: attempts[0]?.score ?? 0,
+    };
+  }, [recentAttempts]);
+
   const sessionIsLive = Boolean(attemptId);
   const canStartPractice =
     isClerkLoaded && isSignedIn && isConvexAuthenticated && !isConvexAuthLoading;
@@ -448,16 +504,12 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
       <audio ref={agentBAudioRef} autoPlay playsInline className="sr-only" />
 
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="surface-card rounded-[2rem] p-6">
+        <div className="surface-card rounded-[1.75rem] p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="eyebrow">Live practice</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight">
-                {scenario.practiceRuntime.interpreterRole}
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-                {scenario.practiceRuntime.briefing}
-              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">{scenario.title}</h2>
+              <p className="mt-2 text-sm text-muted">{scenario.practiceRuntime.interpreterRole}</p>
             </div>
             <div className="flex flex-wrap gap-3">
               {!sessionIsLive ? (
@@ -503,7 +555,28 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
             </div>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[1.25rem] border border-line bg-white/70 p-4">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Latest</div>
+              <div className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
+                {scenarioSummary.latestScore}%
+              </div>
+            </div>
+            <div className="rounded-[1.25rem] border border-line bg-white/70 p-4">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Average</div>
+              <div className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
+                {scenarioSummary.averageScore}%
+              </div>
+            </div>
+            <div className="rounded-[1.25rem] border border-line bg-white/70 p-4">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Best</div>
+              <div className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
+                {scenarioSummary.bestScore}%
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
             <button
               type="button"
               disabled={!sessionIsLive}
@@ -534,10 +607,7 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
             <div className="text-sm font-semibold">
               Active target: {activeTargetName ?? "Not started"}
             </div>
-            <p className="mt-2 text-sm leading-6 text-muted">
-              Switch between both participants as you interpret. Text relay is useful for testing.
-              Push-to-talk is the main live mode.
-            </p>
+            <p className="mt-2 text-sm text-muted">Text relay for testing. Push-to-talk for live turns.</p>
 
             <div className="mt-5 flex flex-col gap-3 md:flex-row">
               <input
@@ -592,7 +662,7 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
         </div>
 
         <div className="space-y-6">
-          <section className="surface-card rounded-[2rem] p-6">
+          <section className="surface-card rounded-[1.75rem] p-6">
             <p className="eyebrow">Assessment focus</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {scenario.practiceRuntime.assessmentFocus.map((item) => (
@@ -606,19 +676,36 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
             </div>
           </section>
 
-          <section className="surface-card rounded-[2rem] p-6">
-            <p className="eyebrow">Recent attempts</p>
+          <section className="surface-card rounded-[1.75rem] p-6">
+            <p className="eyebrow">Progress sync</p>
             <div className="mt-4 space-y-3">
-              {(sessionHistory ?? []).slice(0, 4).map((session) => (
-                <div key={session._id} className="rounded-[1.25rem] border border-line bg-white/70 p-4">
+              <div className="rounded-[1.25rem] border border-line bg-white/70 p-4">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                      Profile average
+                    </div>
+                    <div className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
+                      {overallMetrics?.averageScore ?? 0}%
+                    </div>
+                  </div>
+                  <div className="text-right text-sm text-muted">
+                    {overallMetrics?.modulesCompleted ?? 0} modules passed
+                  </div>
+                </div>
+              </div>
+              {recentAttempts.map((session) => (
+                <div key={session.key} className="rounded-[1.25rem] border border-line bg-white/70 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-sm text-muted">{session.timestamp.slice(0, 10)}</span>
-                    <span className="text-sm font-semibold">{session.score}%</span>
+                    <span className="score-pill rounded-full px-3 py-1.5 text-sm font-semibold">
+                      {session.score}%
+                    </span>
                   </div>
                   <p className="mt-2 text-sm leading-6 text-muted">{session.transcriptSummary}</p>
                 </div>
               ))}
-              {sessionHistory && sessionHistory.length === 0 ? (
+              {recentAttempts.length === 0 ? (
                 <p className="text-sm text-muted">No completed attempts yet for this scenario.</p>
               ) : null}
             </div>
@@ -627,7 +714,7 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <section className="surface-card rounded-[2rem] p-6">
+        <section className="surface-card rounded-[1.75rem] p-6">
           <p className="eyebrow">Live transcript</p>
           <div className="mt-5 space-y-4">
             {transcriptEntries.length === 0 ? (
@@ -648,7 +735,7 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
           </div>
         </section>
 
-        <section className="surface-card rounded-[2rem] p-6">
+        <section className="surface-card rounded-[1.75rem] p-6">
           <p className="eyebrow">Post-assessment</p>
           {assessment ? (
             <div className="mt-5 space-y-5">

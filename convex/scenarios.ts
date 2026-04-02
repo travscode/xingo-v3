@@ -123,3 +123,11 @@ export const listByModule = query({
     return scenarios.map(normalizeScenario);
   },
 });
+
+export const list = query({
+  args: {},
+  handler: async (ctx) => {
+    const scenarios = await ctx.db.query("scenarios").collect();
+    return scenarios.map(normalizeScenario);
+  },
+});

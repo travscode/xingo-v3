@@ -8,50 +8,50 @@ interface ScenarioPanelProps {
 export function ScenarioPanel({ scenario }: ScenarioPanelProps) {
   return (
     <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-      <section className="surface-card rounded-[2rem] p-6">
+      <section className="surface-card rounded-[1.75rem] p-6">
         <p className="eyebrow">Scenario</p>
-        <h2 className="mt-3 text-3xl font-semibold tracking-tight">{scenario.title}</h2>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">{scenario.description}</p>
+        <h2 className="mt-2 text-3xl font-semibold tracking-[-0.05em]">{scenario.title}</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">{scenario.description}</p>
         <div className="mt-6 flex flex-wrap gap-3 text-sm text-muted">
-          <span>{scenario.practiceRuntime.sourceLanguage}</span>
-          <span>↔</span>
-          <span>{scenario.practiceRuntime.targetLanguage}</span>
-          <span>•</span>
-          <span>{scenario.practiceRuntime.interpreterRole}</span>
+          <span className="mono-chip rounded-full px-3 py-2">
+            {scenario.practiceRuntime.sourceLanguage} ↔ {scenario.practiceRuntime.targetLanguage}
+          </span>
+          <span className="mono-chip rounded-full px-3 py-2">{scenario.practiceRuntime.interpreterRole}</span>
         </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
           {[scenario.aiAgentA, scenario.aiAgentB].map((agent) => (
-            <div key={agent.role} className="rounded-[1.5rem] border border-line bg-white/70 p-5">
+            <div key={agent.role} className="rounded-[1.25rem] border border-line bg-white/70 p-4">
               <div className="text-sm font-semibold">{agent.role}</div>
-              <div className="mt-2 text-sm text-muted">
-                {agent.name} • {agent.language} • voice: {agent.voice}
+              <div className="mt-1 text-sm text-muted">
+                {agent.name} • {agent.language}
               </div>
-              <div className="mt-2 text-sm text-muted">{agent.demeanor}</div>
-              <p className="mt-4 text-sm leading-6 text-muted">{agent.goal}</p>
+              <p className="mt-3 text-sm leading-6 text-muted">{agent.goal}</p>
             </div>
           ))}
         </div>
       </section>
 
       <section className="space-y-6">
-        <div className="surface-card rounded-[2rem] p-6">
+        <div className="surface-card rounded-[1.75rem] p-6">
           <p className="eyebrow">Scoring</p>
           <div className="mt-4 space-y-4">
             {Object.entries(scoringWeights).map(([key, value]) => (
               <div key={key} className="flex items-center justify-between text-sm">
                 <span className="capitalize">{key}</span>
-                <span className="font-semibold">{Math.round(value * 100)}%</span>
+                <span className="score-pill rounded-full px-3 py-1.5 font-semibold">
+                  {Math.round(value * 100)}%
+                </span>
               </div>
             ))}
           </div>
         </div>
-        <div className="surface-card rounded-[2rem] p-6">
+        <div className="surface-card rounded-[1.75rem] p-6">
           <p className="eyebrow">Expected skills</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {scenario.expectedSkills.map((skill) => (
               <span
                 key={skill}
-                className="rounded-full border border-line bg-white/80 px-3 py-2 text-sm text-muted"
+                className="mono-chip rounded-full px-3 py-2 text-sm"
               >
                 {skill}
               </span>
