@@ -44,6 +44,7 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
   const [transcriptEntries, setTranscriptEntries] = useState<TranscriptEntry[]>([]);
   const [assessment, setAssessment] = useState<SessionAssessment | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [audioNotice, setAudioNotice] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isAssessing, setIsAssessing] = useState(false);
   const [isPushToTalkActive, setIsPushToTalkActive] = useState(false);
@@ -188,6 +189,24 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
     [agentA, agentASession, agentB, agentBSession],
   );
 
+  const ensureAudioPlayback = useCallback(async (audioElement: HTMLAudioElement | null) => {
+    if (!audioElement) {
+      return;
+    }
+
+    audioElement.autoplay = true;
+    audioElement.setAttribute("playsinline", "true");
+    audioElement.muted = false;
+    audioElement.volume = 1;
+
+    try {
+      await audioElement.play();
+      setAudioNotice(null);
+    } catch {
+      setAudioNotice("Browser audio playback is blocked. Press Enable audio and try again.");
+    }
+  }, []);
+
   const connectAgentIfNeeded = useCallback(
     async (agentKey: AgentKey) => {
       if (connectedAgentsRef.current.has(agentKey)) {
@@ -207,9 +226,10 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
       });
 
       bundle.session.setTurnDetectionEnabled(false);
+      await ensureAudioPlayback(bundle.audioElement);
       connectedAgentsRef.current.add(agentKey);
     },
-    [fetchEphemeralKey, getSessionBundle],
+    [ensureAudioPlayback, fetchEphemeralKey, getSessionBundle],
   );
 
   const switchActiveAgent = useCallback(
@@ -225,9 +245,10 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
       }
 
       nextBundle.session.mute(false);
+      void ensureAudioPlayback(nextBundle.audioElement);
       setActiveAgent(agentKey);
     },
-    [activeAgent, connectAgentIfNeeded, getSessionBundle],
+    [activeAgent, connectAgentIfNeeded, ensureAudioPlayback, getSessionBundle],
   );
 
   const disconnectAll = useCallback(() => {
@@ -244,6 +265,7 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
     }
 
     setError(null);
+    setAudioNotice(null);
     setAssessment(null);
     setTranscriptEntries([]);
     setIsStarting(true);
@@ -403,8 +425,8 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
     <div className="space-y-6">
       <ScenarioPanel scenario={scenario} />
 
-      <audio ref={agentAAudioRef} autoPlay className="hidden" />
-      <audio ref={agentBAudioRef} autoPlay className="hidden" />
+      <audio ref={agentAAudioRef} autoPlay playsInline className="sr-only" />
+      <audio ref={agentBAudioRef} autoPlay playsInline className="sr-only" />
 
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="surface-card rounded-[2rem] p-6">
@@ -438,6 +460,23 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
                   {isAssessing ? "Assessing..." : "Finish and assess"}
                 </button>
               )}
+              {sessionIsLive ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    void ensureAudioPlayback(
+                      activeAgent === "agent_a"
+                        ? agentAAudioRef.current
+                        : activeAgent === "agent_b"
+                          ? agentBAudioRef.current
+                          : null,
+                    )
+                  }
+                  className="rounded-full border border-line bg-white px-5 py-3 text-sm font-semibold"
+                >
+                  Enable audio
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -513,6 +552,11 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
           {error ? (
             <div className="mt-4 rounded-[1.5rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
+            </div>
+          ) : null}
+          {audioNotice ? (
+            <div className="mt-4 rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {audioNotice}
             </div>
           ) : null}
         </div>
