@@ -105,3 +105,13 @@ a {
   background: rgba(16, 16, 16, 0.04);
   color: var(--foreground);
 }
+
+.bg-brand,
+.bg-brand-strong {
+  color: #ffffff;
+}
+
+.bg-brand *,
+.bg-brand-strong * {
+  color: inherit;
+}
