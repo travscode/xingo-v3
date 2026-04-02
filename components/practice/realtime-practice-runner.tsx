@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { RealtimeAgent } from "@openai/agents/realtime";
@@ -54,6 +54,7 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
   const [isStarting, setIsStarting] = useState(false);
   const [isAssessing, setIsAssessing] = useState(false);
   const [isPushToTalkActive, setIsPushToTalkActive] = useState(false);
+  const isSpaceTalkingRef = useRef(false);
 
   const agentAAudioRef = useRef<HTMLAudioElement | null>(null);
   const agentBAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -362,6 +363,71 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
     setIsPushToTalkActive(false);
   }, [activeAgent, getSessionBundle, isPushToTalkActive]);
 
+  const sessionIsLive = Boolean(attemptId);
+
+  useEffect(() => {
+    if (!sessionIsLive) {
+      isSpaceTalkingRef.current = false;
+      return;
+    }
+
+    const isTypingTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) {
+        return false;
+      }
+
+      const tagName = target.tagName.toLowerCase();
+      return (
+        tagName === "input" ||
+        tagName === "textarea" ||
+        target.isContentEditable
+      );
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== "Space" || event.repeat || isTypingTarget(event.target)) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (!isSpaceTalkingRef.current) {
+        isSpaceTalkingRef.current = true;
+        handlePushToTalkStart();
+      }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.code !== "Space" || isTypingTarget(event.target)) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (isSpaceTalkingRef.current) {
+        isSpaceTalkingRef.current = false;
+        handlePushToTalkEnd();
+      }
+    };
+
+    const handleWindowBlur = () => {
+      if (isSpaceTalkingRef.current) {
+        isSpaceTalkingRef.current = false;
+        handlePushToTalkEnd();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, [handlePushToTalkEnd, handlePushToTalkStart, sessionIsLive]);
+
   const handleFinishPractice = useCallback(async () => {
     if (!attemptId || !sessionStartedAt || transcriptEntries.length === 0 || isAssessing) {
       return;
@@ -485,8 +551,6 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
       latestScore: attempts[0]?.score ?? 0,
     };
   }, [recentAttempts]);
-
-  const sessionIsLive = Boolean(attemptId);
   const canStartPractice =
     isClerkLoaded && isSignedIn && isConvexAuthenticated && !isConvexAuthLoading;
   const activeTargetName =
@@ -637,7 +701,7 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
                   isPushToTalkActive ? "bg-brand text-white" : "border border-line bg-white"
                 } disabled:opacity-50`}
               >
-                {isPushToTalkActive ? "Release to send" : "Hold to talk"}
+                {isPushToTalkActive ? "Release to send" : "Hold to talk or space"}
               </button>
             </div>
           </div>
