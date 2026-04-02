@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useAuth } from "@clerk/nextjs";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { RealtimeAgent } from "@openai/agents/realtime";
 import { api } from "@/convex/_generated/api";
 import { buildRealtimeAgentInstructions } from "@/lib/ai";
@@ -31,6 +32,9 @@ function summarizeTranscript(entries: TranscriptEntry[]) {
 }
 
 export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps) {
+  const { isLoaded: isClerkLoaded, isSignedIn } = useAuth();
+  const { isAuthenticated: isConvexAuthenticated, isLoading: isConvexAuthLoading } =
+    useConvexAuth();
   const sessionHistory = useQuery(api.sessions.listByScenarioForCurrentUser, {
     scenarioId: scenario.id,
   });
@@ -264,6 +268,15 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
       return;
     }
 
+    if (!isClerkLoaded || !isSignedIn || isConvexAuthLoading || !isConvexAuthenticated) {
+      setError(
+        isClerkLoaded && isSignedIn
+          ? "You are signed into Clerk, but Convex is not authenticated. This usually means the Clerk `convex` JWT template or production Convex auth setup is missing or misconfigured."
+          : "You need to sign in before starting practice.",
+      );
+      return;
+    }
+
     setError(null);
     setAudioNotice(null);
     setAssessment(null);
@@ -306,6 +319,10 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
     agentASession,
     agentBSession,
     disconnectAll,
+    isClerkLoaded,
+    isConvexAuthenticated,
+    isConvexAuthLoading,
+    isSignedIn,
     isStarting,
     scenario,
     startAttempt,
@@ -414,6 +431,8 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
   ]);
 
   const sessionIsLive = Boolean(attemptId);
+  const canStartPractice =
+    isClerkLoaded && isSignedIn && isConvexAuthenticated && !isConvexAuthLoading;
   const activeTargetName =
     activeAgent === "agent_a"
       ? scenario.aiAgentA.role
@@ -445,10 +464,14 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
                 <button
                   type="button"
                   onClick={handleStartPractice}
-                  disabled={isStarting}
+                  disabled={isStarting || !canStartPractice}
                   className="rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
                 >
-                  {isStarting ? "Starting..." : "Start practice"}
+                  {isConvexAuthLoading
+                    ? "Checking access..."
+                    : isStarting
+                      ? "Starting..."
+                      : "Start practice"}
                 </button>
               ) : (
                 <button
@@ -552,6 +575,13 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
           {error ? (
             <div className="mt-4 rounded-[1.5rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
+            </div>
+          ) : null}
+          {!sessionIsLive && isClerkLoaded && isSignedIn && !isConvexAuthLoading && !isConvexAuthenticated ? (
+            <div className="mt-4 rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Clerk is signed in, but Convex is not authenticated. The usual cause is that
+              the production Clerk `convex` JWT template/integration is missing or the live app
+              is pointed at a different Convex deployment than the one configured for Clerk auth.
             </div>
           ) : null}
           {audioNotice ? (
