@@ -197,7 +197,7 @@ export function useRealtimeVoiceSession(
       const apiKey = await getEphemeralKey();
       const session = new RealtimeSession(agent, {
         transport: new OpenAIRealtimeWebRTC({ audioElement }),
-        model: "gpt-realtime-1.5",
+        model: "gpt-realtime",
         config: {
           inputAudioTranscription: {
             model: "gpt-4o-mini-transcribe",

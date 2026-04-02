@@ -53,7 +53,7 @@ For a fully live billing flow, you still need Stripe price IDs:
 For live practice sessions and post-assessment you also need:
 
 - `OPENAI_API_KEY`
-- `OPENAI_REALTIME_MODEL` (optional, defaults to `gpt-realtime-1.5`)
+- `OPENAI_REALTIME_MODEL` (optional, defaults to `gpt-realtime`)
 - `OPENAI_ASSESSMENT_MODEL` (optional, defaults to `gpt-4.1-mini`)
 
 ## Scripts

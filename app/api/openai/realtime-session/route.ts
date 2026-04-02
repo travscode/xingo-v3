@@ -16,14 +16,17 @@ export async function GET() {
   }
 
   try {
-    const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
+    const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_REALTIME_MODEL ?? "gpt-realtime-1.5",
+        session: {
+          type: "realtime",
+          model: process.env.OPENAI_REALTIME_MODEL ?? "gpt-realtime",
+        },
       }),
     });
 

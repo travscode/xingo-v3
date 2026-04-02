@@ -167,11 +167,11 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
 
     const data = await response.json();
 
-    if (!data?.client_secret?.value) {
+    if (!data?.value) {
       throw new Error("No OpenAI realtime client secret was returned.");
     }
 
-    return data.client_secret.value as string;
+    return data.value as string;
   }, []);
 
   const getSessionBundle = useCallback(
