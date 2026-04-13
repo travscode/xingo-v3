@@ -159,3 +159,8 @@ body {
 .bg-brand-strong * {
   color: inherit;
 }
+
+.cl-avatarBox {
+  width: 3.5rem !important;
+  height: 3.5rem !important;
+}

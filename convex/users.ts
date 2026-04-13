@@ -65,6 +65,7 @@ export const syncCurrentUser = mutation({
         email: args.email || existing.email,
         name: args.name || existing.name,
         imageUrl: args.imageUrl ?? existing.imageUrl,
+        role: args.role ? normalizeRole(args.role) : existing.role,
         updatedAt: now,
       });
     } else {
