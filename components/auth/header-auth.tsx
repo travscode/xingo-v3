@@ -35,7 +35,7 @@ export function HeaderAuth() {
       </Link>
       <Link
         href="/sign-up"
-        className="action-primary px-5 py-3 text-sm bg-white! text-black! hover:bg-brand-green!"
+        className="action-primary px-5 py-3 text-sm bg-brand-green! text-black! hover:bg-white!"
       >
         Create account
       </Link>
