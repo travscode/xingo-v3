@@ -2,9 +2,11 @@
 
 import { useMemo } from "react";
 import { useQuery } from "convex/react";
+import { StatCard } from "@/components/ui/stat-card";
 import { api } from "@/convex/_generated/api";
 
 export function LiveProgress() {
+  const metrics = useQuery(api.sessions.metricsForCurrentUser, {});
   const sessions = useQuery(api.sessions.listForCurrentUser, {});
   const scenarios = useQuery(api.scenarios.list, {});
   const scenarioTitleById = useMemo(
@@ -12,49 +14,52 @@ export function LiveProgress() {
     [scenarios],
   );
 
-  if (!sessions || !scenarios) {
+  if (!metrics || !sessions || !scenarios) {
     return <div className="surface-card h-64 rounded-[2rem] animate-pulse" />;
   }
 
   const completedSessions = sessions.filter((session) => session.completionStatus !== "in_progress");
+  const bestScore = Math.max(0, ...completedSessions.map((session) => session.score));
 
   return (
-    <section className="section-frame rounded-[1.75rem] p-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-8">
+      <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
         <div>
           <p className="eyebrow">Progress</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">Assessment history</h2>
+          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em]">See how your scores are moving.</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
+            Every finished scenario is saved here so improvement is easy to spot.
+          </p>
         </div>
-      </div>
-      <div className="mt-5 overflow-hidden rounded-[1.25rem] border border-line">
-        <table className="min-w-full divide-y divide-line text-left text-sm">
-          <thead className="bg-white/70 text-muted">
-            <tr>
-              <th className="px-4 py-3 font-medium">Scenario</th>
-              <th className="px-4 py-3 font-medium">Duration</th>
-              <th className="px-4 py-3 font-medium">Score</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line bg-white/40">
-            {completedSessions.map((session) => (
-              <tr key={session._id}>
-                <td className="px-4 py-4">{scenarioTitleById.get(session.scenarioId) ?? session.scenarioId}</td>
-                <td className="px-4 py-4">{session.durationMinutes} min</td>
-                <td className="px-4 py-4">{session.score}%</td>
-                <td className="px-4 py-4 capitalize">{session.completionStatus.replace("_", " ")}</td>
-              </tr>
-            ))}
-            {completedSessions.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-muted">
-                  No completed practice attempts yet.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
-    </section>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-3">
+        <StatCard label="Average score" value={`${metrics.averageScore}%`} />
+        <StatCard label="Best score" value={`${bestScore}%`} />
+        <StatCard label="Completed attempts" value={`${completedSessions.length}`} />
+      </section>
+
+      <section className="surface-card rounded-[2rem] p-6">
+        <p className="eyebrow">History</p>
+        <div className="mt-5 space-y-3">
+          {completedSessions.map((session) => (
+            <div key={session._id} className="rounded-[1.5rem] border border-line bg-white p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="font-semibold">{scenarioTitleById.get(session.scenarioId) ?? session.scenarioId}</div>
+                  <div className="mt-1 text-sm text-muted">
+                    {session.durationMinutes} min · {session.completionStatus.replace("_", " ")}
+                  </div>
+                </div>
+                <div className="score-pill rounded-full px-3 py-1.5 text-sm font-semibold">{session.score}%</div>
+              </div>
+            </div>
+          ))}
+          {completedSessions.length === 0 ? (
+            <p className="text-sm text-muted">No completed practice attempts yet.</p>
+          ) : null}
+        </div>
+      </section>
+    </div>
   );
 }

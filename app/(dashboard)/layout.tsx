@@ -7,7 +7,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   await auth.protect();
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-7xl gap-6 px-6 py-6 lg:px-10">
+    <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-4 sm:px-6 lg:px-10 lg:py-6">
       <DashboardSidebar />
       <main className="min-w-0 flex-1 space-y-6">
         <DashboardTopbar />

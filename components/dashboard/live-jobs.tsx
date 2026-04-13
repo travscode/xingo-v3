@@ -11,9 +11,12 @@ export function LiveJobs() {
   }
 
   return (
-    <section className="section-frame rounded-[2rem] p-6">
-      <p className="eyebrow">Job marketplace</p>
-      <div className="mt-6 grid gap-5">
+    <section className="space-y-6">
+      <div className="section-frame rounded-[2.25rem] p-6 lg:p-8">
+        <p className="eyebrow">Jobs</p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em]">See available work.</h1>
+      </div>
+      <div className="grid gap-5">
         {jobs.map((job) => (
           <article key={job._id} className="surface-card rounded-[2rem] p-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">

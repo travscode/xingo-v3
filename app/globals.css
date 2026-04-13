@@ -1,15 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f3f3ef;
-  --foreground: #101010;
+  --background: #f7f7f4;
+  --foreground: #121212;
   --surface: #ffffff;
-  --surface-strong: #ebebe5;
-  --line: rgba(16, 16, 16, 0.08);
-  --brand: #101010;
+  --surface-strong: #f0f0eb;
+  --line: rgba(18, 18, 18, 0.08);
+  --brand: #121212;
   --brand-strong: #000000;
-  --accent: #101010;
-  --muted: #6c6c68;
+  --accent: #121212;
+  --muted: #6b6b67;
+  --brand-orange: #d6d3ce;
+  --brand-green: #bbff00;
+  --brand-pink: #fb83a3;
 }
 
 @theme inline {
@@ -17,6 +20,9 @@
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-surface-strong: var(--surface-strong);
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-green: var(--brand-green);
+  --color-brand-pink: var(--brand-pink);
   --color-line: var(--line);
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
@@ -40,14 +46,8 @@ body {
   color: var(--foreground);
   font-family: var(--font-manrope), sans-serif;
   background-image:
-    linear-gradient(rgba(16, 16, 16, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(16, 16, 16, 0.025) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
+    radial-gradient(circle at top, rgba(18, 18, 18, 0.05), transparent 34%),
+    linear-gradient(to bottom, #fafaf7 0%, #f4f4f0 100%);
 }
 
 ::selection {
@@ -63,21 +63,22 @@ a {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
-    radial-gradient(rgba(16, 16, 16, 0.035) 0.5px, transparent 0.5px);
-  background-size: auto, 18px 18px;
-  opacity: 0.2;
+  background: linear-gradient(
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.08)
+  );
+  opacity: 0.7;
 }
 
 .display {
   font-family: var(--font-manrope), sans-serif;
+  letter-spacing: -0.05em;
 }
 
 .surface-card {
   border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface) 96%, var(--background));
-  box-shadow: 0 10px 24px rgba(16, 16, 16, 0.04);
+  background: color-mix(in srgb, var(--surface) 97%, var(--background));
+  box-shadow: 0 10px 30px rgba(18, 18, 18, 0.04);
 }
 
 .eyebrow {
@@ -90,20 +91,63 @@ a {
 
 .section-frame {
   border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface) 92%, var(--background));
-  box-shadow: 0 18px 40px rgba(16, 16, 16, 0.05);
+  background: color-mix(in srgb, var(--surface) 94%, var(--background));
+  box-shadow: 0 16px 42px rgba(18, 18, 18, 0.05);
 }
 
 .mono-chip {
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.8);
-  color: var(--muted);
+  /* background: rgba(255, 255, 255, 0.8); */
+  /* color: var(--muted); */
+  font-size: 0.65rem;
+  font-weight: 600;
 }
 
 .score-pill {
   border: 1px solid rgba(16, 16, 16, 0.12);
   background: rgba(16, 16, 16, 0.04);
   color: var(--foreground);
+}
+
+.action-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--brand);
+  color: #ffffff;
+  padding: 0.95rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.action-primary:hover {
+  background: var(--brand-strong);
+  box-shadow: 0 12px 30px rgba(18, 18, 18, 0.14);
+}
+
+.action-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid var(--line);
+  padding: 0.95rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.action-secondary:hover {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(18, 18, 18, 0.18);
 }
 
 .bg-brand,

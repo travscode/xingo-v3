@@ -14,6 +14,14 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
   }
 
   const completedSessions = sessions.filter((session) => session.completionStatus !== "in_progress");
+  const scenarioStatus = new Map(
+    scenarios.map((scenario) => {
+      const related = completedSessions.filter((session) => session.scenarioId === scenario.id);
+      const latest = related[0] ?? null;
+      return [scenario.id, latest];
+    }),
+  );
+  const bestScore = Math.max(0, ...completedSessions.map((session) => session.score));
 
   if (!learningModule) {
     return (
@@ -24,66 +32,72 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="section-frame rounded-[2rem] p-6">
+    <div className="space-y-8">
+      <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
         <p className="eyebrow">{learningModule.industryCategory}</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight">{learningModule.title}</h1>
-        <p className="mt-4 max-w-3xl text-sm leading-7 text-muted">{learningModule.description}</p>
-        <div className="mt-6 flex flex-wrap gap-3 text-sm text-muted">
-          <span>{learningModule.durationMinutes} min</span>
-          <span>•</span>
-          <span>{learningModule.difficultyLevel}</span>
-          <span>•</span>
-          <span>{learningModule.badgeIcon}</span>
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">{learningModule.description}</p>
+        <div className="mt-6 flex flex-wrap gap-2 text-sm text-muted">
+          <span className="mono-chip rounded-full px-3 py-2">{learningModule.durationMinutes} min</span>
+          <span className="mono-chip rounded-full px-3 py-2">{learningModule.difficultyLevel}</span>
+          <span className="mono-chip rounded-full px-3 py-2">{learningModule.badgeIcon}</span>
         </div>
         {scenarios[0] ? (
-          <Link
-            href={`/practice/${scenarios[0].id}`}
-            className="mt-8 inline-flex rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white"
-          >
+          <Link href={`/practice/${scenarios[0].id}`} className="action-primary mt-8">
             Start practice
           </Link>
         ) : null}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+      <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
         <div className="surface-card rounded-[2rem] p-6">
-          <p className="eyebrow">Learning objectives</p>
+          <p className="eyebrow">What to focus on</p>
           <div className="mt-5 space-y-3 text-sm leading-7 text-muted">
             {learningModule.learningObjectives.map((objective) => (
-              <p key={objective}>{objective}</p>
+              <div key={objective} className="rounded-[1.25rem] border border-line bg-white p-4">
+                {objective}
+              </div>
             ))}
           </div>
         </div>
 
         <div className="surface-card rounded-[2rem] p-6">
-          <p className="eyebrow">Scenario set</p>
+          <p className="eyebrow">Scenarios</p>
           <div className="mt-5 space-y-4">
             {scenarios.map((scenario) => (
-              <div key={scenario._id} className="rounded-[1.5rem] border border-line bg-white/70 p-4">
-                <div className="font-semibold">{scenario.title}</div>
-                <p className="mt-2 text-sm leading-6 text-muted">{scenario.description}</p>
+              <div key={scenario._id} className="rounded-[1.5rem] border border-line bg-white p-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="font-semibold">{scenario.title}</div>
+                    <p className="mt-2 text-sm leading-6 text-muted">{scenario.description}</p>
+                    {scenarioStatus.get(scenario.id) ? (
+                      <div className="mt-3 text-sm text-muted">
+                        Latest score {scenarioStatus.get(scenario.id)?.score}%
+                      </div>
+                    ) : null}
+                  </div>
+                  <Link href={`/practice/${scenario.id}`} className="action-secondary shrink-0 px-4 py-2 text-sm">
+                    Start
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="surface-card rounded-[2rem] p-6">
-        <p className="eyebrow">Recent performance</p>
-        <div className="mt-5 grid gap-4 md:grid-cols-3">
-          {completedSessions.map((session) => (
-            <div key={session._id} className="rounded-[1.5rem] border border-line bg-white/70 p-4">
-              <div className="text-sm text-muted">{session.timestamp.slice(0, 10)}</div>
-              <div className="mt-2 text-3xl font-semibold">{session.score}%</div>
-              <div className="mt-2 text-sm text-muted">{session.completionStatus}</div>
-            </div>
-          ))}
-          {completedSessions.length === 0 ? (
-            <div className="rounded-[1.5rem] border border-line bg-white/70 p-4 text-sm text-muted">
-              No completed attempts yet.
-            </div>
-          ) : null}
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="surface-card rounded-[2rem] p-5">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Completed attempts</div>
+          <div className="mt-3 text-4xl font-semibold">{completedSessions.length}</div>
+        </div>
+        <div className="surface-card rounded-[2rem] p-5">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Best score</div>
+          <div className="mt-3 text-4xl font-semibold">{bestScore}%</div>
+        </div>
+        <div className="surface-card rounded-[2rem] p-5">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Module badge</div>
+          <div className="mt-3 text-2xl font-semibold">{learningModule.badgeIcon}</div>
         </div>
       </section>
     </div>
