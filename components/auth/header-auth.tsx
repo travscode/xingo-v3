@@ -16,7 +16,7 @@ export function HeaderAuth() {
         <Link
           href="/dashboard"
           prefetch={false}
-          className="action-secondary px-5 py-3 text-sm bg-white! text-black! hover:bg-brand-green!"
+          className="action-secondary px-5 py-3 text-sm bg-brand-green! text-black! hover:bg-white!"
         >
           Dashboard
         </Link>
