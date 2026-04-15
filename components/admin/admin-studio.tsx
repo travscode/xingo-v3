@@ -274,6 +274,7 @@ export function AdminStudio() {
   }
 
   if (!currentUser || currentUser.role !== "platform_admin") {
+    console.log("currentUser", currentUser);
     return (
       <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
         <p className="eyebrow">Admin</p>
