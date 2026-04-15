@@ -1,10 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import type { LearningModule, DifficultyLevel, IndustryCategory } from "@/types/module";
+import type {
+  LearningModule,
+  DifficultyLevel,
+  IndustryCategory,
+} from "@/types/module";
 import type { Scenario } from "@/types/scenario";
 
 type ModuleRecord = Pick<
@@ -63,9 +67,30 @@ type ScenarioFormState = {
   agentBInstructions: string;
 };
 
-const industryOptions: IndustryCategory[] = ["medical", "legal", "immigration", "community", "business"];
-const difficultyOptions: DifficultyLevel[] = ["beginner", "intermediate", "advanced"];
-const voiceOptions = ["alloy", "ash", "ballad", "cedar", "coral", "echo", "marin", "sage", "shimmer", "verse"];
+const industryOptions: IndustryCategory[] = [
+  "medical",
+  "legal",
+  "immigration",
+  "community",
+  "business",
+];
+const difficultyOptions: DifficultyLevel[] = [
+  "beginner",
+  "intermediate",
+  "advanced",
+];
+const voiceOptions = [
+  "alloy",
+  "ash",
+  "ballad",
+  "cedar",
+  "coral",
+  "echo",
+  "marin",
+  "sage",
+  "shimmer",
+  "verse",
+];
 
 function splitLines(value: string) {
   return value
@@ -185,21 +210,39 @@ export function AdminStudio() {
   const [statusMessage, setStatusMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production" || currentUser === undefined) {
+      return;
+    }
+
+    console.info("[AdminStudio] Convex user role snapshot", {
+      clerkId: currentUser?.clerkId ?? null,
+      role: currentUser?.role ?? null,
+      email: currentUser?.email ?? null,
+    });
+  }, [currentUser]);
+
   const resolvedModuleId = useMemo(() => {
     if (isCreatingModule || !modules || modules.length === 0) {
       return "";
     }
 
-    return modules.some((module) => module.id === selectedModuleId) ? selectedModuleId : modules[0].id;
+    return modules.some((module) => module.id === selectedModuleId)
+      ? selectedModuleId
+      : modules[0].id;
   }, [isCreatingModule, modules, selectedModuleId]);
 
   const selectedModule = useMemo(
-    () => (modules ?? []).find((module) => module.id === resolvedModuleId) ?? null,
+    () =>
+      (modules ?? []).find((module) => module.id === resolvedModuleId) ?? null,
     [modules, resolvedModuleId],
   );
 
   const visibleScenarios = useMemo(
-    () => (scenarios ?? []).filter((scenario) => scenario.moduleId === resolvedModuleId),
+    () =>
+      (scenarios ?? []).filter(
+        (scenario) => scenario.moduleId === resolvedModuleId,
+      ),
     [resolvedModuleId, scenarios],
   );
 
@@ -208,17 +251,25 @@ export function AdminStudio() {
       return "";
     }
 
-    return visibleScenarios.some((scenario) => scenario.id === selectedScenarioId)
+    return visibleScenarios.some(
+      (scenario) => scenario.id === selectedScenarioId,
+    )
       ? selectedScenarioId
       : visibleScenarios[0].id;
   }, [isCreatingScenario, selectedScenarioId, visibleScenarios]);
 
   const selectedScenario = useMemo(
-    () => visibleScenarios.find((scenario) => scenario.id === resolvedScenarioId) ?? null,
+    () =>
+      visibleScenarios.find((scenario) => scenario.id === resolvedScenarioId) ??
+      null,
     [resolvedScenarioId, visibleScenarios],
   );
 
-  if (currentUser === undefined || modules === undefined || scenarios === undefined) {
+  if (
+    currentUser === undefined ||
+    modules === undefined ||
+    scenarios === undefined
+  ) {
     return <div className="surface-card h-80 rounded-[2rem] animate-pulse" />;
   }
 
@@ -226,9 +277,12 @@ export function AdminStudio() {
     return (
       <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
         <p className="eyebrow">Admin</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em]">You do not have access to the admin studio.</h1>
+        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em]">
+          You do not have access to the admin studio.
+        </h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-          Set the Clerk user&apos;s `publicMetadata.role` to `platform_admin`, then sign out and back in.
+          Set the Clerk user&apos;s `publicMetadata.role` to `platform_admin`,
+          then sign out and back in.
         </p>
       </section>
     );
@@ -238,11 +292,16 @@ export function AdminStudio() {
     <div className="space-y-8">
       <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
         <p className="eyebrow">Admin studio</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em]">Create modules and shape the practice flow.</h1>
+        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em]">
+          Create modules and shape the practice flow.
+        </h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-          Modules define the training path. Scenarios define the live conversation, voices, prompts, and assessment focus.
+          Modules define the training path. Scenarios define the live
+          conversation, voices, prompts, and assessment focus.
         </p>
-        {statusMessage ? <p className="mt-4 text-sm font-medium">{statusMessage}</p> : null}
+        {statusMessage ? (
+          <p className="mt-4 text-sm font-medium">{statusMessage}</p>
+        ) : null}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[280px_1fr]">
@@ -251,7 +310,9 @@ export function AdminStudio() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="eyebrow">Modules</p>
-                <div className="mt-2 text-lg font-semibold">{modules.length}</div>
+                <div className="mt-2 text-lg font-semibold">
+                  {modules.length}
+                </div>
               </div>
               <button
                 type="button"
@@ -285,7 +346,9 @@ export function AdminStudio() {
                   }`}
                 >
                   <div className="text-sm font-semibold">{module.title}</div>
-                  <div className={`mt-1 text-xs ${!isCreatingModule && resolvedModuleId === module.id ? "text-white/70" : "text-muted"}`}>
+                  <div
+                    className={`mt-1 text-xs ${!isCreatingModule && resolvedModuleId === module.id ? "text-white/70" : "text-muted"}`}
+                  >
                     {module.industryCategory}
                   </div>
                 </button>
@@ -297,7 +360,9 @@ export function AdminStudio() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="eyebrow">Scenarios</p>
-                <div className="mt-2 text-lg font-semibold">{visibleScenarios.length}</div>
+                <div className="mt-2 text-lg font-semibold">
+                  {visibleScenarios.length}
+                </div>
               </div>
               <button
                 type="button"
@@ -329,7 +394,9 @@ export function AdminStudio() {
                   }`}
                 >
                   <div className="text-sm font-semibold">{scenario.title}</div>
-                  <div className={`mt-1 text-xs ${!isCreatingScenario && resolvedScenarioId === scenario.id ? "text-white/70" : "text-muted"}`}>
+                  <div
+                    className={`mt-1 text-xs ${!isCreatingScenario && resolvedScenarioId === scenario.id ? "text-white/70" : "text-muted"}`}
+                  >
                     {scenario.difficultyLevel}
                   </div>
                 </button>
@@ -345,8 +412,16 @@ export function AdminStudio() {
 
         <div className="space-y-6">
           <ModuleEditor
-            key={isCreatingModule ? "new-module" : selectedModule?.id ?? "module-empty"}
-            initialState={selectedModule ? createModuleFormFromRecord(selectedModule) : createEmptyModuleForm()}
+            key={
+              isCreatingModule
+                ? "new-module"
+                : (selectedModule?.id ?? "module-empty")
+            }
+            initialState={
+              selectedModule
+                ? createModuleFormFromRecord(selectedModule)
+                : createEmptyModuleForm()
+            }
             isCreating={isCreatingModule || !selectedModule}
             isPending={isPending}
             onSubmit={(form) => {
@@ -363,7 +438,8 @@ export function AdminStudio() {
                       learningObjectives: splitLines(form.learningObjectives),
                       isFree: form.isFree,
                       isAccredited: form.isAccredited,
-                      accreditationProvider: form.accreditationProvider.trim() || undefined,
+                      accreditationProvider:
+                        form.accreditationProvider.trim() || undefined,
                       badgeIcon: form.badgeIcon.trim(),
                     });
                     setStatusMessage("Module updated.");
@@ -379,14 +455,19 @@ export function AdminStudio() {
                     learningObjectives: splitLines(form.learningObjectives),
                     isFree: form.isFree,
                     isAccredited: form.isAccredited,
-                    accreditationProvider: form.accreditationProvider.trim() || undefined,
+                    accreditationProvider:
+                      form.accreditationProvider.trim() || undefined,
                     badgeIcon: form.badgeIcon.trim(),
                   });
                   setIsCreatingModule(false);
                   setSelectedModuleId(result.id);
                   setStatusMessage("Module created.");
                 } catch (error) {
-                  setStatusMessage(error instanceof Error ? error.message : "Could not save module.");
+                  setStatusMessage(
+                    error instanceof Error
+                      ? error.message
+                      : "Could not save module.",
+                  );
                 }
               });
             }}
@@ -396,9 +477,14 @@ export function AdminStudio() {
             key={
               isCreatingScenario
                 ? `new-scenario-${selectedModule?.id ?? "none"}`
-                : selectedScenario?.id ?? `scenario-empty-${selectedModule?.id ?? "none"}`
+                : (selectedScenario?.id ??
+                  `scenario-empty-${selectedModule?.id ?? "none"}`)
             }
-            initialState={selectedScenario ? createScenarioFormFromRecord(selectedScenario) : createEmptyScenarioForm()}
+            initialState={
+              selectedScenario
+                ? createScenarioFormFromRecord(selectedScenario)
+                : createEmptyScenarioForm()
+            }
             isCreating={isCreatingScenario || !selectedScenario}
             isPending={isPending}
             disabled={!selectedModule}
@@ -460,7 +546,11 @@ export function AdminStudio() {
                   setSelectedScenarioId(result.id);
                   setStatusMessage("Scenario created.");
                 } catch (error) {
-                  setStatusMessage(error instanceof Error ? error.message : "Could not save scenario.");
+                  setStatusMessage(
+                    error instanceof Error
+                      ? error.message
+                      : "Could not save scenario.",
+                  );
                 }
               });
             }}
@@ -489,9 +579,16 @@ function ModuleEditor({
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="eyebrow">Module editor</p>
-          <h2 className="mt-2 text-2xl font-semibold">{isCreating ? "New module" : "Edit module"}</h2>
+          <h2 className="mt-2 text-2xl font-semibold">
+            {isCreating ? "New module" : "Edit module"}
+          </h2>
         </div>
-        <button type="button" className="action-primary" onClick={() => onSubmit(form)} disabled={isPending}>
+        <button
+          type="button"
+          className="action-primary"
+          onClick={() => onSubmit(form)}
+          disabled={isPending}
+        >
           {isCreating ? "Create module" : "Save module"}
         </button>
       </div>
@@ -500,14 +597,21 @@ function ModuleEditor({
         <Field label="Title">
           <input
             value={form.title}
-            onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, title: event.target.value }))
+            }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Badge">
           <input
             value={form.badgeIcon}
-            onChange={(event) => setForm((current) => ({ ...current, badgeIcon: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                badgeIcon: event.target.value,
+              }))
+            }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           />
         </Field>
@@ -515,7 +619,10 @@ function ModuleEditor({
           <select
             value={form.industryCategory}
             onChange={(event) =>
-              setForm((current) => ({ ...current, industryCategory: event.target.value as IndustryCategory }))
+              setForm((current) => ({
+                ...current,
+                industryCategory: event.target.value as IndustryCategory,
+              }))
             }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           >
@@ -530,7 +637,10 @@ function ModuleEditor({
           <select
             value={form.difficultyLevel}
             onChange={(event) =>
-              setForm((current) => ({ ...current, difficultyLevel: event.target.value as DifficultyLevel }))
+              setForm((current) => ({
+                ...current,
+                difficultyLevel: event.target.value as DifficultyLevel,
+              }))
             }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           >
@@ -546,7 +656,12 @@ function ModuleEditor({
             type="number"
             min="1"
             value={form.durationMinutes}
-            onChange={(event) => setForm((current) => ({ ...current, durationMinutes: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                durationMinutes: event.target.value,
+              }))
+            }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           />
         </Field>
@@ -554,7 +669,10 @@ function ModuleEditor({
           <input
             value={form.accreditationProvider}
             onChange={(event) =>
-              setForm((current) => ({ ...current, accreditationProvider: event.target.value }))
+              setForm((current) => ({
+                ...current,
+                accreditationProvider: event.target.value,
+              }))
             }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
             disabled={!form.isAccredited}
@@ -565,7 +683,12 @@ function ModuleEditor({
       <Field label="Description" className="mt-4">
         <textarea
           value={form.description}
-          onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+          onChange={(event) =>
+            setForm((current) => ({
+              ...current,
+              description: event.target.value,
+            }))
+          }
           className="min-h-28 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
         />
       </Field>
@@ -574,7 +697,10 @@ function ModuleEditor({
         <textarea
           value={form.learningObjectives}
           onChange={(event) =>
-            setForm((current) => ({ ...current, learningObjectives: event.target.value }))
+            setForm((current) => ({
+              ...current,
+              learningObjectives: event.target.value,
+            }))
           }
           className="min-h-28 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
         />
@@ -584,12 +710,16 @@ function ModuleEditor({
         <Toggle
           label="Free module"
           checked={form.isFree}
-          onChange={(checked) => setForm((current) => ({ ...current, isFree: checked }))}
+          onChange={(checked) =>
+            setForm((current) => ({ ...current, isFree: checked }))
+          }
         />
         <Toggle
           label="Accredited"
           checked={form.isAccredited}
-          onChange={(checked) => setForm((current) => ({ ...current, isAccredited: checked }))}
+          onChange={(checked) =>
+            setForm((current) => ({ ...current, isAccredited: checked }))
+          }
         />
       </div>
     </section>
@@ -616,9 +746,16 @@ function ScenarioEditor({
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="eyebrow">Scenario editor</p>
-          <h2 className="mt-2 text-2xl font-semibold">{isCreating ? "New scenario" : "Edit scenario"}</h2>
+          <h2 className="mt-2 text-2xl font-semibold">
+            {isCreating ? "New scenario" : "Edit scenario"}
+          </h2>
         </div>
-        <button type="button" className="action-primary" onClick={() => onSubmit(form)} disabled={isPending || disabled}>
+        <button
+          type="button"
+          className="action-primary"
+          onClick={() => onSubmit(form)}
+          disabled={isPending || disabled}
+        >
           {isCreating ? "Create scenario" : "Save scenario"}
         </button>
       </div>
@@ -627,7 +764,9 @@ function ScenarioEditor({
         <Field label="Title">
           <input
             value={form.title}
-            onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, title: event.target.value }))
+            }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           />
         </Field>
@@ -635,7 +774,10 @@ function ScenarioEditor({
           <select
             value={form.difficultyLevel}
             onChange={(event) =>
-              setForm((current) => ({ ...current, difficultyLevel: event.target.value as DifficultyLevel }))
+              setForm((current) => ({
+                ...current,
+                difficultyLevel: event.target.value as DifficultyLevel,
+              }))
             }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           >
@@ -651,7 +793,12 @@ function ScenarioEditor({
       <Field label="Description" className="mt-4">
         <textarea
           value={form.description}
-          onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+          onChange={(event) =>
+            setForm((current) => ({
+              ...current,
+              description: event.target.value,
+            }))
+          }
           className="min-h-24 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
         />
       </Field>
@@ -660,7 +807,12 @@ function ScenarioEditor({
         <Field label="Interpreter role">
           <input
             value={form.interpreterRole}
-            onChange={(event) => setForm((current) => ({ ...current, interpreterRole: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                interpreterRole: event.target.value,
+              }))
+            }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           />
         </Field>
@@ -682,14 +834,24 @@ function ScenarioEditor({
         <Field label="Source language">
           <input
             value={form.sourceLanguage}
-            onChange={(event) => setForm((current) => ({ ...current, sourceLanguage: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                sourceLanguage: event.target.value,
+              }))
+            }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Target language">
           <input
             value={form.targetLanguage}
-            onChange={(event) => setForm((current) => ({ ...current, targetLanguage: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                targetLanguage: event.target.value,
+              }))
+            }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           />
         </Field>
@@ -698,7 +860,9 @@ function ScenarioEditor({
       <Field label="Briefing" className="mt-4">
         <textarea
           value={form.briefing}
-          onChange={(event) => setForm((current) => ({ ...current, briefing: event.target.value }))}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, briefing: event.target.value }))
+          }
           className="min-h-24 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
         />
       </Field>
@@ -707,14 +871,24 @@ function ScenarioEditor({
         <Field label="Expected skills" hint="One per line">
           <textarea
             value={form.expectedSkills}
-            onChange={(event) => setForm((current) => ({ ...current, expectedSkills: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                expectedSkills: event.target.value,
+              }))
+            }
             className="min-h-24 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Assessment focus" hint="One per line">
           <textarea
             value={form.assessmentFocus}
-            onChange={(event) => setForm((current) => ({ ...current, assessmentFocus: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                assessmentFocus: event.target.value,
+              }))
+            }
             className="min-h-24 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           />
         </Field>
@@ -732,7 +906,9 @@ function ScenarioEditor({
           openingLine={form.agentAOpeningLine}
           instructions={form.agentAInstructions}
           voices={voiceOptions}
-          onChange={(field, value) => setForm((current) => ({ ...current, [field]: value }))}
+          onChange={(field, value) =>
+            setForm((current) => ({ ...current, [field]: value }))
+          }
         />
         <AgentForm
           title="Agent B"
@@ -745,7 +921,9 @@ function ScenarioEditor({
           openingLine={form.agentBOpeningLine}
           instructions={form.agentBInstructions}
           voices={voiceOptions}
-          onChange={(field, value) => setForm((current) => ({ ...current, [field]: value }))}
+          onChange={(field, value) =>
+            setForm((current) => ({ ...current, [field]: value }))
+          }
         />
       </div>
     </section>
@@ -783,7 +961,11 @@ function Toggle({
 }) {
   return (
     <label className="flex items-center gap-3 rounded-full border border-line bg-white px-4 py-3 text-sm font-medium">
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
       <span>{label}</span>
     </label>
   );
@@ -823,28 +1005,48 @@ function AgentForm({
         <Field label="Name">
           <input
             value={name}
-            onChange={(event) => onChange(`${prefix}Name` as keyof ScenarioFormState, event.target.value)}
+            onChange={(event) =>
+              onChange(
+                `${prefix}Name` as keyof ScenarioFormState,
+                event.target.value,
+              )
+            }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Role">
           <input
             value={role}
-            onChange={(event) => onChange(`${prefix}Role` as keyof ScenarioFormState, event.target.value)}
+            onChange={(event) =>
+              onChange(
+                `${prefix}Role` as keyof ScenarioFormState,
+                event.target.value,
+              )
+            }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Language">
           <input
             value={language}
-            onChange={(event) => onChange(`${prefix}Language` as keyof ScenarioFormState, event.target.value)}
+            onChange={(event) =>
+              onChange(
+                `${prefix}Language` as keyof ScenarioFormState,
+                event.target.value,
+              )
+            }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Voice">
           <select
             value={voice}
-            onChange={(event) => onChange(`${prefix}Voice` as keyof ScenarioFormState, event.target.value)}
+            onChange={(event) =>
+              onChange(
+                `${prefix}Voice` as keyof ScenarioFormState,
+                event.target.value,
+              )
+            }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           >
             {voices.map((item) => (
@@ -858,28 +1060,48 @@ function AgentForm({
       <Field label="Goal" className="mt-4">
         <textarea
           value={goal}
-          onChange={(event) => onChange(`${prefix}Goal` as keyof ScenarioFormState, event.target.value)}
+          onChange={(event) =>
+            onChange(
+              `${prefix}Goal` as keyof ScenarioFormState,
+              event.target.value,
+            )
+          }
           className="min-h-20 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
         />
       </Field>
       <Field label="Demeanor" className="mt-4">
         <input
           value={demeanor}
-          onChange={(event) => onChange(`${prefix}Demeanor` as keyof ScenarioFormState, event.target.value)}
+          onChange={(event) =>
+            onChange(
+              `${prefix}Demeanor` as keyof ScenarioFormState,
+              event.target.value,
+            )
+          }
           className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
         />
       </Field>
       <Field label="Opening line" className="mt-4">
         <textarea
           value={openingLine}
-          onChange={(event) => onChange(`${prefix}OpeningLine` as keyof ScenarioFormState, event.target.value)}
+          onChange={(event) =>
+            onChange(
+              `${prefix}OpeningLine` as keyof ScenarioFormState,
+              event.target.value,
+            )
+          }
           className="min-h-20 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
         />
       </Field>
       <Field label="Instructions" className="mt-4">
         <textarea
           value={instructions}
-          onChange={(event) => onChange(`${prefix}Instructions` as keyof ScenarioFormState, event.target.value)}
+          onChange={(event) =>
+            onChange(
+              `${prefix}Instructions` as keyof ScenarioFormState,
+              event.target.value,
+            )
+          }
           className="min-h-28 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
         />
       </Field>
