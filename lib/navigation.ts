@@ -1,3 +1,15 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  BadgeCheck,
+  BookOpen,
+  BriefcaseBusiness,
+  CircleHelp,
+  CreditCard,
+  LayoutDashboard,
+  TrendingUp,
+  UserRound,
+} from "lucide-react";
+
 export const marketingNavigation = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/for-interpreters", label: "Interpreters" },
@@ -6,12 +18,12 @@ export const marketingNavigation = [
 ] as const;
 
 export const dashboardNavigation = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/modules", label: "Modules" },
-  { href: "/progress", label: "Progress" },
-  { href: "/credentials", label: "Credentials" },
-  { href: "/jobs", label: "Jobs" },
-  { href: "/billing", label: "Billing" },
-  { href: "/account", label: "Profile" },
-  { href: "/help", label: "Help" },
-] as const;
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/modules", label: "Modules", icon: BookOpen },
+  { href: "/progress", label: "Progress", icon: TrendingUp },
+  { href: "/credentials", label: "Credentials", icon: BadgeCheck },
+  { href: "/jobs", label: "Jobs", icon: BriefcaseBusiness },
+  { href: "/billing", label: "Billing", icon: CreditCard },
+  { href: "/account", label: "Profile", icon: UserRound },
+  { href: "/help", label: "Help", icon: CircleHelp },
+] satisfies readonly { href: string; label: string; icon: LucideIcon }[];
