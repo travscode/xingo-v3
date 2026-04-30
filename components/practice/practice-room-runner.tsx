@@ -736,6 +736,21 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   const locationLine = `You are at ${scenario.title}`;
 
   /**
+   * Returns the active AI speaking label for transcript status text.
+   */
+  const speakingAgentLabel = useMemo(() => {
+    if (speakingKey === "agent_a") {
+      return `${scenario.aiAgentA.name} speaking...`;
+    }
+
+    if (speakingKey === "agent_b") {
+      return `${scenario.aiAgentB.name} speaking...`;
+    }
+
+    return null;
+  }, [scenario.aiAgentA.name, scenario.aiAgentB.name, speakingKey]);
+
+  /**
    * Resolves avatar artwork for transcript entries from speaker names.
    */
   function getAvatarForSpeaker(speaker: string) {
@@ -761,10 +776,8 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
 
       <section className="grid min-h-[820px] xl:grid-cols-[1fr_360px]">
         <section className="relative p-8 sm:p-12">
-          <p className="text-2xl font-semibold text-[#8e8e8e]">
-            {locationLine}
-          </p>
-          <h1 className="mt-2 text-5xl font-semibold tracking-[-0.04em] text-black sm:text-6xl">
+          <p className="text-xl font-semibold text-[#8e8e8e]">{locationLine}</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-black sm:text-6xl">
             Help {scenario.aiAgentA.name} with {scenario.aiAgentB.name}
           </h1>
 
@@ -776,7 +789,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
             </div>
           ) : null}
 
-          <div className="mt-14 grid gap-8 md:grid-cols-2">
+          <div className="mt-14 grid gap-8 md:grid-cols-2 justify-items-center items-center justify-center md:justify-items-center">
             <ParticipantAvatar
               label={scenario.aiAgentB.name}
               subLabel={scenario.aiAgentB.role}
@@ -897,6 +910,11 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
               Language
             </button>
           </div>
+          {speakingAgentLabel ? (
+            <div className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#7aa2ff]">
+              {speakingAgentLabel}
+            </div>
+          ) : null}
 
           <div className="mt-6 flex-1 space-y-3 overflow-y-auto pr-1">
             {visibleTranscriptEntries.map((entry) => (
@@ -953,8 +971,10 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
               (sessionIsLive && isAssessing) ||
               (!sessionIsLive && (isStarting || countdownValue !== null))
             }
-            className={`mt-4 flex h-[60px] items-center justify-between rounded-[20px] px-7 text-3xl font-medium text-white disabled:opacity-60 ${
-              sessionIsLive ? "bg-[#001EFF]" : "bg-[#16a34a]"
+            className={`mt-4 flex h-[60px] items-center justify-between rounded-[20px] px-7 text-3xl font-medium  disabled:opacity-60 ${
+              sessionIsLive
+                ? "bg-[#001EFF] text-white"
+                : "bg-brand-green text-black"
             }`}
           >
             <span>
