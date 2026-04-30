@@ -96,7 +96,7 @@ function ParticipantAvatar({
         </div>
       </div>
       <div>
-        <div className="text-[44px] font-semibold leading-none tracking-[-0.03em] text-black sm:text-[50px]">
+        <div className="text-[32px] font-semibold leading-none tracking-[-0.03em] text-black">
           {label}
         </div>
         <div className="mt-2 text-base text-[#8b8b8b]">{subLabel}</div>
@@ -777,7 +777,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       <section className="grid min-h-[820px] xl:grid-cols-[1fr_360px]">
         <section className="relative p-8 sm:p-12">
           <p className="text-xl font-semibold text-[#8e8e8e]">{locationLine}</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-black sm:text-6xl">
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-black">
             Help {scenario.aiAgentA.name} with {scenario.aiAgentB.name}
           </h1>
 
@@ -839,7 +839,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
                 <rect x="18" y="9" width="3" height="6" rx="1.5" />
               </svg>
             </button>
-            <div className="mt-4 text-[44px] font-semibold leading-none tracking-[-0.03em] text-black sm:text-[50px]">
+            <div className="mt-4 text-[32px] font-semibold leading-none tracking-[-0.03em] text-black">
               You
             </div>
           </div>
