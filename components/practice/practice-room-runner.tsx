@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { useConvexAuth, useMutation } from "convex/react";
@@ -83,12 +82,13 @@ function ParticipantAvatar({
         ) : null}
         <div className="relative z-10 flex h-[190px] w-[190px] items-center justify-center overflow-hidden rounded-full bg-[#f0f0f0] text-4xl font-semibold text-black">
           {imageUrl ? (
-            <Image
+            // Uses a native image element to avoid Next.js optimizer issues with signed Convex URLs.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               src={imageUrl}
               alt={label}
-              width={190}
-              height={190}
               className="h-full w-full object-cover"
+              loading="lazy"
             />
           ) : (
             <span>{initials}</span>
@@ -909,12 +909,13 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
                 {entry.role !== "user" ? (
                   <div className="mt-1 h-10 w-10 overflow-hidden rounded-full bg-[#adadad]">
                     {getAvatarForSpeaker(entry.speaker) ? (
-                      <Image
+                      // Uses a native image element to avoid Next.js optimizer issues with signed Convex URLs.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
                         src={getAvatarForSpeaker(entry.speaker)!}
                         alt={entry.speaker}
-                        width={40}
-                        height={40}
                         className="h-full w-full object-cover"
+                        loading="lazy"
                       />
                     ) : null}
                   </div>
