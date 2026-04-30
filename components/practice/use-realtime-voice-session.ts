@@ -98,6 +98,7 @@ export function useRealtimeVoiceSession(
   callbacks: TranscriptCallbacks,
 ) {
   const sessionRef = useRef<RealtimeSession | null>(null);
+  const knownTranscriptItemIdsRef = useRef<Set<string>>(new Set());
   const [status, setStatus] =
     useState<RealtimeConnectionStatus>("DISCONNECTED");
 
@@ -108,6 +109,29 @@ export function useRealtimeVoiceSession(
 
     return sessionRef.current;
   }, []);
+
+  /**
+   * Tracks transcript items and guarantees each item has an initial entry.
+   */
+  const ensureTranscriptItem = useCallback(
+    (itemId: string, role: TranscriptEntry["role"]) => {
+      if (!itemId) {
+        return;
+      }
+
+      if (!knownTranscriptItemIdsRef.current.has(itemId)) {
+        knownTranscriptItemIdsRef.current.add(itemId);
+        callbacks.onTranscriptStart({
+          id: itemId,
+          role,
+          speaker: role === "assistant" ? speakerLabel : interpreterLabel,
+          text: "",
+          createdAt: new Date().toISOString(),
+        });
+      }
+    },
+    [callbacks, interpreterLabel, speakerLabel],
+  );
 
   const handleHistoryAdded = useCallback(
     (item: RealtimeHistoryMessage) => {
@@ -122,6 +146,7 @@ export function useRealtimeVoiceSession(
         return;
       }
 
+      knownTranscriptItemIdsRef.current.add(itemId);
       const text = extractMessageText(item.content ?? []);
       callbacks.onTranscriptStart({
         id: itemId,
@@ -165,6 +190,7 @@ export function useRealtimeVoiceSession(
           "conversation.item.input_audio_transcription.completed" &&
         transportEvent.item_id
       ) {
+        ensureTranscriptItem(transportEvent.item_id, "user");
         const transcript = normalizeTranscriptValue(transportEvent.transcript);
         if (transcript) {
           callbacks.onTranscriptUpdate(
@@ -181,6 +207,7 @@ export function useRealtimeVoiceSession(
         transportEvent.type === "response.audio_transcript.delta" &&
         transportEvent.item_id
       ) {
+        ensureTranscriptItem(transportEvent.item_id, "assistant");
         callbacks.onTranscriptUpdate(
           transportEvent.item_id,
           transportEvent.delta || "",
@@ -193,6 +220,7 @@ export function useRealtimeVoiceSession(
         transportEvent.type === "response.audio_transcript.done" &&
         transportEvent.item_id
       ) {
+        ensureTranscriptItem(transportEvent.item_id, "assistant");
         const transcript = normalizeTranscriptValue(transportEvent.transcript);
         if (transcript) {
           callbacks.onTranscriptUpdate(
@@ -216,7 +244,7 @@ export function useRealtimeVoiceSession(
         callbacks.onError?.(message);
       }
     },
-    [callbacks],
+    [callbacks, ensureTranscriptItem],
   );
 
   const connect = useCallback(
@@ -247,6 +275,7 @@ export function useRealtimeVoiceSession(
       });
 
       sessionRef.current = session;
+      knownTranscriptItemIdsRef.current.clear();
 
       try {
         await session.connect({ apiKey });
@@ -263,6 +292,7 @@ export function useRealtimeVoiceSession(
   const disconnect = useCallback(() => {
     sessionRef.current?.close();
     sessionRef.current = null;
+    knownTranscriptItemIdsRef.current.clear();
     setStatus("DISCONNECTED");
   }, []);
 
@@ -302,6 +332,7 @@ export function useRealtimeVoiceSession(
     (text: string) => {
       const session = ensureConnected();
       const itemId = crypto.randomUUID();
+      knownTranscriptItemIdsRef.current.add(itemId);
       callbacks.onTranscriptStart({
         id: itemId,
         role: "user",
