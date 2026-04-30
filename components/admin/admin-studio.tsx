@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import type {
   LearningModule,
   DifficultyLevel,
@@ -55,6 +56,7 @@ type ScenarioFormState = {
   agentALanguage: string;
   agentAVoice: string;
   agentAAvatarImageUrl: string;
+  agentAAvatarStorageId: string;
   agentAGoal: string;
   agentADemeanor: string;
   agentAOpeningLine: string;
@@ -64,6 +66,7 @@ type ScenarioFormState = {
   agentBLanguage: string;
   agentBVoice: string;
   agentBAvatarImageUrl: string;
+  agentBAvatarStorageId: string;
   agentBGoal: string;
   agentBDemeanor: string;
   agentBOpeningLine: string;
@@ -100,6 +103,13 @@ function splitLines(value: string) {
     .split("\n")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+/**
+ * Converts a plain string to a Convex storage id when present.
+ */
+function toStorageId(value: string): Id<"_storage"> | undefined {
+  return value ? (value as Id<"_storage">) : undefined;
 }
 
 function joinLines(items: string[]) {
@@ -153,6 +163,7 @@ function createEmptyScenarioForm(): ScenarioFormState {
     agentALanguage: "English",
     agentAVoice: "cedar",
     agentAAvatarImageUrl: "",
+    agentAAvatarStorageId: "",
     agentAGoal: "",
     agentADemeanor: "",
     agentAOpeningLine: "",
@@ -162,6 +173,7 @@ function createEmptyScenarioForm(): ScenarioFormState {
     agentBLanguage: "Spanish",
     agentBVoice: "sage",
     agentBAvatarImageUrl: "",
+    agentBAvatarStorageId: "",
     agentBGoal: "",
     agentBDemeanor: "",
     agentBOpeningLine: "",
@@ -186,6 +198,7 @@ function createScenarioFormFromRecord(scenario: Scenario): ScenarioFormState {
     agentALanguage: scenario.aiAgentA.language,
     agentAVoice: scenario.aiAgentA.voice,
     agentAAvatarImageUrl: scenario.aiAgentA.avatarImageUrl ?? "",
+    agentAAvatarStorageId: scenario.aiAgentA.avatarStorageId ?? "",
     agentAGoal: scenario.aiAgentA.goal,
     agentADemeanor: scenario.aiAgentA.demeanor,
     agentAOpeningLine: scenario.aiAgentA.openingLine ?? "",
@@ -195,6 +208,7 @@ function createScenarioFormFromRecord(scenario: Scenario): ScenarioFormState {
     agentBLanguage: scenario.aiAgentB.language,
     agentBVoice: scenario.aiAgentB.voice,
     agentBAvatarImageUrl: scenario.aiAgentB.avatarImageUrl ?? "",
+    agentBAvatarStorageId: scenario.aiAgentB.avatarStorageId ?? "",
     agentBGoal: scenario.aiAgentB.goal,
     agentBDemeanor: scenario.aiAgentB.demeanor,
     agentBOpeningLine: scenario.aiAgentB.openingLine ?? "",
@@ -542,6 +556,7 @@ export function AdminStudio() {
                     voice: form.agentAVoice,
                     avatarImageUrl:
                       form.agentAAvatarImageUrl.trim() || undefined,
+                    avatarStorageId: toStorageId(form.agentAAvatarStorageId),
                     goal: form.agentAGoal.trim(),
                     language: form.agentALanguage.trim(),
                     demeanor: form.agentADemeanor.trim() || undefined,
@@ -554,6 +569,7 @@ export function AdminStudio() {
                     voice: form.agentBVoice,
                     avatarImageUrl:
                       form.agentBAvatarImageUrl.trim() || undefined,
+                    avatarStorageId: toStorageId(form.agentBAvatarStorageId),
                     goal: form.agentBGoal.trim(),
                     language: form.agentBLanguage.trim(),
                     demeanor: form.agentBDemeanor.trim() || undefined,
@@ -933,6 +949,7 @@ function ScenarioEditor({
           language={form.agentALanguage}
           voice={form.agentAVoice}
           avatarImageUrl={form.agentAAvatarImageUrl}
+          avatarStorageId={form.agentAAvatarStorageId}
           goal={form.agentAGoal}
           demeanor={form.agentADemeanor}
           openingLine={form.agentAOpeningLine}
@@ -949,6 +966,7 @@ function ScenarioEditor({
           language={form.agentBLanguage}
           voice={form.agentBVoice}
           avatarImageUrl={form.agentBAvatarImageUrl}
+          avatarStorageId={form.agentBAvatarStorageId}
           goal={form.agentBGoal}
           demeanor={form.agentBDemeanor}
           openingLine={form.agentBOpeningLine}
@@ -1011,6 +1029,7 @@ function AgentForm({
   language,
   voice,
   avatarImageUrl,
+  avatarStorageId,
   goal,
   demeanor,
   openingLine,
@@ -1024,6 +1043,7 @@ function AgentForm({
   language: string;
   voice: string;
   avatarImageUrl: string;
+  avatarStorageId: string;
   goal: string;
   demeanor: string;
   openingLine: string;
@@ -1032,22 +1052,66 @@ function AgentForm({
   onChange: (field: keyof ScenarioFormState, value: string) => void;
 }) {
   const prefix = title === "Agent A" ? "agentA" : "agentB";
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const generateAvatarUploadUrl = useMutation(
+    api.scenarios.generateAvatarUploadUrlAdmin,
+  );
+  const resolveAvatarStorageUrl = useMutation(
+    api.scenarios.resolveAvatarStorageUrlAdmin,
+  );
 
   /**
-   * Converts a selected image file to a data URL so avatars can be uploaded inline.
+   * Uploads the selected avatar to Convex file storage and stores its resolved URL.
    */
-  function handleAvatarFileChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handleAvatarFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+    event.currentTarget.value = "";
     if (!file) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      onChange(`${prefix}AvatarImageUrl` as keyof ScenarioFormState, result);
-    };
-    reader.readAsDataURL(file);
+    setUploadError(null);
+    setIsUploadingAvatar(true);
+
+    try {
+      const uploadUrl = await generateAvatarUploadUrl({});
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": file.type || "application/octet-stream",
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Could not upload avatar file.");
+      }
+
+      const result = (await uploadResponse.json()) as { storageId?: string };
+      if (!result.storageId) {
+        throw new Error("Upload did not return a storage id.");
+      }
+
+      const resolvedUrl = await resolveAvatarStorageUrl({
+        storageId: toStorageId(result.storageId)!,
+      });
+
+      onChange(
+        `${prefix}AvatarStorageId` as keyof ScenarioFormState,
+        result.storageId,
+      );
+      onChange(
+        `${prefix}AvatarImageUrl` as keyof ScenarioFormState,
+        resolvedUrl,
+      );
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : "Could not upload avatar.",
+      );
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   }
 
   return (
@@ -1112,12 +1176,16 @@ function AgentForm({
           <div className="space-y-3">
             <input
               value={avatarImageUrl}
-              onChange={(event) =>
+              onChange={(event) => {
+                onChange(
+                  `${prefix}AvatarStorageId` as keyof ScenarioFormState,
+                  "",
+                );
                 onChange(
                   `${prefix}AvatarImageUrl` as keyof ScenarioFormState,
                   event.target.value,
-                )
-              }
+                );
+              }}
               placeholder="https://... or upload below"
               className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
             />
@@ -1126,21 +1194,37 @@ function AgentForm({
                 type="file"
                 accept="image/*"
                 onChange={handleAvatarFileChange}
+                disabled={isUploadingAvatar}
                 className="text-sm"
               />
               <button
                 type="button"
-                onClick={() =>
+                onClick={() => {
+                  onChange(
+                    `${prefix}AvatarStorageId` as keyof ScenarioFormState,
+                    "",
+                  );
                   onChange(
                     `${prefix}AvatarImageUrl` as keyof ScenarioFormState,
                     "",
-                  )
-                }
+                  );
+                }}
                 className="action-secondary px-3 py-2 text-xs"
               >
                 Remove image
               </button>
             </div>
+            {isUploadingAvatar ? (
+              <p className="text-xs text-muted">Uploading avatar...</p>
+            ) : null}
+            {uploadError ? (
+              <p className="text-xs text-red-600">{uploadError}</p>
+            ) : null}
+            {avatarStorageId ? (
+              <p className="text-[11px] text-muted">
+                Stored file id: {avatarStorageId}
+              </p>
+            ) : null}
             {avatarImageUrl ? (
               <div className="h-16 w-16 overflow-hidden rounded-full border border-line bg-surface">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

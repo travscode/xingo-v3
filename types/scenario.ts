@@ -5,6 +5,7 @@ export interface VoiceAgent {
   role: string;
   voice: string;
   avatarImageUrl?: string;
+  avatarStorageId?: string;
   goal: string;
   language: string;
   demeanor: string;

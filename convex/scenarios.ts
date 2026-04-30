@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import type { MutationCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 
 const difficultyLevel = v.union(
   v.literal("beginner"),
@@ -13,6 +14,7 @@ const voiceAgent = v.object({
   role: v.string(),
   voice: v.string(),
   avatarImageUrl: v.optional(v.string()),
+  avatarStorageId: v.optional(v.id("_storage")),
   goal: v.string(),
   language: v.optional(v.string()),
   demeanor: v.optional(v.string()),
@@ -85,6 +87,7 @@ function normalizeAgent(
     role: string;
     voice: string;
     avatarImageUrl?: string;
+    avatarStorageId?: Id<"_storage">;
     goal: string;
     language?: string;
     demeanor?: string;
@@ -105,39 +108,43 @@ function normalizeAgent(
   };
 }
 
-function normalizeScenario<T extends {
-  aiAgentA: {
-    name?: string;
-    role: string;
-    voice: string;
-    avatarImageUrl?: string;
-    goal: string;
-    language?: string;
-    demeanor?: string;
-    instructions?: string;
-    openingLine?: string;
-  };
-  aiAgentB: {
-    name?: string;
-    role: string;
-    voice: string;
-    avatarImageUrl?: string;
-    goal: string;
-    language?: string;
-    demeanor?: string;
-    instructions?: string;
-    openingLine?: string;
-  };
-  practiceRuntime?: {
-    interpreterRole: string;
-    sourceLanguage: string;
-    targetLanguage: string;
-    openingSpeaker: "agent_a" | "agent_b";
-    briefing: string;
-    assessmentFocus: string[];
-  };
-  expectedSkills: string[];
-}>(scenario: T) {
+function normalizeScenario<
+  T extends {
+    aiAgentA: {
+      name?: string;
+      role: string;
+      voice: string;
+      avatarImageUrl?: string;
+      avatarStorageId?: Id<"_storage">;
+      goal: string;
+      language?: string;
+      demeanor?: string;
+      instructions?: string;
+      openingLine?: string;
+    };
+    aiAgentB: {
+      name?: string;
+      role: string;
+      voice: string;
+      avatarImageUrl?: string;
+      avatarStorageId?: Id<"_storage">;
+      goal: string;
+      language?: string;
+      demeanor?: string;
+      instructions?: string;
+      openingLine?: string;
+    };
+    practiceRuntime?: {
+      interpreterRole: string;
+      sourceLanguage: string;
+      targetLanguage: string;
+      openingSpeaker: "agent_a" | "agent_b";
+      briefing: string;
+      assessmentFocus: string[];
+    };
+    expectedSkills: string[];
+  },
+>(scenario: T) {
   return {
     ...scenario,
     aiAgentA: normalizeAgent(scenario.aiAgentA, "English"),
@@ -154,7 +161,10 @@ function normalizeScenario<T extends {
   };
 }
 
-async function requirePlatformAdmin(ctx: MutationCtx) {
+/**
+ * Ensures the current user has platform admin access.
+ */
+async function requirePlatformAdmin(ctx: MutationCtx | QueryCtx) {
   const identity = await ctx.auth.getUserIdentity();
 
   if (!identity) {
@@ -174,7 +184,54 @@ async function requirePlatformAdmin(ctx: MutationCtx) {
   return user;
 }
 
-async function ensureUniqueId(ctx: MutationCtx, moduleId: string, title: string, currentId?: string) {
+/**
+ * Resolves the current CDN URL for a stored avatar, falling back to raw URL values.
+ */
+async function resolveAgentAvatarUrl(
+  ctx: MutationCtx | QueryCtx,
+  agent: { avatarStorageId?: Id<"_storage">; avatarImageUrl?: string },
+) {
+  if (!agent.avatarStorageId) {
+    return agent.avatarImageUrl;
+  }
+
+  const storageUrl = await ctx.storage.getUrl(agent.avatarStorageId);
+  return storageUrl ?? agent.avatarImageUrl;
+}
+
+/**
+ * Enriches a scenario with resolved avatar URLs before returning to clients.
+ */
+async function enrichScenarioAvatars<
+  T extends {
+    aiAgentA: { avatarStorageId?: Id<"_storage">; avatarImageUrl?: string };
+    aiAgentB: { avatarStorageId?: Id<"_storage">; avatarImageUrl?: string };
+  },
+>(ctx: MutationCtx | QueryCtx, scenario: T) {
+  const [agentAAvatarImageUrl, agentBAvatarImageUrl] = await Promise.all([
+    resolveAgentAvatarUrl(ctx, scenario.aiAgentA),
+    resolveAgentAvatarUrl(ctx, scenario.aiAgentB),
+  ]);
+
+  return {
+    ...scenario,
+    aiAgentA: {
+      ...scenario.aiAgentA,
+      avatarImageUrl: agentAAvatarImageUrl,
+    },
+    aiAgentB: {
+      ...scenario.aiAgentB,
+      avatarImageUrl: agentBAvatarImageUrl,
+    },
+  };
+}
+
+async function ensureUniqueId(
+  ctx: MutationCtx,
+  moduleId: string,
+  title: string,
+  currentId?: string,
+) {
   const initial = `${slugify(moduleId)}-${slugify(title) || "scenario"}`;
 
   for (let index = 0; index < 100; index += 1) {
@@ -200,7 +257,12 @@ export const getById = query({
       .withIndex("by_public_id", (q) => q.eq("id", args.id))
       .unique();
 
-    return scenario ? normalizeScenario(scenario) : null;
+    if (!scenario) {
+      return null;
+    }
+
+    const enriched = await enrichScenarioAvatars(ctx, scenario);
+    return normalizeScenario(enriched);
   },
 });
 
@@ -212,7 +274,10 @@ export const listByModule = query({
       .withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId))
       .collect();
 
-    return scenarios.map(normalizeScenario);
+    const enriched = await Promise.all(
+      scenarios.map((scenario) => enrichScenarioAvatars(ctx, scenario)),
+    );
+    return enriched.map(normalizeScenario);
   },
 });
 
@@ -220,7 +285,34 @@ export const list = query({
   args: {},
   handler: async (ctx) => {
     const scenarios = await ctx.db.query("scenarios").collect();
-    return scenarios.map(normalizeScenario);
+    const enriched = await Promise.all(
+      scenarios.map((scenario) => enrichScenarioAvatars(ctx, scenario)),
+    );
+    return enriched.map(normalizeScenario);
+  },
+});
+
+export const generateAvatarUploadUrlAdmin = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requirePlatformAdmin(ctx);
+    return ctx.storage.generateUploadUrl();
+  },
+});
+
+export const resolveAvatarStorageUrlAdmin = mutation({
+  args: {
+    storageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    await requirePlatformAdmin(ctx);
+    const url = await ctx.storage.getUrl(args.storageId);
+
+    if (!url) {
+      throw new Error("Could not resolve avatar URL from storage.");
+    }
+
+    return url;
   },
 });
 
@@ -242,8 +334,14 @@ export const createAdmin = mutation({
     const insertedId = await ctx.db.insert("scenarios", {
       id,
       ...args,
-      aiAgentA: normalizeAgent(args.aiAgentA, args.practiceRuntime.sourceLanguage),
-      aiAgentB: normalizeAgent(args.aiAgentB, args.practiceRuntime.targetLanguage),
+      aiAgentA: normalizeAgent(
+        args.aiAgentA,
+        args.practiceRuntime.sourceLanguage,
+      ),
+      aiAgentB: normalizeAgent(
+        args.aiAgentB,
+        args.practiceRuntime.targetLanguage,
+      ),
       expectedSkills: args.expectedSkills.filter(Boolean),
       practiceRuntime: {
         ...args.practiceRuntime,
@@ -276,8 +374,14 @@ export const updateAdmin = mutation({
       moduleId: args.moduleId,
       title: args.title,
       description: args.description,
-      aiAgentA: normalizeAgent(args.aiAgentA, args.practiceRuntime.sourceLanguage),
-      aiAgentB: normalizeAgent(args.aiAgentB, args.practiceRuntime.targetLanguage),
+      aiAgentA: normalizeAgent(
+        args.aiAgentA,
+        args.practiceRuntime.sourceLanguage,
+      ),
+      aiAgentB: normalizeAgent(
+        args.aiAgentB,
+        args.practiceRuntime.targetLanguage,
+      ),
       expectedSkills: args.expectedSkills.filter(Boolean),
       practiceRuntime: {
         ...args.practiceRuntime,

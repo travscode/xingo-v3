@@ -33,6 +33,7 @@ const voiceAgent = v.object({
   role: v.string(),
   voice: v.string(),
   avatarImageUrl: v.optional(v.string()),
+  avatarStorageId: v.optional(v.id("_storage")),
   goal: v.string(),
   language: v.optional(v.string()),
   demeanor: v.optional(v.string()),
@@ -76,7 +77,10 @@ const sessionAssessment = v.object({
   strengths: v.array(v.string()),
   improvementAreas: v.array(v.string()),
   recommendedNextStep: v.string(),
-  completionDecision: v.union(v.literal("completed"), v.literal("needs_review")),
+  completionDecision: v.union(
+    v.literal("completed"),
+    v.literal("needs_review"),
+  ),
   breakdown: assessmentBreakdown,
 });
 
