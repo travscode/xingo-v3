@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
@@ -61,26 +60,34 @@ function ParticipantAvatar({
   imageUrl,
   initials,
   isSpeaking,
+  isActive,
+  onSelect,
 }: {
   label: string;
   subLabel: string;
   imageUrl?: string;
   initials: string;
   isSpeaking: boolean;
+  isActive?: boolean;
+  onSelect?: () => void;
 }) {
   return (
-    <div className="flex w-full max-w-[220px] flex-col items-center gap-3">
+    <button
+      type="button"
+      onClick={onSelect}
+      className="flex w-full max-w-[300px] flex-col items-center gap-4 text-center"
+    >
       <div className="relative">
-        {isSpeaking ? (
+        {isSpeaking || isActive ? (
           <span className="avatar-speaking-ring" aria-hidden />
         ) : null}
-        <div className="relative z-10 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-line bg-white text-xl font-semibold">
+        <div className="relative z-10 flex h-[190px] w-[190px] items-center justify-center overflow-hidden rounded-full bg-[#f0f0f0] text-4xl font-semibold text-black">
           {imageUrl ? (
             <Image
               src={imageUrl}
               alt={label}
-              width={96}
-              height={96}
+              width={190}
+              height={190}
               className="h-full w-full object-cover"
             />
           ) : (
@@ -88,11 +95,13 @@ function ParticipantAvatar({
           )}
         </div>
       </div>
-      <div className="text-center">
-        <div className="text-sm font-semibold">{label}</div>
-        <div className="text-xs text-muted">{subLabel}</div>
+      <div>
+        <div className="text-[44px] font-semibold leading-none tracking-[-0.03em] text-black sm:text-[50px]">
+          {label}
+        </div>
+        <div className="mt-2 text-base text-[#8b8b8b]">{subLabel}</div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -109,7 +118,6 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   const [sessionStartedAt, setSessionStartedAt] = useState<number | null>(null);
   const [activeAgent, setActiveAgent] = useState<AgentKey | null>(null);
   const [speakingKey, setSpeakingKey] = useState<SpeakingKey>(null);
-  const [textRelay, setTextRelay] = useState("");
   const [transcriptEntries, setTranscriptEntries] = useState<TranscriptEntry[]>(
     [],
   );
@@ -445,17 +453,6 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     switchActiveAgent,
   ]);
 
-  const handleSendRelay = useCallback(() => {
-    if (!textRelay.trim() || !activeAgent) {
-      return;
-    }
-
-    const bundle = getSessionBundle(activeAgent);
-    bundle.session.interrupt();
-    bundle.session.sendInterpreterText(textRelay.trim());
-    setTextRelay("");
-  }, [activeAgent, getSessionBundle, textRelay]);
-
   const handlePushToTalkStart = useCallback(() => {
     if (!activeAgent) {
       return;
@@ -478,6 +475,12 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   }, [activeAgent, getSessionBundle, isPushToTalkActive]);
 
   const sessionIsLive = Boolean(attemptId);
+  const hasAutoStartAttemptedRef = useRef(false);
+  const canStartPractice =
+    isClerkLoaded &&
+    isSignedIn &&
+    isConvexAuthenticated &&
+    !isConvexAuthLoading;
 
   useEffect(() => {
     if (!sessionIsLive) {
@@ -553,6 +556,20 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      sessionIsLive ||
+      isStarting ||
+      !canStartPractice ||
+      hasAutoStartAttemptedRef.current
+    ) {
+      return;
+    }
+
+    hasAutoStartAttemptedRef.current = true;
+    void handleStartPractice();
+  }, [canStartPractice, handleStartPractice, isStarting, sessionIsLive]);
 
   const handleFinishPractice = useCallback(async () => {
     if (
@@ -631,122 +648,120 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     transcriptEntries,
   ]);
 
-  const canStartPractice =
-    isClerkLoaded &&
-    isSignedIn &&
-    isConvexAuthenticated &&
-    !isConvexAuthLoading;
-  const activeTargetName =
-    activeAgent === "agent_a"
-      ? scenario.aiAgentA.role
-      : activeAgent === "agent_b"
-        ? scenario.aiAgentB.role
-        : null;
-
   const visibleTranscriptEntries = transcriptEntries.filter((entry) =>
     entry.text.trim(),
   );
+  const locationLine = `You are at ${scenario.title}`;
+
+  /**
+   * Resolves avatar artwork for transcript entries from speaker names.
+   */
+  function getAvatarForSpeaker(speaker: string) {
+    if (
+      speaker === scenario.aiAgentA.role ||
+      speaker === scenario.aiAgentA.name
+    ) {
+      return scenario.aiAgentA.avatarImageUrl;
+    }
+    if (
+      speaker === scenario.aiAgentB.role ||
+      speaker === scenario.aiAgentB.name
+    ) {
+      return scenario.aiAgentB.avatarImageUrl;
+    }
+    return undefined;
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="overflow-hidden rounded-[1.6rem] border border-line bg-white">
       <audio ref={agentAAudioRef} autoPlay playsInline className="sr-only" />
       <audio ref={agentBAudioRef} autoPlay playsInline className="sr-only" />
 
-      <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="eyebrow">Practice room</p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em]">
-              {scenario.title}
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-              {scenario.description}
-            </p>
-          </div>
-          <Link
-            href={`/modules/${scenario.moduleId}`}
-            className="action-secondary px-4 py-2 text-sm"
-          >
-            Exit room
-          </Link>
-        </div>
-      </section>
+      <section className="grid min-h-[820px] xl:grid-cols-[1fr_360px]">
+        <section className="relative p-8 sm:p-12">
+          <p className="text-2xl font-semibold text-[#8e8e8e]">
+            {locationLine}
+          </p>
+          <h1 className="mt-2 text-5xl font-semibold tracking-[-0.04em] text-black sm:text-6xl">
+            Help {scenario.aiAgentA.name} with {scenario.aiAgentB.name}
+          </h1>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_340px]">
-        <section className="surface-card rounded-[2rem] p-6">
-          <div className="rounded-[1.5rem] border border-line bg-white p-4 text-sm text-muted">
-            <div className="font-semibold text-foreground">
-              How to run the practice room
-            </div>
-            <ul className="mt-3 list-disc space-y-1 pl-5">
-              <li>Select which participant to relay to.</li>
-              <li>
-                Hold `Space` or the talk button to speak your interpretation.
-              </li>
-              <li>
-                Use text relay only for quick testing or noisy environments.
-              </li>
-              <li>
-                Press `Finish` to calculate score and open your results
-                breakdown.
-              </li>
-            </ul>
+          <div className="mt-14 grid gap-8 md:grid-cols-2">
+            <ParticipantAvatar
+              label={scenario.aiAgentB.name}
+              subLabel={scenario.aiAgentB.role}
+              imageUrl={scenario.aiAgentB.avatarImageUrl}
+              initials={getInitials(
+                scenario.aiAgentB.name || scenario.aiAgentB.role,
+              )}
+              isSpeaking={speakingKey === "agent_b"}
+              isActive={activeAgent === "agent_b"}
+              onSelect={() => void switchActiveAgent("agent_b")}
+            />
+            <ParticipantAvatar
+              label={scenario.aiAgentA.name}
+              subLabel={scenario.aiAgentA.role}
+              imageUrl={scenario.aiAgentA.avatarImageUrl}
+              initials={getInitials(
+                scenario.aiAgentA.name || scenario.aiAgentA.role,
+              )}
+              isSpeaking={speakingKey === "agent_a"}
+              isActive={activeAgent === "agent_a"}
+              onSelect={() => void switchActiveAgent("agent_a")}
+            />
           </div>
 
-          <div className="mt-6 rounded-[1.75rem] border border-line bg-white p-6">
-            <div className="flex flex-wrap items-start justify-center gap-6">
-              <ParticipantAvatar
-                label={scenario.aiAgentA.name}
-                subLabel={scenario.aiAgentA.role}
-                imageUrl={scenario.aiAgentA.avatarImageUrl}
-                initials={getInitials(
-                  scenario.aiAgentA.name || scenario.aiAgentA.role,
-                )}
-                isSpeaking={speakingKey === "agent_a"}
-              />
-              <ParticipantAvatar
-                label="You"
-                subLabel={scenario.practiceRuntime.interpreterRole}
-                initials="ME"
-                isSpeaking={speakingKey === "interpreter" || isPushToTalkActive}
-              />
-              <ParticipantAvatar
-                label={scenario.aiAgentB.name}
-                subLabel={scenario.aiAgentB.role}
-                imageUrl={scenario.aiAgentB.avatarImageUrl}
-                initials={getInitials(
-                  scenario.aiAgentB.name || scenario.aiAgentB.role,
-                )}
-                isSpeaking={speakingKey === "agent_b"}
-              />
+          <div className="mt-10 flex flex-col items-center">
+            <button
+              type="button"
+              onMouseDown={handlePushToTalkStart}
+              onMouseUp={handlePushToTalkEnd}
+              onMouseLeave={handlePushToTalkEnd}
+              onTouchStart={handlePushToTalkStart}
+              onTouchEnd={handlePushToTalkEnd}
+              disabled={!sessionIsLive || !activeAgent}
+              className={`flex h-[220px] w-[220px] items-center justify-center rounded-full ${
+                isPushToTalkActive ? "bg-[#001EFF]" : "bg-black"
+              } text-white disabled:opacity-60`}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden
+                className="h-16 w-16"
+                fill="currentColor"
+              >
+                <rect x="3" y="10" width="3" height="4" rx="1.5" />
+                <rect x="8" y="8" width="3" height="8" rx="1.5" />
+                <rect x="13" y="6" width="3" height="12" rx="1.5" />
+                <rect x="18" y="9" width="3" height="6" rx="1.5" />
+              </svg>
+            </button>
+            <div className="mt-4 text-[44px] font-semibold leading-none tracking-[-0.03em] text-black sm:text-[50px]">
+              You
             </div>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            {!sessionIsLive ? (
+          <div className="mt-8 flex items-center justify-between text-xl font-semibold text-[#8d8d8d]">
+            <div>Press Spacebar to change participant</div>
+            <div>Hold Spacebar to talk</div>
+          </div>
+
+          {!sessionIsLive ? (
+            <div className="mt-6">
               <button
                 type="button"
                 onClick={handleStartPractice}
                 disabled={isStarting || !canStartPractice}
-                className="action-primary disabled:opacity-50"
+                className="rounded-full bg-black px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
               >
-                {isConvexAuthLoading
-                  ? "Checking access..."
-                  : isStarting
-                    ? "Starting..."
-                    : "Start practice"}
+                {isStarting ? "Starting..." : "Start practice"}
               </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleFinishPractice}
-                disabled={isAssessing}
-                className="action-primary bg-[#001EFF] disabled:opacity-50"
-              >
-                {isAssessing ? "Calculating score..." : "Finish"}
-              </button>
-            )}
-            {sessionIsLive ? (
+            </div>
+          ) : null}
+
+          {audioNotice ? (
+            <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {audioNotice}
               <button
                 type="button"
                 onClick={() =>
@@ -758,116 +773,88 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
                         : null,
                   )
                 }
-                className="action-secondary"
+                className="ml-3 underline"
               >
                 Enable audio
               </button>
-            ) : null}
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              disabled={!sessionIsLive}
-              onClick={() => void switchActiveAgent("agent_a")}
-              className={`rounded-full border px-4 py-2 text-sm font-medium ${
-                activeAgent === "agent_a"
-                  ? "border-brand bg-brand text-white"
-                  : "border-line bg-white text-foreground"
-              } disabled:opacity-50`}
-            >
-              Relay to {scenario.aiAgentA.role}
-            </button>
-            <button
-              type="button"
-              disabled={!sessionIsLive}
-              onClick={() => void switchActiveAgent("agent_b")}
-              className={`rounded-full border px-4 py-2 text-sm font-medium ${
-                activeAgent === "agent_b"
-                  ? "border-brand bg-brand text-white"
-                  : "border-line bg-white text-foreground"
-              } disabled:opacity-50`}
-            >
-              Relay to {scenario.aiAgentB.role}
-            </button>
-          </div>
-
-          <div className="mt-5 rounded-[1.5rem] border border-line bg-white p-4">
-            <div className="text-sm font-semibold">
-              Active target: {activeTargetName ?? "Not started"}
-            </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto]">
-              <input
-                value={textRelay}
-                onChange={(event) => setTextRelay(event.target.value)}
-                placeholder="Type an interpreter relay for the active participant..."
-                disabled={!sessionIsLive || !activeAgent}
-                className="min-w-0 rounded-full border border-line bg-white px-4 py-3 text-sm outline-none disabled:opacity-50"
-              />
-              <button
-                type="button"
-                onClick={handleSendRelay}
-                disabled={!sessionIsLive || !activeAgent || !textRelay.trim()}
-                className="action-secondary px-4 py-3 text-sm disabled:opacity-50"
-              >
-                Send
-              </button>
-              <button
-                type="button"
-                onMouseDown={handlePushToTalkStart}
-                onMouseUp={handlePushToTalkEnd}
-                onMouseLeave={handlePushToTalkEnd}
-                onTouchStart={handlePushToTalkStart}
-                onTouchEnd={handlePushToTalkEnd}
-                disabled={!sessionIsLive || !activeAgent}
-                className={`rounded-full px-4 py-3 text-sm font-semibold ${
-                  isPushToTalkActive
-                    ? "bg-brand text-white"
-                    : "border border-line bg-white"
-                } disabled:opacity-50`}
-              >
-                {isPushToTalkActive ? "Release to send" : "Hold to talk"}
-              </button>
-            </div>
-          </div>
-
-          {error ? (
-            <div className="mt-4 rounded-[1.5rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
             </div>
           ) : null}
-          {audioNotice ? (
-            <div className="mt-4 rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              {audioNotice}
+          {error ? (
+            <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+              <button
+                type="button"
+                onClick={() => {
+                  hasAutoStartAttemptedRef.current = false;
+                  void handleStartPractice();
+                }}
+                className="ml-3 underline"
+              >
+                Retry
+              </button>
             </div>
           ) : null}
         </section>
 
-        <aside className="surface-card rounded-[2rem] p-6">
-          <p className="eyebrow">Transcript</p>
-          <div className="mt-4 max-h-[680px] space-y-3 overflow-y-auto pr-1">
+        <aside className="relative flex h-full flex-col bg-black px-6 py-5 text-white">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[40px] font-semibold leading-none tracking-[-0.03em]">
+              Transcript
+            </h2>
+            <button
+              type="button"
+              className="rounded-full border border-white/20 px-3 py-1 text-xs text-white/75"
+            >
+              Language
+            </button>
+          </div>
+
+          <div className="mt-6 flex-1 space-y-3 overflow-y-auto pr-1">
             {visibleTranscriptEntries.map((entry) => (
-              <div
-                key={entry.id}
-                className="rounded-[1.25rem] border border-line bg-white p-3"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold">{entry.speaker}</div>
-                  <div className="text-[11px] uppercase tracking-[0.14em] text-muted">
-                    {entry.role}
-                  </div>
+              <div key={entry.id} className="flex items-start gap-3">
+                <div className="mt-1 h-10 w-10 overflow-hidden rounded-full bg-[#adadad]">
+                  {getAvatarForSpeaker(entry.speaker) ? (
+                    <Image
+                      src={getAvatarForSpeaker(entry.speaker)!}
+                      alt={entry.speaker}
+                      width={40}
+                      height={40}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : null}
                 </div>
-                <p className="mt-2 text-sm leading-6 text-muted">
+                <div
+                  className={`max-w-[78%] rounded-[20px] px-4 py-3 text-sm leading-5 ${
+                    entry.role === "user"
+                      ? "bg-white text-black"
+                      : "bg-[#2f2f2f] text-white"
+                  }`}
+                >
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] opacity-70">
+                    {entry.speaker}
+                  </div>
                   {entry.text}
-                </p>
+                </div>
               </div>
             ))}
             {visibleTranscriptEntries.length === 0 ? (
-              <p className="text-sm text-muted">
-                Transcript entries appear here once the conversation starts.
+              <p className="text-sm text-white/65">
+                Transcript appears here once the conversation starts.
               </p>
             ) : null}
           </div>
+
+          <button
+            type="button"
+            onClick={handleFinishPractice}
+            disabled={!sessionIsLive || isAssessing}
+            className="mt-4 flex h-[60px] items-center justify-between rounded-[20px] bg-[#001EFF] px-7 text-3xl font-medium text-white disabled:opacity-60"
+          >
+            <span>{isAssessing ? "Finishing..." : "Finish"}</span>
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#001EFF]">
+              →
+            </span>
+          </button>
         </aside>
       </section>
     </div>
