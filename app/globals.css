@@ -164,3 +164,26 @@ body {
   width: 3.5rem !important;
   height: 3.5rem !important;
 }
+
+@keyframes avatarRingPulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1.22);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.22);
+    opacity: 0;
+  }
+}
+
+.avatar-speaking-ring {
+  position: absolute;
+  inset: -10px;
+  border: 2px solid rgba(0, 30, 255, 0.45);
+  border-radius: 9999px;
+  animation: avatarRingPulse 1.2s ease-out infinite;
+}

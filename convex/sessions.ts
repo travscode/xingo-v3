@@ -146,6 +146,55 @@ export const metricsForCurrentUser = query({
   },
 });
 
+export const getByAttemptIdForCurrentUser = query({
+  args: { attemptId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      return null;
+    }
+
+    const clerkId = getClerkId(identity);
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_public_id", (q) => q.eq("id", args.attemptId))
+      .unique();
+
+    if (!session || session.clerkId !== clerkId) {
+      return null;
+    }
+
+    return session;
+  },
+});
+
+export const getLatestCompletedByScenarioForCurrentUser = query({
+  args: { scenarioId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      return null;
+    }
+
+    const clerkId = getClerkId(identity);
+    const sessions = await ctx.db
+      .query("sessions")
+      .withIndex("by_scenarioId", (q) => q.eq("scenarioId", args.scenarioId))
+      .collect();
+
+    return (
+      sessions
+        .filter(
+          (session) =>
+            session.clerkId === clerkId && session.completionStatus !== "in_progress",
+        )
+        .sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0] ?? null
+    );
+  },
+});
+
 export const startAttempt = mutation({
   args: {
     id: v.string(),

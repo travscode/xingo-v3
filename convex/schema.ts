@@ -32,11 +32,17 @@ const voiceAgent = v.object({
   name: v.optional(v.string()),
   role: v.string(),
   voice: v.string(),
+  avatarImageUrl: v.optional(v.string()),
   goal: v.string(),
   language: v.optional(v.string()),
   demeanor: v.optional(v.string()),
   instructions: v.optional(v.string()),
   openingLine: v.optional(v.string()),
+});
+
+const languagePreference = v.object({
+  sourceLanguage: v.string(),
+  targetLanguage: v.string(),
 });
 
 const practiceRuntime = v.object({
@@ -85,6 +91,7 @@ export default defineSchema({
     subscriptionStatus,
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
+    languagePreferences: v.optional(v.array(languagePreference)),
     createdAt: v.string(),
     updatedAt: v.string(),
   })

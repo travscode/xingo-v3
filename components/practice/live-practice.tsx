@@ -2,7 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { RealtimePracticeRunner } from "@/components/practice/realtime-practice-runner";
+import { PracticeRoomRunner } from "@/components/practice/practice-room-runner";
 
 export function LivePractice({ scenarioId }: { scenarioId: string }) {
   const scenario = useQuery(api.scenarios.getById, { id: scenarioId });
@@ -19,5 +19,5 @@ export function LivePractice({ scenarioId }: { scenarioId: string }) {
     );
   }
 
-  return <RealtimePracticeRunner scenario={scenario} />;
+  return <PracticeRoomRunner scenario={scenario} />;
 }

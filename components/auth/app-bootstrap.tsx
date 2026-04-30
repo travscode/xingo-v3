@@ -17,7 +17,8 @@ export function AppBootstrap() {
   const seedBaseData = useMutation(api.seed.seedBaseData);
   const syncCurrentUser = useMutation(api.users.syncCurrentUser);
   const seededRef = useRef(false);
-  const lastSyncSignatureRef = useRef<string | null>(null);
+  const lastSuccessfulSyncSignatureRef = useRef<string | null>(null);
+  const syncInFlightRef = useRef(false);
 
   useEffect(() => {
     if (seededRef.current) {
@@ -37,19 +38,16 @@ export function AppBootstrap() {
     const role = getClerkPublicRole(user.publicMetadata.role);
     const syncSignature = `${user.id}|${primaryEmail ?? ""}|${user.fullName ?? user.username ?? "Interpreter"}|${user.imageUrl ?? ""}|${role ?? ""}`;
 
-    if (lastSyncSignatureRef.current === syncSignature) {
+    if (lastSuccessfulSyncSignatureRef.current === syncSignature || syncInFlightRef.current) {
       return;
     }
 
-    lastSyncSignatureRef.current = syncSignature;
-
-    if (process.env.NODE_ENV !== "production") {
-      console.info("[AppBootstrap] Clerk user metadata snapshot", {
-        clerkId: user.id,
-        publicMetadata: user.publicMetadata,
-        resolvedRole: role ?? null,
-      });
-    }
+    syncInFlightRef.current = true;
+    console.info("[AppBootstrap] Clerk user metadata snapshot", {
+      clerkId: user.id,
+      publicMetadata: user.publicMetadata,
+      resolvedRole: role ?? null,
+    });
 
     void syncCurrentUser({
       clerkId: user.id,
@@ -57,11 +55,16 @@ export function AppBootstrap() {
       name: user.fullName ?? user.username ?? "Interpreter",
       imageUrl: user.imageUrl ?? undefined,
       role,
-    }).catch((error: unknown) => {
-      if (process.env.NODE_ENV !== "production") {
+    })
+      .then(() => {
+        lastSuccessfulSyncSignatureRef.current = syncSignature;
+      })
+      .catch((error: unknown) => {
         console.error("[AppBootstrap] Failed to sync current user", error);
-      }
-    });
+      })
+      .finally(() => {
+        syncInFlightRef.current = false;
+      });
   }, [isLoaded, isSignedIn, syncCurrentUser, user]);
 
   return null;

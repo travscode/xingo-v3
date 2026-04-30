@@ -6,6 +6,11 @@ export type PlatformRole =
 
 export type SubscriptionStatus = "free" | "professional" | "organization";
 
+export interface LanguagePreference {
+  sourceLanguage: string;
+  targetLanguage: string;
+}
+
 export interface UserProfile {
   id: string;
   clerkId: string;
@@ -14,5 +19,6 @@ export interface UserProfile {
   role: PlatformRole;
   organizationId?: string;
   subscriptionStatus: SubscriptionStatus;
+  languagePreferences?: LanguagePreference[];
   createdAt: string;
 }

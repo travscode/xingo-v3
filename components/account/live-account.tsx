@@ -1,19 +1,34 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getPerformanceBadges, getTopIndustry } from "@/lib/performance";
 import { StatCard } from "@/components/ui/stat-card";
+import type { LanguagePreference } from "@/types/user";
+
+/**
+ * Returns an empty language preference row for settings forms.
+ */
+function createEmptyLanguagePreference(): LanguagePreference {
+  return {
+    sourceLanguage: "",
+    targetLanguage: "",
+  };
+}
 
 export function LiveAccount() {
   const { user } = useUser();
   const currentUser = useQuery(api.users.current, {});
+  const updateLanguagePreferences = useMutation(api.users.updateLanguagePreferences);
   const metrics = useQuery(api.sessions.metricsForCurrentUser, {});
   const sessions = useQuery(api.sessions.listForCurrentUser, {});
   const modules = useQuery(api.modules.list, {});
   const scenarios = useQuery(api.scenarios.list, {});
+  const [languagePreferences, setLanguagePreferences] = useState<LanguagePreference[]>([]);
+  const [isSavingPreferences, setIsSavingPreferences] = useState(false);
+  const [preferenceStatus, setPreferenceStatus] = useState("");
 
   const completedSessions = useMemo(
     () => (sessions ?? []).filter((session) => session.completionStatus !== "in_progress"),
@@ -67,6 +82,15 @@ export function LiveAccount() {
     () => new Map((scenarios ?? []).map((scenario) => [scenario.id, scenario.title])),
     [scenarios],
   );
+
+  useEffect(() => {
+    if (!currentUser) {
+      return;
+    }
+
+    const saved = currentUser.languagePreferences ?? [];
+    setLanguagePreferences(saved.length > 0 ? saved : [createEmptyLanguagePreference()]);
+  }, [currentUser]);
 
   if (!metrics || !sessions || !modules || !scenarios) {
     return <div className="surface-card h-80 rounded-[1.75rem] animate-pulse" />;
@@ -152,6 +176,93 @@ export function LiveAccount() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="surface-card rounded-[2rem] p-6">
+        <p className="eyebrow">Language preferences</p>
+        <p className="mt-3 text-sm text-muted">
+          Set your working language pairs so XINGO can prioritize matching scenarios.
+        </p>
+        <div className="mt-5 space-y-3">
+          {languagePreferences.map((pair, index) => (
+            <div key={`pref_${index}`} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+              <input
+                value={pair.sourceLanguage}
+                onChange={(event) =>
+                  setLanguagePreferences((current) =>
+                    current.map((item, itemIndex) =>
+                      itemIndex === index
+                        ? { ...item, sourceLanguage: event.target.value }
+                        : item,
+                    ),
+                  )
+                }
+                placeholder="Source language"
+                className="w-full rounded-[1rem] border border-line bg-white px-4 py-3 text-sm"
+              />
+              <input
+                value={pair.targetLanguage}
+                onChange={(event) =>
+                  setLanguagePreferences((current) =>
+                    current.map((item, itemIndex) =>
+                      itemIndex === index
+                        ? { ...item, targetLanguage: event.target.value }
+                        : item,
+                    ),
+                  )
+                }
+                placeholder="Target language"
+                className="w-full rounded-[1rem] border border-line bg-white px-4 py-3 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setLanguagePreferences((current) =>
+                    current.length > 1 ? current.filter((_, itemIndex) => itemIndex !== index) : current,
+                  )
+                }
+                className="action-secondary px-4 py-3 text-sm"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              setLanguagePreferences((current) => [...current, createEmptyLanguagePreference()])
+            }
+            className="action-secondary px-4 py-2 text-sm"
+          >
+            Add pair
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              setIsSavingPreferences(true);
+              setPreferenceStatus("");
+              try {
+                await updateLanguagePreferences({
+                  languagePreferences: languagePreferences.filter(
+                    (pair) => pair.sourceLanguage.trim() && pair.targetLanguage.trim(),
+                  ),
+                });
+                setPreferenceStatus("Preferences saved.");
+              } catch (error) {
+                setPreferenceStatus(error instanceof Error ? error.message : "Could not save preferences.");
+              } finally {
+                setIsSavingPreferences(false);
+              }
+            }}
+            disabled={isSavingPreferences}
+            className="action-primary px-4 py-2 text-sm disabled:opacity-50"
+          >
+            {isSavingPreferences ? "Saving..." : "Save preferences"}
+          </button>
+        </div>
+        {preferenceStatus ? <p className="mt-3 text-sm text-muted">{preferenceStatus}</p> : null}
       </section>
 
       <section className="surface-card rounded-[2rem] p-6">

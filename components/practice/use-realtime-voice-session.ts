@@ -106,7 +106,7 @@ export function useRealtimeVoiceSession(
         id: itemId,
         role,
         speaker: role === "assistant" ? speakerLabel : interpreterLabel,
-        text: text || (role === "user" ? "[Transcribing...]" : ""),
+        text,
         createdAt: new Date().toISOString(),
       });
     },

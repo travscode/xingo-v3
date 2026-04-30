@@ -47,7 +47,7 @@ export function ModuleCard({ module }: ModuleCardProps) {
         href={`/modules/${module.id}`}
         className="action-secondary mt-6 w-full flex gap-2"
       >
-        <span>Practice now</span>
+        <span>Open module</span>
         <ArrowRightIcon size={12.6} />
       </Link>
     </article>

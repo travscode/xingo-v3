@@ -2,6 +2,11 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { demoSessionsForClerk } from "./seedData";
 
+const languagePreference = v.object({
+  sourceLanguage: v.string(),
+  targetLanguage: v.string(),
+});
+
 function normalizeRole(role?: string) {
   if (
     role === "interpreter" ||
@@ -76,6 +81,7 @@ export const syncCurrentUser = mutation({
         imageUrl: args.imageUrl,
         role: normalizeRole(args.role),
         subscriptionStatus: "free",
+        languagePreferences: [],
         createdAt: now,
         updatedAt: now,
       });
@@ -102,6 +108,41 @@ export const syncCurrentUser = mutation({
         assignedInterpreterClerkId: clerkId,
       });
     }
+
+    return { ok: true };
+  },
+});
+
+export const updateLanguagePreferences = mutation({
+  args: {
+    languagePreferences: v.array(languagePreference),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const clerkId = identity.subject ?? identity.tokenIdentifier;
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
+      .unique();
+
+    if (!user) {
+      throw new Error("User profile not found");
+    }
+
+    await ctx.db.patch(user._id, {
+      languagePreferences: args.languagePreferences
+        .map((pair) => ({
+          sourceLanguage: pair.sourceLanguage.trim(),
+          targetLanguage: pair.targetLanguage.trim(),
+        }))
+        .filter((pair) => pair.sourceLanguage && pair.targetLanguage),
+      updatedAt: new Date().toISOString(),
+    });
 
     return { ok: true };
   },

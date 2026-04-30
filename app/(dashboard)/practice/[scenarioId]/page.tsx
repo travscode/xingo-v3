@@ -1,4 +1,4 @@
-import { LivePractice } from "@/components/practice/live-practice";
+import { LivePracticeResults } from "@/components/practice/live-practice-results";
 
 export default async function PracticePage({
   params,
@@ -6,5 +6,5 @@ export default async function PracticePage({
   params: Promise<{ scenarioId: string }>;
 }) {
   const { scenarioId } = await params;
-  return <LivePractice scenarioId={scenarioId} />;
+  return <LivePracticeResults scenarioId={scenarioId} />;
 }

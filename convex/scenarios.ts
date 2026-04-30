@@ -12,6 +12,7 @@ const voiceAgent = v.object({
   name: v.optional(v.string()),
   role: v.string(),
   voice: v.string(),
+  avatarImageUrl: v.optional(v.string()),
   goal: v.string(),
   language: v.optional(v.string()),
   demeanor: v.optional(v.string()),
@@ -83,6 +84,7 @@ function normalizeAgent(
     name?: string;
     role: string;
     voice: string;
+    avatarImageUrl?: string;
     goal: string;
     language?: string;
     demeanor?: string;
@@ -108,6 +110,7 @@ function normalizeScenario<T extends {
     name?: string;
     role: string;
     voice: string;
+    avatarImageUrl?: string;
     goal: string;
     language?: string;
     demeanor?: string;
@@ -118,6 +121,7 @@ function normalizeScenario<T extends {
     name?: string;
     role: string;
     voice: string;
+    avatarImageUrl?: string;
     goal: string;
     language?: string;
     demeanor?: string;

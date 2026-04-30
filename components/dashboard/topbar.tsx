@@ -27,7 +27,7 @@ export function DashboardTopbar() {
           </h1>
         </div>
       </div>
-      <div className="flex items-center gap-3 text-right">
+      {/* <div className="flex items-center gap-3 text-right">
         <Link href="/modules" className="action-primary hidden sm:inline-flex">
           Start practice
         </Link>
@@ -40,7 +40,7 @@ export function DashboardTopbar() {
           </p>
         </div>
         <UserButton />
-      </div>
+      </div> */}
     </div>
   );
 }

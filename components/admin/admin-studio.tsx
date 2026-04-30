@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type {
@@ -53,6 +54,7 @@ type ScenarioFormState = {
   agentARole: string;
   agentALanguage: string;
   agentAVoice: string;
+  agentAAvatarImageUrl: string;
   agentAGoal: string;
   agentADemeanor: string;
   agentAOpeningLine: string;
@@ -61,6 +63,7 @@ type ScenarioFormState = {
   agentBRole: string;
   agentBLanguage: string;
   agentBVoice: string;
+  agentBAvatarImageUrl: string;
   agentBGoal: string;
   agentBDemeanor: string;
   agentBOpeningLine: string;
@@ -149,6 +152,7 @@ function createEmptyScenarioForm(): ScenarioFormState {
     agentARole: "Practitioner",
     agentALanguage: "English",
     agentAVoice: "cedar",
+    agentAAvatarImageUrl: "",
     agentAGoal: "",
     agentADemeanor: "",
     agentAOpeningLine: "",
@@ -157,6 +161,7 @@ function createEmptyScenarioForm(): ScenarioFormState {
     agentBRole: "Patient",
     agentBLanguage: "Spanish",
     agentBVoice: "sage",
+    agentBAvatarImageUrl: "",
     agentBGoal: "",
     agentBDemeanor: "",
     agentBOpeningLine: "",
@@ -180,6 +185,7 @@ function createScenarioFormFromRecord(scenario: Scenario): ScenarioFormState {
     agentARole: scenario.aiAgentA.role,
     agentALanguage: scenario.aiAgentA.language,
     agentAVoice: scenario.aiAgentA.voice,
+    agentAAvatarImageUrl: scenario.aiAgentA.avatarImageUrl ?? "",
     agentAGoal: scenario.aiAgentA.goal,
     agentADemeanor: scenario.aiAgentA.demeanor,
     agentAOpeningLine: scenario.aiAgentA.openingLine ?? "",
@@ -188,6 +194,7 @@ function createScenarioFormFromRecord(scenario: Scenario): ScenarioFormState {
     agentBRole: scenario.aiAgentB.role,
     agentBLanguage: scenario.aiAgentB.language,
     agentBVoice: scenario.aiAgentB.voice,
+    agentBAvatarImageUrl: scenario.aiAgentB.avatarImageUrl ?? "",
     agentBGoal: scenario.aiAgentB.goal,
     agentBDemeanor: scenario.aiAgentB.demeanor,
     agentBOpeningLine: scenario.aiAgentB.openingLine ?? "",
@@ -195,7 +202,15 @@ function createScenarioFormFromRecord(scenario: Scenario): ScenarioFormState {
   };
 }
 
+/**
+ * Reads a Clerk role value from public metadata when it is a valid string.
+ */
+function getClerkRoleFromMetadata(value: unknown) {
+  return typeof value === "string" ? value : null;
+}
+
 export function AdminStudio() {
+  const { isLoaded: isClerkLoaded, user: clerkUser } = useUser();
   const currentUser = useQuery(api.users.current, {});
   const modules = useQuery(api.modules.list, {});
   const scenarios = useQuery(api.scenarios.list, {});
@@ -209,18 +224,30 @@ export function AdminStudio() {
   const [isCreatingScenario, setIsCreatingScenario] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [isPending, startTransition] = useTransition();
+  const lastDebugSignatureRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "production" || currentUser === undefined) {
+    if (!isClerkLoaded || currentUser === undefined) {
       return;
     }
 
-    console.info("[AdminStudio] Convex user role snapshot", {
-      clerkId: currentUser?.clerkId ?? null,
-      role: currentUser?.role ?? null,
-      email: currentUser?.email ?? null,
+    const clerkRole = getClerkRoleFromMetadata(clerkUser?.publicMetadata?.role);
+    const debugSignature = `${clerkUser?.id ?? "none"}|${clerkRole ?? "none"}|${currentUser?.clerkId ?? "none"}|${currentUser?.role ?? "none"}`;
+
+    if (lastDebugSignatureRef.current === debugSignature) {
+      return;
+    }
+
+    lastDebugSignatureRef.current = debugSignature;
+    console.info("[AdminStudio] Auth debug snapshot", {
+      clerkIdFromClerk: clerkUser?.id ?? null,
+      clerkPublicMetadata: clerkUser?.publicMetadata ?? null,
+      clerkRoleFromMetadata: clerkRole,
+      convexClerkId: currentUser?.clerkId ?? null,
+      convexRole: currentUser?.role ?? null,
+      convexEmail: currentUser?.email ?? null,
     });
-  }, [currentUser]);
+  }, [clerkUser, currentUser, isClerkLoaded]);
 
   const resolvedModuleId = useMemo(() => {
     if (isCreatingModule || !modules || modules.length === 0) {
@@ -274,7 +301,6 @@ export function AdminStudio() {
   }
 
   if (!currentUser || currentUser.role !== "platform_admin") {
-    console.log("currentUser", currentUser);
     return (
       <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
         <p className="eyebrow">Admin</p>
@@ -514,6 +540,7 @@ export function AdminStudio() {
                     name: form.agentAName.trim() || undefined,
                     role: form.agentARole.trim(),
                     voice: form.agentAVoice,
+                    avatarImageUrl: form.agentAAvatarImageUrl.trim() || undefined,
                     goal: form.agentAGoal.trim(),
                     language: form.agentALanguage.trim(),
                     demeanor: form.agentADemeanor.trim() || undefined,
@@ -524,6 +551,7 @@ export function AdminStudio() {
                     name: form.agentBName.trim() || undefined,
                     role: form.agentBRole.trim(),
                     voice: form.agentBVoice,
+                    avatarImageUrl: form.agentBAvatarImageUrl.trim() || undefined,
                     goal: form.agentBGoal.trim(),
                     language: form.agentBLanguage.trim(),
                     demeanor: form.agentBDemeanor.trim() || undefined,
@@ -902,6 +930,7 @@ function ScenarioEditor({
           role={form.agentARole}
           language={form.agentALanguage}
           voice={form.agentAVoice}
+          avatarImageUrl={form.agentAAvatarImageUrl}
           goal={form.agentAGoal}
           demeanor={form.agentADemeanor}
           openingLine={form.agentAOpeningLine}
@@ -917,6 +946,7 @@ function ScenarioEditor({
           role={form.agentBRole}
           language={form.agentBLanguage}
           voice={form.agentBVoice}
+          avatarImageUrl={form.agentBAvatarImageUrl}
           goal={form.agentBGoal}
           demeanor={form.agentBDemeanor}
           openingLine={form.agentBOpeningLine}
@@ -978,6 +1008,7 @@ function AgentForm({
   role,
   language,
   voice,
+  avatarImageUrl,
   goal,
   demeanor,
   openingLine,
@@ -990,6 +1021,7 @@ function AgentForm({
   role: string;
   language: string;
   voice: string;
+  avatarImageUrl: string;
   goal: string;
   demeanor: string;
   openingLine: string;
@@ -1056,6 +1088,19 @@ function AgentForm({
               </option>
             ))}
           </select>
+        </Field>
+        <Field label="Avatar image URL" className="md:col-span-2">
+          <input
+            value={avatarImageUrl}
+            onChange={(event) =>
+              onChange(
+                `${prefix}AvatarImageUrl` as keyof ScenarioFormState,
+                event.target.value,
+              )
+            }
+            placeholder="https://..."
+            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+          />
         </Field>
       </div>
       <Field label="Goal" className="mt-4">
