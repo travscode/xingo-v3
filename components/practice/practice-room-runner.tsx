@@ -126,11 +126,20 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   const [isStarting, setIsStarting] = useState(false);
   const [isAssessing, setIsAssessing] = useState(false);
   const [isPushToTalkActive, setIsPushToTalkActive] = useState(false);
-  const isSpaceTalkingRef = useRef(false);
+  const [countdownValue, setCountdownValue] = useState<number | null>(null);
+  const spaceKeyDownAtRef = useRef<number | null>(null);
+  const spaceHoldTimeoutRef = useRef<number | null>(null);
+  const spaceHoldActiveRef = useRef(false);
+  const countdownTimeoutRef = useRef<number | null>(null);
   const speakingTimeoutRef = useRef<number | null>(null);
   const agentAAudioRef = useRef<HTMLAudioElement | null>(null);
   const agentBAudioRef = useRef<HTMLAudioElement | null>(null);
   const connectedAgentsRef = useRef<Set<AgentKey>>(new Set());
+  const canStartPractice =
+    isClerkLoaded &&
+    isSignedIn &&
+    isConvexAuthenticated &&
+    !isConvexAuthLoading;
 
   const markSpeaking = useCallback((key: SpeakingKey) => {
     if (speakingTimeoutRef.current) {
@@ -475,16 +484,31 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   }, [activeAgent, getSessionBundle, isPushToTalkActive]);
 
   const sessionIsLive = Boolean(attemptId);
-  const hasAutoStartAttemptedRef = useRef(false);
-  const canStartPractice =
-    isClerkLoaded &&
-    isSignedIn &&
-    isConvexAuthenticated &&
-    !isConvexAuthLoading;
+
+  /**
+   * Selects the next active target participant in a stable A/B loop.
+   */
+  const toggleActiveAgent = useCallback(() => {
+    if (!sessionIsLive) {
+      return;
+    }
+
+    const nextAgent: AgentKey =
+      activeAgent === "agent_a"
+        ? "agent_b"
+        : activeAgent === "agent_b"
+          ? "agent_a"
+          : "agent_a";
+    void switchActiveAgent(nextAgent);
+  }, [activeAgent, sessionIsLive, switchActiveAgent]);
 
   useEffect(() => {
     if (!sessionIsLive) {
-      isSpaceTalkingRef.current = false;
+      spaceKeyDownAtRef.current = null;
+      spaceHoldActiveRef.current = false;
+      if (spaceHoldTimeoutRef.current) {
+        window.clearTimeout(spaceHoldTimeoutRef.current);
+      }
       return;
     }
 
@@ -501,6 +525,8 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       );
     };
 
+    const holdThresholdMs = 220;
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
         event.code !== "Space" ||
@@ -512,10 +538,16 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
 
       event.preventDefault();
 
-      if (!isSpaceTalkingRef.current) {
-        isSpaceTalkingRef.current = true;
-        handlePushToTalkStart();
+      if (spaceKeyDownAtRef.current !== null) {
+        return;
       }
+
+      spaceKeyDownAtRef.current = Date.now();
+      spaceHoldActiveRef.current = false;
+      spaceHoldTimeoutRef.current = window.setTimeout(() => {
+        spaceHoldActiveRef.current = true;
+        handlePushToTalkStart();
+      }, holdThresholdMs);
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
@@ -525,15 +557,29 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
 
       event.preventDefault();
 
-      if (isSpaceTalkingRef.current) {
-        isSpaceTalkingRef.current = false;
+      const keyDownAt = spaceKeyDownAtRef.current;
+      spaceKeyDownAtRef.current = null;
+      if (spaceHoldTimeoutRef.current) {
+        window.clearTimeout(spaceHoldTimeoutRef.current);
+      }
+
+      const elapsed = keyDownAt ? Date.now() - keyDownAt : 0;
+      if (spaceHoldActiveRef.current || elapsed >= holdThresholdMs) {
+        spaceHoldActiveRef.current = false;
         handlePushToTalkEnd();
+      } else {
+        toggleActiveAgent();
       }
     };
 
     const handleWindowBlur = () => {
-      if (isSpaceTalkingRef.current) {
-        isSpaceTalkingRef.current = false;
+      spaceKeyDownAtRef.current = null;
+      if (spaceHoldTimeoutRef.current) {
+        window.clearTimeout(spaceHoldTimeoutRef.current);
+      }
+
+      if (spaceHoldActiveRef.current) {
+        spaceHoldActiveRef.current = false;
         handlePushToTalkEnd();
       }
     };
@@ -547,29 +593,65 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("blur", handleWindowBlur);
     };
-  }, [handlePushToTalkEnd, handlePushToTalkStart, sessionIsLive]);
+  }, [
+    handlePushToTalkEnd,
+    handlePushToTalkStart,
+    sessionIsLive,
+    toggleActiveAgent,
+  ]);
 
   useEffect(() => {
     return () => {
+      if (countdownTimeoutRef.current) {
+        window.clearTimeout(countdownTimeoutRef.current);
+      }
+      if (spaceHoldTimeoutRef.current) {
+        window.clearTimeout(spaceHoldTimeoutRef.current);
+      }
       if (speakingTimeoutRef.current) {
         window.clearTimeout(speakingTimeoutRef.current);
       }
     };
   }, []);
 
-  useEffect(() => {
+  /**
+   * Starts a visible countdown before opening the realtime session.
+   */
+  const beginStartCountdown = useCallback(() => {
     if (
       sessionIsLive ||
       isStarting ||
-      !canStartPractice ||
-      hasAutoStartAttemptedRef.current
+      countdownValue !== null ||
+      !canStartPractice
     ) {
       return;
     }
 
-    hasAutoStartAttemptedRef.current = true;
-    void handleStartPractice();
-  }, [canStartPractice, handleStartPractice, isStarting, sessionIsLive]);
+    setError(null);
+    setCountdownValue(5);
+  }, [canStartPractice, countdownValue, isStarting, sessionIsLive]);
+
+  useEffect(() => {
+    if (countdownValue === null) {
+      return;
+    }
+
+    if (countdownValue <= 1) {
+      setCountdownValue(null);
+      void handleStartPractice();
+      return;
+    }
+
+    countdownTimeoutRef.current = window.setTimeout(() => {
+      setCountdownValue((current) => (current !== null ? current - 1 : null));
+    }, 1000);
+
+    return () => {
+      if (countdownTimeoutRef.current) {
+        window.clearTimeout(countdownTimeoutRef.current);
+      }
+    };
+  }, [countdownValue, handleStartPractice]);
 
   const handleFinishPractice = useCallback(async () => {
     if (
@@ -686,6 +768,14 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
             Help {scenario.aiAgentA.name} with {scenario.aiAgentB.name}
           </h1>
 
+          {countdownValue !== null ? (
+            <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
+              <div className="rounded-full bg-black/85 px-12 py-8 text-8xl font-semibold text-white">
+                {countdownValue}
+              </div>
+            </div>
+          ) : null}
+
           <div className="mt-14 grid gap-8 md:grid-cols-2">
             <ParticipantAvatar
               label={scenario.aiAgentB.name}
@@ -785,8 +875,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
               <button
                 type="button"
                 onClick={() => {
-                  hasAutoStartAttemptedRef.current = false;
-                  void handleStartPractice();
+                  beginStartCountdown();
                 }}
                 className="ml-3 underline"
               >
@@ -811,18 +900,25 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
 
           <div className="mt-6 flex-1 space-y-3 overflow-y-auto pr-1">
             {visibleTranscriptEntries.map((entry) => (
-              <div key={entry.id} className="flex items-start gap-3">
-                <div className="mt-1 h-10 w-10 overflow-hidden rounded-full bg-[#adadad]">
-                  {getAvatarForSpeaker(entry.speaker) ? (
-                    <Image
-                      src={getAvatarForSpeaker(entry.speaker)!}
-                      alt={entry.speaker}
-                      width={40}
-                      height={40}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : null}
-                </div>
+              <div
+                key={entry.id}
+                className={`flex items-start gap-3 ${
+                  entry.role === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                {entry.role !== "user" ? (
+                  <div className="mt-1 h-10 w-10 overflow-hidden rounded-full bg-[#adadad]">
+                    {getAvatarForSpeaker(entry.speaker) ? (
+                      <Image
+                        src={getAvatarForSpeaker(entry.speaker)!}
+                        alt={entry.speaker}
+                        width={40}
+                        height={40}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
                 <div
                   className={`max-w-[78%] rounded-[20px] px-4 py-3 text-sm leading-5 ${
                     entry.role === "user"
@@ -835,6 +931,11 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
                   </div>
                   {entry.text}
                 </div>
+                {entry.role === "user" ? (
+                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-xs font-semibold text-black">
+                    You
+                  </div>
+                ) : null}
               </div>
             ))}
             {visibleTranscriptEntries.length === 0 ? (
@@ -846,13 +947,26 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
 
           <button
             type="button"
-            onClick={handleFinishPractice}
-            disabled={!sessionIsLive || isAssessing}
-            className="mt-4 flex h-[60px] items-center justify-between rounded-[20px] bg-[#001EFF] px-7 text-3xl font-medium text-white disabled:opacity-60"
+            onClick={sessionIsLive ? handleFinishPractice : beginStartCountdown}
+            disabled={
+              (sessionIsLive && isAssessing) ||
+              (!sessionIsLive && (isStarting || countdownValue !== null))
+            }
+            className={`mt-4 flex h-[60px] items-center justify-between rounded-[20px] px-7 text-3xl font-medium text-white disabled:opacity-60 ${
+              sessionIsLive ? "bg-[#001EFF]" : "bg-[#16a34a]"
+            }`}
           >
-            <span>{isAssessing ? "Finishing..." : "Finish"}</span>
+            <span>
+              {sessionIsLive
+                ? isAssessing
+                  ? "Finishing..."
+                  : "Finish"
+                : countdownValue !== null
+                  ? `Start in ${countdownValue}`
+                  : "Start"}
+            </span>
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#001EFF]">
-              →
+              {sessionIsLive ? "→" : "▶"}
             </span>
           </button>
         </aside>

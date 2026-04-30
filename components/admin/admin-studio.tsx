@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
@@ -540,7 +540,8 @@ export function AdminStudio() {
                     name: form.agentAName.trim() || undefined,
                     role: form.agentARole.trim(),
                     voice: form.agentAVoice,
-                    avatarImageUrl: form.agentAAvatarImageUrl.trim() || undefined,
+                    avatarImageUrl:
+                      form.agentAAvatarImageUrl.trim() || undefined,
                     goal: form.agentAGoal.trim(),
                     language: form.agentALanguage.trim(),
                     demeanor: form.agentADemeanor.trim() || undefined,
@@ -551,7 +552,8 @@ export function AdminStudio() {
                     name: form.agentBName.trim() || undefined,
                     role: form.agentBRole.trim(),
                     voice: form.agentBVoice,
-                    avatarImageUrl: form.agentBAvatarImageUrl.trim() || undefined,
+                    avatarImageUrl:
+                      form.agentBAvatarImageUrl.trim() || undefined,
                     goal: form.agentBGoal.trim(),
                     language: form.agentBLanguage.trim(),
                     demeanor: form.agentBDemeanor.trim() || undefined,
@@ -1031,6 +1033,23 @@ function AgentForm({
 }) {
   const prefix = title === "Agent A" ? "agentA" : "agentB";
 
+  /**
+   * Converts a selected image file to a data URL so avatars can be uploaded inline.
+   */
+  function handleAvatarFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      onChange(`${prefix}AvatarImageUrl` as keyof ScenarioFormState, result);
+    };
+    reader.readAsDataURL(file);
+  }
+
   return (
     <div className="rounded-[1.5rem] border border-line bg-white p-5">
       <p className="eyebrow">{title}</p>
@@ -1090,17 +1109,49 @@ function AgentForm({
           </select>
         </Field>
         <Field label="Avatar image URL" className="md:col-span-2">
-          <input
-            value={avatarImageUrl}
-            onChange={(event) =>
-              onChange(
-                `${prefix}AvatarImageUrl` as keyof ScenarioFormState,
-                event.target.value,
-              )
-            }
-            placeholder="https://..."
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
-          />
+          <div className="space-y-3">
+            <input
+              value={avatarImageUrl}
+              onChange={(event) =>
+                onChange(
+                  `${prefix}AvatarImageUrl` as keyof ScenarioFormState,
+                  event.target.value,
+                )
+              }
+              placeholder="https://... or upload below"
+              className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarFileChange}
+                className="text-sm"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  onChange(
+                    `${prefix}AvatarImageUrl` as keyof ScenarioFormState,
+                    "",
+                  )
+                }
+                className="action-secondary px-3 py-2 text-xs"
+              >
+                Remove image
+              </button>
+            </div>
+            {avatarImageUrl ? (
+              <div className="h-16 w-16 overflow-hidden rounded-full border border-line bg-surface">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={avatarImageUrl}
+                  alt={`${title} avatar preview`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : null}
+          </div>
         </Field>
       </div>
       <Field label="Goal" className="mt-4">

@@ -8,7 +8,10 @@ import {
 } from "@openai/agents/realtime";
 import type { TranscriptEntry } from "@/types/session";
 
-export type RealtimeConnectionStatus = "DISCONNECTED" | "CONNECTING" | "CONNECTED";
+export type RealtimeConnectionStatus =
+  | "DISCONNECTED"
+  | "CONNECTING"
+  | "CONNECTED";
 
 interface TranscriptCallbacks {
   onTranscriptStart: (entry: TranscriptEntry) => void;
@@ -26,6 +29,7 @@ interface ConnectOptions {
 type RealtimeMessageItem = {
   type?: string;
   text?: string;
+  output_text?: string;
   transcript?: string | null;
 };
 
@@ -62,6 +66,10 @@ function extractMessageText(content: RealtimeMessageItem[] = []): string {
         return part.text ?? "";
       }
 
+      if (part.type === "text" || part.type === "output_text") {
+        return part.output_text ?? part.text ?? "";
+      }
+
       if (part.type === "audio") {
         return part.transcript ?? "";
       }
@@ -72,13 +80,26 @@ function extractMessageText(content: RealtimeMessageItem[] = []): string {
     .join("\n");
 }
 
+/**
+ * Returns a normalized transcript string or null when the event has no usable text.
+ */
+function normalizeTranscriptValue(transcript?: string | null) {
+  if (typeof transcript !== "string") {
+    return null;
+  }
+
+  const value = transcript.trim();
+  return value ? value : null;
+}
+
 export function useRealtimeVoiceSession(
   speakerLabel: string,
   interpreterLabel: string,
   callbacks: TranscriptCallbacks,
 ) {
   const sessionRef = useRef<RealtimeSession | null>(null);
-  const [status, setStatus] = useState<RealtimeConnectionStatus>("DISCONNECTED");
+  const [status, setStatus] =
+    useState<RealtimeConnectionStatus>("DISCONNECTED");
 
   const ensureConnected = useCallback(() => {
     if (!sessionRef.current) {
@@ -140,36 +161,47 @@ export function useRealtimeVoiceSession(
       const transportEvent = event as RealtimeTransportEvent;
 
       if (
-        transportEvent.type === "conversation.item.input_audio_transcription.completed" &&
+        transportEvent.type ===
+          "conversation.item.input_audio_transcription.completed" &&
+        transportEvent.item_id
+      ) {
+        const transcript = normalizeTranscriptValue(transportEvent.transcript);
+        if (transcript) {
+          callbacks.onTranscriptUpdate(
+            transportEvent.item_id,
+            transcript,
+            false,
+          );
+          callbacks.onTranscriptComplete(transportEvent.item_id, transcript);
+        }
+        return;
+      }
+
+      if (
+        transportEvent.type === "response.audio_transcript.delta" &&
         transportEvent.item_id
       ) {
         callbacks.onTranscriptUpdate(
           transportEvent.item_id,
-          transportEvent.transcript || "[inaudible]",
-          false,
-        );
-        callbacks.onTranscriptComplete(
-          transportEvent.item_id,
-          transportEvent.transcript || "[inaudible]",
+          transportEvent.delta || "",
+          true,
         );
         return;
       }
 
-      if (transportEvent.type === "response.audio_transcript.delta" && transportEvent.item_id) {
-        callbacks.onTranscriptUpdate(transportEvent.item_id, transportEvent.delta || "", true);
-        return;
-      }
-
-      if (transportEvent.type === "response.audio_transcript.done" && transportEvent.item_id) {
-        callbacks.onTranscriptUpdate(
-          transportEvent.item_id,
-          transportEvent.transcript || "[inaudible]",
-          false,
-        );
-        callbacks.onTranscriptComplete(
-          transportEvent.item_id,
-          transportEvent.transcript || "[inaudible]",
-        );
+      if (
+        transportEvent.type === "response.audio_transcript.done" &&
+        transportEvent.item_id
+      ) {
+        const transcript = normalizeTranscriptValue(transportEvent.transcript);
+        if (transcript) {
+          callbacks.onTranscriptUpdate(
+            transportEvent.item_id,
+            transcript,
+            false,
+          );
+          callbacks.onTranscriptComplete(transportEvent.item_id, transcript);
+        }
         return;
       }
 
@@ -209,7 +241,8 @@ export function useRealtimeVoiceSession(
       session.on("history_updated", handleHistoryUpdated);
       session.on("transport_event", handleTransportEvent);
       session.on("error", (error: unknown) => {
-        const message = error instanceof Error ? error.message : "Realtime session error.";
+        const message =
+          error instanceof Error ? error.message : "Realtime session error.";
         callbacks.onError?.(message);
       });
 
