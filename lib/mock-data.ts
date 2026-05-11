@@ -235,7 +235,7 @@ export const scenarios: Scenario[] = [
       "A case worker reviews tenancy risk, household makeup, and next-step referrals.",
     aiAgentA: createVoiceAgent(
       "Case Worker",
-      "cedar",
+      "shimmer",
       "Collect facts and explain service pathways",
       "English",
       "Empathetic and methodical",

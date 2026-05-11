@@ -141,6 +141,13 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     isConvexAuthenticated &&
     !isConvexAuthLoading;
 
+  /**
+   * Handles non-fatal realtime transport warnings without showing a blocking UI error.
+   */
+  const handleRealtimeWarning = useCallback((message: string) => {
+    console.warn("[PracticeRoomRunner] Realtime warning", message);
+  }, []);
+
   const markSpeaking = useCallback((key: SpeakingKey) => {
     if (speakingTimeoutRef.current) {
       window.clearTimeout(speakingTimeoutRef.current);
@@ -258,7 +265,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       onTranscriptStart: addTranscriptEntry,
       onTranscriptUpdate: updateTranscriptEntry,
       onTranscriptComplete: completeTranscriptEntry,
-      onError: setError,
+      onError: handleRealtimeWarning,
     },
   );
 
@@ -269,7 +276,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       onTranscriptStart: addTranscriptEntry,
       onTranscriptUpdate: updateTranscriptEntry,
       onTranscriptComplete: completeTranscriptEntry,
-      onError: setError,
+      onError: handleRealtimeWarning,
     },
   );
 
@@ -736,6 +743,25 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   const locationLine = `You are at ${scenario.title}`;
 
   /**
+   * Returns a human-readable participant label for the currently active relay target.
+   */
+  const activeConversationLabel = useMemo(() => {
+    if (activeAgent === "agent_a") {
+      return `${scenario.aiAgentA.name} (${scenario.aiAgentA.role})`;
+    }
+    if (activeAgent === "agent_b") {
+      return `${scenario.aiAgentB.name} (${scenario.aiAgentB.role})`;
+    }
+    return "Not started";
+  }, [
+    activeAgent,
+    scenario.aiAgentA.name,
+    scenario.aiAgentA.role,
+    scenario.aiAgentB.name,
+    scenario.aiAgentB.role,
+  ]);
+
+  /**
    * Returns the active AI speaking label for transcript status text.
    */
   const speakingAgentLabel = useMemo(() => {
@@ -774,7 +800,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       <audio ref={agentAAudioRef} autoPlay playsInline className="sr-only" />
       <audio ref={agentBAudioRef} autoPlay playsInline className="sr-only" />
 
-      <section className="grid min-h-[820px] xl:grid-cols-[1fr_360px]">
+      <section className="grid h-[820px] xl:grid-cols-[1fr_360px]">
         <section className="relative p-8 sm:p-12">
           <p className="text-xl font-semibold text-[#8e8e8e]">{locationLine}</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-black">
@@ -788,6 +814,10 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
               </div>
             </div>
           ) : null}
+
+          <div className="mt-4 inline-flex rounded-full border border-line bg-white/90 px-4 py-2 text-sm font-semibold text-black">
+            You are currently talking to {activeConversationLabel}
+          </div>
 
           <div className="mt-14 grid gap-8 md:grid-cols-2 justify-items-center items-center justify-center md:justify-items-center">
             <ParticipantAvatar
@@ -859,6 +889,10 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
               >
                 {isStarting ? "Starting..." : "Start practice"}
               </button>
+              <p className="mt-3 text-sm text-[#6d6d6d]">
+                Start to hear the opening line, then hold the mic button (or
+                hold Spacebar) to interpret.
+              </p>
             </div>
           ) : null}
 
@@ -898,7 +932,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
           ) : null}
         </section>
 
-        <aside className="relative flex h-full flex-col bg-black px-6 py-5 text-white">
+        <aside className="relative flex h-full min-h-0 flex-col bg-black px-6 py-5 text-white">
           <div className="flex items-center justify-between">
             <h2 className="text-[40px] font-semibold leading-none tracking-[-0.03em]">
               Transcript
@@ -916,7 +950,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
             </div>
           ) : null}
 
-          <div className="mt-6 flex-1 space-y-3 overflow-y-auto pr-1">
+          <div className="mt-6 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
             {visibleTranscriptEntries.map((entry) => (
               <div
                 key={entry.id}

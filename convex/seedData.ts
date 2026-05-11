@@ -333,7 +333,7 @@ export const seedScenarios = [
     aiAgentA: {
       name: "Maya Collins",
       role: "Case Worker",
-      voice: "cedar",
+      voice: "shimmer",
       goal: "Collect facts, assess urgency, and explain available support pathways.",
       language: "English",
       demeanor: "Empathetic, methodical, and clear",
