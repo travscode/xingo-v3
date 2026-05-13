@@ -801,7 +801,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       <audio ref={agentBAudioRef} autoPlay playsInline className="sr-only" />
 
       <section className="grid h-[820px] xl:grid-cols-[1fr_360px]">
-        <section className="relative p-8 sm:p-12">
+        <section className="relative min-h-0 overflow-y-auto p-8 sm:p-12">
           <p className="text-xl font-semibold text-[#8e8e8e]">{locationLine}</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-black">
             Help {scenario.aiAgentA.name} with {scenario.aiAgentB.name}
@@ -883,7 +883,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
             <div className="mt-6">
               <button
                 type="button"
-                onClick={handleStartPractice}
+                onClick={beginStartCountdown}
                 disabled={isStarting || !canStartPractice}
                 className="rounded-full bg-black px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
               >
