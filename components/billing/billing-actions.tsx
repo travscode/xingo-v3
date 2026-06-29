@@ -10,6 +10,7 @@ const planInfo = [
 
 export function BillingActions() {
   const user = useQuery(api.users.current, {});
+  const currentPlan = user?.subscriptionStatus ?? "free";
 
   return (
     <section className="space-y-6">
@@ -30,22 +31,30 @@ export function BillingActions() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {planInfo.map((plan) => (
-          <form
-            key={plan.name}
-            action="/api/stripe/checkout"
-            method="post"
-            className="surface-card rounded-[2rem] p-6"
-          >
-            <input type="hidden" name="plan" value={plan.name} />
-            <p className="eyebrow">Upgrade</p>
-            <div className="mt-3 text-2xl font-semibold">{plan.label}</div>
-            <div className="mt-2 text-sm leading-7 text-muted">{plan.description}</div>
-            <button type="submit" className="action-primary mt-6 w-full">
-              Start checkout
-            </button>
-          </form>
-        ))}
+        {planInfo.map((plan) => {
+          const isCurrentPlan = currentPlan === plan.name;
+
+          return (
+            <form
+              key={plan.name}
+              action="/api/stripe/checkout"
+              method="post"
+              className="surface-card rounded-[2rem] p-6"
+            >
+              <input type="hidden" name="plan" value={plan.name} />
+              <p className="eyebrow">{isCurrentPlan ? "Current" : "Upgrade"}</p>
+              <div className="mt-3 text-2xl font-semibold">{plan.label}</div>
+              <div className="mt-2 text-sm leading-7 text-muted">{plan.description}</div>
+              <button
+                type="submit"
+                disabled={isCurrentPlan}
+                className="action-primary mt-6 w-full disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isCurrentPlan ? "Current plan" : "Start checkout"}
+              </button>
+            </form>
+          );
+        })}
       </div>
     </section>
   );
