@@ -1,6 +1,24 @@
 import { SignUp } from "@clerk/nextjs";
 
-export default function SignUpPage() {
+/**
+ * Restricts auth redirects to internal application paths.
+ */
+function getSafeRedirectTarget(value?: string) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/dashboard";
+  }
+
+  return value;
+}
+
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string }>;
+}) {
+  const { redirect } = await searchParams;
+  const redirectTarget = getSafeRedirectTarget(redirect);
+
   return (
     <main className="mx-auto max-w-3xl px-6 pb-10 lg:px-10">
       <section className="rounded-[2.5rem] px-4 py-8 sm:px-8 sm:py-12">
@@ -14,8 +32,8 @@ export default function SignUpPage() {
           <SignUp
             path="/sign-up"
             routing="path"
-            signInUrl="/sign-in"
-            fallbackRedirectUrl="/dashboard"
+            signInUrl={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`}
+            fallbackRedirectUrl={redirectTarget}
           />
         </div>
       </section>
