@@ -19,7 +19,7 @@ export const metadata: Metadata = {
  */
 export default function NaatiCclLandingPage() {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-6 pb-10 pt-4 lg:px-10">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-14 px-6 pb-10 pt-4 lg:px-8">
       <NaatiCclHeroSection />
       <NaatiCclWhySection />
       <NaatiCclLanguagesSection />

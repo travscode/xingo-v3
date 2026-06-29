@@ -5,6 +5,8 @@ import {
   cclSignInHref,
   cclSignUpHref,
   featureStats,
+  heroStats,
+  heroTabs,
   trustItems,
 } from "./content";
 
@@ -13,75 +15,120 @@ import {
  */
 export function NaatiCclHeroSection() {
   return (
-    <section className="grid gap-8 rounded-[2.5rem] border border-line bg-white/88 px-6 py-8 shadow-[0_16px_44px_rgba(18,18,18,0.06)] lg:grid-cols-[1.15fr_0.85fr] lg:px-10 lg:py-12">
-      <div className="max-w-3xl">
-        <p className="eyebrow">NAATI CCL mock test</p>
-        <h1 className="display mt-4 text-5xl font-semibold tracking-tight text-balance lg:text-7xl">
-          Practice short bilingual dialogues with a cleaner, faster CCL prep flow.
-        </h1>
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-muted">
-          XINGO gives NAATI CCL learners a direct path from signup into a
-          seeded practice module focused on short community-language exchanges,
-          fast recall, and accurate transfer of meaning.
-        </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Link href={cclSignUpHref} className="action-primary">
-            Start mock practice
-            <ArrowRightIcon className="ml-4 inline-block" size={14} />
-          </Link>
-          <Link href={cclSignInHref} className="action-secondary">
-            Continue training
-          </Link>
-        </div>
-        <div className="mt-8 flex flex-wrap gap-3 text-sm">
-          {trustItems.map((item) => (
-            <span
-              key={item}
-              className="mono-chip rounded-full border-0 bg-brand-green px-4 py-2 font-semibold text-black"
-            >
-              {item}
-            </span>
-          ))}
+    <section className="space-y-5">
+      <div className="rounded-[2.5rem] border border-[#e6e7f0] bg-[#f7f7fb] px-6 py-6 shadow-[0_12px_34px_rgba(18,18,18,0.04)] lg:px-8">
+        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-700">
+              NAATI CCL mock test
+            </p>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-900 lg:text-[3.15rem] lg:leading-[1.05]">
+              Start practicing real-life community dialogues with a cleaner CCL
+              prep flow.
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 lg:text-base">
+              Choose your target language, create an account, and go straight
+              into the XINGO CCL module built for short-turn recall, instruction
+              transfer, and exam-style repetition.
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              {heroStats.map((stat) => (
+                <div
+                  key={stat.label}
+                  className="rounded-3xl border border-[#e6e7f0] bg-white px-4 py-3"
+                >
+                  <div className="text-2xl font-semibold text-slate-900">
+                    {stat.value}
+                  </div>
+                  <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-slate-500">
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link href={cclSignUpHref} className="action-primary">
+                Get started
+                <ArrowRightIcon className="ml-4 inline-block" size={14} />
+              </Link>
+              <Link href={cclSignInHref} className="action-secondary">
+                How to excel?
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-4xl border border-[#e6e7f0] bg-white p-5">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Scan to begin
+              </div>
+              <div className="mt-4 aspect-square rounded-3xl border border-dashed border-slate-300 bg-[linear-gradient(135deg,#f5f3ff,#ffffff,#ede9fe)] p-4">
+                <div className="grid h-full grid-cols-6 gap-1">
+                  {Array.from({ length: 36 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className={`rounded-sm ${index % 3 === 0 || index % 5 === 0 ? "bg-slate-900" : "bg-transparent"}`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <p className="mt-3 text-xs leading-6 text-slate-500">
+                Placeholder QR-style visual to echo the screenshot structure.
+              </p>
+            </div>
+
+            <div className="rounded-4xl border border-[#e6e7f0] bg-white p-5">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Quick module view
+              </div>
+              <div className="mt-4 space-y-3">
+                {featureStats.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="rounded-3xl border border-[#ececf3] bg-[#fafafe] px-4 py-3"
+                  >
+                    <div className="text-lg font-semibold text-slate-900">
+                      {stat.value}
+                    </div>
+                    <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500">
+                      {stat.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Link
+                href={cclModuleHref}
+                className="action-secondary mt-4 inline-flex px-4 py-2 text-sm"
+              >
+                View module
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="surface-card rounded-4xl p-6 lg:p-8">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="eyebrow">Quick view</p>
-            <h2 className="mt-3 text-3xl font-semibold">Module launch pad</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-            <div className="rounded-3xl border border-line bg-white p-4">Phone</div>
-            <div className="rounded-3xl border border-line bg-white p-4">Desktop</div>
-          </div>
-        </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          {featureStats.map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-3xl border border-line bg-white p-4"
-            >
-              <div className="text-3xl font-semibold">{stat.value}</div>
-              <div className="mt-2 text-xs uppercase tracking-[0.16em] text-muted">
-                {stat.label}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-6 rounded-[1.75rem] border border-line bg-[#f7f7ff] p-5">
-          <p className="text-sm font-semibold">Direct module path</p>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            Sign up from this page and land directly on the seeded CCL module
-            instead of a generic dashboard entry point.
-          </p>
-          <Link
-            href={cclModuleHref}
-            className="action-secondary mt-5 inline-flex px-4 py-2 text-sm"
+      <div className="flex flex-wrap gap-2 border-b border-line pb-2">
+        {heroTabs.map((item) => (
+          <div
+            key={item}
+            className="rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-slate-600"
           >
-            View module
-          </Link>
-        </div>
+            {item}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-3 text-sm">
+        {trustItems.map((item) => (
+          <span
+            key={item}
+            className="mono-chip rounded-full border-0 bg-brand-green px-4 py-2 font-semibold text-black"
+          >
+            {item}
+          </span>
+        ))}
       </div>
     </section>
   );

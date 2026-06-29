@@ -10,17 +10,16 @@ export function NaatiCclShowcaseSection() {
     <section className="space-y-8">
       <div className="text-center">
         <p className="eyebrow">Practice makes progress</p>
-        <h2 className="mt-3 text-4xl font-semibold tracking-tight lg:text-5xl">
-          Keep the section layout strong and the content unmistakably XINGO.
+        <h2 className="mt-3 text-4xl font-semibold tracking-tight lg:text-[2.35rem]">
+          Practice Makes Perfect
         </h2>
         <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-muted">
-          This block mirrors the screenshot&apos;s product-showcase rhythm with
-          an original dashboard-style composition and scenario callouts tied to
-          the CCL module you seeded.
+          Build confidence with a cleaner replay loop, progress visibility, and
+          seeded scenarios that stay close to high-value CCL dialogue patterns.
         </p>
       </div>
 
-      <div className="rounded-[2.5rem] border border-line bg-white p-5 shadow-[0_16px_44px_rgba(18,18,18,0.06)] lg:p-6">
+      <div className="rounded-[2.5rem] border border-[#e9eaf2] bg-white p-5 shadow-[0_16px_44px_rgba(18,18,18,0.06)] lg:p-6">
         <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="rounded-[1.75rem] border border-line bg-[#fbfbff] p-5">
             <div className="flex items-center justify-between">

@@ -7,15 +7,16 @@ import { cclSignUpHref } from "./content";
  */
 export function NaatiCclStarterPackSection() {
   return (
-    <section className="grid gap-4 lg:grid-cols-[0.72fr_0.28fr]">
+    <section className="grid gap-4 lg:grid-cols-[0.68fr_0.32fr]">
       <div className="rounded-4xl bg-[#2b7fff] px-6 py-7 text-white shadow-[0_18px_50px_rgba(43,127,255,0.2)] lg:px-8">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
-          Starter pack
+          Download
         </p>
         <h2 className="mt-3 text-4xl font-semibold">Open the CCL prep path.</h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-white/80">
-          Use this block like a download CTA: create an account, unlock the CCL
-          route, and move directly into the seeded module.
+          Use this block like the screenshot&apos;s download call-to-action:
+          create an account, unlock the route, and move directly into the seeded
+          module.
         </p>
         <Link
           href={cclSignUpHref}
@@ -25,7 +26,7 @@ export function NaatiCclStarterPackSection() {
           Unlock starter access
         </Link>
       </div>
-      <div className="surface-card rounded-4xl p-6">
+      <div className="rounded-4xl border border-[#eaebf2] bg-white p-6">
         <div className="space-y-4 text-sm">
           <div className="flex items-start gap-3">
             <FileText className="mt-0.5 text-violet-600" size={18} />
