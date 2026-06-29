@@ -1,5 +1,20 @@
 import { mutation } from "./_generated/server";
-import { seedJobs, seedModules, seedOrganizations, seedScenarios } from "./seedData";
+import {
+  seedJobs,
+  seedModules,
+  seedOrganizations,
+  seedScenarios,
+} from "./seedData";
+
+function resolveSeedAgentCount(
+  scenario: (typeof seedScenarios)[number],
+): 1 | 2 {
+  if ("agentCount" in scenario && scenario.agentCount === 1) {
+    return 1;
+  }
+
+  return scenario.aiAgentB ? 2 : 1;
+}
 
 export const seedBaseData = mutation({
   args: {},
@@ -52,8 +67,9 @@ export const seedBaseData = mutation({
 
       await ctx.db.insert("scenarios", {
         ...scenario,
+        agentCount: resolveSeedAgentCount(scenario),
         aiAgentA: { ...scenario.aiAgentA },
-        aiAgentB: { ...scenario.aiAgentB },
+        aiAgentB: scenario.aiAgentB ? { ...scenario.aiAgentB } : undefined,
         practiceRuntime: {
           ...scenario.practiceRuntime,
           assessmentFocus: [...scenario.practiceRuntime.assessmentFocus],
@@ -78,7 +94,10 @@ export const seedBaseData = mutation({
     }
 
     const totalInserted =
-      insertedOrganizations + insertedModules + insertedScenarios + insertedJobs;
+      insertedOrganizations +
+      insertedModules +
+      insertedScenarios +
+      insertedJobs;
 
     return {
       seeded: totalInserted > 0,
@@ -110,8 +129,11 @@ export const syncScenarioRuntime = mutation({
       await ctx.db.patch(existingScenario._id, {
         title: seededScenario.title,
         description: seededScenario.description,
+        agentCount: resolveSeedAgentCount(seededScenario),
         aiAgentA: { ...seededScenario.aiAgentA },
-        aiAgentB: { ...seededScenario.aiAgentB },
+        aiAgentB: seededScenario.aiAgentB
+          ? { ...seededScenario.aiAgentB }
+          : undefined,
         practiceRuntime: {
           ...seededScenario.practiceRuntime,
           assessmentFocus: [...seededScenario.practiceRuntime.assessmentFocus],

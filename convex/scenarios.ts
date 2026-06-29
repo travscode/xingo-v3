@@ -48,8 +48,9 @@ const scenarioFields = {
   moduleId: v.string(),
   title: v.string(),
   description: v.string(),
+  agentCount: v.union(v.literal(1), v.literal(2)),
   aiAgentA: voiceAgent,
-  aiAgentB: voiceAgent,
+  aiAgentB: v.optional(voiceAgent),
   practiceRuntime,
   expectedSkills: v.array(v.string()),
   difficultyLevel,
@@ -110,6 +111,7 @@ function normalizeAgent(
 
 function normalizeScenario<
   T extends {
+    agentCount?: 1 | 2;
     aiAgentA: {
       name?: string;
       role: string;
@@ -122,7 +124,7 @@ function normalizeScenario<
       instructions?: string;
       openingLine?: string;
     };
-    aiAgentB: {
+    aiAgentB?: {
       name?: string;
       role: string;
       voice: string;
@@ -145,10 +147,26 @@ function normalizeScenario<
     expectedSkills: string[];
   },
 >(scenario: T) {
+  const normalizedAgentCount =
+    scenario.agentCount ?? (scenario.aiAgentB ? 2 : 1);
+  const fallbackAgentB =
+    normalizedAgentCount === 2
+      ? normalizeAgent(
+          scenario.aiAgentB ?? {
+            role: "Client",
+            voice: "sage",
+            goal: "Respond naturally to the interpreter.",
+            language: scenario.practiceRuntime?.targetLanguage ?? "Spanish",
+          },
+          scenario.practiceRuntime?.targetLanguage ?? "Spanish",
+        )
+      : undefined;
+
   return {
     ...scenario,
+    agentCount: normalizedAgentCount,
     aiAgentA: normalizeAgent(scenario.aiAgentA, "English"),
-    aiAgentB: normalizeAgent(scenario.aiAgentB, "Spanish"),
+    aiAgentB: fallbackAgentB,
     practiceRuntime: scenario.practiceRuntime ?? {
       interpreterRole: "Consecutive interpreter",
       sourceLanguage: "English",
@@ -205,12 +223,12 @@ async function resolveAgentAvatarUrl(
 async function enrichScenarioAvatars<
   T extends {
     aiAgentA: { avatarStorageId?: Id<"_storage">; avatarImageUrl?: string };
-    aiAgentB: { avatarStorageId?: Id<"_storage">; avatarImageUrl?: string };
+    aiAgentB?: { avatarStorageId?: Id<"_storage">; avatarImageUrl?: string };
   },
 >(ctx: MutationCtx | QueryCtx, scenario: T) {
   const [agentAAvatarImageUrl, agentBAvatarImageUrl] = await Promise.all([
     resolveAgentAvatarUrl(ctx, scenario.aiAgentA),
-    resolveAgentAvatarUrl(ctx, scenario.aiAgentB),
+    scenario.aiAgentB ? resolveAgentAvatarUrl(ctx, scenario.aiAgentB) : undefined,
   ]);
 
   return {
@@ -219,10 +237,12 @@ async function enrichScenarioAvatars<
       ...scenario.aiAgentA,
       avatarImageUrl: agentAAvatarImageUrl,
     },
-    aiAgentB: {
-      ...scenario.aiAgentB,
-      avatarImageUrl: agentBAvatarImageUrl,
-    },
+    aiAgentB: scenario.aiAgentB
+      ? {
+          ...scenario.aiAgentB,
+          avatarImageUrl: agentBAvatarImageUrl,
+        }
+      : undefined,
   };
 }
 
@@ -334,14 +354,15 @@ export const createAdmin = mutation({
     const insertedId = await ctx.db.insert("scenarios", {
       id,
       ...args,
+      agentCount: args.agentCount,
       aiAgentA: normalizeAgent(
         args.aiAgentA,
         args.practiceRuntime.sourceLanguage,
       ),
-      aiAgentB: normalizeAgent(
-        args.aiAgentB,
-        args.practiceRuntime.targetLanguage,
-      ),
+      aiAgentB:
+        args.agentCount === 2 && args.aiAgentB
+          ? normalizeAgent(args.aiAgentB, args.practiceRuntime.targetLanguage)
+          : undefined,
       expectedSkills: args.expectedSkills.filter(Boolean),
       practiceRuntime: {
         ...args.practiceRuntime,
@@ -374,14 +395,15 @@ export const updateAdmin = mutation({
       moduleId: args.moduleId,
       title: args.title,
       description: args.description,
+      agentCount: args.agentCount,
       aiAgentA: normalizeAgent(
         args.aiAgentA,
         args.practiceRuntime.sourceLanguage,
       ),
-      aiAgentB: normalizeAgent(
-        args.aiAgentB,
-        args.practiceRuntime.targetLanguage,
-      ),
+      aiAgentB:
+        args.agentCount === 2 && args.aiAgentB
+          ? normalizeAgent(args.aiAgentB, args.practiceRuntime.targetLanguage)
+          : undefined,
       expectedSkills: args.expectedSkills.filter(Boolean),
       practiceRuntime: {
         ...args.practiceRuntime,

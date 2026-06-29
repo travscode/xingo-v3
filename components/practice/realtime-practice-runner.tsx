@@ -8,7 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { buildRealtimeAgentInstructions } from "@/lib/ai";
 import { ScenarioPanel } from "@/components/practice/scenario-panel";
 import { useRealtimeVoiceSession } from "@/components/practice/use-realtime-voice-session";
-import type { Scenario } from "@/types/scenario";
+import type { Scenario, VoiceAgent } from "@/types/scenario";
 import type { SessionAssessment, TranscriptEntry } from "@/types/session";
 
 type AgentKey = "agent_a" | "agent_b";
@@ -31,10 +31,14 @@ function summarizeTranscript(entries: TranscriptEntry[]) {
   return lastSpeakerTurns || "Practice session completed.";
 }
 
-export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps) {
+export function RealtimePracticeRunner({
+  scenario,
+}: RealtimePracticeRunnerProps) {
   const { isLoaded: isClerkLoaded, isSignedIn } = useAuth();
-  const { isAuthenticated: isConvexAuthenticated, isLoading: isConvexAuthLoading } =
-    useConvexAuth();
+  const {
+    isAuthenticated: isConvexAuthenticated,
+    isLoading: isConvexAuthLoading,
+  } = useConvexAuth();
   const overallMetrics = useQuery(api.sessions.metricsForCurrentUser, {});
   const sessionHistory = useQuery(api.sessions.listByScenarioForCurrentUser, {
     scenarioId: scenario.id,
@@ -46,9 +50,13 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
   const [sessionStartedAt, setSessionStartedAt] = useState<number | null>(null);
   const [activeAgent, setActiveAgent] = useState<AgentKey | null>(null);
   const [textRelay, setTextRelay] = useState("");
-  const [transcriptEntries, setTranscriptEntries] = useState<TranscriptEntry[]>([]);
+  const [transcriptEntries, setTranscriptEntries] = useState<TranscriptEntry[]>(
+    [],
+  );
   const [assessment, setAssessment] = useState<SessionAssessment | null>(null);
-  const [latestAttemptStamp, setLatestAttemptStamp] = useState<string | null>(null);
+  const [latestAttemptStamp, setLatestAttemptStamp] = useState<string | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [audioNotice, setAudioNotice] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
@@ -59,6 +67,23 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
   const agentAAudioRef = useRef<HTMLAudioElement | null>(null);
   const agentBAudioRef = useRef<HTMLAudioElement | null>(null);
   const connectedAgentsRef = useRef<Set<AgentKey>>(new Set());
+  const hasSecondAgent =
+    scenario.agentCount === 2 && Boolean(scenario.aiAgentB);
+  const agentBConfig = useMemo<VoiceAgent>(
+    () =>
+      scenario.aiAgentB ?? {
+        name: "Participant",
+        role: "Participant",
+        voice: "sage",
+        goal: "Respond naturally to the interpreter.",
+        language: scenario.practiceRuntime.targetLanguage,
+        demeanor: "Natural and concise",
+        instructions:
+          "You are a placeholder participant and should never be selected in a one-agent scenario.",
+        openingLine: "",
+      },
+    [scenario],
+  );
 
   const addTranscriptEntry = useCallback((entry: TranscriptEntry) => {
     setTranscriptEntries((current) => {
@@ -70,39 +95,47 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
         return next;
       }
 
-      return [...current, entry].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      return [...current, entry].sort((a, b) =>
+        a.createdAt.localeCompare(b.createdAt),
+      );
     });
   }, []);
 
-  const updateTranscriptEntry = useCallback((entryId: string, text: string, append: boolean) => {
-    setTranscriptEntries((current) =>
-      current.map((entry) =>
-        entry.id === entryId
-          ? {
-              ...entry,
-              text: append ? `${entry.text}${text}` : text,
-            }
-          : entry,
-      ),
-    );
-  }, []);
+  const updateTranscriptEntry = useCallback(
+    (entryId: string, text: string, append: boolean) => {
+      setTranscriptEntries((current) =>
+        current.map((entry) =>
+          entry.id === entryId
+            ? {
+                ...entry,
+                text: append ? `${entry.text}${text}` : text,
+              }
+            : entry,
+        ),
+      );
+    },
+    [],
+  );
 
-  const completeTranscriptEntry = useCallback((entryId: string, text?: string) => {
-    if (!text) {
-      return;
-    }
+  const completeTranscriptEntry = useCallback(
+    (entryId: string, text?: string) => {
+      if (!text) {
+        return;
+      }
 
-    setTranscriptEntries((current) =>
-      current.map((entry) =>
-        entry.id === entryId
-          ? {
-              ...entry,
-              text,
-            }
-          : entry,
-      ),
-    );
-  }, []);
+      setTranscriptEntries((current) =>
+        current.map((entry) =>
+          entry.id === entryId
+            ? {
+                ...entry,
+                text,
+              }
+            : entry,
+        ),
+      );
+    },
+    [],
+  );
 
   const agentA = useMemo(
     () =>
@@ -115,27 +148,27 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
         instructions: buildRealtimeAgentInstructions(
           scenario,
           scenario.aiAgentA,
-          scenario.aiAgentB,
+          hasSecondAgent ? agentBConfig : undefined,
         ),
       }),
-    [scenario],
+    [agentBConfig, hasSecondAgent, scenario],
   );
 
   const agentB = useMemo(
     () =>
       new RealtimeAgent({
-        name: scenario.aiAgentB.name,
-        voice: scenario.aiAgentB.voice,
+        name: agentBConfig.name,
+        voice: agentBConfig.voice,
         handoffs: [],
         tools: [],
-        handoffDescription: `${scenario.aiAgentB.role} in ${scenario.title}`,
+        handoffDescription: `${agentBConfig.role} in ${scenario.title}`,
         instructions: buildRealtimeAgentInstructions(
           scenario,
-          scenario.aiAgentB,
+          agentBConfig,
           scenario.aiAgentA,
         ),
       }),
-    [scenario],
+    [agentBConfig, scenario],
   );
 
   const agentASession = useRealtimeVoiceSession(
@@ -150,8 +183,8 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
   );
 
   const agentBSession = useRealtimeVoiceSession(
-    scenario.aiAgentB.role,
-    `Interpreter -> ${scenario.aiAgentB.role}`,
+    agentBConfig.role,
+    `Interpreter -> ${agentBConfig.role}`,
     {
       onTranscriptStart: addTranscriptEntry,
       onTranscriptUpdate: updateTranscriptEntry,
@@ -196,23 +229,28 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
     [agentA, agentASession, agentB, agentBSession],
   );
 
-  const ensureAudioPlayback = useCallback(async (audioElement: HTMLAudioElement | null) => {
-    if (!audioElement) {
-      return;
-    }
+  const ensureAudioPlayback = useCallback(
+    async (audioElement: HTMLAudioElement | null) => {
+      if (!audioElement) {
+        return;
+      }
 
-    audioElement.autoplay = true;
-    audioElement.setAttribute("playsinline", "true");
-    audioElement.muted = false;
-    audioElement.volume = 1;
+      audioElement.autoplay = true;
+      audioElement.setAttribute("playsinline", "true");
+      audioElement.muted = false;
+      audioElement.volume = 1;
 
-    try {
-      await audioElement.play();
-      setAudioNotice(null);
-    } catch {
-      setAudioNotice("Browser audio playback is blocked. Press Enable audio and try again.");
-    }
-  }, []);
+      try {
+        await audioElement.play();
+        setAudioNotice(null);
+      } catch {
+        setAudioNotice(
+          "Browser audio playback is blocked. Press Enable audio and try again.",
+        );
+      }
+    },
+    [],
+  );
 
   const connectAgentIfNeeded = useCallback(
     async (agentKey: AgentKey) => {
@@ -246,7 +284,11 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
       const currentKey = activeAgent;
       const nextBundle = getSessionBundle(agentKey);
 
-      if (currentKey && currentKey !== agentKey && connectedAgentsRef.current.has(currentKey)) {
+      if (
+        currentKey &&
+        currentKey !== agentKey &&
+        connectedAgentsRef.current.has(currentKey)
+      ) {
         const currentBundle = getSessionBundle(currentKey);
         currentBundle.session.mute(true);
       }
@@ -271,7 +313,12 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
       return;
     }
 
-    if (!isClerkLoaded || !isSignedIn || isConvexAuthLoading || !isConvexAuthenticated) {
+    if (
+      !isClerkLoaded ||
+      !isSignedIn ||
+      isConvexAuthLoading ||
+      !isConvexAuthenticated
+    ) {
       setError(
         isClerkLoaded && isSignedIn
           ? "You are signed into Clerk, but Convex is not authenticated. This usually means the Clerk `convex` JWT template or production Convex auth setup is missing or misconfigured."
@@ -303,16 +350,21 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
       const openingSession =
         openingSpeaker === "agent_a" ? agentASession : agentBSession;
       const openingAgent =
-        openingSpeaker === "agent_a" ? scenario.aiAgentA : scenario.aiAgentB;
+        openingSpeaker === "agent_a" || !hasSecondAgent
+          ? scenario.aiAgentA
+          : agentBConfig;
 
       openingSession.sendHiddenInstruction(
         `Begin the interpreter role-play now. Address the interpreter and open with this line or its natural equivalent: ${
-          openingAgent.openingLine ?? "Introduce the scenario and ask your first question."
+          openingAgent.openingLine ??
+          "Introduce the scenario and ask your first question."
         }`,
       );
     } catch (caughtError) {
       const message =
-        caughtError instanceof Error ? caughtError.message : "Unable to start practice.";
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to start practice.";
       setError(message);
       disconnectAll();
     } finally {
@@ -327,6 +379,8 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
     isConvexAuthLoading,
     isSignedIn,
     isStarting,
+    agentBConfig,
+    hasSecondAgent,
     scenario,
     startAttempt,
     switchActiveAgent,
@@ -385,7 +439,11 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code !== "Space" || event.repeat || isTypingTarget(event.target)) {
+      if (
+        event.code !== "Space" ||
+        event.repeat ||
+        isTypingTarget(event.target)
+      ) {
         return;
       }
 
@@ -429,7 +487,12 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
   }, [handlePushToTalkEnd, handlePushToTalkStart, sessionIsLive]);
 
   const handleFinishPractice = useCallback(async () => {
-    if (!attemptId || !sessionStartedAt || transcriptEntries.length === 0 || isAssessing) {
+    if (
+      !attemptId ||
+      !sessionStartedAt ||
+      transcriptEntries.length === 0 ||
+      isAssessing
+    ) {
       return;
     }
 
@@ -457,7 +520,10 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
 
       const nextAssessment = (await response.json()) as SessionAssessment;
       const endedAt = new Date().toISOString();
-      const durationSeconds = Math.max(30, Math.round((Date.now() - sessionStartedAt) / 1000));
+      const durationSeconds = Math.max(
+        30,
+        Math.round((Date.now() - sessionStartedAt) / 1000),
+      );
       const durationMinutes = formatMinutes(durationSeconds);
       const transcriptSummary = summarizeTranscript(transcriptEntries);
 
@@ -485,7 +551,9 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
       setSessionStartedAt(null);
     } catch (caughtError) {
       const message =
-        caughtError instanceof Error ? caughtError.message : "Unable to complete practice.";
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to complete practice.";
       setError(message);
     } finally {
       setIsAssessing(false);
@@ -533,7 +601,9 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
   }, [assessment, latestAttemptStamp, sessionHistory]);
 
   const scenarioSummary = useMemo(() => {
-    const attempts = recentAttempts.filter((attempt) => attempt.completionStatus !== "in_progress");
+    const attempts = recentAttempts.filter(
+      (attempt) => attempt.completionStatus !== "in_progress",
+    );
 
     if (attempts.length === 0) {
       return {
@@ -546,18 +616,24 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
 
     return {
       attempts: attempts.length,
-      averageScore: Math.round(attempts.reduce((sum, attempt) => sum + attempt.score, 0) / attempts.length),
+      averageScore: Math.round(
+        attempts.reduce((sum, attempt) => sum + attempt.score, 0) /
+          attempts.length,
+      ),
       bestScore: Math.max(...attempts.map((attempt) => attempt.score)),
       latestScore: attempts[0]?.score ?? 0,
     };
   }, [recentAttempts]);
   const canStartPractice =
-    isClerkLoaded && isSignedIn && isConvexAuthenticated && !isConvexAuthLoading;
+    isClerkLoaded &&
+    isSignedIn &&
+    isConvexAuthenticated &&
+    !isConvexAuthLoading;
   const activeTargetName =
     activeAgent === "agent_a"
       ? scenario.aiAgentA.role
       : activeAgent === "agent_b"
-        ? scenario.aiAgentB.role
+        ? agentBConfig.role
         : null;
 
   return (
@@ -572,8 +648,12 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="eyebrow">Live practice</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">{scenario.title}</h2>
-              <p className="mt-2 text-sm text-muted">{scenario.practiceRuntime.interpreterRole}</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">
+                {scenario.title}
+              </h2>
+              <p className="mt-2 text-sm text-muted">
+                {scenario.practiceRuntime.interpreterRole}
+              </p>
             </div>
             <div className="flex flex-wrap gap-3">
               {!sessionIsLive ? (
@@ -621,19 +701,25 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-[1.25rem] border border-line bg-white/70 p-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Latest</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                Latest
+              </div>
               <div className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
                 {scenarioSummary.latestScore}%
               </div>
             </div>
             <div className="rounded-[1.25rem] border border-line bg-white/70 p-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Average</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                Average
+              </div>
               <div className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
                 {scenarioSummary.averageScore}%
               </div>
             </div>
             <div className="rounded-[1.25rem] border border-line bg-white/70 p-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Best</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                Best
+              </div>
               <div className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
                 {scenarioSummary.bestScore}%
               </div>
@@ -653,25 +739,29 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
             >
               Relay to {scenario.aiAgentA.role}
             </button>
-            <button
-              type="button"
-              disabled={!sessionIsLive}
-              onClick={() => void switchActiveAgent("agent_b")}
-              className={`rounded-full border px-4 py-2 text-sm font-medium ${
-                activeAgent === "agent_b"
-                  ? "border-brand bg-brand text-white"
-                  : "border-line bg-white/80 text-foreground"
-              } disabled:opacity-50`}
-            >
-              Relay to {scenario.aiAgentB.role}
-            </button>
+            {hasSecondAgent ? (
+              <button
+                type="button"
+                disabled={!sessionIsLive}
+                onClick={() => void switchActiveAgent("agent_b")}
+                className={`rounded-full border px-4 py-2 text-sm font-medium ${
+                  activeAgent === "agent_b"
+                    ? "border-brand bg-brand text-white"
+                    : "border-line bg-white/80 text-foreground"
+                } disabled:opacity-50`}
+              >
+                Relay to {agentBConfig.role}
+              </button>
+            ) : null}
           </div>
 
           <div className="mt-6 rounded-[1.5rem] border border-line bg-white/70 p-4">
             <div className="text-sm font-semibold">
               Active target: {activeTargetName ?? "Not started"}
             </div>
-            <p className="mt-2 text-sm text-muted">Text relay for testing. Push-to-talk for live turns.</p>
+            <p className="mt-2 text-sm text-muted">
+              Text relay for testing. Push-to-talk for live turns.
+            </p>
 
             <div className="mt-5 flex flex-col gap-3 md:flex-row">
               <input
@@ -698,10 +788,14 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
                 onTouchEnd={handlePushToTalkEnd}
                 disabled={!sessionIsLive || !activeAgent}
                 className={`rounded-full px-4 py-3 text-sm font-semibold ${
-                  isPushToTalkActive ? "bg-brand text-white" : "border border-line bg-white"
+                  isPushToTalkActive
+                    ? "bg-brand text-white"
+                    : "border border-line bg-white"
                 } disabled:opacity-50`}
               >
-                {isPushToTalkActive ? "Release to send" : "Hold to talk or space"}
+                {isPushToTalkActive
+                  ? "Release to send"
+                  : "Hold to talk or space"}
               </button>
             </div>
           </div>
@@ -711,11 +805,17 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
               {error}
             </div>
           ) : null}
-          {!sessionIsLive && isClerkLoaded && isSignedIn && !isConvexAuthLoading && !isConvexAuthenticated ? (
+          {!sessionIsLive &&
+          isClerkLoaded &&
+          isSignedIn &&
+          !isConvexAuthLoading &&
+          !isConvexAuthenticated ? (
             <div className="mt-4 rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Clerk is signed in, but Convex is not authenticated. The usual cause is that
-              the production Clerk `convex` JWT template/integration is missing or the live app
-              is pointed at a different Convex deployment than the one configured for Clerk auth.
+              Clerk is signed in, but Convex is not authenticated. The usual
+              cause is that the production Clerk `convex` JWT
+              template/integration is missing or the live app is pointed at a
+              different Convex deployment than the one configured for Clerk
+              auth.
             </div>
           ) : null}
           {audioNotice ? (
@@ -759,18 +859,27 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
                 </div>
               </div>
               {recentAttempts.map((session) => (
-                <div key={session.key} className="rounded-[1.25rem] border border-line bg-white/70 p-4">
+                <div
+                  key={session.key}
+                  className="rounded-[1.25rem] border border-line bg-white/70 p-4"
+                >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-muted">{session.timestamp.slice(0, 10)}</span>
+                    <span className="text-sm text-muted">
+                      {session.timestamp.slice(0, 10)}
+                    </span>
                     <span className="score-pill rounded-full px-3 py-1.5 text-sm font-semibold">
                       {session.score}%
                     </span>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-muted">{session.transcriptSummary}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted">
+                    {session.transcriptSummary}
+                  </p>
                 </div>
               ))}
               {recentAttempts.length === 0 ? (
-                <p className="text-sm text-muted">No completed attempts yet for this scenario.</p>
+                <p className="text-sm text-muted">
+                  No completed attempts yet for this scenario.
+                </p>
               ) : null}
             </div>
           </section>
@@ -783,16 +892,24 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
           <div className="mt-5 space-y-4">
             {transcriptEntries.length === 0 ? (
               <p className="text-sm text-muted">
-                Start a session to capture the interpreter relay and both participant responses.
+                Start a session to capture the interpreter relay and both
+                participant responses.
               </p>
             ) : (
               transcriptEntries.map((entry) => (
-                <div key={entry.id} className="rounded-[1.5rem] border border-line bg-white/70 p-4">
+                <div
+                  key={entry.id}
+                  className="rounded-[1.5rem] border border-line bg-white/70 p-4"
+                >
                   <div className="flex items-center justify-between gap-4">
                     <div className="text-sm font-semibold">{entry.speaker}</div>
-                    <div className="text-xs uppercase tracking-[0.18em] text-muted">{entry.role}</div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-muted">
+                      {entry.role}
+                    </div>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-muted">{entry.text || "[Waiting for transcript]"}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted">
+                    {entry.text || "[Waiting for transcript]"}
+                  </p>
                 </div>
               ))
             )}
@@ -805,16 +922,23 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
             <div className="mt-5 space-y-5">
               <div className="flex items-end justify-between gap-4">
                 <div>
-                  <div className="text-5xl font-semibold">{assessment.overallScore}%</div>
+                  <div className="text-5xl font-semibold">
+                    {assessment.overallScore}%
+                  </div>
                   <div className="mt-2 text-sm capitalize text-muted">
                     {assessment.completionDecision.replace("_", " ")}
                   </div>
                 </div>
               </div>
-              <p className="text-sm leading-7 text-muted">{assessment.summary}</p>
+              <p className="text-sm leading-7 text-muted">
+                {assessment.summary}
+              </p>
               <div className="space-y-3 text-sm">
                 {Object.entries(assessment.breakdown).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between gap-4">
+                  <div
+                    key={key}
+                    className="flex items-center justify-between gap-4"
+                  >
                     <span className="capitalize">{key}</span>
                     <span className="font-semibold">{Math.round(value)}%</span>
                   </div>
@@ -829,14 +953,16 @@ export function RealtimePracticeRunner({ scenario }: RealtimePracticeRunnerProps
                 <p className="mt-2">{assessment.improvementAreas.join(" ")}</p>
               </div>
               <div className="rounded-[1.5rem] border border-line bg-white/70 p-4 text-sm leading-6 text-muted">
-                <div className="font-semibold text-foreground">Recommended next step</div>
+                <div className="font-semibold text-foreground">
+                  Recommended next step
+                </div>
                 <p className="mt-2">{assessment.recommendedNextStep}</p>
               </div>
             </div>
           ) : (
             <p className="mt-5 text-sm leading-7 text-muted">
-              When you finish the scenario, XINGO will assess the transcript and store the result
-              against your history for this module.
+              When you finish the scenario, XINGO will assess the transcript and
+              store the result against your history for this module.
             </p>
           )}
         </section>

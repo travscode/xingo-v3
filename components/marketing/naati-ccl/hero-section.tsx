@@ -23,13 +23,12 @@ export function NaatiCclHeroSection() {
               NAATI CCL mock test
             </p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-900 lg:text-[3.15rem] lg:leading-[1.05]">
-              Start practicing real-life community dialogues with a cleaner CCL
-              prep flow.
+              Don&apos;t walk into an $800 exam hoping for the best.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 lg:text-base">
-              Choose your target language, create an account, and go straight
-              into the XINGO CCL module built for short-turn recall, instruction
-              transfer, and exam-style repetition.
+              Xingo helps you practise realistic NAATI exam style conversations
+              with AI voice, so you can practice and be prepared for the NAATI
+              CCL exam.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-3">

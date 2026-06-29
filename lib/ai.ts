@@ -7,25 +7,35 @@ export interface ConversationTurn {
 }
 
 export function buildScenarioPrompt(scenario: Scenario) {
-  return [
+  const promptLines = [
     `Scenario: ${scenario.title}`,
     `Description: ${scenario.description}`,
     `Interpreter role: ${scenario.practiceRuntime.interpreterRole}`,
     `Languages: ${scenario.practiceRuntime.sourceLanguage} <-> ${scenario.practiceRuntime.targetLanguage}`,
     `Agent A: ${scenario.aiAgentA.name} (${scenario.aiAgentA.role})`,
     `Agent A goal: ${scenario.aiAgentA.goal}`,
-    `Agent B: ${scenario.aiAgentB.name} (${scenario.aiAgentB.role})`,
-    `Agent B goal: ${scenario.aiAgentB.goal}`,
+  ];
+
+  if (scenario.aiAgentB) {
+    promptLines.push(
+      `Agent B: ${scenario.aiAgentB.name} (${scenario.aiAgentB.role})`,
+      `Agent B goal: ${scenario.aiAgentB.goal}`,
+    );
+  }
+
+  promptLines.push(
     `Briefing: ${scenario.practiceRuntime.briefing}`,
     `Assessment focus: ${scenario.practiceRuntime.assessmentFocus.join(", ")}`,
     `Skills: ${scenario.expectedSkills.join(", ")}`,
-  ].join("\n");
+  );
+
+  return promptLines.join("\n");
 }
 
 export function buildRealtimeAgentInstructions(
   scenario: Scenario,
   currentAgent: VoiceAgent,
-  counterpartAgent: VoiceAgent,
+  counterpartAgent?: VoiceAgent,
 ) {
   return [
     currentAgent.instructions,
@@ -37,10 +47,16 @@ export function buildRealtimeAgentInstructions(
     `Your language: ${currentAgent.language}. Speak only in ${currentAgent.language}.`,
     `Your demeanor: ${currentAgent.demeanor}.`,
     `Your goal: ${currentAgent.goal}.`,
-    `The other participant is ${counterpartAgent.name}, the ${counterpartAgent.role}.`,
-    `A human ${scenario.practiceRuntime.interpreterRole.toLowerCase()} is relaying between both sides.`,
+    counterpartAgent
+      ? `The other participant is ${counterpartAgent.name}, the ${counterpartAgent.role}.`
+      : "A human interpreter is relaying between you and the learner.",
+    counterpartAgent
+      ? `A human ${scenario.practiceRuntime.interpreterRole.toLowerCase()} is relaying between both sides.`
+      : `A human ${scenario.practiceRuntime.interpreterRole.toLowerCase()} is relaying between you and the learner.`,
     "Never act as the interpreter.",
-    "Never translate or summarise what the other participant said.",
+    counterpartAgent
+      ? "Never translate or summarise what the other participant said."
+      : "Never translate or summarise on behalf of the learner.",
     "Speak in short, natural turns and wait for the interpreter before responding.",
     "If the interpreter pauses, stay silent.",
     currentAgent.openingLine
@@ -51,7 +67,9 @@ export function buildRealtimeAgentInstructions(
     .join("\n");
 }
 
-export function buildTranscriptForAssessment(transcriptEntries: TranscriptEntry[]) {
+export function buildTranscriptForAssessment(
+  transcriptEntries: TranscriptEntry[],
+) {
   return transcriptEntries
     .map((entry) => `[${entry.createdAt}] ${entry.speaker}: ${entry.text}`)
     .join("\n");
@@ -89,7 +107,13 @@ export const practiceAssessmentSchema = {
           turnManagement: { type: "number" },
           professionalism: { type: "number" },
         },
-        required: ["accuracy", "terminology", "fluency", "turnManagement", "professionalism"],
+        required: [
+          "accuracy",
+          "terminology",
+          "fluency",
+          "turnManagement",
+          "professionalism",
+        ],
       },
     },
     required: [
@@ -104,7 +128,10 @@ export const practiceAssessmentSchema = {
   },
 } as const;
 
-export function buildAssessmentInstructions(scenario: Scenario, transcriptEntries: TranscriptEntry[]) {
+export function buildAssessmentInstructions(
+  scenario: Scenario,
+  transcriptEntries: TranscriptEntry[],
+) {
   return [
     "You are assessing an interpreter training role-play.",
     "Score the interpreter on fidelity, terminology, fluency, turn management, and professionalism.",

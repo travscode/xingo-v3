@@ -8,7 +8,7 @@ import { RealtimeAgent } from "@openai/agents/realtime";
 import { api } from "@/convex/_generated/api";
 import { buildRealtimeAgentInstructions } from "@/lib/ai";
 import { useRealtimeVoiceSession } from "@/components/practice/use-realtime-voice-session";
-import type { Scenario } from "@/types/scenario";
+import type { Scenario, VoiceAgent } from "@/types/scenario";
 import type { TranscriptEntry } from "@/types/session";
 
 type AgentKey = "agent_a" | "agent_b";
@@ -148,6 +148,23 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     isSignedIn &&
     isConvexAuthenticated &&
     !isConvexAuthLoading;
+  const hasSecondAgent =
+    scenario.agentCount === 2 && Boolean(scenario.aiAgentB);
+  const agentBConfig = useMemo<VoiceAgent>(
+    () =>
+      scenario.aiAgentB ?? {
+        name: "Participant",
+        role: "Participant",
+        voice: "sage",
+        goal: "Respond naturally to the interpreter.",
+        language: scenario.practiceRuntime.targetLanguage,
+        demeanor: "Natural and concise",
+        instructions:
+          "You are a placeholder participant and should never be selected in a one-agent scenario.",
+        openingLine: "",
+      },
+    [scenario],
+  );
 
   /**
    * Handles non-fatal realtime transport warnings without showing a blocking UI error.
@@ -188,12 +205,12 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       if (entry.role === "assistant") {
         if (entry.speaker === scenario.aiAgentA.role) {
           markSpeaking("agent_a");
-        } else if (entry.speaker === scenario.aiAgentB.role) {
+        } else if (entry.speaker === agentBConfig.role) {
           markSpeaking("agent_b");
         }
       }
     },
-    [markSpeaking, scenario.aiAgentA.role, scenario.aiAgentB.role],
+    [agentBConfig.role, markSpeaking, scenario.aiAgentA.role],
   );
 
   const updateTranscriptEntry = useCallback(
@@ -279,27 +296,27 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
         instructions: buildRealtimeAgentInstructions(
           scenario,
           scenario.aiAgentA,
-          scenario.aiAgentB,
+          hasSecondAgent ? agentBConfig : undefined,
         ),
       }),
-    [scenario],
+    [agentBConfig, hasSecondAgent, scenario],
   );
 
   const agentB = useMemo(
     () =>
       new RealtimeAgent({
-        name: scenario.aiAgentB.name,
-        voice: scenario.aiAgentB.voice,
+        name: agentBConfig.name,
+        voice: agentBConfig.voice,
         handoffs: [],
         tools: [],
-        handoffDescription: `${scenario.aiAgentB.role} in ${scenario.title}`,
+        handoffDescription: `${agentBConfig.role} in ${scenario.title}`,
         instructions: buildRealtimeAgentInstructions(
           scenario,
-          scenario.aiAgentB,
+          agentBConfig,
           scenario.aiAgentA,
         ),
       }),
-    [scenario],
+    [agentBConfig, scenario],
   );
 
   const agentASession = useRealtimeVoiceSession(
@@ -314,8 +331,8 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   );
 
   const agentBSession = useRealtimeVoiceSession(
-    scenario.aiAgentB.role,
-    `Interpreter -> ${scenario.aiAgentB.role}`,
+    agentBConfig.role,
+    `Interpreter -> ${agentBConfig.role}`,
     {
       onTranscriptStart: addTranscriptEntry,
       onTranscriptUpdate: updateTranscriptEntry,
@@ -484,7 +501,9 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       const openingSession =
         openingSpeaker === "agent_a" ? agentASession : agentBSession;
       const openingAgent =
-        openingSpeaker === "agent_a" ? scenario.aiAgentA : scenario.aiAgentB;
+        openingSpeaker === "agent_a" || !hasSecondAgent
+          ? scenario.aiAgentA
+          : agentBConfig;
 
       openingSession.sendHiddenInstruction(
         `Begin the interpreter role-play now. Address the interpreter and open with this line or its natural equivalent: ${
@@ -511,6 +530,8 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     isConvexAuthLoading,
     isSignedIn,
     isStarting,
+    agentBConfig,
+    hasSecondAgent,
     scenario,
     startAttempt,
     switchActiveAgent,
@@ -547,6 +568,11 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       return;
     }
 
+    if (!hasSecondAgent) {
+      void switchActiveAgent("agent_a");
+      return;
+    }
+
     const nextAgent: AgentKey =
       activeAgent === "agent_a"
         ? "agent_b"
@@ -554,7 +580,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
           ? "agent_a"
           : "agent_a";
     void switchActiveAgent(nextAgent);
-  }, [activeAgent, sessionIsLive, switchActiveAgent]);
+  }, [activeAgent, hasSecondAgent, sessionIsLive, switchActiveAgent]);
 
   useEffect(() => {
     if (!sessionIsLive) {
@@ -874,15 +900,15 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       return `${scenario.aiAgentA.name} (${scenario.aiAgentA.role})`;
     }
     if (activeAgent === "agent_b") {
-      return `${scenario.aiAgentB.name} (${scenario.aiAgentB.role})`;
+      return `${agentBConfig.name} (${agentBConfig.role})`;
     }
     return "Not started";
   }, [
     activeAgent,
     scenario.aiAgentA.name,
     scenario.aiAgentA.role,
-    scenario.aiAgentB.name,
-    scenario.aiAgentB.role,
+    agentBConfig.name,
+    agentBConfig.role,
   ]);
 
   /**
@@ -894,11 +920,11 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     }
 
     if (speakingKey === "agent_b") {
-      return `${scenario.aiAgentB.name} speaking...`;
+      return `${agentBConfig.name} speaking...`;
     }
 
     return null;
-  }, [scenario.aiAgentA.name, scenario.aiAgentB.name, speakingKey]);
+  }, [agentBConfig.name, scenario.aiAgentA.name, speakingKey]);
 
   /**
    * Resolves avatar artwork for transcript entries from speaker names.
@@ -910,11 +936,8 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     ) {
       return scenario.aiAgentA.avatarImageUrl;
     }
-    if (
-      speaker === scenario.aiAgentB.role ||
-      speaker === scenario.aiAgentB.name
-    ) {
-      return scenario.aiAgentB.avatarImageUrl;
+    if (speaker === agentBConfig.role || speaker === agentBConfig.name) {
+      return agentBConfig.avatarImageUrl;
     }
     return undefined;
   }
@@ -928,7 +951,9 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
         <section className="relative min-h-0 overflow-y-auto p-8 sm:p-12">
           <p className="text-xl font-semibold text-[#8e8e8e]">{locationLine}</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-black">
-            Help {scenario.aiAgentA.name} with {scenario.aiAgentB.name}
+            {hasSecondAgent
+              ? `Help ${scenario.aiAgentA.name} with ${agentBConfig.name}`
+              : `Interpret for ${scenario.aiAgentA.name}`}
           </h1>
 
           {countdownValue !== null ? (
@@ -943,20 +968,22 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
             You are currently talking to {activeConversationLabel}
           </div>
 
-          <div className="mt-14 grid gap-8 md:grid-cols-2 justify-items-center items-center justify-center md:justify-items-center">
-            <ParticipantAvatar
-              label={scenario.aiAgentB.name}
-              subLabel={
-                scenario.aiAgentB.role + " ● " + scenario.aiAgentB.language
-              }
-              imageUrl={scenario.aiAgentB.avatarImageUrl}
-              initials={getInitials(
-                scenario.aiAgentB.name || scenario.aiAgentB.role,
-              )}
-              isSpeaking={speakingKey === "agent_b"}
-              isActive={activeAgent === "agent_b"}
-              onSelect={() => void switchActiveAgent("agent_b")}
-            />
+          <div
+            className={`mt-14 grid gap-8 items-center justify-center justify-items-center ${
+              hasSecondAgent ? "md:grid-cols-2" : "md:grid-cols-1"
+            }`}
+          >
+            {hasSecondAgent ? (
+              <ParticipantAvatar
+                label={agentBConfig.name}
+                subLabel={agentBConfig.role + " ● " + agentBConfig.language}
+                imageUrl={agentBConfig.avatarImageUrl}
+                initials={getInitials(agentBConfig.name || agentBConfig.role)}
+                isSpeaking={speakingKey === "agent_b"}
+                isActive={activeAgent === "agent_b"}
+                onSelect={() => void switchActiveAgent("agent_b")}
+              />
+            ) : null}
             <ParticipantAvatar
               label={scenario.aiAgentA.name}
               subLabel={
@@ -1003,7 +1030,11 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
           </div>
 
           <div className="mt-8 flex items-center justify-between text-xl font-semibold text-[#8d8d8d]">
-            <div>Press Spacebar to change participant</div>
+            <div>
+              {hasSecondAgent
+                ? "Press Spacebar to change participant"
+                : "Single-agent scenario"}
+            </div>
             <div>Hold Spacebar to talk</div>
           </div>
 

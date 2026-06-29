@@ -27,8 +27,9 @@ export interface Scenario {
   moduleId: string;
   title: string;
   description: string;
+  agentCount: 1 | 2;
   aiAgentA: VoiceAgent;
-  aiAgentB: VoiceAgent;
+  aiAgentB?: VoiceAgent;
   practiceRuntime: PracticeRuntime;
   expectedSkills: string[];
   difficultyLevel: DifficultyLevel;

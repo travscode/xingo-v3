@@ -44,6 +44,7 @@ type ScenarioFormState = {
   title: string;
   description: string;
   difficultyLevel: DifficultyLevel;
+  agentCount: "1" | "2";
   expectedSkills: string;
   interpreterRole: string;
   sourceLanguage: string;
@@ -250,6 +251,7 @@ function createEmptyScenarioForm(): ScenarioFormState {
     title: "",
     description: "",
     difficultyLevel: "beginner",
+    agentCount: "2",
     expectedSkills: "",
     interpreterRole: "Consecutive interpreter",
     sourceLanguage: "English",
@@ -285,6 +287,9 @@ function createScenarioFormFromRecord(scenario: Scenario): ScenarioFormState {
     title: scenario.title,
     description: scenario.description,
     difficultyLevel: scenario.difficultyLevel,
+    agentCount: String(scenario.agentCount ?? (scenario.aiAgentB ? 2 : 1)) as
+      | "1"
+      | "2",
     expectedSkills: joinLines(scenario.expectedSkills),
     interpreterRole: scenario.practiceRuntime.interpreterRole,
     sourceLanguage: scenario.practiceRuntime.sourceLanguage,
@@ -302,16 +307,17 @@ function createScenarioFormFromRecord(scenario: Scenario): ScenarioFormState {
     agentADemeanor: scenario.aiAgentA.demeanor,
     agentAOpeningLine: scenario.aiAgentA.openingLine ?? "",
     agentAInstructions: scenario.aiAgentA.instructions,
-    agentBName: scenario.aiAgentB.name,
-    agentBRole: scenario.aiAgentB.role,
-    agentBLanguage: scenario.aiAgentB.language,
-    agentBVoice: scenario.aiAgentB.voice,
-    agentBAvatarImageUrl: scenario.aiAgentB.avatarImageUrl ?? "",
-    agentBAvatarStorageId: scenario.aiAgentB.avatarStorageId ?? "",
-    agentBGoal: scenario.aiAgentB.goal,
-    agentBDemeanor: scenario.aiAgentB.demeanor,
-    agentBOpeningLine: scenario.aiAgentB.openingLine ?? "",
-    agentBInstructions: scenario.aiAgentB.instructions,
+    agentBName: scenario.aiAgentB?.name ?? "",
+    agentBRole: scenario.aiAgentB?.role ?? "Client",
+    agentBLanguage:
+      scenario.aiAgentB?.language ?? scenario.practiceRuntime.targetLanguage,
+    agentBVoice: scenario.aiAgentB?.voice ?? "sage",
+    agentBAvatarImageUrl: scenario.aiAgentB?.avatarImageUrl ?? "",
+    agentBAvatarStorageId: scenario.aiAgentB?.avatarStorageId ?? "",
+    agentBGoal: scenario.aiAgentB?.goal ?? "",
+    agentBDemeanor: scenario.aiAgentB?.demeanor ?? "",
+    agentBOpeningLine: scenario.aiAgentB?.openingLine ?? "",
+    agentBInstructions: scenario.aiAgentB?.instructions ?? "",
   };
 }
 
@@ -640,6 +646,7 @@ export function AdminStudio() {
                   title: form.title.trim(),
                   description: form.description.trim(),
                   difficultyLevel: form.difficultyLevel,
+                  agentCount: Number(form.agentCount) as 1 | 2,
                   expectedSkills: splitLines(form.expectedSkills),
                   practiceRuntime: {
                     interpreterRole: form.interpreterRole.trim(),
@@ -662,19 +669,26 @@ export function AdminStudio() {
                     openingLine: form.agentAOpeningLine.trim() || undefined,
                     instructions: form.agentAInstructions.trim() || undefined,
                   },
-                  aiAgentB: {
-                    name: form.agentBName.trim() || undefined,
-                    role: form.agentBRole.trim(),
-                    voice: form.agentBVoice,
-                    avatarImageUrl:
-                      form.agentBAvatarImageUrl.trim() || undefined,
-                    avatarStorageId: toStorageId(form.agentBAvatarStorageId),
-                    goal: form.agentBGoal.trim(),
-                    language: form.agentBLanguage.trim(),
-                    demeanor: form.agentBDemeanor.trim() || undefined,
-                    openingLine: form.agentBOpeningLine.trim() || undefined,
-                    instructions: form.agentBInstructions.trim() || undefined,
-                  },
+                  aiAgentB:
+                    form.agentCount === "2"
+                      ? {
+                          name: form.agentBName.trim() || undefined,
+                          role: form.agentBRole.trim(),
+                          voice: form.agentBVoice,
+                          avatarImageUrl:
+                            form.agentBAvatarImageUrl.trim() || undefined,
+                          avatarStorageId: toStorageId(
+                            form.agentBAvatarStorageId,
+                          ),
+                          goal: form.agentBGoal.trim(),
+                          language: form.agentBLanguage.trim(),
+                          demeanor: form.agentBDemeanor.trim() || undefined,
+                          openingLine:
+                            form.agentBOpeningLine.trim() || undefined,
+                          instructions:
+                            form.agentBInstructions.trim() || undefined,
+                        }
+                      : undefined,
                 } as const;
 
                 try {
@@ -934,6 +948,26 @@ function ScenarioEditor({
             ))}
           </select>
         </Field>
+        <Field label="Number of agents">
+          <select
+            value={form.agentCount}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                agentCount: event.target.value as "1" | "2",
+                openingSpeaker:
+                  event.target.value === "1" &&
+                  current.openingSpeaker === "agent_b"
+                    ? "agent_a"
+                    : current.openingSpeaker,
+              }))
+            }
+            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+          >
+            <option value="1">1 agent</option>
+            <option value="2">2 agents</option>
+          </select>
+        </Field>
       </div>
 
       <Field label="Description" className="mt-4">
@@ -974,7 +1008,9 @@ function ScenarioEditor({
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
           >
             <option value="agent_a">Agent A</option>
-            <option value="agent_b">Agent B</option>
+            {form.agentCount === "2" ? (
+              <option value="agent_b">Agent B</option>
+            ) : null}
           </select>
         </Field>
         <Field label="Source language">
@@ -1070,23 +1106,30 @@ function ScenarioEditor({
             setForm((current) => ({ ...current, [field]: value }))
           }
         />
-        <AgentForm
-          title="Agent B"
-          name={form.agentBName}
-          role={form.agentBRole}
-          language={form.agentBLanguage}
-          voice={form.agentBVoice}
-          avatarImageUrl={form.agentBAvatarImageUrl}
-          avatarStorageId={form.agentBAvatarStorageId}
-          goal={form.agentBGoal}
-          demeanor={form.agentBDemeanor}
-          openingLine={form.agentBOpeningLine}
-          instructions={form.agentBInstructions}
-          voices={voiceOptions}
-          onChange={(field, value) =>
-            setForm((current) => ({ ...current, [field]: value }))
-          }
-        />
+        {form.agentCount === "2" ? (
+          <AgentForm
+            title="Agent B"
+            name={form.agentBName}
+            role={form.agentBRole}
+            language={form.agentBLanguage}
+            voice={form.agentBVoice}
+            avatarImageUrl={form.agentBAvatarImageUrl}
+            avatarStorageId={form.agentBAvatarStorageId}
+            goal={form.agentBGoal}
+            demeanor={form.agentBDemeanor}
+            openingLine={form.agentBOpeningLine}
+            instructions={form.agentBInstructions}
+            voices={voiceOptions}
+            onChange={(field, value) =>
+              setForm((current) => ({ ...current, [field]: value }))
+            }
+          />
+        ) : (
+          <div className="rounded-[1.5rem] border border-dashed border-line bg-white p-5 text-sm text-muted">
+            This scenario uses one agent only. The learner interprets directly
+            with Agent A in the practice room.
+          </div>
+        )}
       </div>
     </section>
   );
