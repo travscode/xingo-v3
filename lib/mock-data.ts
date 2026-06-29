@@ -109,6 +109,7 @@ export const scenarios: Scenario[] = [
     title: "Emergency Room Triage",
     description:
       "A doctor assesses chest pain, prior medication use, and symptom onset while the patient is distressed.",
+    agentCount: 2,
     aiAgentA: createVoiceAgent(
       "Doctor",
       "cedar",
@@ -140,6 +141,7 @@ export const scenarios: Scenario[] = [
     title: "Pediatric Consultation",
     description:
       "A pediatrician and caregiver discuss fever history, dosage timing, and allergy risk.",
+    agentCount: 2,
     aiAgentA: createVoiceAgent(
       "Pediatrician",
       "cedar",
@@ -171,6 +173,7 @@ export const scenarios: Scenario[] = [
     title: "Bail Hearing",
     description:
       "A magistrate, prosecutor, and defendant review prior appearances, risks, and release conditions.",
+    agentCount: 2,
     aiAgentA: createVoiceAgent(
       "Magistrate",
       "cedar",
@@ -202,6 +205,7 @@ export const scenarios: Scenario[] = [
     title: "Visa Eligibility Interview",
     description:
       "An officer reviews travel history, supporting documents, and timeline consistency.",
+    agentCount: 2,
     aiAgentA: createVoiceAgent(
       "Case Officer",
       "cedar",
@@ -233,6 +237,7 @@ export const scenarios: Scenario[] = [
     title: "Housing Support Assessment",
     description:
       "A case worker reviews tenancy risk, household makeup, and next-step referrals.",
+    agentCount: 2,
     aiAgentA: createVoiceAgent(
       "Case Worker",
       "shimmer",

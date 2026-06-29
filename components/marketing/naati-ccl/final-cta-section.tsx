@@ -21,14 +21,8 @@ export function NaatiCclFinalCtaSection() {
             href={cclSignUpHref}
             className="action-secondary bg-brand-green text-black hover:bg-white"
           >
-            Create account for CCL
+            Start practicing now
             <ArrowRightIcon className="ml-4 inline-block" size={14} />
-          </Link>
-          <Link
-            href={cclSignInHref}
-            className="rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-          >
-            Sign in and continue
           </Link>
         </div>
       </div>
