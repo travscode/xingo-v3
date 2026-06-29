@@ -1,6 +1,17 @@
 import { languages } from "./content";
 
 /**
+ * Converts a two-letter ISO country code into a flag emoji.
+ */
+function toFlagEmoji(countryCode: string) {
+  return countryCode
+    .toUpperCase()
+    .replace(/./g, (char) =>
+      String.fromCodePoint(127397 + char.charCodeAt(0)),
+    );
+}
+
+/**
  * Renders the supported-language style grid for the landing page.
  */
 export function NaatiCclLanguagesSection() {
@@ -27,9 +38,19 @@ export function NaatiCclLanguagesSection() {
                 {language.region}
               </div>
               <div className="mt-2 flex items-center justify-between gap-3 text-sm font-semibold text-slate-900">
-                <span>{language.english}</span>
+                <span className="flex items-center gap-2">
+                  <span aria-hidden="true" className="text-base leading-none">
+                    {toFlagEmoji(language.englishFlag)}
+                  </span>
+                  <span>{language.english}</span>
+                </span>
                 <span className="text-slate-400">/</span>
-                <span>{language.target}</span>
+                <span className="flex items-center gap-2">
+                  <span>{language.target}</span>
+                  <span aria-hidden="true" className="text-base leading-none">
+                    {toFlagEmoji(language.targetFlag)}
+                  </span>
+                </span>
               </div>
             </div>
           ))}
