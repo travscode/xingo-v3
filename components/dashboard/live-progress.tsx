@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { useQuery } from "convex/react";
 import { StatCard } from "@/components/ui/stat-card";
 import { api } from "@/convex/_generated/api";
@@ -52,6 +53,14 @@ export function LiveProgress() {
                   </div>
                 </div>
                 <div className="score-pill rounded-full px-3 py-1.5 text-sm font-semibold">{session.score}%</div>
+              </div>
+              <div className="mt-4">
+                <Link
+                  href={`/practice/${session.scenarioId}?attemptId=${session.id}`}
+                  className="text-sm font-semibold text-brand underline-offset-4 hover:underline"
+                >
+                  View practice results
+                </Link>
               </div>
             </div>
           ))}

@@ -521,11 +521,13 @@ export const credentials = [
     title: "Medical Distinction",
     issuer: "Community Health Language Network",
     status: "Awarded",
+    badgeImage: "/images/badges/medical-distinction-badge.svg",
   },
   {
     title: "Court Certified",
     issuer: "National Interpreter Accreditation Board",
     status: "In progress",
+    badgeImage: "/images/badges/court-certified-badge.svg",
   },
 ] as const;
 

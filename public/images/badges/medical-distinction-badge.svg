@@ -1,0 +1,17 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="200" height="200" rx="36" fill="#0F766E"/>
+<rect x="16" y="16" width="168" height="168" rx="28" fill="url(#paint0_linear_1_1)" fill-opacity="0.96"/>
+<circle cx="100" cy="78" r="34" fill="#F8FAFC" fill-opacity="0.18"/>
+<circle cx="100" cy="78" r="26" fill="#F8FAFC"/>
+<path d="M100 58C94.4772 58 90 62.4772 90 68V71H88C84.6863 71 82 73.6863 82 77V96C82 99.3137 84.6863 102 88 102H112C115.314 102 118 99.3137 118 96V77C118 73.6863 115.314 71 112 71H110V68C110 62.4772 105.523 58 100 58ZM96 68C96 65.7909 97.7909 64 100 64C102.209 64 104 65.7909 104 68V71H96V68Z" fill="#0F766E"/>
+<path d="M70 126L82.5 104L100 112L117.5 104L130 126L115 130L100 146L85 130L70 126Z" fill="#FDE68A"/>
+<path d="M70 126L85 130L100 146L115 130L130 126" stroke="#B45309" stroke-width="4" stroke-linejoin="round"/>
+<text x="100" y="164" text-anchor="middle" fill="#F8FAFC" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700">MEDICAL</text>
+<text x="100" y="182" text-anchor="middle" fill="#CCFBF1" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700">DISTINCTION</text>
+<defs>
+<linearGradient id="paint0_linear_1_1" x1="32" y1="24" x2="168" y2="176" gradientUnits="userSpaceOnUse">
+<stop stop-color="#14B8A6"/>
+<stop offset="1" stop-color="#115E59"/>
+</linearGradient>
+</defs>
+</svg>
