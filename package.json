@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "ship": "convex deploy && git status && git add . && msg=$(node -e \"console.log(require('crypto').randomBytes(8).toString('hex'))\") && git commit -a -m \"$msg\" && git push",
+    "git:ship": "convex deploy && git status && git add . && msg=$(node -e \"console.log(require('crypto').randomBytes(8).toString('hex'))\") && git commit -a -m \"$msg\" && git push"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.5",

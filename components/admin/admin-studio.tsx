@@ -92,10 +92,72 @@ const voiceOptions = [
   "cedar",
   "coral",
   "echo",
+  "fable",
   "marin",
+  "nova",
+  "onyx",
   "sage",
   "shimmer",
   "verse",
+];
+const openAiVoiceLanguageOptions = [
+  "English",
+  "Arabic",
+  "Armenian",
+  "Afrikaans",
+  "Azerbaijani",
+  "Belarusian",
+  "Bosnian",
+  "Bulgarian",
+  "Catalan",
+  "Chinese",
+  "Croatian",
+  "Czech",
+  "Danish",
+  "Dutch",
+  "Estonian",
+  "Finnish",
+  "French",
+  "Galician",
+  "German",
+  "Greek",
+  "Hebrew",
+  "Hindi",
+  "Hungarian",
+  "Icelandic",
+  "Indonesian",
+  "Italian",
+  "Japanese",
+  "Kannada",
+  "Kazakh",
+  "Korean",
+  "Latvian",
+  "Lithuanian",
+  "Macedonian",
+  "Malay",
+  "Maori",
+  "Marathi",
+  "Nepali",
+  "Norwegian",
+  "Persian",
+  "Polish",
+  "Portuguese",
+  "Romanian",
+  "Russian",
+  "Serbian",
+  "Slovak",
+  "Slovenian",
+  "Spanish",
+  "Swahili",
+  "Swedish",
+  "Tagalog",
+  "Tamil",
+  "Thai",
+  "Turkish",
+  "Ukrainian",
+  "Urdu",
+  "Vietnamese",
+  "Welsh",
 ];
 
 function splitLines(value: string) {
@@ -114,6 +176,20 @@ function toStorageId(value: string): Id<"_storage"> | undefined {
 
 function joinLines(items: string[]) {
   return items.join("\n");
+}
+
+/**
+ * Returns the shared OpenAI voice-language list while preserving any saved custom value.
+ */
+function getOpenAiVoiceLanguageOptions(selectedLanguage: string) {
+  if (
+    !selectedLanguage ||
+    openAiVoiceLanguageOptions.includes(selectedLanguage)
+  ) {
+    return openAiVoiceLanguageOptions;
+  }
+
+  return [selectedLanguage, ...openAiVoiceLanguageOptions];
 }
 
 function createEmptyModuleForm(): ModuleFormState {
@@ -879,7 +955,7 @@ function ScenarioEditor({
           </select>
         </Field>
         <Field label="Source language">
-          <input
+          <select
             value={form.sourceLanguage}
             onChange={(event) =>
               setForm((current) => ({
@@ -888,10 +964,16 @@ function ScenarioEditor({
               }))
             }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
-          />
+          >
+            {getOpenAiVoiceLanguageOptions(form.sourceLanguage).map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
         </Field>
         <Field label="Target language">
-          <input
+          <select
             value={form.targetLanguage}
             onChange={(event) =>
               setForm((current) => ({
@@ -900,7 +982,13 @@ function ScenarioEditor({
               }))
             }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
-          />
+          >
+            {getOpenAiVoiceLanguageOptions(form.targetLanguage).map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
         </Field>
       </div>
 
@@ -1143,7 +1231,7 @@ function AgentForm({
           />
         </Field>
         <Field label="Language">
-          <input
+          <select
             value={language}
             onChange={(event) =>
               onChange(
@@ -1152,7 +1240,13 @@ function AgentForm({
               )
             }
             className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
-          />
+          >
+            {getOpenAiVoiceLanguageOptions(language).map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
         </Field>
         <Field label="Voice">
           <select

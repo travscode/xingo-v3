@@ -91,7 +91,7 @@ export default function HomePage() {
         </div>
         <div className="relative aspect-[1.8/1] w-full overflow-hidden rounded-4xl">
           <Image
-            src="/images/start-practice.jpg"
+            src="/images/doctor3.webp"
             fill
             className="object-cover"
             alt="Practice scene"

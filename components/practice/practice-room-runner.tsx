@@ -800,7 +800,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       <audio ref={agentAAudioRef} autoPlay playsInline className="sr-only" />
       <audio ref={agentBAudioRef} autoPlay playsInline className="sr-only" />
 
-      <section className="grid h-[820px] xl:grid-cols-[1fr_360px]">
+      <section className="grid h-auto xl:grid-cols-[1fr_360px]">
         <section className="relative min-h-0 overflow-y-auto p-8 sm:p-12">
           <p className="text-xl font-semibold text-[#8e8e8e]">{locationLine}</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-black">
