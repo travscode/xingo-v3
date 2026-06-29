@@ -13,12 +13,9 @@ export function NaatiCclFinalCtaSection() {
           Ready to start
         </p>
         <h2 className="display mt-3 text-4xl font-semibold">
-          Open the CCL path and send learners straight into the module.
+          Ready to start practicing for the CCL exam now?
         </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-white/70">
-          The auth flow on this page keeps the journey tight: signup, land on
-          the NAATI CCL module, then begin practice from the seeded scenarios.
-        </p>
+
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link
             href={cclSignUpHref}
