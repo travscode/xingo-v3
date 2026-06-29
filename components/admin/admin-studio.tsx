@@ -100,6 +100,21 @@ const voiceOptions = [
   "shimmer",
   "verse",
 ];
+const openAiVoiceGenders: Record<string, "male" | "female"> = {
+  alloy: "female",
+  ash: "male",
+  ballad: "male",
+  cedar: "male",
+  coral: "female",
+  echo: "male",
+  fable: "male",
+  marin: "female",
+  nova: "female",
+  onyx: "male",
+  sage: "female",
+  shimmer: "female",
+  verse: "male",
+};
 const openAiVoiceLanguageOptions = [
   "English",
   "Arabic",
@@ -190,6 +205,14 @@ function getOpenAiVoiceLanguageOptions(selectedLanguage: string) {
   }
 
   return [selectedLanguage, ...openAiVoiceLanguageOptions];
+}
+
+/**
+ * Returns a display label for an OpenAI voice while preserving the stored value.
+ */
+function getOpenAiVoiceLabel(voice: string) {
+  const gender = openAiVoiceGenders[voice];
+  return gender ? `${voice} (${gender})` : voice;
 }
 
 function createEmptyModuleForm(): ModuleFormState {
@@ -1261,7 +1284,7 @@ function AgentForm({
           >
             {voices.map((item) => (
               <option key={item} value={item}>
-                {item}
+                {getOpenAiVoiceLabel(item)}
               </option>
             ))}
           </select>
