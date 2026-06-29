@@ -17,7 +17,7 @@ export function NaatiCclHeroSection() {
   return (
     <section className="space-y-5">
       <div className="rounded-[2.5rem] border border-[#e6e7f0] bg-[#f7f7fb] px-6 py-6 shadow-[0_12px_34px_rgba(18,18,18,0.04)] lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+        <div className="grid gap-8">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-700">
               NAATI CCL mock test
@@ -55,54 +55,6 @@ export function NaatiCclHeroSection() {
               </Link>
               <Link href={cclSignInHref} className="action-secondary">
                 How to excel?
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-4xl border border-[#e6e7f0] bg-white p-5">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Scan to begin
-              </div>
-              <div className="mt-4 aspect-square rounded-3xl border border-dashed border-slate-300 bg-[linear-gradient(135deg,#f5f3ff,#ffffff,#ede9fe)] p-4">
-                <div className="grid h-full grid-cols-6 gap-1">
-                  {Array.from({ length: 36 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className={`rounded-sm ${index % 3 === 0 || index % 5 === 0 ? "bg-slate-900" : "bg-transparent"}`}
-                    />
-                  ))}
-                </div>
-              </div>
-              <p className="mt-3 text-xs leading-6 text-slate-500">
-                Placeholder QR-style visual to echo the screenshot structure.
-              </p>
-            </div>
-
-            <div className="rounded-4xl border border-[#e6e7f0] bg-white p-5">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Quick module view
-              </div>
-              <div className="mt-4 space-y-3">
-                {featureStats.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="rounded-3xl border border-[#ececf3] bg-[#fafafe] px-4 py-3"
-                  >
-                    <div className="text-lg font-semibold text-slate-900">
-                      {stat.value}
-                    </div>
-                    <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500">
-                      {stat.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Link
-                href={cclModuleHref}
-                className="action-secondary mt-4 inline-flex px-4 py-2 text-sm"
-              >
-                View module
               </Link>
             </div>
           </div>

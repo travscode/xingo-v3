@@ -1,4 +1,42 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  BookOpen,
+  BriefcaseBusiness,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  FileText,
+  GraduationCap,
+  HeartPulse,
+  Home,
+  Languages,
+  MapPinned,
+  ShieldCheck,
+  Sparkles,
+  Stethoscope,
+  Target,
+  TrendingUp,
+} from "lucide-react";
 import { overviewColumns } from "./content";
+
+const itemIcons: Record<string, LucideIcon> = {
+  "Health booking": HeartPulse,
+  "School meeting": GraduationCap,
+  "Housing repair": Home,
+  "Police statement": ShieldCheck,
+  "Short-turn recall": Clock3,
+  "Instruction transfer": Languages,
+  "Chronology control": CalendarDays,
+  "Natural delivery": Sparkles,
+  "Names and dates": FileText,
+  Deadlines: Target,
+  Documents: BookOpen,
+  "Service vocabulary": Stethoscope,
+  "Faster recall": TrendingUp,
+  "Cleaner relay": CheckCircle2,
+  "Better confidence": BriefcaseBusiness,
+  "Module readiness": MapPinned,
+};
 
 /**
  * Renders the test-overview style grid for the CCL landing page.
@@ -33,9 +71,17 @@ export function NaatiCclOverviewSection() {
                 {column.items.map((item) => (
                   <div
                     key={item}
-                    className="rounded-2xl border border-line bg-[#fafafa] px-3 py-2 text-sm"
+                    className="flex items-center gap-3 rounded-2xl border border-line bg-[#fafafa] px-3 py-2 text-sm"
                   >
-                    {item}
+                    {(() => {
+                      const Icon = itemIcons[item];
+                      return Icon ? (
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-500">
+                          <Icon size={16} />
+                        </span>
+                      ) : null;
+                    })()}
+                    <span>{item}</span>
                   </div>
                 ))}
               </div>
