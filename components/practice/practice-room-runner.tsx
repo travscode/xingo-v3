@@ -121,6 +121,14 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   const [transcriptEntries, setTranscriptEntries] = useState<TranscriptEntry[]>(
     [],
   );
+  const [translatedTranscriptTextById, setTranslatedTranscriptTextById] =
+    useState<Record<string, string>>({});
+  const [translatingEntryIds, setTranslatingEntryIds] = useState<
+    Record<string, boolean>
+  >({});
+  const [translationErrorsById, setTranslationErrorsById] = useState<
+    Record<string, string>
+  >({});
   const [error, setError] = useState<string | null>(null);
   const [audioNotice, setAudioNotice] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
@@ -190,6 +198,24 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
 
   const updateTranscriptEntry = useCallback(
     (entryId: string, text: string, append: boolean) => {
+      setTranslatedTranscriptTextById((current) => {
+        if (!(entryId in current)) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next[entryId];
+        return next;
+      });
+      setTranslationErrorsById((current) => {
+        if (!(entryId in current)) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next[entryId];
+        return next;
+      });
       setTranscriptEntries((current) =>
         current.map((entry) =>
           entry.id === entryId
@@ -210,6 +236,24 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
         return;
       }
 
+      setTranslatedTranscriptTextById((current) => {
+        if (!(entryId in current)) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next[entryId];
+        return next;
+      });
+      setTranslationErrorsById((current) => {
+        if (!(entryId in current)) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next[entryId];
+        return next;
+      });
       setTranscriptEntries((current) =>
         current.map((entry) =>
           entry.id === entryId
@@ -418,6 +462,9 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     setError(null);
     setAudioNotice(null);
     setTranscriptEntries([]);
+    setTranslatedTranscriptTextById({});
+    setTranslatingEntryIds({});
+    setTranslationErrorsById({});
     setIsStarting(true);
 
     try {
@@ -737,6 +784,83 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     transcriptEntries,
   ]);
 
+  /**
+   * Translates a single transcript entry into English without mutating the source transcript.
+   */
+  const handleTranslateTranscriptEntry = useCallback(
+    async (entryId: string, text: string) => {
+      const trimmedText = text.trim();
+
+      if (
+        !trimmedText ||
+        translatingEntryIds[entryId] ||
+        translatedTranscriptTextById[entryId]
+      ) {
+        return;
+      }
+
+      setTranslationErrorsById((current) => {
+        if (!(entryId in current)) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next[entryId];
+        return next;
+      });
+      setTranslatingEntryIds((current) => ({
+        ...current,
+        [entryId]: true,
+      }));
+
+      try {
+        const response = await fetch("/api/practice/translate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: trimmedText,
+          }),
+        });
+
+        if (!response.ok) {
+          const body = await response.text();
+          throw new Error(body || "Translation failed.");
+        }
+
+        const data = (await response.json()) as { translation?: string };
+        const translation =
+          typeof data.translation === "string" ? data.translation.trim() : "";
+
+        if (!translation) {
+          throw new Error("Translation failed.");
+        }
+
+        setTranslatedTranscriptTextById((current) => ({
+          ...current,
+          [entryId]: translation,
+        }));
+      } catch (caughtError) {
+        const message =
+          caughtError instanceof Error
+            ? caughtError.message
+            : "Translation failed.";
+        setTranslationErrorsById((current) => ({
+          ...current,
+          [entryId]: message,
+        }));
+      } finally {
+        setTranslatingEntryIds((current) => {
+          const next = { ...current };
+          delete next[entryId];
+          return next;
+        });
+      }
+    },
+    [translatedTranscriptTextById, translatingEntryIds],
+  );
+
   const visibleTranscriptEntries = transcriptEntries.filter((entry) =>
     entry.text.trim(),
   );
@@ -822,7 +946,9 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
           <div className="mt-14 grid gap-8 md:grid-cols-2 justify-items-center items-center justify-center md:justify-items-center">
             <ParticipantAvatar
               label={scenario.aiAgentB.name}
-              subLabel={scenario.aiAgentB.role}
+              subLabel={
+                scenario.aiAgentB.role + " ● " + scenario.aiAgentB.language
+              }
               imageUrl={scenario.aiAgentB.avatarImageUrl}
               initials={getInitials(
                 scenario.aiAgentB.name || scenario.aiAgentB.role,
@@ -833,7 +959,9 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
             />
             <ParticipantAvatar
               label={scenario.aiAgentA.name}
-              subLabel={scenario.aiAgentA.role}
+              subLabel={
+                scenario.aiAgentA.role + " ● " + scenario.aiAgentA.language
+              }
               imageUrl={scenario.aiAgentA.avatarImageUrl}
               initials={getInitials(
                 scenario.aiAgentA.name || scenario.aiAgentA.role,
@@ -951,46 +1079,101 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
           ) : null}
 
           <div className="mt-6 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
-            {visibleTranscriptEntries.map((entry) => (
-              <div
-                key={entry.id}
-                className={`flex items-start gap-3 ${
-                  entry.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                {entry.role !== "user" ? (
-                  <div className="mt-1 h-10 w-10 overflow-hidden rounded-full bg-[#adadad]">
-                    {getAvatarForSpeaker(entry.speaker) ? (
-                      // Uses a native image element to avoid Next.js optimizer issues with signed Convex URLs.
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={getAvatarForSpeaker(entry.speaker)!}
-                        alt={entry.speaker}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
+            {visibleTranscriptEntries.map((entry) =>
+              (() => {
+                const displayedText =
+                  translatedTranscriptTextById[entry.id] ?? entry.text;
+                const isTranslating = Boolean(translatingEntryIds[entry.id]);
+                const translationError = translationErrorsById[entry.id];
+                const hasTranslation = Boolean(
+                  translatedTranscriptTextById[entry.id],
+                );
+
+                return (
+                  <div
+                    key={entry.id}
+                    className={`flex items-start gap-3 ${
+                      entry.role === "user" ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    {entry.role !== "user" ? (
+                      <div className="mt-1 h-10 w-10 overflow-hidden rounded-full bg-[#adadad]">
+                        {getAvatarForSpeaker(entry.speaker) ? (
+                          // Uses a native image element to avoid Next.js optimizer issues with signed Convex URLs.
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={getAvatarForSpeaker(entry.speaker)!}
+                            alt={entry.speaker}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <div
+                      className={`max-w-[78%] rounded-[20px] px-4 py-3 text-sm leading-5 ${
+                        entry.role === "user"
+                          ? "bg-white text-black"
+                          : "bg-[#2f2f2f] text-white"
+                      }`}
+                    >
+                      <div className="mb-1 flex items-start justify-between gap-3">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] opacity-70">
+                          {entry.speaker}
+                        </div>
+                        {!hasTranslation ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleTranslateTranscriptEntry(
+                                entry.id,
+                                entry.text,
+                              )
+                            }
+                            disabled={isTranslating}
+                            className={`shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+                              entry.role === "user"
+                                ? "text-black/60"
+                                : "text-white/70"
+                            } disabled:opacity-50`}
+                          >
+                            Translate
+                          </button>
+                        ) : (
+                          <div
+                            className={`shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+                              entry.role === "user"
+                                ? "text-black/55"
+                                : "text-white/60"
+                            }`}
+                          >
+                            English
+                          </div>
+                        )}
+                      </div>
+                      {displayedText}
+                      {translationError ? (
+                        <div className="mt-2 text-[11px] text-[#ff8f8f]">
+                          {translationError}
+                        </div>
+                      ) : null}
+                    </div>
+                    {isTranslating ? (
+                      <div
+                        className="mt-3 h-4 w-4 animate-spin rounded-full border-2 border-white/25 border-t-[#7aa2ff]"
+                        aria-label="Translating"
+                        role="status"
                       />
                     ) : null}
+                    {entry.role === "user" ? (
+                      <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-xs font-semibold text-black">
+                        You
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
-                <div
-                  className={`max-w-[78%] rounded-[20px] px-4 py-3 text-sm leading-5 ${
-                    entry.role === "user"
-                      ? "bg-white text-black"
-                      : "bg-[#2f2f2f] text-white"
-                  }`}
-                >
-                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] opacity-70">
-                    {entry.speaker}
-                  </div>
-                  {entry.text}
-                </div>
-                {entry.role === "user" ? (
-                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-xs font-semibold text-black">
-                    You
-                  </div>
-                ) : null}
-              </div>
-            ))}
+                );
+              })(),
+            )}
             {visibleTranscriptEntries.length === 0 ? (
               <p className="text-sm text-white/65">
                 Transcript appears here once the conversation starts.
@@ -1020,7 +1203,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
                   ? `Start in ${countdownValue}`
                   : "Start"}
             </span>
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#001EFF]">
+            <span className="inline-flex h-8 w-8 items-center justify-center text-[#001EFF]">
               {sessionIsLive ? "→" : "▶"}
             </span>
           </button>
