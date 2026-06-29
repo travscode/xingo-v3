@@ -70,7 +70,11 @@ function extractMessageText(content: RealtimeMessageItem[] = []): string {
         return part.output_text ?? part.text ?? "";
       }
 
-      if (part.type === "audio") {
+      if (
+        part.type === "audio" ||
+        part.type === "input_audio" ||
+        part.type === "output_audio"
+      ) {
         return part.transcript ?? "";
       }
 
@@ -167,14 +171,31 @@ export function useRealtimeVoiceSession(
         }
 
         const itemId = item.itemId ?? item.id;
+        const role = item.role as TranscriptEntry["role"] | undefined;
         const text = extractMessageText(item.content ?? []);
+
+        if (
+          itemId &&
+          role &&
+          (role === "assistant" || role === "user") &&
+          !knownTranscriptItemIdsRef.current.has(itemId)
+        ) {
+          knownTranscriptItemIdsRef.current.add(itemId);
+          callbacks.onTranscriptStart({
+            id: itemId,
+            role,
+            speaker: role === "assistant" ? speakerLabel : interpreterLabel,
+            text: "",
+            createdAt: new Date().toISOString(),
+          });
+        }
 
         if (itemId && text) {
           callbacks.onTranscriptUpdate(itemId, text, false);
         }
       });
     },
-    [callbacks],
+    [callbacks, interpreterLabel, speakerLabel],
   );
 
   const handleTransportEvent = useCallback(
