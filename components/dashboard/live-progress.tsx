@@ -444,49 +444,6 @@ export function LiveProgress() {
       </section>
 
       <section className="surface-card rounded-[2rem] p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="eyebrow">History</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">
-              Trend explorer
-            </h2>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard
-              label="Modules practiced"
-              value={`${history.summary.uniqueModules}`}
-            />
-            <StatCard
-              label="Scenarios practiced"
-              value={`${history.summary.uniqueScenarios}`}
-            />
-          </div>
-        </div>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          {historyTabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => {
-                setSelectedTab(tab.id);
-                setSelectedMetric(tabMetrics[tab.id][0]);
-                setComparisonMode("single");
-                if (tab.id === "ccl" && selectedModuleId === "all") {
-                  setSelectedModuleId(CCL_MODULE_ID);
-                }
-              }}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                selectedTab === tab.id
-                  ? "bg-brand text-white"
-                  : "border border-line bg-white text-muted hover:text-foreground"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
         <div className="mt-4 flex flex-wrap gap-2">
           {tabMetrics[selectedTab].map((metric) => (
             <button
@@ -658,10 +615,28 @@ export function LiveProgress() {
 
         <div className="mt-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="text-sm text-muted">
-              {isCclTab
-                ? "CCL mode uses pass-rate and /90 scoring trends."
-                : "Hover over the graph for bucket details, or export the visible trend data."}
+            <div className="mt-6 flex flex-wrap gap-2">
+              {historyTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedTab(tab.id);
+                    setSelectedMetric(tabMetrics[tab.id][0]);
+                    setComparisonMode("single");
+                    if (tab.id === "ccl" && selectedModuleId === "all") {
+                      setSelectedModuleId(CCL_MODULE_ID);
+                    }
+                  }}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    selectedTab === tab.id
+                      ? "bg-brand text-white"
+                      : "border border-line bg-white text-muted hover:text-foreground"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
             <button
               type="button"
