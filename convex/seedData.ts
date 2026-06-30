@@ -1,6 +1,7 @@
 const demoAssessment = {
   overallScore: 82,
-  summary: "Strong command of the encounter with a few moments where terminology or pacing softened the original emphasis.",
+  summary:
+    "Strong command of the encounter with a few moments where terminology or pacing softened the original emphasis.",
   strengths: [
     "Preserved the core medical concern and timeline accurately",
     "Maintained calm turn-taking under pressure",
@@ -10,7 +11,8 @@ const demoAssessment = {
     "Carry medication details with tighter precision",
     "Keep long explanations segmented into shorter relays",
   ],
-  recommendedNextStep: "Repeat the scenario once more and focus on dosage, chronology, and escalation language.",
+  recommendedNextStep:
+    "Repeat the scenario once more and focus on dosage, chronology, and escalation language.",
   completionDecision: "completed" as const,
   breakdown: {
     accuracy: 84,
@@ -36,7 +38,11 @@ const demoAssessment = {
 };
 
 function buildTranscript(
-  lines: Array<{ speaker: string; text: string; role: "assistant" | "user" | "system" }>,
+  lines: Array<{
+    speaker: string;
+    text: string;
+    role: "assistant" | "user" | "system";
+  }>,
   baseTimestamp: string,
 ) {
   const startedAt = new Date(baseTimestamp).getTime();
@@ -156,12 +162,12 @@ export const seedModules = [
     id: "naati-certification-practice-ccl",
     title: "NAATI Certification Practice CCL",
     description:
-      "This module is built around the NAATI Credentialed Community Language (CCL) test. It helps learners practice short bilingual community dialogues that require accurate transfer of meaning, key details, and speaker intent between English and another language in settings such as health, education, housing, and public services.",
+      "This module is built around the NAATI Credentialed Community Language (CCL) test. It helps learners practice short bilingual community dialogues between an English speaker and a Language Other Than English speaker in settings such as health, education, housing, legal services, and public services.",
     industryCategory: "community",
     durationMinutes: 30,
     difficultyLevel: "intermediate",
     learningObjectives: [
-      "Practice short dialogue-based exchanges similar to the NAATI CCL test format",
+      "Practice short two-speaker dialogue exchanges similar to the NAATI CCL test format",
       "Retain key information such as names, dates, instructions, and service details across both languages",
       "Build confidence in accurate, complete, and natural community-language transfer under time pressure",
     ],
@@ -217,7 +223,11 @@ export const seedScenarios = [
         "Urgency and escalation language",
       ],
     },
-    expectedSkills: ["Medical terminology", "Clarification control", "Latency management"],
+    expectedSkills: [
+      "Medical terminology",
+      "Clarification control",
+      "Latency management",
+    ],
     difficultyLevel: "intermediate",
   },
   {
@@ -263,7 +273,11 @@ export const seedScenarios = [
         "Family communication tone",
       ],
     },
-    expectedSkills: ["Medication accuracy", "Chronology tracking", "Family communication"],
+    expectedSkills: [
+      "Medication accuracy",
+      "Chronology tracking",
+      "Family communication",
+    ],
     difficultyLevel: "beginner",
   },
   {
@@ -310,7 +324,11 @@ export const seedScenarios = [
         "Neutral delivery",
       ],
     },
-    expectedSkills: ["Legal register", "Conditional phrasing", "Formal tone retention"],
+    expectedSkills: [
+      "Legal register",
+      "Conditional phrasing",
+      "Formal tone retention",
+    ],
     difficultyLevel: "advanced",
   },
   {
@@ -357,7 +375,11 @@ export const seedScenarios = [
         "Long-answer management",
       ],
     },
-    expectedSkills: ["Timeline fidelity", "Document terminology", "Neutral delivery"],
+    expectedSkills: [
+      "Timeline fidelity",
+      "Document terminology",
+      "Neutral delivery",
+    ],
     difficultyLevel: "advanced",
   },
   {
@@ -403,7 +425,11 @@ export const seedScenarios = [
         "Empathy without drift",
       ],
     },
-    expectedSkills: ["Plain-language delivery", "Address accuracy", "Empathy without drift"],
+    expectedSkills: [
+      "Plain-language delivery",
+      "Address accuracy",
+      "Empathy without drift",
+    ],
     difficultyLevel: "beginner",
   },
   {
@@ -922,7 +948,8 @@ export const seedJobs = [
   {
     id: "job_1",
     title: "Hospital Discharge Follow-up",
-    description: "Remote interpreting support for a bilingual discharge planning session.",
+    description:
+      "Remote interpreting support for a bilingual discharge planning session.",
     industry: "medical",
     date: "2026-03-24",
     location: "Remote",
@@ -933,7 +960,8 @@ export const seedJobs = [
   {
     id: "job_2",
     title: "Community Legal Clinic Intake",
-    description: "In-person appointment block for initial client intake and referral advice.",
+    description:
+      "In-person appointment block for initial client intake and referral advice.",
     industry: "legal",
     date: "2026-03-29",
     location: "Perth CBD",
@@ -956,7 +984,8 @@ export function demoSessionsForClerk(clerkId: string) {
       durationMinutes: 18,
       score: 82,
       completionStatus: "completed" as const,
-      transcriptSummary: "Strong terminology control with two minor omissions in medication timing.",
+      transcriptSummary:
+        "Strong terminology control with two minor omissions in medication timing.",
       transcriptEntries: buildTranscript(
         [
           {
@@ -991,7 +1020,8 @@ export function demoSessionsForClerk(clerkId: string) {
       durationMinutes: 26,
       score: 74,
       completionStatus: "needs_review" as const,
-      transcriptSummary: "Good register, but release conditions were condensed too aggressively.",
+      transcriptSummary:
+        "Good register, but release conditions were condensed too aggressively.",
       transcriptEntries: buildTranscript(
         [
           {
@@ -1015,7 +1045,8 @@ export function demoSessionsForClerk(clerkId: string) {
       assessment: {
         ...demoAssessment,
         overallScore: 74,
-        summary: "Register was strong, but some conditional details and reporting obligations lost precision.",
+        summary:
+          "Register was strong, but some conditional details and reporting obligations lost precision.",
         improvementAreas: [
           "Preserve every release condition without compression",
           "Keep date and reporting language fully explicit",
@@ -1044,7 +1075,8 @@ export function demoSessionsForClerk(clerkId: string) {
       durationMinutes: 14,
       score: 91,
       completionStatus: "completed" as const,
-      transcriptSummary: "Clear turn management and strong accuracy across names and addresses.",
+      transcriptSummary:
+        "Clear turn management and strong accuracy across names and addresses.",
       transcriptEntries: buildTranscript(
         [
           {
@@ -1068,13 +1100,16 @@ export function demoSessionsForClerk(clerkId: string) {
       assessment: {
         ...demoAssessment,
         overallScore: 91,
-        summary: "Excellent pacing, clarity, and factual accuracy across the housing intake.",
+        summary:
+          "Excellent pacing, clarity, and factual accuracy across the housing intake.",
         strengths: [
           "Kept service explanations accessible and complete",
           "Maintained excellent clarity around names and living arrangements",
           "Balanced empathy with accuracy",
         ],
-        improvementAreas: ["Continue building confidence with longer service explanations"],
+        improvementAreas: [
+          "Continue building confidence with longer service explanations",
+        ],
         recommendedNextStep:
           "Move into more complex community and immigration scenarios to build stamina with longer turns.",
         breakdown: {

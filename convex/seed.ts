@@ -6,10 +6,51 @@ import {
   seedScenarios,
 } from "./seedData";
 
-function resolveSeedAgentCount(
-  scenario: (typeof seedScenarios)[number],
-): 1 | 2 {
-  if ("agentCount" in scenario && scenario.agentCount === 1) {
+type SeedScenarioRecord = {
+  id: string;
+  moduleId: string;
+  title: string;
+  description: string;
+  agentCount?: 1 | 2;
+  aiAgentA: {
+    name?: string;
+    role: string;
+    voice: string;
+    avatarImageUrl?: string;
+    goal: string;
+    language?: string;
+    demeanor?: string;
+    instructions?: string;
+    openingLine?: string;
+  };
+  aiAgentB?: {
+    name?: string;
+    role: string;
+    voice: string;
+    avatarImageUrl?: string;
+    goal: string;
+    language?: string;
+    demeanor?: string;
+    instructions?: string;
+    openingLine?: string;
+  };
+  practiceRuntime: {
+    interpreterRole: string;
+    sourceLanguage: string;
+    targetLanguage: string;
+    openingSpeaker: "agent_a" | "agent_b";
+    briefing: string;
+    assessmentFocus: string[];
+  };
+  expectedSkills: string[];
+  difficultyLevel: "beginner" | "intermediate" | "advanced";
+};
+
+const typedSeedScenarios =
+  seedScenarios as unknown as readonly SeedScenarioRecord[];
+
+function resolveSeedAgentCount(scenario: SeedScenarioRecord): 1 | 2 {
+  if (scenario.agentCount === 1) {
     return 1;
   }
 
@@ -55,7 +96,7 @@ export const seedBaseData = mutation({
       insertedModules += 1;
     }
 
-    for (const scenario of seedScenarios) {
+    for (const scenario of typedSeedScenarios) {
       const existingScenario = await ctx.db
         .query("scenarios")
         .withIndex("by_public_id", (q) => q.eq("id", scenario.id))
@@ -116,7 +157,7 @@ export const syncScenarioRuntime = mutation({
   handler: async (ctx) => {
     let updated = 0;
 
-    for (const seededScenario of seedScenarios) {
+    for (const seededScenario of typedSeedScenarios) {
       const existingScenario = await ctx.db
         .query("scenarios")
         .withIndex("by_public_id", (q) => q.eq("id", seededScenario.id))

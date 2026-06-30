@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
@@ -51,13 +52,20 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
           return rightMatched - leftMatched;
         })
       : scenarios;
+  const isNaatiCclModule = moduleId === "naati-certification-practice-ccl";
+  const scenarioPassThreshold = isNaatiCclModule ? 63 : 75;
   const scenarioStatus = new Map(
     prioritizedScenarios.map((scenario) => {
       const related = completedSessions.filter(
         (session) => session.scenarioId === scenario.id,
       );
-      const latest = related[0] ?? null;
-      return [scenario.id, latest];
+      const highest =
+        related.length > 0
+          ? related.reduce((best, current) =>
+              current.score > best.score ? current : best,
+            )
+          : null;
+      return [scenario.id, highest];
     }),
   );
   const bestScore = Math.max(
@@ -102,6 +110,32 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
             Start practice
           </Link>
         ) : null}
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="surface-card rounded-[2rem] p-5">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+            Overall score
+          </div>
+          <div className="mt-3 text-4xl font-semibold">{bestScore}%</div>
+        </div>
+        <div className="surface-card rounded-[2rem] p-5">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+            Completed attempts
+          </div>
+          <div className="mt-3 text-4xl font-semibold">
+            {completedSessions.length}
+          </div>
+        </div>
+
+        <div className="surface-card rounded-[2rem] p-5">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+            Module badge
+          </div>
+          <div className="mt-3 text-2xl font-semibold">
+            {learningModule.badgeIcon}
+          </div>
+        </div>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
@@ -150,8 +184,25 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
                       ) : null}
                     </div>
                     {scenarioStatus.get(scenario.id) ? (
-                      <div className="mt-3 text-sm text-muted">
-                        Latest score {scenarioStatus.get(scenario.id)?.score}%
+                      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+                        <span className="text-muted">
+                          Highest score{" "}
+                          {isNaatiCclModule
+                            ? `${scenarioStatus.get(scenario.id)?.score}/90`
+                            : `${scenarioStatus.get(scenario.id)?.score}%`}
+                        </span>
+                        {(scenarioStatus.get(scenario.id)?.score ?? 0) >=
+                        scenarioPassThreshold ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-emerald-700">
+                            <CheckCircle2 size={14} />
+                            Pass
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1.5 text-red-700">
+                            <XCircle size={14} />
+                            Fail
+                          </span>
+                        )}
                       </div>
                     ) : null}
                   </div>
@@ -164,31 +215,6 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className="surface-card rounded-[2rem] p-5">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-            Completed attempts
-          </div>
-          <div className="mt-3 text-4xl font-semibold">
-            {completedSessions.length}
-          </div>
-        </div>
-        <div className="surface-card rounded-[2rem] p-5">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-            Best score
-          </div>
-          <div className="mt-3 text-4xl font-semibold">{bestScore}%</div>
-        </div>
-        <div className="surface-card rounded-[2rem] p-5">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-            Module badge
-          </div>
-          <div className="mt-3 text-2xl font-semibold">
-            {learningModule.badgeIcon}
           </div>
         </div>
       </section>
