@@ -644,34 +644,73 @@ export function LiveProgress() {
       <section className="surface-card rounded-[2rem] p-6">
         <div className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_0.8fr] rounded-[1.5rem] border border-line bg-[#fafafa]">
           <div className=" p-4">
-            <div className="mt-3 flex flex-wrap gap-2">
-              {(
-                [
-                  ["overall", "Overall"],
-                  ["thisWeek", "This week"],
-                  ["thisMonth", "This month"],
-                  ["lastMonth", "Last month"],
-                  ["thisYear", "This year"],
-                ] as const
-              ).map(([rangeId, label]) => (
-                <button
-                  key={rangeId}
-                  type="button"
-                  onClick={() => {
-                    const range = getQuickRange(rangeId);
-                    setSelectedRange(rangeId);
-                    setStartDate(range.startDate);
-                    setEndDate(range.endDate);
-                    setHistoryPage(1);
-                  }}
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                    selectedRange === rangeId
-                      ? "bg-brand text-white"
-                      : "border border-line bg-white text-muted hover:text-foreground"
-                  }`}
-                >
-                  {label}
-                </button>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {historyTabs.map((tab) => (
+                <DropdownMenu key={tab.id}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        selectedTab === tab.id
+                          ? "bg-brand text-white"
+                          : "border border-line bg-white text-muted hover:text-foreground"
+                      }`}
+                    >
+                      <span>
+                        {getHistoryTriggerLabel(
+                          tab.id,
+                          selectedTab,
+                          selectedMetric,
+                          comparisonMode,
+                        )}
+                      </span>
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-60">
+                    <DropdownMenuLabel>{tab.label}</DropdownMenuLabel>
+                    {tabMetrics[tab.id].map((metric) => {
+                      const isActiveMetric =
+                        selectedTab === tab.id &&
+                        comparisonMode === "single" &&
+                        selectedMetric === metric;
+
+                      return (
+                        <DropdownMenuItem
+                          key={metric}
+                          onSelect={() => selectHistoryView(tab.id, metric)}
+                          className="justify-between"
+                        >
+                          <span>{metricMeta[metric].label}</span>
+                          {isActiveMetric ? (
+                            <Check className="h-4 w-4" />
+                          ) : null}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                    {tab.id === "scores" || tab.id === "ccl" ? (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            selectHistoryView(
+                              tab.id,
+                              tabMetrics[tab.id][0],
+                              "avgVsBest",
+                            )
+                          }
+                          className="justify-between"
+                        >
+                          <span>Average vs best</span>
+                          {selectedTab === tab.id &&
+                          comparisonMode === "avgVsBest" ? (
+                            <Check className="h-4 w-4" />
+                          ) : null}
+                        </DropdownMenuItem>
+                      </>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ))}
             </div>
           </div>
@@ -793,78 +832,6 @@ export function LiveProgress() {
             subtitle={chartSubtitle}
             series={chartSeries}
           />
-
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="mt-6 flex flex-wrap gap-2">
-              {historyTabs.map((tab) => (
-                <DropdownMenu key={tab.id}>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                        selectedTab === tab.id
-                          ? "bg-brand text-white"
-                          : "border border-line bg-white text-muted hover:text-foreground"
-                      }`}
-                    >
-                      <span>
-                        {getHistoryTriggerLabel(
-                          tab.id,
-                          selectedTab,
-                          selectedMetric,
-                          comparisonMode,
-                        )}
-                      </span>
-                      <ChevronDown className="h-4 w-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="min-w-60">
-                    <DropdownMenuLabel>{tab.label}</DropdownMenuLabel>
-                    {tabMetrics[tab.id].map((metric) => {
-                      const isActiveMetric =
-                        selectedTab === tab.id &&
-                        comparisonMode === "single" &&
-                        selectedMetric === metric;
-
-                      return (
-                        <DropdownMenuItem
-                          key={metric}
-                          onSelect={() => selectHistoryView(tab.id, metric)}
-                          className="justify-between"
-                        >
-                          <span>{metricMeta[metric].label}</span>
-                          {isActiveMetric ? (
-                            <Check className="h-4 w-4" />
-                          ) : null}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                    {tab.id === "scores" || tab.id === "ccl" ? (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onSelect={() =>
-                            selectHistoryView(
-                              tab.id,
-                              tabMetrics[tab.id][0],
-                              "avgVsBest",
-                            )
-                          }
-                          className="justify-between"
-                        >
-                          <span>Average vs best</span>
-                          {selectedTab === tab.id &&
-                          comparisonMode === "avgVsBest" ? (
-                            <Check className="h-4 w-4" />
-                          ) : null}
-                        </DropdownMenuItem>
-                      </>
-                    ) : null}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
