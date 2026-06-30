@@ -71,6 +71,20 @@ const assessmentBreakdown = v.object({
   professionalism: v.number(),
 });
 
+const aiUsageSource = v.union(
+  v.literal("realtime"),
+  v.literal("assessment"),
+  v.literal("translation"),
+  v.literal("other"),
+);
+
+const stripeChargeStatus = v.union(
+  v.literal("not_applicable"),
+  v.literal("pending"),
+  v.literal("invoiced"),
+  v.literal("failed"),
+);
+
 const sessionAssessment = v.object({
   overallScore: v.number(),
   summary: v.string(),
@@ -174,6 +188,32 @@ export default defineSchema({
     .index("by_clerkId", ["clerkId"])
     .index("by_moduleId", ["moduleId"])
     .index("by_scenarioId", ["scenarioId"]),
+
+  aiUsageEvents: defineTable({
+    id: v.string(),
+    clerkId: v.string(),
+    source: aiUsageSource,
+    model: v.string(),
+    moduleId: v.optional(v.string()),
+    scenarioId: v.optional(v.string()),
+    attemptId: v.optional(v.string()),
+    requestPath: v.optional(v.string()),
+    promptTokens: v.number(),
+    completionTokens: v.number(),
+    totalTokens: v.number(),
+    usageCredits: v.number(),
+    overageCredits: v.number(),
+    overageChargeCents: v.number(),
+    stripeChargeStatus,
+    stripeInvoiceItemId: v.optional(v.string()),
+    stripeChargeError: v.optional(v.string()),
+    billingMonth: v.string(),
+    createdAt: v.string(),
+  })
+    .index("by_public_id", ["id"])
+    .index("by_clerkId", ["clerkId"])
+    .index("by_clerkId_billingMonth", ["clerkId", "billingMonth"])
+    .index("by_attemptId", ["attemptId"]),
 
   jobs: defineTable({
     id: v.string(),

@@ -136,6 +136,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   const [isPushToTalkActive, setIsPushToTalkActive] = useState(false);
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
   const spaceKeyDownAtRef = useRef<number | null>(null);
+  const attemptIdRef = useRef<string | null>(null);
   const spaceHoldTimeoutRef = useRef<number | null>(null);
   const spaceHoldActiveRef = useRef(false);
   const countdownTimeoutRef = useRef<number | null>(null);
@@ -319,6 +320,34 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     [agentBConfig, scenario],
   );
 
+  /**
+   * Records realtime token usage for the current room attempt without blocking practice.
+   */
+  const reportRealtimeUsage = useCallback(
+    async (usage: {
+      eventId: string;
+      model: string;
+      promptTokens: number;
+      completionTokens: number;
+      totalTokens: number;
+    }) => {
+      await fetch("/api/openai/usage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...usage,
+          source: "realtime",
+          moduleId: scenario.moduleId,
+          scenarioId: scenario.id,
+          attemptId: attemptIdRef.current ?? undefined,
+        }),
+      }).catch(() => undefined);
+    },
+    [scenario.id, scenario.moduleId],
+  );
+
   const agentASession = useRealtimeVoiceSession(
     scenario.aiAgentA.role,
     `Interpreter -> ${scenario.aiAgentA.role}`,
@@ -326,6 +355,9 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       onTranscriptStart: addTranscriptEntry,
       onTranscriptUpdate: updateTranscriptEntry,
       onTranscriptComplete: completeTranscriptEntry,
+      onUsage: (usage) => {
+        void reportRealtimeUsage(usage);
+      },
       onError: handleRealtimeWarning,
     },
   );
@@ -337,6 +369,9 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       onTranscriptStart: addTranscriptEntry,
       onTranscriptUpdate: updateTranscriptEntry,
       onTranscriptComplete: completeTranscriptEntry,
+      onUsage: (usage) => {
+        void reportRealtimeUsage(usage);
+      },
       onError: handleRealtimeWarning,
     },
   );
@@ -492,6 +527,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
         scenarioId: scenario.id,
       });
 
+      attemptIdRef.current = nextAttemptId;
       setAttemptId(nextAttemptId);
       setSessionStartedAt(Date.now());
 
@@ -757,6 +793,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
         body: JSON.stringify({
           scenario,
           transcriptEntries,
+          attemptId,
         }),
       });
 
@@ -789,6 +826,9 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
         },
       });
 
+      attemptIdRef.current = null;
+      setAttemptId(null);
+      setSessionStartedAt(null);
       router.push(`/practice/${scenario.id}?attemptId=${attemptId}&fromRoom=1`);
     } catch (caughtError) {
       const message =
@@ -847,6 +887,9 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
           },
           body: JSON.stringify({
             text: trimmedText,
+            moduleId: scenario.moduleId,
+            scenarioId: scenario.id,
+            attemptId: attemptIdRef.current ?? undefined,
           }),
         });
 
@@ -884,7 +927,12 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
         });
       }
     },
-    [translatedTranscriptTextById, translatingEntryIds],
+    [
+      scenario.id,
+      scenario.moduleId,
+      translatedTranscriptTextById,
+      translatingEntryIds,
+    ],
   );
 
   const visibleTranscriptEntries = transcriptEntries.filter((entry) =>

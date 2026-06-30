@@ -31,6 +31,9 @@ const sessionAssessment = v.object({
 const progressMetric = v.union(
   v.literal("averageScore"),
   v.literal("bestScore"),
+  v.literal("averageScore90"),
+  v.literal("bestScore90"),
+  v.literal("passRate"),
   v.literal("accuracy"),
   v.literal("terminology"),
   v.literal("fluency"),
@@ -45,6 +48,9 @@ const progressMetric = v.union(
 type ProgressMetric =
   | "averageScore"
   | "bestScore"
+  | "averageScore90"
+  | "bestScore90"
+  | "passRate"
   | "accuracy"
   | "terminology"
   | "fluency"
@@ -75,6 +81,8 @@ type CompletedSessionRecord = SessionStatusRecord & {
     };
   };
 };
+
+const CCL_PASS_SCORE = 63;
 
 function getClerkId(identity: {
   subject?: string | null;
@@ -201,12 +209,20 @@ function getBucketMetricValue(
 
   switch (metric) {
     case "averageScore":
+    case "averageScore90":
       return Math.round(
         sessions.reduce((sum, session) => sum + session.score, 0) /
           sessions.length,
       );
     case "bestScore":
+    case "bestScore90":
       return Math.max(...sessions.map((session) => session.score));
+    case "passRate":
+      return Math.round(
+        (sessions.filter((session) => session.score >= CCL_PASS_SCORE).length /
+          sessions.length) *
+          100,
+      );
     case "practiceMinutes":
       return Math.round(
         sessions.reduce((sum, session) => sum + session.durationMinutes, 0),
@@ -236,6 +252,77 @@ function getBucketMetricValue(
     default:
       return 0;
   }
+}
+
+/**
+ * Builds chart points for one metric across the provided aggregation buckets.
+ */
+function buildProgressPoints(
+  metric: ProgressMetric,
+  bucket: "day" | "week" | "month",
+  buckets: Map<string, CompletedSessionRecord[]>,
+) {
+  return [...buckets.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([bucketStart, bucketSessions]) => {
+      const bucketDate = new Date(bucketStart);
+      return {
+        bucketStart,
+        bucketLabel: formatBucketLabel(bucketDate, bucket),
+        value: getBucketMetricValue(metric, bucketSessions),
+        attemptCount: bucketSessions.length,
+      };
+    });
+}
+
+/**
+ * Calculates the summary cards shown above the progress chart.
+ */
+function getProgressSummary(sortedSessions: CompletedSessionRecord[]) {
+  const attemptCount = sortedSessions.length;
+
+  return {
+    averageScore:
+      attemptCount > 0
+        ? Math.round(
+            sortedSessions.reduce((sum, session) => sum + session.score, 0) /
+              attemptCount,
+          )
+        : 0,
+    bestScore:
+      attemptCount > 0
+        ? Math.max(...sortedSessions.map((session) => session.score))
+        : 0,
+    averageScore90:
+      attemptCount > 0
+        ? Math.round(
+            sortedSessions.reduce((sum, session) => sum + session.score, 0) /
+              attemptCount,
+          )
+        : 0,
+    bestScore90:
+      attemptCount > 0
+        ? Math.max(...sortedSessions.map((session) => session.score))
+        : 0,
+    passRate:
+      attemptCount > 0
+        ? Math.round(
+            (sortedSessions.filter((session) => session.score >= CCL_PASS_SCORE)
+              .length /
+              attemptCount) *
+              100,
+          )
+        : 0,
+    attemptCount,
+    practiceMinutes: Math.round(
+      sortedSessions.reduce((sum, session) => sum + session.durationMinutes, 0),
+    ),
+    uniqueModules: new Set(sortedSessions.map((session) => session.moduleId))
+      .size,
+    uniqueScenarios: new Set(
+      sortedSessions.map((session) => session.scenarioId),
+    ).size,
+  };
 }
 
 function calculateMetrics(
@@ -366,7 +453,7 @@ export const metricsForCurrentUser = query({
 
 export const progressHistoryForCurrentUser = query({
   args: {
-    metric: progressMetric,
+    metrics: v.array(progressMetric),
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
     moduleId: v.optional(v.string()),
@@ -378,10 +465,14 @@ export const progressHistoryForCurrentUser = query({
     if (!identity) {
       return {
         bucket: "day" as const,
+        series: [],
         points: [],
         summary: {
           averageScore: 0,
           bestScore: 0,
+          averageScore90: 0,
+          bestScore90: 0,
+          passRate: 0,
           attemptCount: 0,
           practiceMinutes: 0,
           uniqueModules: 0,
@@ -448,48 +539,20 @@ export const progressHistoryForCurrentUser = query({
       existing.push(session);
       buckets.set(key, existing);
     }
+    const metrics: ProgressMetric[] =
+      args.metrics.length > 0
+        ? [...new Set(args.metrics)]
+        : (["averageScore"] as ProgressMetric[]);
+    const series = metrics.map((metric) => ({
+      metric,
+      points: buildProgressPoints(metric, bucket, buckets),
+    }));
 
     return {
       bucket,
-      points: [...buckets.entries()]
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([bucketStart, bucketSessions]) => {
-          const bucketDate = new Date(bucketStart);
-          return {
-            bucketStart,
-            bucketLabel: formatBucketLabel(bucketDate, bucket),
-            value: getBucketMetricValue(args.metric, bucketSessions),
-            attemptCount: bucketSessions.length,
-          };
-        }),
-      summary: {
-        averageScore:
-          sortedSessions.length > 0
-            ? Math.round(
-                sortedSessions.reduce(
-                  (sum, session) => sum + session.score,
-                  0,
-                ) / sortedSessions.length,
-              )
-            : 0,
-        bestScore:
-          sortedSessions.length > 0
-            ? Math.max(...sortedSessions.map((session) => session.score))
-            : 0,
-        attemptCount: sortedSessions.length,
-        practiceMinutes: Math.round(
-          sortedSessions.reduce(
-            (sum, session) => sum + session.durationMinutes,
-            0,
-          ),
-        ),
-        uniqueModules: new Set(
-          sortedSessions.map((session) => session.moduleId),
-        ).size,
-        uniqueScenarios: new Set(
-          sortedSessions.map((session) => session.scenarioId),
-        ).size,
-      },
+      series,
+      points: series[0]?.points ?? [],
+      summary: getProgressSummary(sortedSessions),
     };
   },
 });

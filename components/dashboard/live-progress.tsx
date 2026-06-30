@@ -7,7 +7,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { ProgressHistoryChart } from "@/components/dashboard/progress-history-chart";
 import { api } from "@/convex/_generated/api";
 
-type HistoryTabId = "scores" | "assessment" | "practice" | "coverage";
+type HistoryTabId = "scores" | "assessment" | "practice" | "coverage" | "ccl";
 type QuickRangeId =
   | "overall"
   | "thisWeek"
@@ -15,12 +15,14 @@ type QuickRangeId =
   | "lastMonth"
   | "thisYear"
   | "custom";
+type ComparisonModeId = "single" | "avgVsBest";
 
 const historyTabs: Array<{ id: HistoryTabId; label: string }> = [
   { id: "scores", label: "Scores" },
   { id: "assessment", label: "Assessment" },
   { id: "practice", label: "Practice" },
   { id: "coverage", label: "Coverage" },
+  { id: "ccl", label: "CCL" },
 ];
 
 const tabMetrics = {
@@ -34,6 +36,7 @@ const tabMetrics = {
   ],
   practice: ["practiceMinutes", "attempts"],
   coverage: ["modulesPracticed", "scenariosPracticed"],
+  ccl: ["averageScore90", "bestScore90", "passRate"],
 } as const;
 
 const metricMeta = {
@@ -45,6 +48,23 @@ const metricMeta = {
   bestScore: {
     label: "Best score",
     subtitle: "Strongest score reached in each time bucket.",
+    formatValue: (value: number) => `${Math.round(value)}%`,
+  },
+  averageScore90: {
+    label: "Average score (/90)",
+    subtitle:
+      "Average NAATI CCL result across completed attempts in each time bucket.",
+    formatValue: (value: number) => `${Math.round(value)}/90`,
+  },
+  bestScore90: {
+    label: "Best score (/90)",
+    subtitle: "Strongest NAATI CCL result reached in each time bucket.",
+    formatValue: (value: number) => `${Math.round(value)}/90`,
+  },
+  passRate: {
+    label: "Pass rate",
+    subtitle:
+      "Share of completed CCL attempts meeting the 63/90 pass threshold.",
     formatValue: (value: number) => `${Math.round(value)}%`,
   },
   accuracy: {
@@ -96,6 +116,87 @@ const metricMeta = {
     formatValue: (value: number) => `${Math.round(value)}`,
   },
 } as const;
+
+type MetricId = keyof typeof metricMeta;
+
+const CCL_MODULE_ID = "naati-certification-practice-ccl";
+
+const metricColors: Record<MetricId, string> = {
+  averageScore: "#4f46e5",
+  bestScore: "#0f766e",
+  averageScore90: "#2563eb",
+  bestScore90: "#0f766e",
+  passRate: "#dc2626",
+  accuracy: "#7c3aed",
+  terminology: "#2563eb",
+  fluency: "#0891b2",
+  turnManagement: "#ea580c",
+  professionalism: "#16a34a",
+  practiceMinutes: "#4f46e5",
+  attempts: "#64748b",
+  modulesPracticed: "#7c3aed",
+  scenariosPracticed: "#2563eb",
+};
+
+/**
+ * Escapes a value for safe inclusion in CSV output.
+ */
+function escapeCsvValue(value: string | number) {
+  const normalized = String(value ?? "");
+  if (
+    normalized.includes(",") ||
+    normalized.includes('"') ||
+    normalized.includes("\n")
+  ) {
+    return `"${normalized.replace(/"/g, '""')}"`;
+  }
+  return normalized;
+}
+
+/**
+ * Downloads a CSV file in the browser without leaving the current page.
+ */
+function downloadCsv(filename: string, rows: string[][]) {
+  const csv = rows.map((row) => row.map(escapeCsvValue).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Builds a CSV export from the currently displayed chart series.
+ */
+function buildChartCsvRows(
+  series: Array<{
+    label: string;
+    points: Array<{
+      bucketStart: string;
+      bucketLabel: string;
+      value: number;
+      attemptCount: number;
+    }>;
+    formatValue: (value: number) => string;
+  }>,
+) {
+  const referencePoints = series[0]?.points ?? [];
+  const header = [
+    "Bucket start",
+    "Bucket label",
+    "Attempt count",
+    ...series.map((item) => item.label),
+  ];
+  const rows = referencePoints.map((point, index) => [
+    point.bucketStart,
+    point.bucketLabel,
+    String(point.attemptCount),
+    ...series.map((item) => item.formatValue(item.points[index]?.value ?? 0)),
+  ]);
+  return [header, ...rows];
+}
 
 /**
  * Formats a JavaScript date as a native date-input string.
@@ -204,8 +305,10 @@ function matchesProgressFilters(
 export function LiveProgress() {
   const [selectedTab, setSelectedTab] = useState<HistoryTabId>("scores");
   const [selectedMetric, setSelectedMetric] =
-    useState<(typeof tabMetrics)[HistoryTabId][number]>("averageScore");
+    useState<MetricId>("averageScore");
   const [selectedRange, setSelectedRange] = useState<QuickRangeId>("overall");
+  const [comparisonMode, setComparisonMode] =
+    useState<ComparisonModeId>("single");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [selectedModuleId, setSelectedModuleId] = useState("all");
@@ -213,8 +316,23 @@ export function LiveProgress() {
   const sessions = useQuery(api.sessions.listForCurrentUser, {});
   const modules = useQuery(api.modules.list, {});
   const scenarios = useQuery(api.scenarios.list, {});
+  const activeMetrics = useMemo<MetricId[]>(() => {
+    if (comparisonMode !== "avgVsBest") {
+      return [selectedMetric];
+    }
+
+    if (selectedTab === "ccl") {
+      return ["averageScore90", "bestScore90"];
+    }
+
+    if (selectedTab === "scores") {
+      return ["averageScore", "bestScore"];
+    }
+
+    return [selectedMetric];
+  }, [comparisonMode, selectedMetric, selectedTab]);
   const history = useQuery(api.sessions.progressHistoryForCurrentUser, {
-    metric: selectedMetric,
+    metrics: activeMetrics,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
     moduleId: selectedModuleId !== "all" ? selectedModuleId : undefined,
@@ -252,10 +370,36 @@ export function LiveProgress() {
     [endDate, selectedModuleId, selectedScenarioId, sessions, startDate],
   );
   const activeMetricMeta = metricMeta[selectedMetric];
+  const isCclTab = selectedTab === "ccl";
 
   if (!sessions || !scenarios || !modules || !history) {
     return <div className="surface-card h-64 rounded-[2rem] animate-pulse" />;
   }
+
+  const chartSeries = history.series.map((item) => ({
+    id: item.metric,
+    label: metricMeta[item.metric].label,
+    color: metricColors[item.metric],
+    points: item.points,
+    formatValue: metricMeta[item.metric].formatValue,
+  }));
+  const chartTitle =
+    comparisonMode === "avgVsBest" && selectedTab === "scores"
+      ? "Average vs best score"
+      : comparisonMode === "avgVsBest" && selectedTab === "ccl"
+        ? "Average vs best CCL score"
+        : activeMetricMeta.label;
+  const chartSubtitle =
+    comparisonMode === "avgVsBest" && selectedTab === "scores"
+      ? "Compare your average result and strongest result in the same trend view."
+      : comparisonMode === "avgVsBest" && selectedTab === "ccl"
+        ? "Track average and best NAATI CCL results together on a /90 scale."
+        : activeMetricMeta.subtitle;
+  const cclScenarioIds = new Set(
+    scenarios
+      .filter((scenario) => scenario.moduleId === CCL_MODULE_ID)
+      .map((scenario) => scenario.id),
+  );
 
   return (
     <div className="space-y-8">
@@ -273,17 +417,39 @@ export function LiveProgress() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Average score"
-          value={`${history.summary.averageScore}%`}
-        />
-        <StatCard label="Best score" value={`${history.summary.bestScore}%`} />
-        <StatCard
-          label="Practice time"
-          value={metricMeta.practiceMinutes.formatValue(
-            history.summary.practiceMinutes,
-          )}
-        />
+        {isCclTab ? (
+          <>
+            <StatCard
+              label="Average score"
+              value={`${history.summary.averageScore90}/90`}
+            />
+            <StatCard
+              label="Best score"
+              value={`${history.summary.bestScore90}/90`}
+            />
+            <StatCard
+              label="Pass rate"
+              value={`${history.summary.passRate}%`}
+            />
+          </>
+        ) : (
+          <>
+            <StatCard
+              label="Average score"
+              value={`${history.summary.averageScore}%`}
+            />
+            <StatCard
+              label="Best score"
+              value={`${history.summary.bestScore}%`}
+            />
+            <StatCard
+              label="Practice time"
+              value={metricMeta.practiceMinutes.formatValue(
+                history.summary.practiceMinutes,
+              )}
+            />
+          </>
+        )}
         <StatCard
           label="Completed attempts"
           value={`${history.summary.attemptCount}`}
@@ -318,6 +484,10 @@ export function LiveProgress() {
               onClick={() => {
                 setSelectedTab(tab.id);
                 setSelectedMetric(tabMetrics[tab.id][0]);
+                setComparisonMode("single");
+                if (tab.id === "ccl" && selectedModuleId === "all") {
+                  setSelectedModuleId(CCL_MODULE_ID);
+                }
               }}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                 selectedTab === tab.id
@@ -335,9 +505,12 @@ export function LiveProgress() {
             <button
               key={metric}
               type="button"
-              onClick={() => setSelectedMetric(metric)}
+              onClick={() => {
+                setComparisonMode("single");
+                setSelectedMetric(metric);
+              }}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                selectedMetric === metric
+                selectedMetric === metric && comparisonMode === "single"
                   ? "bg-brand/10 text-brand"
                   : "border border-line bg-white text-muted hover:text-foreground"
               }`}
@@ -345,6 +518,19 @@ export function LiveProgress() {
               {metricMeta[metric].label}
             </button>
           ))}
+          {selectedTab === "scores" || selectedTab === "ccl" ? (
+            <button
+              type="button"
+              onClick={() => setComparisonMode("avgVsBest")}
+              className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                comparisonMode === "avgVsBest"
+                  ? "bg-brand/10 text-brand"
+                  : "border border-line bg-white text-muted hover:text-foreground"
+              }`}
+            >
+              Average vs best
+            </button>
+          ) : null}
         </div>
 
         <div className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
@@ -484,11 +670,31 @@ export function LiveProgress() {
         </div>
 
         <div className="mt-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-sm text-muted">
+              {isCclTab
+                ? "CCL mode uses pass-rate and /90 scoring trends."
+                : "Hover over the graph for bucket details, or export the visible trend data."}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const rows = buildChartCsvRows(chartSeries);
+                const filePrefix = isCclTab ? "ccl-progress" : "progress";
+                downloadCsv(
+                  `${filePrefix}-${selectedTab}-${selectedMetric}.csv`,
+                  rows,
+                );
+              }}
+              className="action-secondary px-4 py-2 text-sm"
+            >
+              Export CSV
+            </button>
+          </div>
           <ProgressHistoryChart
-            title={activeMetricMeta.label}
-            subtitle={activeMetricMeta.subtitle}
-            points={history.points}
-            formatValue={activeMetricMeta.formatValue}
+            title={chartTitle}
+            subtitle={chartSubtitle}
+            series={chartSeries}
           />
         </div>
       </section>
@@ -515,7 +721,9 @@ export function LiveProgress() {
                   </div>
                 </div>
                 <div className="score-pill rounded-full px-3 py-1.5 text-sm font-semibold">
-                  {session.score}%
+                  {cclScenarioIds.has(session.scenarioId)
+                    ? `${session.score}/90`
+                    : `${session.score}%`}
                 </div>
               </div>
               <div className="mt-4">

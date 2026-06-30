@@ -6,6 +6,7 @@ import {
   RealtimeAgent,
   RealtimeSession,
 } from "@openai/agents/realtime";
+import { normalizeOpenAiUsage } from "@/lib/openai-usage-metrics";
 import type { TranscriptEntry } from "@/types/session";
 
 export type RealtimeConnectionStatus =
@@ -17,6 +18,13 @@ interface TranscriptCallbacks {
   onTranscriptStart: (entry: TranscriptEntry) => void;
   onTranscriptUpdate: (entryId: string, text: string, append: boolean) => void;
   onTranscriptComplete: (entryId: string, text?: string) => void;
+  onUsage?: (usage: {
+    eventId: string;
+    model: string;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  }) => void;
   onError?: (message: string) => void;
 }
 
@@ -46,6 +54,11 @@ type RealtimeTransportEvent = {
   item_id?: string;
   transcript?: string;
   delta?: string;
+  response?: {
+    id?: string;
+    model?: string;
+    usage?: unknown;
+  };
   error?: {
     message?: string;
   };
@@ -250,6 +263,23 @@ export function useRealtimeVoiceSession(
             false,
           );
           callbacks.onTranscriptComplete(transportEvent.item_id, transcript);
+        }
+        return;
+      }
+
+      if (transportEvent.type === "response.done") {
+        const usage = normalizeOpenAiUsage(transportEvent.response?.usage);
+        const eventId = transportEvent.response?.id;
+        const model = transportEvent.response?.model;
+
+        if (usage && eventId && model) {
+          callbacks.onUsage?.({
+            eventId,
+            model,
+            promptTokens: usage.promptTokens,
+            completionTokens: usage.completionTokens,
+            totalTokens: usage.totalTokens,
+          });
         }
         return;
       }

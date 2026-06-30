@@ -63,6 +63,7 @@ export function RealtimePracticeRunner({
   const [isAssessing, setIsAssessing] = useState(false);
   const [isPushToTalkActive, setIsPushToTalkActive] = useState(false);
   const isSpaceTalkingRef = useRef(false);
+  const attemptIdRef = useRef<string | null>(null);
 
   const agentAAudioRef = useRef<HTMLAudioElement | null>(null);
   const agentBAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -137,6 +138,34 @@ export function RealtimePracticeRunner({
     [],
   );
 
+  /**
+   * Records realtime token usage for the active practice attempt without blocking the UI.
+   */
+  const reportRealtimeUsage = useCallback(
+    async (usage: {
+      eventId: string;
+      model: string;
+      promptTokens: number;
+      completionTokens: number;
+      totalTokens: number;
+    }) => {
+      await fetch("/api/openai/usage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...usage,
+          source: "realtime",
+          moduleId: scenario.moduleId,
+          scenarioId: scenario.id,
+          attemptId: attemptIdRef.current ?? undefined,
+        }),
+      }).catch(() => undefined);
+    },
+    [scenario.id, scenario.moduleId],
+  );
+
   const agentA = useMemo(
     () =>
       new RealtimeAgent({
@@ -178,6 +207,9 @@ export function RealtimePracticeRunner({
       onTranscriptStart: addTranscriptEntry,
       onTranscriptUpdate: updateTranscriptEntry,
       onTranscriptComplete: completeTranscriptEntry,
+      onUsage: (usage) => {
+        void reportRealtimeUsage(usage);
+      },
       onError: setError,
     },
   );
@@ -189,6 +221,9 @@ export function RealtimePracticeRunner({
       onTranscriptStart: addTranscriptEntry,
       onTranscriptUpdate: updateTranscriptEntry,
       onTranscriptComplete: completeTranscriptEntry,
+      onUsage: (usage) => {
+        void reportRealtimeUsage(usage);
+      },
       onError: setError,
     },
   );
@@ -341,6 +376,7 @@ export function RealtimePracticeRunner({
         scenarioId: scenario.id,
       });
 
+      attemptIdRef.current = nextAttemptId;
       setAttemptId(nextAttemptId);
       setSessionStartedAt(Date.now());
 
@@ -510,6 +546,7 @@ export function RealtimePracticeRunner({
         body: JSON.stringify({
           scenario,
           transcriptEntries,
+          attemptId,
         }),
       });
 
@@ -547,6 +584,7 @@ export function RealtimePracticeRunner({
         overallScore: Math.round(nextAssessment.overallScore),
       });
       setLatestAttemptStamp(endedAt);
+      attemptIdRef.current = null;
       setAttemptId(null);
       setSessionStartedAt(null);
     } catch (caughtError) {

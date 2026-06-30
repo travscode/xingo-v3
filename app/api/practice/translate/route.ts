@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import OpenAI from "openai";
+import { recordOpenAiUsage } from "@/lib/openai-usage";
+import { normalizeOpenAiUsage } from "@/lib/openai-usage-metrics";
 
 interface TranslateRequestBody {
   text?: string;
+  moduleId?: string;
+  scenarioId?: string;
+  attemptId?: string;
 }
 
 /**
@@ -30,6 +35,12 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as TranslateRequestBody;
     const text = typeof body?.text === "string" ? body.text.trim() : "";
+    const moduleId =
+      typeof body?.moduleId === "string" ? body.moduleId : undefined;
+    const scenarioId =
+      typeof body?.scenarioId === "string" ? body.scenarioId : undefined;
+    const attemptId =
+      typeof body?.attemptId === "string" ? body.attemptId : undefined;
 
     if (!text) {
       return NextResponse.json(
@@ -57,6 +68,23 @@ export async function POST(request: Request) {
       ],
     });
 
+    const usage = normalizeOpenAiUsage(response.usage);
+    if (usage) {
+      await recordOpenAiUsage({
+        eventId: response.id,
+        clerkId: userId,
+        source: "translation",
+        model: response.model,
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+        totalTokens: usage.totalTokens,
+        moduleId,
+        scenarioId,
+        attemptId,
+        requestPath: "/api/practice/translate",
+      });
+    }
+
     const translation = normalizeTranslation(response.output_text || text);
 
     if (!translation) {
@@ -69,9 +97,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ translation });
   } catch (error) {
     console.error("[/api/practice/translate]", error);
-    return NextResponse.json(
-      { error: "Translation failed." },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Translation failed." }, { status: 500 });
   }
 }
