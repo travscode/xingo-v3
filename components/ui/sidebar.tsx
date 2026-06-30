@@ -77,8 +77,8 @@ export function Sidebar({
         "z-40 flex h-dvh flex-col bg-white/84 backdrop-blur-xl transition-[width,transform] duration-200 ease-out",
         isDesktop
           ? open
-            ? "relative w-72 border-r border-line"
-            : "relative w-0 overflow-hidden border-r border-transparent"
+            ? "fixed inset-y-0 left-0 w-72 border-r border-line"
+            : "fixed inset-y-0 left-0 w-0 overflow-hidden border-r border-transparent"
           : open
             ? "fixed inset-y-0 left-0 w-72 translate-x-0 border-r border-line shadow-[0_20px_60px_rgba(18,18,18,0.14)]"
             : "fixed inset-y-0 left-0 w-72 -translate-x-full border-r border-line",
@@ -104,7 +104,19 @@ export function SidebarInset({
   className?: string;
   children: React.ReactNode;
 }) {
-  return <div className={cn("min-w-0 flex-1", className)}>{children}</div>;
+  const { isDesktop, open } = useSidebar();
+
+  return (
+    <div
+      className={cn(
+        "min-w-0 flex-1",
+        isDesktop && open ? "lg:ml-72" : undefined,
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function SidebarTrigger({

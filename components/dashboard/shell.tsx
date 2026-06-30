@@ -25,10 +25,10 @@ function MobileSidebarBackdrop() {
 export function DashboardShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex h-dvh w-full overflow-hidden">
         <DashboardSidebar />
-        <SidebarInset>
-          <div className="flex min-h-screen flex-col gap-6 p-4 sm:p-6 lg:p-8">
+        <SidebarInset className="h-dvh overflow-y-auto">
+          <div className="flex min-h-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
             <DashboardTopbar />
             <main className="min-w-0 flex-1">{children}</main>
           </div>

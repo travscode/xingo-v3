@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { useQuery } from "convex/react";
@@ -10,6 +11,20 @@ import { api } from "@/convex/_generated/api";
  */
 function getLanguagePairKey(sourceLanguage: string, targetLanguage: string) {
   return `${sourceLanguage.trim().toLowerCase()}::${targetLanguage.trim().toLowerCase()}`;
+}
+
+/**
+ * Returns a small badge image for the module summary card.
+ */
+function getModuleBadgeImage(moduleId: string) {
+  const badgeImages: Record<string, string> = {
+    "medical-interpreting-foundations":
+      "/images/badges/medical-distinction-badge.svg",
+    "courtroom-interpreting-intensive":
+      "/images/badges/court-certified-badge.svg",
+  };
+
+  return badgeImages[moduleId] ?? "/images/start-practice.jpg";
 }
 
 export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
@@ -68,6 +83,13 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
       return [scenario.id, highest];
     }),
   );
+  const nextScenario =
+    prioritizedScenarios.find((scenario) => !scenarioStatus.get(scenario.id)) ??
+    prioritizedScenarios.find(
+      (scenario) =>
+        (scenarioStatus.get(scenario.id)?.score ?? 0) < scenarioPassThreshold,
+    ) ??
+    prioritizedScenarios[0];
   const bestScore = Math.max(
     0,
     ...completedSessions.map((session) => session.score),
@@ -102,13 +124,16 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
             {learningModule.badgeIcon}
           </span>
         </div>
-        {prioritizedScenarios[0] ? (
-          <Link
-            href={`/practice/${prioritizedScenarios[0].id}/room`}
-            className="action-primary mt-8"
-          >
-            Start practice
-          </Link>
+        {nextScenario ? (
+          <div className="mt-8">
+            <div className="text-sm text-muted">Next: {nextScenario.title}</div>
+            <Link
+              href={`/practice/${nextScenario.id}/room`}
+              className="action-primary mt-3"
+            >
+              Start practice
+            </Link>
+          </div>
         ) : null}
       </section>
 
@@ -132,7 +157,16 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
             Module badge
           </div>
-          <div className="mt-3 text-2xl font-semibold">
+          <div className="mt-3 flex items-center gap-3 text-2xl font-semibold">
+            <div className="relative h-10 w-10 overflow-hidden rounded-2xl border border-line bg-white">
+              <Image
+                src={getModuleBadgeImage(learningModule.id)}
+                alt={`${learningModule.title} badge`}
+                fill
+                className="object-cover"
+                sizes="40px"
+              />
+            </div>
             {learningModule.badgeIcon}
           </div>
         </div>
