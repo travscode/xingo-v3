@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 type ProgressHistoryPoint = {
   bucketStart: string;
@@ -27,6 +27,9 @@ type PositionedPoint = ProgressHistoryPoint & {
   x: number;
   y: number;
 };
+
+const DEFAULT_CHART_WIDTH = 720;
+const MIN_CHART_WIDTH = 320;
 
 /**
  * Limits x-axis labels so dense ranges stay readable.
@@ -68,8 +71,11 @@ function buildAreaPath(
 /**
  * Calculates shared chart coordinates for every displayed series.
  */
-function buildChartGeometry(series: ProgressHistorySeries[]) {
-  const width = 720;
+function buildChartGeometry(
+  series: ProgressHistorySeries[],
+  containerWidth: number,
+) {
+  const width = Math.max(MIN_CHART_WIDTH, Math.floor(containerWidth));
   const height = 260;
   const padding = { top: 24, right: 24, bottom: 44, left: 24 };
   const usableWidth = width - padding.left - padding.right;
@@ -140,18 +146,53 @@ export function ProgressHistoryChart({
   series,
 }: ProgressHistoryChartProps) {
   const gradientId = useId().replace(/:/g, "");
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [containerWidth, setContainerWidth] = useState(DEFAULT_CHART_WIDTH);
   const primarySeries = series[0];
   const latestPrimaryPoint =
     primarySeries?.points[primarySeries.points.length - 1] ?? null;
+
+  /**
+   * Tracks the rendered container width so the SVG geometry can fill it exactly.
+   */
+  useEffect(() => {
+    const node = containerRef.current;
+
+    if (!node) {
+      return;
+    }
+
+    const updateWidth = (nextWidth: number) => {
+      setContainerWidth(Math.max(MIN_CHART_WIDTH, Math.floor(nextWidth)));
+    };
+
+    updateWidth(node.getBoundingClientRect().width);
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+
+      if (!entry) {
+        return;
+      }
+
+      updateWidth(entry.contentRect.width);
+    });
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   const chart = useMemo(() => {
     if (series.length === 0 || !series[0] || series[0].points.length === 0) {
       return null;
     }
 
-    return buildChartGeometry(series);
-  }, [series]);
+    return buildChartGeometry(series, containerWidth);
+  }, [containerWidth, series]);
 
   if (!chart || !primarySeries || primarySeries.points.length === 0) {
     return (
@@ -219,7 +260,7 @@ export function ProgressHistoryChart({
         ))}
       </div>
 
-      <div className="mt-5">
+      <div ref={containerRef} className="mt-5 w-full">
         <svg
           viewBox={`0 0 ${chart.width} ${chart.height}`}
           className="h-72 w-full"

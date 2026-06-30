@@ -2,10 +2,24 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, FolderOpen, MapIcon } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  ChevronDown,
+  FolderOpen,
+  MapIcon,
+} from "lucide-react";
 import { useQuery } from "convex/react";
 import { StatCard } from "@/components/ui/stat-card";
 import { ProgressHistoryChart } from "@/components/dashboard/progress-history-chart";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { api } from "@/convex/_generated/api";
 
 type HistoryTabId = "scores" | "assessment" | "practice" | "coverage" | "ccl";
@@ -121,6 +135,8 @@ const metricMeta = {
 type MetricId = keyof typeof metricMeta;
 
 const CCL_MODULE_ID = "naati-certification-practice-ccl";
+const ATTEMPT_HISTORY_PAGE_SIZE = 10;
+const ATTEMPT_HISTORY_PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 
 const metricColors: Record<MetricId, string> = {
   averageScore: "#4f46e5",
@@ -303,6 +319,156 @@ function matchesProgressFilters(
   return true;
 }
 
+/**
+ * Returns a compact page-number model with ellipses for large result sets.
+ */
+function getVisibleHistoryPages(currentPage: number, totalPages: number) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  if (currentPage <= 4) {
+    return [1, 2, 3, 4, 5, "ellipsis", totalPages] as const;
+  }
+
+  if (currentPage >= totalPages - 3) {
+    return [
+      1,
+      "ellipsis",
+      totalPages - 4,
+      totalPages - 3,
+      totalPages - 2,
+      totalPages - 1,
+      totalPages,
+    ] as const;
+  }
+
+  return [
+    1,
+    "ellipsis",
+    currentPage - 1,
+    currentPage,
+    currentPage + 1,
+    "ellipsis",
+    totalPages,
+  ] as const;
+}
+
+/**
+ * Returns the label shown on each history-tab dropdown trigger.
+ */
+function getHistoryTriggerLabel(
+  tabId: HistoryTabId,
+  selectedTab: HistoryTabId,
+  selectedMetric: MetricId,
+  comparisonMode: ComparisonModeId,
+) {
+  const tab = historyTabs.find((item) => item.id === tabId);
+
+  if (selectedTab !== tabId) {
+    return tab?.label ?? tabId;
+  }
+
+  if (comparisonMode === "avgVsBest") {
+    return "Average vs best";
+  }
+
+  return metricMeta[selectedMetric].label;
+}
+
+/**
+ * Renders the paginated attempt-history controls above or below the list.
+ */
+function AttemptHistoryPaginationControls({
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+}) {
+  if (totalItems === 0) {
+    return null;
+  }
+
+  const startItem = (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+  const visiblePages = getVisibleHistoryPages(currentPage, totalPages);
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
+        <span>
+          Showing {startItem} - {endItem} of {totalItems}
+        </span>
+        <label className="flex items-center gap-2">
+          <span>Per page</span>
+          <select
+            value={pageSize}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+            className="rounded-full border border-line bg-white px-3 py-1.5 text-foreground outline-none"
+            aria-label="Attempts per page"
+          >
+            {ATTEMPT_HISTORY_PAGE_SIZE_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          className="action-secondary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Previous
+        </button>
+        {visiblePages.map((page, index) =>
+          page === "ellipsis" ? (
+            <span
+              key={`ellipsis_${index}`}
+              className="px-2 py-1 text-sm text-muted"
+            >
+              ...
+            </span>
+          ) : (
+            <button
+              key={page}
+              type="button"
+              onClick={() => onPageChange(page)}
+              className={`rounded-full px-3 py-2 text-sm font-semibold transition ${
+                currentPage === page
+                  ? "bg-brand text-white"
+                  : "border border-line bg-white text-muted hover:text-foreground"
+              }`}
+            >
+              {page}
+            </button>
+          ),
+        )}
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+          className="action-secondary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function LiveProgress() {
   const [selectedTab, setSelectedTab] = useState<HistoryTabId>("scores");
   const [selectedMetric, setSelectedMetric] =
@@ -314,6 +480,10 @@ export function LiveProgress() {
   const [endDate, setEndDate] = useState("");
   const [selectedModuleId, setSelectedModuleId] = useState("all");
   const [selectedScenarioId, setSelectedScenarioId] = useState("all");
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPageSize, setHistoryPageSize] = useState(
+    ATTEMPT_HISTORY_PAGE_SIZE,
+  );
   const sessions = useQuery(api.sessions.listForCurrentUser, {});
   const modules = useQuery(api.modules.list, {});
   const scenarios = useQuery(api.scenarios.list, {});
@@ -370,8 +540,35 @@ export function LiveProgress() {
       ),
     [endDate, selectedModuleId, selectedScenarioId, sessions, startDate],
   );
+  const totalHistoryPages = Math.max(
+    1,
+    Math.ceil(completedSessions.length / historyPageSize),
+  );
+  const currentHistoryPage = Math.min(historyPage, totalHistoryPages);
+  const paginatedCompletedSessions = useMemo(() => {
+    const startIndex = (currentHistoryPage - 1) * historyPageSize;
+    return completedSessions.slice(startIndex, startIndex + historyPageSize);
+  }, [completedSessions, currentHistoryPage, historyPageSize]);
   const activeMetricMeta = metricMeta[selectedMetric];
   const isCclTab = selectedTab === "ccl";
+
+  /**
+   * Applies a new chart view from the unified history-tab dropdown controls.
+   */
+  const selectHistoryView = (
+    tabId: HistoryTabId,
+    metric: MetricId,
+    mode: ComparisonModeId = "single",
+  ) => {
+    setSelectedTab(tabId);
+    setSelectedMetric(metric);
+    setComparisonMode(mode);
+    setHistoryPage(1);
+
+    if (tabId === "ccl" && selectedModuleId === "all") {
+      setSelectedModuleId(CCL_MODULE_ID);
+    }
+  };
 
   if (!sessions || !scenarios || !modules || !history) {
     return <div className="surface-card h-64 rounded-[2rem] animate-pulse" />;
@@ -445,39 +642,6 @@ export function LiveProgress() {
       </section>
 
       <section className="surface-card rounded-[2rem] p-6">
-        <div className="mt-4 flex flex-wrap gap-2">
-          {tabMetrics[selectedTab].map((metric) => (
-            <button
-              key={metric}
-              type="button"
-              onClick={() => {
-                setComparisonMode("single");
-                setSelectedMetric(metric);
-              }}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                selectedMetric === metric && comparisonMode === "single"
-                  ? "bg-brand/10 text-brand"
-                  : "border border-line bg-white text-muted hover:text-foreground"
-              }`}
-            >
-              {metricMeta[metric].label}
-            </button>
-          ))}
-          {selectedTab === "scores" || selectedTab === "ccl" ? (
-            <button
-              type="button"
-              onClick={() => setComparisonMode("avgVsBest")}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                comparisonMode === "avgVsBest"
-                  ? "bg-brand/10 text-brand"
-                  : "border border-line bg-white text-muted hover:text-foreground"
-              }`}
-            >
-              Average vs best
-            </button>
-          ) : null}
-        </div>
-
         <div className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_0.8fr] rounded-[1.5rem] border border-line bg-[#fafafa]">
           <div className=" p-4">
             <div className="mt-3 flex flex-wrap gap-2">
@@ -498,6 +662,7 @@ export function LiveProgress() {
                     setSelectedRange(rangeId);
                     setStartDate(range.startDate);
                     setEndDate(range.endDate);
+                    setHistoryPage(1);
                   }}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
                     selectedRange === rangeId
@@ -521,6 +686,7 @@ export function LiveProgress() {
                   onChange={(event) => {
                     setSelectedRange("custom");
                     setStartDate(event.target.value);
+                    setHistoryPage(1);
                   }}
                   aria-label="Start date"
                   className="w-full bg-transparent text-foreground outline-none"
@@ -534,6 +700,7 @@ export function LiveProgress() {
                   onChange={(event) => {
                     setSelectedRange("custom");
                     setEndDate(event.target.value);
+                    setHistoryPage(1);
                   }}
                   aria-label="End date"
                   className="w-full bg-transparent text-foreground outline-none"
@@ -546,6 +713,7 @@ export function LiveProgress() {
                   onChange={(event) => {
                     const nextModuleId = event.target.value;
                     setSelectedModuleId(nextModuleId);
+                    setHistoryPage(1);
                     const scenarioStillMatches =
                       selectedScenarioId === "all" ||
                       (scenarios ?? []).some(
@@ -577,6 +745,7 @@ export function LiveProgress() {
                   onChange={(event) => {
                     const nextScenarioId = event.target.value;
                     setSelectedScenarioId(nextScenarioId);
+                    setHistoryPage(1);
                     if (nextScenarioId === "all") {
                       return;
                     }
@@ -600,62 +769,131 @@ export function LiveProgress() {
                   ))}
                 </select>
               </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const rows = buildChartCsvRows(chartSeries);
+                  const filePrefix = isCclTab ? "ccl-progress" : "progress";
+                  downloadCsv(
+                    `${filePrefix}-${selectedTab}-${selectedMetric}.csv`,
+                    rows,
+                  );
+                }}
+                className="rounded-full font-semibold not-last:px-4 py-2 text-sm border border-line bg-white text-muted  hover:bg-brand hover:text-white"
+              >
+                Export CSV
+              </button>
             </div>
           </div>
         </div>
 
         <div className="mt-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="mt-6 flex flex-wrap gap-2">
-              {historyTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedTab(tab.id);
-                    setSelectedMetric(tabMetrics[tab.id][0]);
-                    setComparisonMode("single");
-                    if (tab.id === "ccl" && selectedModuleId === "all") {
-                      setSelectedModuleId(CCL_MODULE_ID);
-                    }
-                  }}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    selectedTab === tab.id
-                      ? "bg-brand text-white"
-                      : "border border-line bg-white text-muted hover:text-foreground"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const rows = buildChartCsvRows(chartSeries);
-                const filePrefix = isCclTab ? "ccl-progress" : "progress";
-                downloadCsv(
-                  `${filePrefix}-${selectedTab}-${selectedMetric}.csv`,
-                  rows,
-                );
-              }}
-              className="action-secondary px-4 py-2 text-sm"
-            >
-              Export CSV
-            </button>
-          </div>
           <ProgressHistoryChart
             title={chartTitle}
             subtitle={chartSubtitle}
             series={chartSeries}
           />
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="mt-6 flex flex-wrap gap-2">
+              {historyTabs.map((tab) => (
+                <DropdownMenu key={tab.id}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        selectedTab === tab.id
+                          ? "bg-brand text-white"
+                          : "border border-line bg-white text-muted hover:text-foreground"
+                      }`}
+                    >
+                      <span>
+                        {getHistoryTriggerLabel(
+                          tab.id,
+                          selectedTab,
+                          selectedMetric,
+                          comparisonMode,
+                        )}
+                      </span>
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-60">
+                    <DropdownMenuLabel>{tab.label}</DropdownMenuLabel>
+                    {tabMetrics[tab.id].map((metric) => {
+                      const isActiveMetric =
+                        selectedTab === tab.id &&
+                        comparisonMode === "single" &&
+                        selectedMetric === metric;
+
+                      return (
+                        <DropdownMenuItem
+                          key={metric}
+                          onSelect={() => selectHistoryView(tab.id, metric)}
+                          className="justify-between"
+                        >
+                          <span>{metricMeta[metric].label}</span>
+                          {isActiveMetric ? (
+                            <Check className="h-4 w-4" />
+                          ) : null}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                    {tab.id === "scores" || tab.id === "ccl" ? (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            selectHistoryView(
+                              tab.id,
+                              tabMetrics[tab.id][0],
+                              "avgVsBest",
+                            )
+                          }
+                          className="justify-between"
+                        >
+                          <span>Average vs best</span>
+                          {selectedTab === tab.id &&
+                          comparisonMode === "avgVsBest" ? (
+                            <Check className="h-4 w-4" />
+                          ) : null}
+                        </DropdownMenuItem>
+                      </>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       <section className="surface-card rounded-[2rem] p-6">
-        <p className="eyebrow">Attempt history</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="eyebrow">Attempt history</p>
+          {completedSessions.length > 0 ? (
+            <div className="text-sm text-muted">
+              Page {currentHistoryPage} of {totalHistoryPages}
+            </div>
+          ) : null}
+        </div>
+        {completedSessions.length > 0 ? (
+          <div className="mt-5 border-b border-line pb-4">
+            <AttemptHistoryPaginationControls
+              currentPage={currentHistoryPage}
+              totalPages={totalHistoryPages}
+              totalItems={completedSessions.length}
+              pageSize={historyPageSize}
+              onPageChange={setHistoryPage}
+              onPageSizeChange={(pageSize) => {
+                setHistoryPageSize(pageSize);
+                setHistoryPage(1);
+              }}
+            />
+          </div>
+        ) : null}
         <div className="mt-5 space-y-3">
-          {completedSessions.map((session) => (
+          {paginatedCompletedSessions.map((session) => (
             <div
               key={session._id}
               className="rounded-[1.5rem] border border-line bg-white p-4"
@@ -695,6 +933,21 @@ export function LiveProgress() {
             </p>
           ) : null}
         </div>
+        {completedSessions.length > historyPageSize ? (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+            <AttemptHistoryPaginationControls
+              currentPage={currentHistoryPage}
+              totalPages={totalHistoryPages}
+              totalItems={completedSessions.length}
+              pageSize={historyPageSize}
+              onPageChange={setHistoryPage}
+              onPageSizeChange={(pageSize) => {
+                setHistoryPageSize(pageSize);
+                setHistoryPage(1);
+              }}
+            />
+          </div>
+        ) : null}
       </section>
     </div>
   );
