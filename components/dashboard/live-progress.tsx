@@ -403,19 +403,6 @@ export function LiveProgress() {
 
   return (
     <div className="space-y-8">
-      <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
-        <div>
-          <p className="eyebrow">Progress</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em]">
-            Track your performance over time.
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-            Explore average score, assessment breakdowns, practice time, and
-            coverage trends across all work, a single module, or one scenario.
-          </p>
-        </div>
-      </section>
-
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {isCclTab ? (
           <>
