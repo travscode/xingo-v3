@@ -642,7 +642,7 @@ export function LiveProgress() {
       </section>
 
       <section className="surface-card rounded-[2rem] p-6">
-        <div className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_0.8fr] rounded-[1.5rem] border border-line bg-[#fafafa]">
+        <div className="flex items-center justify-between mt-6  gap-4  rounded-[1.5rem] border border-line bg-[#fafafa]">
           <div className=" p-4">
             <div className="mt-6 flex flex-wrap gap-2">
               {historyTabs.map((tab) => (
