@@ -22,7 +22,7 @@ export const dashboardNavigation = [
   { href: "/modules", label: "Modules", icon: BookOpen },
   { href: "/progress", label: "Progress", icon: TrendingUp },
   { href: "/credentials", label: "Credentials", icon: BadgeCheck },
-  { href: "/jobs", label: "Jobs", icon: BriefcaseBusiness },
+  // { href: "/jobs", label: "Jobs", icon: BriefcaseBusiness },
   { href: "/billing", label: "Billing", icon: CreditCard },
   { href: "/account", label: "Profile", icon: UserRound },
   { href: "/help", label: "Help", icon: CircleHelp },

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { CalendarDays, FolderOpen, MapIcon } from "lucide-react";
 import { useQuery } from "convex/react";
 import { StatCard } from "@/components/ui/stat-card";
 import { ProgressHistoryChart } from "@/components/dashboard/progress-history-chart";
@@ -477,19 +478,16 @@ export function LiveProgress() {
           ) : null}
         </div>
 
-        <div className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[1.5rem] border border-line bg-[#fafafa] p-4">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              Quick range
-            </div>
+        <div className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_0.8fr] rounded-[1.5rem] border border-line bg-[#fafafa]">
+          <div className=" p-4">
             <div className="mt-3 flex flex-wrap gap-2">
               {(
                 [
+                  ["overall", "Overall"],
                   ["thisWeek", "This week"],
                   ["thisMonth", "This month"],
                   ["lastMonth", "Last month"],
                   ["thisYear", "This year"],
-                  ["overall", "Overall"],
                 ] as const
               ).map(([rangeId, label]) => (
                 <button
@@ -513,15 +511,10 @@ export function LiveProgress() {
             </div>
           </div>
 
-          <div className="rounded-[1.5rem] border border-line bg-[#fafafa] p-4">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              Filters
-            </div>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <label className="text-sm text-muted">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.16em]">
-                  Start date
-                </span>
+          <div className="p-4">
+            <div className="mt-3 flex flex-nowrap items-center gap-3 overflow-x-auto pb-1">
+              <label className="flex min-w-[170px] items-center gap-2 rounded-xl border border-line bg-white px-3 py-2 text-sm text-muted">
+                <CalendarDays size={16} className="shrink-0 text-muted" />
                 <input
                   type="date"
                   value={startDate}
@@ -529,13 +522,12 @@ export function LiveProgress() {
                     setSelectedRange("custom");
                     setStartDate(event.target.value);
                   }}
-                  className="w-full rounded-xl border border-line bg-white px-3 py-2 text-foreground"
+                  aria-label="Start date"
+                  className="w-full bg-transparent text-foreground outline-none"
                 />
               </label>
-              <label className="text-sm text-muted">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.16em]">
-                  End date
-                </span>
+              <label className="flex min-w-[170px] items-center gap-2 rounded-xl border border-line bg-white px-3 py-2 text-sm text-muted">
+                <CalendarDays size={16} className="shrink-0 text-muted" />
                 <input
                   type="date"
                   value={endDate}
@@ -543,13 +535,12 @@ export function LiveProgress() {
                     setSelectedRange("custom");
                     setEndDate(event.target.value);
                   }}
-                  className="w-full rounded-xl border border-line bg-white px-3 py-2 text-foreground"
+                  aria-label="End date"
+                  className="w-full bg-transparent text-foreground outline-none"
                 />
               </label>
-              <label className="text-sm text-muted">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.16em]">
-                  Module
-                </span>
+              <label className="flex min-w-[220px] items-center gap-2 rounded-xl border border-line bg-white px-3 py-2 text-sm text-muted">
+                <FolderOpen size={16} className="shrink-0 text-muted" />
                 <select
                   value={selectedModuleId}
                   onChange={(event) => {
@@ -568,7 +559,8 @@ export function LiveProgress() {
                       setSelectedScenarioId("all");
                     }
                   }}
-                  className="w-full rounded-xl border border-line bg-white px-3 py-2 text-foreground"
+                  aria-label="Module"
+                  className="w-full bg-transparent text-foreground outline-none"
                 >
                   <option value="all">All modules</option>
                   {modules.map((module) => (
@@ -578,10 +570,8 @@ export function LiveProgress() {
                   ))}
                 </select>
               </label>
-              <label className="text-sm text-muted">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.16em]">
-                  Scenario
-                </span>
+              <label className="flex min-w-[220px] items-center gap-2 rounded-xl border border-line bg-white px-3 py-2 text-sm text-muted">
+                <MapIcon size={16} className="shrink-0 text-muted" />
                 <select
                   value={selectedScenarioId}
                   onChange={(event) => {
@@ -599,7 +589,8 @@ export function LiveProgress() {
                       setSelectedModuleId(matchedScenario.moduleId);
                     }
                   }}
-                  className="w-full rounded-xl border border-line bg-white px-3 py-2 text-foreground"
+                  aria-label="Scenario"
+                  className="w-full bg-transparent text-foreground outline-none"
                 >
                   <option value="all">All scenarios</option>
                   {visibleScenarios.map((scenario) => (
