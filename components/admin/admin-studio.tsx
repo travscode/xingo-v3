@@ -1014,40 +1014,28 @@ function ScenarioEditor({
           </select>
         </Field>
         <Field label="Source language">
-          <select
-            value={form.sourceLanguage}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                sourceLanguage: event.target.value,
-              }))
-            }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
-          >
-            {getOpenAiVoiceLanguageOptions(form.sourceLanguage).map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+          <div className="w-full rounded-[1rem] border border-dashed border-line bg-slate-50 px-4 py-3 text-sm text-muted">
+            <div className="font-semibold text-slate-600">
+              {form.sourceLanguage}
+            </div>
+            <p className="mt-1 text-xs leading-5">
+              Not editable here. The learner selects the active language pair in
+              the dashboard topbar, and that choice overrides these values at
+              practice time.
+            </p>
+          </div>
         </Field>
         <Field label="Target language">
-          <select
-            value={form.targetLanguage}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                targetLanguage: event.target.value,
-              }))
-            }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
-          >
-            {getOpenAiVoiceLanguageOptions(form.targetLanguage).map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+          <div className="w-full rounded-[1rem] border border-dashed border-line bg-slate-50 px-4 py-3 text-sm text-muted">
+            <div className="font-semibold text-slate-600">
+              {form.targetLanguage}
+            </div>
+            <p className="mt-1 text-xs leading-5">
+              Not editable here. The learner selects the active language pair in
+              the dashboard topbar, and that choice overrides these values at
+              practice time.
+            </p>
+          </div>
         </Field>
       </div>
 
@@ -1297,22 +1285,13 @@ function AgentForm({
           />
         </Field>
         <Field label="Language">
-          <select
-            value={language}
-            onChange={(event) =>
-              onChange(
-                `${prefix}Language` as keyof ScenarioFormState,
-                event.target.value,
-              )
-            }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
-          >
-            {getOpenAiVoiceLanguageOptions(language).map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+          <div className="w-full rounded-[1rem] border border-dashed border-line bg-slate-50 px-4 py-3 text-sm text-muted">
+            <div className="font-semibold text-slate-600">{language}</div>
+            <p className="mt-1 text-xs leading-5">
+              Not editable here. This agent's spoken language is overridden at
+              practice time by the learner's topbar language pair selection.
+            </p>
+          </div>
         </Field>
         <Field label="Voice">
           <select

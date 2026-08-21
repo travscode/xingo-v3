@@ -3,7 +3,12 @@
 import type { ReactNode } from "react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
-import { SidebarInset, SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { LanguagePairProvider } from "@/components/providers/language-pair-context";
 
 function MobileSidebarBackdrop() {
   const { isDesktop, open, setOpen } = useSidebar();
@@ -24,17 +29,19 @@ function MobileSidebarBackdrop() {
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   return (
-    <SidebarProvider>
-      <div className="flex h-dvh w-full overflow-hidden">
-        <DashboardSidebar />
-        <SidebarInset className="h-dvh overflow-y-auto">
-          <div className="flex min-h-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
-            <DashboardTopbar />
-            <main className="min-w-0 flex-1">{children}</main>
-          </div>
-        </SidebarInset>
-        <MobileSidebarBackdrop />
-      </div>
-    </SidebarProvider>
+    <LanguagePairProvider>
+      <SidebarProvider>
+        <div className="flex h-dvh w-full overflow-hidden">
+          <DashboardSidebar />
+          <SidebarInset className="h-dvh overflow-y-auto">
+            <div className="flex min-h-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
+              <DashboardTopbar />
+              <main className="min-w-0 flex-1">{children}</main>
+            </div>
+          </SidebarInset>
+          <MobileSidebarBackdrop />
+        </div>
+      </SidebarProvider>
+    </LanguagePairProvider>
   );
 }

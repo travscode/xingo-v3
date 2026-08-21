@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { buildRealtimeAgentInstructions } from "@/lib/ai";
 import { ScenarioPanel } from "@/components/practice/scenario-panel";
 import { useRealtimeVoiceSession } from "@/components/practice/use-realtime-voice-session";
+import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
 import type { Scenario, VoiceAgent } from "@/types/scenario";
 import type { SessionAssessment, TranscriptEntry } from "@/types/session";
 
@@ -65,25 +66,52 @@ export function RealtimePracticeRunner({
   const isSpaceTalkingRef = useRef(false);
   const attemptIdRef = useRef<string | null>(null);
 
+  const { activePair } = useActiveLanguagePair();
   const agentAAudioRef = useRef<HTMLAudioElement | null>(null);
   const agentBAudioRef = useRef<HTMLAudioElement | null>(null);
   const connectedAgentsRef = useRef<Set<AgentKey>>(new Set());
+
+  const effectiveAgentA = useMemo<VoiceAgent>(
+    () => ({
+      ...scenario.aiAgentA,
+      language: activePair.targetLanguage,
+    }),
+    [scenario.aiAgentA, activePair.targetLanguage],
+  );
+
   const hasSecondAgent =
     scenario.agentCount === 2 && Boolean(scenario.aiAgentB);
+
   const agentBConfig = useMemo<VoiceAgent>(
     () =>
-      scenario.aiAgentB ?? {
-        name: "Participant",
-        role: "Participant",
-        voice: "sage",
-        goal: "Respond naturally to the interpreter.",
-        language: scenario.practiceRuntime.targetLanguage,
-        demeanor: "Natural and concise",
-        instructions:
-          "You are a placeholder participant and should never be selected in a one-agent scenario.",
-        openingLine: "",
+      scenario.aiAgentB
+        ? { ...scenario.aiAgentB, language: activePair.sourceLanguage }
+        : {
+            name: "Participant",
+            role: "Participant",
+            voice: "sage",
+            goal: "Respond naturally to the interpreter.",
+            language: activePair.sourceLanguage,
+            demeanor: "Natural and concise",
+            instructions:
+              "You are a placeholder participant and should never be selected in a one-agent scenario.",
+            openingLine: "",
+          },
+    [scenario.aiAgentB, activePair.sourceLanguage],
+  );
+
+  const effectiveScenario = useMemo<Scenario & { _id: string }>(
+    () => ({
+      ...scenario,
+      practiceRuntime: {
+        ...scenario.practiceRuntime,
+        sourceLanguage: activePair.sourceLanguage,
+        targetLanguage: activePair.targetLanguage,
       },
-    [scenario],
+      aiAgentA: effectiveAgentA,
+      aiAgentB: hasSecondAgent ? agentBConfig : scenario.aiAgentB,
+    }),
+    [scenario, activePair, effectiveAgentA, hasSecondAgent, agentBConfig],
   );
 
   const addTranscriptEntry = useCallback((entry: TranscriptEntry) => {
@@ -169,18 +197,18 @@ export function RealtimePracticeRunner({
   const agentA = useMemo(
     () =>
       new RealtimeAgent({
-        name: scenario.aiAgentA.name,
-        voice: scenario.aiAgentA.voice,
+        name: effectiveAgentA.name,
+        voice: effectiveAgentA.voice,
         handoffs: [],
         tools: [],
-        handoffDescription: `${scenario.aiAgentA.role} in ${scenario.title}`,
+        handoffDescription: `${effectiveAgentA.role} in ${effectiveScenario.title}`,
         instructions: buildRealtimeAgentInstructions(
-          scenario,
-          scenario.aiAgentA,
+          effectiveScenario,
+          effectiveAgentA,
           hasSecondAgent ? agentBConfig : undefined,
         ),
       }),
-    [agentBConfig, hasSecondAgent, scenario],
+    [agentBConfig, hasSecondAgent, effectiveAgentA, effectiveScenario],
   );
 
   const agentB = useMemo(
@@ -190,19 +218,19 @@ export function RealtimePracticeRunner({
         voice: agentBConfig.voice,
         handoffs: [],
         tools: [],
-        handoffDescription: `${agentBConfig.role} in ${scenario.title}`,
+        handoffDescription: `${agentBConfig.role} in ${effectiveScenario.title}`,
         instructions: buildRealtimeAgentInstructions(
-          scenario,
+          effectiveScenario,
           agentBConfig,
-          scenario.aiAgentA,
+          effectiveAgentA,
         ),
       }),
-    [agentBConfig, scenario],
+    [agentBConfig, effectiveScenario, effectiveAgentA],
   );
 
   const agentASession = useRealtimeVoiceSession(
-    scenario.aiAgentA.role,
-    `Interpreter -> ${scenario.aiAgentA.role}`,
+    effectiveAgentA.role,
+    `Interpreter -> ${effectiveAgentA.role}`,
     {
       onTranscriptStart: addTranscriptEntry,
       onTranscriptUpdate: updateTranscriptEntry,
@@ -380,14 +408,14 @@ export function RealtimePracticeRunner({
       setAttemptId(nextAttemptId);
       setSessionStartedAt(Date.now());
 
-      const openingSpeaker = scenario.practiceRuntime.openingSpeaker;
+      const openingSpeaker = effectiveScenario.practiceRuntime.openingSpeaker;
       await switchActiveAgent(openingSpeaker);
 
       const openingSession =
         openingSpeaker === "agent_a" ? agentASession : agentBSession;
       const openingAgent =
         openingSpeaker === "agent_a" || !hasSecondAgent
-          ? scenario.aiAgentA
+          ? effectiveAgentA
           : agentBConfig;
 
       openingSession.sendHiddenInstruction(
@@ -417,7 +445,10 @@ export function RealtimePracticeRunner({
     isStarting,
     agentBConfig,
     hasSecondAgent,
-    scenario,
+    effectiveScenario,
+    effectiveAgentA,
+    scenario.moduleId,
+    scenario.id,
     startAttempt,
     switchActiveAgent,
   ]);
@@ -544,7 +575,7 @@ export function RealtimePracticeRunner({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          scenario,
+          scenario: effectiveScenario,
           transcriptEntries,
           attemptId,
         }),
@@ -600,8 +631,9 @@ export function RealtimePracticeRunner({
     attemptId,
     completeAttempt,
     disconnectAll,
+    effectiveScenario,
     isAssessing,
-    scenario,
+    scenario.id,
     sessionStartedAt,
     transcriptEntries,
   ]);
@@ -669,14 +701,14 @@ export function RealtimePracticeRunner({
     !isConvexAuthLoading;
   const activeTargetName =
     activeAgent === "agent_a"
-      ? scenario.aiAgentA.role
+      ? effectiveAgentA.role
       : activeAgent === "agent_b"
         ? agentBConfig.role
         : null;
 
   return (
     <div className="space-y-6">
-      <ScenarioPanel scenario={scenario} />
+      <ScenarioPanel scenario={effectiveScenario} />
 
       <audio ref={agentAAudioRef} autoPlay playsInline className="sr-only" />
       <audio ref={agentBAudioRef} autoPlay playsInline className="sr-only" />
@@ -775,7 +807,7 @@ export function RealtimePracticeRunner({
                   : "border-line bg-white/80 text-foreground"
               } disabled:opacity-50`}
             >
-              Relay to {scenario.aiAgentA.role}
+              Relay to {effectiveAgentA.role}
             </button>
             {hasSecondAgent ? (
               <button

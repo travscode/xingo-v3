@@ -8,6 +8,7 @@ import { RealtimeAgent } from "@openai/agents/realtime";
 import { api } from "@/convex/_generated/api";
 import { buildRealtimeAgentInstructions } from "@/lib/ai";
 import { useRealtimeVoiceSession } from "@/components/practice/use-realtime-voice-session";
+import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
 import type { Scenario, VoiceAgent } from "@/types/scenario";
 import type { TranscriptEntry } from "@/types/session";
 
@@ -112,6 +113,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     isAuthenticated: isConvexAuthenticated,
     isLoading: isConvexAuthLoading,
   } = useConvexAuth();
+  const { activePair } = useActiveLanguagePair();
   const startAttempt = useMutation(api.sessions.startAttempt);
   const completeAttempt = useMutation(api.sessions.completeAttempt);
   const [attemptId, setAttemptId] = useState<string | null>(null);
@@ -149,22 +151,48 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     isSignedIn &&
     isConvexAuthenticated &&
     !isConvexAuthLoading;
+
+  const effectiveAgentA = useMemo<VoiceAgent>(
+    () => ({
+      ...scenario.aiAgentA,
+      language: activePair.targetLanguage,
+    }),
+    [scenario.aiAgentA, activePair.targetLanguage],
+  );
+
   const hasSecondAgent =
     scenario.agentCount === 2 && Boolean(scenario.aiAgentB);
+
   const agentBConfig = useMemo<VoiceAgent>(
     () =>
-      scenario.aiAgentB ?? {
-        name: "Participant",
-        role: "Participant",
-        voice: "sage",
-        goal: "Respond naturally to the interpreter.",
-        language: scenario.practiceRuntime.targetLanguage,
-        demeanor: "Natural and concise",
-        instructions:
-          "You are a placeholder participant and should never be selected in a one-agent scenario.",
-        openingLine: "",
+      scenario.aiAgentB
+        ? { ...scenario.aiAgentB, language: activePair.sourceLanguage }
+        : {
+            name: "Participant",
+            role: "Participant",
+            voice: "sage",
+            goal: "Respond naturally to the interpreter.",
+            language: activePair.sourceLanguage,
+            demeanor: "Natural and concise",
+            instructions:
+              "You are a placeholder participant and should never be selected in a one-agent scenario.",
+            openingLine: "",
+          },
+    [scenario.aiAgentB, activePair.sourceLanguage],
+  );
+
+  const effectiveScenario = useMemo<Scenario & { _id: string }>(
+    () => ({
+      ...scenario,
+      practiceRuntime: {
+        ...scenario.practiceRuntime,
+        sourceLanguage: activePair.sourceLanguage,
+        targetLanguage: activePair.targetLanguage,
       },
-    [scenario],
+      aiAgentA: effectiveAgentA,
+      aiAgentB: hasSecondAgent ? agentBConfig : scenario.aiAgentB,
+    }),
+    [scenario, activePair, effectiveAgentA, hasSecondAgent, agentBConfig],
   );
 
   /**
@@ -204,14 +232,14 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       });
 
       if (entry.role === "assistant") {
-        if (entry.speaker === scenario.aiAgentA.role) {
+        if (entry.speaker === effectiveAgentA.role) {
           markSpeaking("agent_a");
         } else if (entry.speaker === agentBConfig.role) {
           markSpeaking("agent_b");
         }
       }
     },
-    [agentBConfig.role, markSpeaking, scenario.aiAgentA.role],
+    [agentBConfig.role, markSpeaking, effectiveAgentA.role],
   );
 
   const updateTranscriptEntry = useCallback(
@@ -289,18 +317,18 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   const agentA = useMemo(
     () =>
       new RealtimeAgent({
-        name: scenario.aiAgentA.name,
-        voice: scenario.aiAgentA.voice,
+        name: effectiveAgentA.name,
+        voice: effectiveAgentA.voice,
         handoffs: [],
         tools: [],
-        handoffDescription: `${scenario.aiAgentA.role} in ${scenario.title}`,
+        handoffDescription: `${effectiveAgentA.role} in ${effectiveScenario.title}`,
         instructions: buildRealtimeAgentInstructions(
-          scenario,
-          scenario.aiAgentA,
+          effectiveScenario,
+          effectiveAgentA,
           hasSecondAgent ? agentBConfig : undefined,
         ),
       }),
-    [agentBConfig, hasSecondAgent, scenario],
+    [agentBConfig, hasSecondAgent, effectiveAgentA, effectiveScenario],
   );
 
   const agentB = useMemo(
@@ -310,14 +338,14 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
         voice: agentBConfig.voice,
         handoffs: [],
         tools: [],
-        handoffDescription: `${agentBConfig.role} in ${scenario.title}`,
+        handoffDescription: `${agentBConfig.role} in ${effectiveScenario.title}`,
         instructions: buildRealtimeAgentInstructions(
-          scenario,
+          effectiveScenario,
           agentBConfig,
-          scenario.aiAgentA,
+          effectiveAgentA,
         ),
       }),
-    [agentBConfig, scenario],
+    [agentBConfig, effectiveScenario, effectiveAgentA],
   );
 
   /**
@@ -349,8 +377,8 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   );
 
   const agentASession = useRealtimeVoiceSession(
-    scenario.aiAgentA.role,
-    `Interpreter -> ${scenario.aiAgentA.role}`,
+    effectiveAgentA.role,
+    `Interpreter -> ${effectiveAgentA.role}`,
     {
       onTranscriptStart: addTranscriptEntry,
       onTranscriptUpdate: updateTranscriptEntry,
@@ -531,14 +559,14 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       setAttemptId(nextAttemptId);
       setSessionStartedAt(Date.now());
 
-      const openingSpeaker = scenario.practiceRuntime.openingSpeaker;
+      const openingSpeaker = effectiveScenario.practiceRuntime.openingSpeaker;
       await switchActiveAgent(openingSpeaker);
 
       const openingSession =
         openingSpeaker === "agent_a" ? agentASession : agentBSession;
       const openingAgent =
         openingSpeaker === "agent_a" || !hasSecondAgent
-          ? scenario.aiAgentA
+          ? effectiveAgentA
           : agentBConfig;
 
       openingSession.sendHiddenInstruction(
@@ -568,7 +596,10 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     isStarting,
     agentBConfig,
     hasSecondAgent,
-    scenario,
+    effectiveScenario,
+    effectiveAgentA,
+    scenario.moduleId,
+    scenario.id,
     startAttempt,
     switchActiveAgent,
   ]);
@@ -791,7 +822,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          scenario,
+          scenario: effectiveScenario,
           transcriptEntries,
           attemptId,
         }),
@@ -843,9 +874,10 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     attemptId,
     completeAttempt,
     disconnectAll,
+    effectiveScenario,
     isAssessing,
     router,
-    scenario,
+    scenario.id,
     sessionStartedAt,
     transcriptEntries,
   ]);
@@ -945,7 +977,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
    */
   const activeConversationLabel = useMemo(() => {
     if (activeAgent === "agent_a") {
-      return `${scenario.aiAgentA.name} (${scenario.aiAgentA.role})`;
+      return `${effectiveAgentA.name} (${effectiveAgentA.role})`;
     }
     if (activeAgent === "agent_b") {
       return `${agentBConfig.name} (${agentBConfig.role})`;
@@ -953,8 +985,8 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     return "Not started";
   }, [
     activeAgent,
-    scenario.aiAgentA.name,
-    scenario.aiAgentA.role,
+    effectiveAgentA.name,
+    effectiveAgentA.role,
     agentBConfig.name,
     agentBConfig.role,
   ]);
@@ -964,7 +996,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
    */
   const speakingAgentLabel = useMemo(() => {
     if (speakingKey === "agent_a") {
-      return `${scenario.aiAgentA.name} speaking...`;
+      return `${effectiveAgentA.name} speaking...`;
     }
 
     if (speakingKey === "agent_b") {
@@ -972,17 +1004,14 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     }
 
     return null;
-  }, [agentBConfig.name, scenario.aiAgentA.name, speakingKey]);
+  }, [agentBConfig.name, effectiveAgentA.name, speakingKey]);
 
   /**
    * Resolves avatar artwork for transcript entries from speaker names.
    */
   function getAvatarForSpeaker(speaker: string) {
-    if (
-      speaker === scenario.aiAgentA.role ||
-      speaker === scenario.aiAgentA.name
-    ) {
-      return scenario.aiAgentA.avatarImageUrl;
+    if (speaker === effectiveAgentA.role || speaker === effectiveAgentA.name) {
+      return effectiveAgentA.avatarImageUrl;
     }
     if (speaker === agentBConfig.role || speaker === agentBConfig.name) {
       return agentBConfig.avatarImageUrl;
@@ -1000,8 +1029,8 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
           <p className="text-xl font-semibold text-[#8e8e8e]">{locationLine}</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-black">
             {hasSecondAgent
-              ? `Help ${scenario.aiAgentA.name} with ${agentBConfig.name}`
-              : `Interpret for ${scenario.aiAgentA.name}`}
+              ? `Help ${effectiveAgentA.name} with ${agentBConfig.name}`
+              : `Interpret for ${effectiveAgentA.name}`}
           </h1>
 
           {countdownValue !== null ? (
@@ -1033,13 +1062,11 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
               />
             ) : null}
             <ParticipantAvatar
-              label={scenario.aiAgentA.name}
-              subLabel={
-                scenario.aiAgentA.role + " ● " + scenario.aiAgentA.language
-              }
-              imageUrl={scenario.aiAgentA.avatarImageUrl}
+              label={effectiveAgentA.name}
+              subLabel={effectiveAgentA.role + " ● " + effectiveAgentA.language}
+              imageUrl={effectiveAgentA.avatarImageUrl}
               initials={getInitials(
-                scenario.aiAgentA.name || scenario.aiAgentA.role,
+                effectiveAgentA.name || effectiveAgentA.role,
               )}
               isSpeaking={speakingKey === "agent_a"}
               isActive={activeAgent === "agent_a"}

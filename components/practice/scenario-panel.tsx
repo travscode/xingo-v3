@@ -1,14 +1,38 @@
+import { useMemo } from "react";
 import type { Scenario } from "@/types/scenario";
 import { scoringWeights } from "@/utils/scoring";
+import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
 
 interface ScenarioPanelProps {
   scenario: Scenario;
 }
 
 export function ScenarioPanel({ scenario }: ScenarioPanelProps) {
-  const visibleAgents = [scenario.aiAgentA, scenario.aiAgentB].filter(
-    (agent): agent is NonNullable<typeof agent> => Boolean(agent),
+  const { activePair } = useActiveLanguagePair();
+
+  const effectiveScenario = useMemo<Scenario>(
+    () => ({
+      ...scenario,
+      practiceRuntime: {
+        ...scenario.practiceRuntime,
+        sourceLanguage: activePair.sourceLanguage,
+        targetLanguage: activePair.targetLanguage,
+      },
+      aiAgentA: {
+        ...scenario.aiAgentA,
+        language: activePair.targetLanguage,
+      },
+      aiAgentB: scenario.aiAgentB
+        ? { ...scenario.aiAgentB, language: activePair.sourceLanguage }
+        : scenario.aiAgentB,
+    }),
+    [scenario, activePair],
   );
+
+  const visibleAgents = [
+    effectiveScenario.aiAgentA,
+    effectiveScenario.aiAgentB,
+  ].filter((agent): agent is NonNullable<typeof agent> => Boolean(agent));
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
@@ -22,11 +46,11 @@ export function ScenarioPanel({ scenario }: ScenarioPanelProps) {
         </p>
         <div className="mt-6 flex flex-wrap gap-3 text-sm text-muted">
           <span className="mono-chip rounded-full px-3 py-2">
-            {scenario.practiceRuntime.sourceLanguage} ↔{" "}
-            {scenario.practiceRuntime.targetLanguage}
+            {effectiveScenario.practiceRuntime.sourceLanguage} ↔{" "}
+            {effectiveScenario.practiceRuntime.targetLanguage}
           </span>
           <span className="mono-chip rounded-full px-3 py-2">
-            {scenario.practiceRuntime.interpreterRole}
+            {effectiveScenario.practiceRuntime.interpreterRole}
           </span>
         </div>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
