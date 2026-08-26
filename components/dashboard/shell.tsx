@@ -3,11 +3,7 @@
 import type { ReactNode } from "react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
-import {
-  SidebarInset,
-  SidebarProvider,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { LanguagePairProvider } from "@/components/providers/language-pair-context";
 
 function MobileSidebarBackdrop() {
