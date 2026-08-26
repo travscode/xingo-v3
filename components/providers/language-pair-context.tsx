@@ -99,33 +99,57 @@ interface LanguagePairContextValue {
   availablePairs: LanguagePair[];
 }
 
-const LanguagePairContext = createContext<LanguagePairContextValue | null>(null);
+const LanguagePairContext = createContext<LanguagePairContextValue | null>(
+  null,
+);
 
 const DEFAULT_PAIR = createLanguagePair("English", "Spanish");
 
 /**
- * Loads the persisted language pair key from localStorage (browser-only).
+ * Loads the persisted language pair from localStorage (browser-only).
+ * The stored value is the full JSON representation so flipped / ad-hoc pairs
+ * that are not present in the seed list still survive page reloads.
  */
-function readStoredPairKey(): string | null {
+function readStoredPair(): LanguagePair | null {
   if (typeof window === "undefined") {
     return null;
   }
   try {
-    return window.localStorage.getItem(LANGUAGE_PAIR_STORAGE_KEY);
+    const raw = window.localStorage.getItem(LANGUAGE_PAIR_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw) as unknown;
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      typeof (parsed as LanguagePair).sourceLanguage === "string" &&
+      typeof (parsed as LanguagePair).targetLanguage === "string"
+    ) {
+      return createLanguagePair(
+        (parsed as LanguagePair).sourceLanguage,
+        (parsed as LanguagePair).targetLanguage,
+      );
+    }
+    return null;
   } catch {
     return null;
   }
 }
 
 /**
- * Persists the selected language pair key to localStorage.
+ * Persists a language pair to localStorage as JSON so flipped / ad-hoc pairs
+ * (not present in the seed list) are preserved across page reloads.
  */
-function writeStoredPairKey(key: string) {
+function writeStoredPair(pair: LanguagePair) {
   if (typeof window === "undefined") {
     return;
   }
   try {
-    window.localStorage.setItem(LANGUAGE_PAIR_STORAGE_KEY, key);
+    window.localStorage.setItem(
+      LANGUAGE_PAIR_STORAGE_KEY,
+      JSON.stringify(pair),
+    );
   } catch {
     // Ignore quota / private mode errors.
   }
@@ -135,7 +159,8 @@ function writeStoredPairKey(key: string) {
  * Provider that exposes the currently selected language pair across the dashboard.
  *
  * - Sources options from the user's saved preferences plus the default seeded CCL pairs.
- * - Persists the selection to localStorage so it survives page reloads.
+ * - Persists the full pair (not only the key) to localStorage so flipped / ad-hoc
+ *   combinations that are not part of the option list still survive page reloads.
  * - Falls back to the first available option (or a hardcoded default) when nothing is stored.
  */
 export function LanguagePairProvider({
@@ -148,26 +173,29 @@ export function LanguagePairProvider({
     () => buildLanguagePairOptions(currentUser?.languagePreferences),
     [currentUser?.languagePreferences],
   );
-  const [selectedKey, setSelectedKey] = useState<string | null>(() =>
-    readStoredPairKey(),
+  const [selectedPair, setSelectedPair] = useState<LanguagePair | null>(() =>
+    readStoredPair(),
   );
 
   useEffect(() => {
-    if (selectedKey) {
-      writeStoredPairKey(selectedKey);
+    if (selectedPair) {
+      writeStoredPair(selectedPair);
     }
-  }, [selectedKey]);
+  }, [selectedPair]);
 
   const setActivePair = useCallback((pair: LanguagePair) => {
-    setSelectedKey(pair.key);
+    setSelectedPair(pair);
   }, []);
 
   const activePair = useMemo<LanguagePair>(() => {
-    const byKey = selectedKey
-      ? availablePairs.find((option) => option.key === selectedKey)
-      : undefined;
-    return byKey ?? availablePairs[0] ?? DEFAULT_PAIR;
-  }, [availablePairs, selectedKey]);
+    if (selectedPair) {
+      const matchingOption = availablePairs.find(
+        (option) => option.key === selectedPair.key,
+      );
+      return matchingOption ?? selectedPair;
+    }
+    return availablePairs[0] ?? DEFAULT_PAIR;
+  }, [availablePairs, selectedPair]);
 
   const value = useMemo<LanguagePairContextValue>(
     () => ({
