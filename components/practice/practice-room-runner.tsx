@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { useConvexAuth, useMutation } from "convex/react";
 import { RealtimeAgent } from "@openai/agents/realtime";
+import { Lottie } from "lottie-react";
 import { api } from "@/convex/_generated/api";
 import { buildRealtimeAgentInstructions } from "@/lib/ai";
 import { useRealtimeVoiceSession } from "@/components/practice/use-realtime-voice-session";
 import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
 import type { Scenario, VoiceAgent } from "@/types/scenario";
 import type { TranscriptEntry } from "@/types/session";
+import soundWavesAnimation from "@/public/animations/sound-waves.json";
 
 type AgentKey = "agent_a" | "agent_b";
 type SpeakingKey = AgentKey | "interpreter" | null;
@@ -94,6 +96,17 @@ function ParticipantAvatar({
           ) : (
             <span>{initials}</span>
           )}
+          {isSpeaking ? (
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px]">
+              <div className="h-[110px] w-[110px]">
+                <Lottie
+                  animationData={soundWavesAnimation}
+                  loop={true}
+                  autoplay={true}
+                />
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
       <div>
