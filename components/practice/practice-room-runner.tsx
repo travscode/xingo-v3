@@ -582,10 +582,11 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
 
   const switchActiveAgent = useCallback(
     async (agentKey: AgentKey) => {
-      await connectAgentIfNeeded(agentKey);
-
       const currentKey = activeAgent;
-      const nextBundle = getSessionBundle(agentKey);
+
+      if (currentKey !== agentKey) {
+        setActiveAgent(agentKey);
+      }
 
       if (
         currentKey &&
@@ -596,9 +597,27 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
         currentBundle.session.mute(true);
       }
 
+      if (!connectedAgentsRef.current.has(agentKey)) {
+        try {
+          await connectAgentIfNeeded(agentKey);
+        } catch (connectErr) {
+          console.error(
+            "[PracticeRoomRunner] Failed to connect agent on switch",
+            agentKey,
+            connectErr,
+          );
+          setError(
+            connectErr instanceof Error
+              ? connectErr.message
+              : "Failed to connect the selected participant.",
+          );
+          return;
+        }
+      }
+
+      const nextBundle = getSessionBundle(agentKey);
       nextBundle.session.mute(false);
       void ensureAudioPlayback(nextBundle.audioElement);
-      setActiveAgent(agentKey);
     },
     [activeAgent, connectAgentIfNeeded, ensureAudioPlayback, getSessionBundle],
   );
