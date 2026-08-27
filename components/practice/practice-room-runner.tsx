@@ -160,6 +160,10 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   const agentAAudioRef = useRef<HTMLAudioElement | null>(null);
   const agentBAudioRef = useRef<HTMLAudioElement | null>(null);
   const connectedAgentsRef = useRef<Set<AgentKey>>(new Set());
+  const transcriptScrollContainerRef = useRef<HTMLDivElement>(null);
+  const agentASpeakingActiveRef = useRef(false);
+  const agentBSpeakingActiveRef = useRef(false);
+  const audioEventListenersAttachedRef = useRef<Set<AgentKey>>(new Set());
   const canStartPractice =
     isClerkLoaded &&
     isSignedIn &&
@@ -216,18 +220,85 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     console.warn("[PracticeRoomRunner] Realtime warning", message);
   }, []);
 
+  /**
+   * Marks a speaker as active and schedules a safety timeout to clear the
+   * speaking state if audio events fail to fire. Uses 30-second fallback since
+   * actual audio duration is variable; ended/pause events are the primary signal.
+   */
   const markSpeaking = useCallback((key: SpeakingKey) => {
     if (speakingTimeoutRef.current) {
       window.clearTimeout(speakingTimeoutRef.current);
       speakingTimeoutRef.current = null;
     }
     setSpeakingKey(key);
+    if (key === "agent_a") {
+      agentASpeakingActiveRef.current = true;
+    } else if (key === "agent_b") {
+      agentBSpeakingActiveRef.current = true;
+    }
     if (key) {
       speakingTimeoutRef.current = window.setTimeout(() => {
+        agentASpeakingActiveRef.current = false;
+        agentBSpeakingActiveRef.current = false;
         setSpeakingKey(null);
-      }, 1100);
+      }, 30000);
     }
   }, []);
+
+  /**
+   * Clears the speaking state for a specific agent when audio playback finishes.
+   * Uses both ref and state to ensure consistency between renders.
+   */
+  const clearSpeakingForAgent = useCallback((agentKey: AgentKey) => {
+    if (agentKey === "agent_a") {
+      agentASpeakingActiveRef.current = false;
+    } else if (agentKey === "agent_b") {
+      agentBSpeakingActiveRef.current = false;
+    }
+    setSpeakingKey((current) => (current === agentKey ? null : current));
+  }, []);
+
+  /**
+   * Attaches play/pause/ended listeners to an agent's audio element so the
+   * speaking animation stays in sync with real audio output instead of a fixed timer.
+   */
+  const setupAgentAudioEventListeners = useCallback(
+    (agentKey: AgentKey, audioElement: HTMLAudioElement) => {
+      if (audioEventListenersAttachedRef.current.has(agentKey)) {
+        return;
+      }
+
+      const handlePlay = () => {
+        markSpeaking(agentKey);
+      };
+
+      const handleEnded = () => {
+        clearSpeakingForAgent(agentKey);
+      };
+
+      const handlePause = () => {
+        if (
+          !Number.isFinite(audioElement.duration) ||
+          audioElement.currentTime >= audioElement.duration - 0.05
+        ) {
+          clearSpeakingForAgent(agentKey);
+        }
+      };
+
+      const handleWaiting = () => {
+        markSpeaking(agentKey);
+      };
+
+      audioElement.addEventListener("play", handlePlay);
+      audioElement.addEventListener("ended", handleEnded);
+      audioElement.addEventListener("pause", handlePause);
+      audioElement.addEventListener("waiting", handleWaiting);
+      audioElement.addEventListener("canplaythrough", handlePlay);
+
+      audioEventListenersAttachedRef.current.add(agentKey);
+    },
+    [clearSpeakingForAgent, markSpeaking],
+  );
 
   const addTranscriptEntry = useCallback(
     (entry: TranscriptEntry) => {
@@ -489,6 +560,8 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
         throw new Error("Audio output is not ready yet.");
       }
 
+      setupAgentAudioEventListeners(agentKey, bundle.audioElement);
+
       await bundle.session.connect({
         getEphemeralKey: fetchEphemeralKey,
         agent: bundle.agent,
@@ -499,7 +572,12 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       await ensureAudioPlayback(bundle.audioElement);
       connectedAgentsRef.current.add(agentKey);
     },
-    [ensureAudioPlayback, fetchEphemeralKey, getSessionBundle],
+    [
+      ensureAudioPlayback,
+      fetchEphemeralKey,
+      getSessionBundle,
+      setupAgentAudioEventListeners,
+    ],
   );
 
   const switchActiveAgent = useCallback(
@@ -533,6 +611,15 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     setIsPushToTalkActive(false);
     setSpeakingKey(null);
   }, [agentASession, agentBSession]);
+
+  useEffect(() => {
+    if (agentAAudioRef.current) {
+      setupAgentAudioEventListeners("agent_a", agentAAudioRef.current);
+    }
+    if (agentBAudioRef.current) {
+      setupAgentAudioEventListeners("agent_b", agentBAudioRef.current);
+    }
+  }, [setupAgentAudioEventListeners]);
 
   const handleStartPractice = useCallback(async () => {
     if (isStarting) {
@@ -984,6 +1071,54 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   const visibleTranscriptEntries = transcriptEntries.filter((entry) =>
     entry.text.trim(),
   );
+
+  /**
+   * Smoothly scrolls the transcript container to its bottom with an ease-in-out curve.
+   * Uses requestAnimationFrame for a buttery animation over 400ms.
+   */
+  const scrollTranscriptToBottom = useCallback(() => {
+    const container = transcriptScrollContainerRef.current;
+    if (!container) return;
+
+    const startScrollTop = container.scrollTop;
+    const endScrollTop = container.scrollHeight - container.clientHeight;
+    const distance = endScrollTop - startScrollTop;
+
+    if (Math.abs(distance) < 1) return;
+
+    const duration = 400;
+    let startTime: number | null = null;
+
+    /**
+     * Per-frame animation step applying cubic ease-in-out interpolation.
+     */
+    const animateStep = (timestamp: number) => {
+      if (startTime === null) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased =
+        progress < 0.5
+          ? 4 * progress * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      container.scrollTop = startScrollTop + distance * eased;
+      if (progress < 1) {
+        window.requestAnimationFrame(animateStep);
+      }
+    };
+
+    window.requestAnimationFrame(animateStep);
+  }, []);
+
+  useEffect(() => {
+    scrollTranscriptToBottom();
+  }, [
+    visibleTranscriptEntries,
+    translatedTranscriptTextById,
+    translatingEntryIds,
+    translationErrorsById,
+    scrollTranscriptToBottom,
+  ]);
+
   const locationLine = `You are at ${scenario.title}`;
 
   /**
@@ -1200,7 +1335,10 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
             </div>
           ) : null}
 
-          <div className="mt-6 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+          <div
+            ref={transcriptScrollContainerRef}
+            className="mt-6 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 max-h-[70vh]"
+          >
             {visibleTranscriptEntries.map((entry) =>
               (() => {
                 const displayedText =
