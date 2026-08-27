@@ -17,6 +17,7 @@ import soundWavesAnimation from "@/public/animations/sound-waves.json";
 type AgentKey = "agent_a" | "agent_b";
 type SpeakingKey = AgentKey | "interpreter" | null;
 
+const notStartedLabel = "Not started";
 interface PracticeRoomRunnerProps {
   scenario: Scenario & { _id: string };
 }
@@ -995,7 +996,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     if (activeAgent === "agent_b") {
       return `${agentBConfig.name} (${agentBConfig.role})`;
     }
-    return "Not started";
+    return notStartedLabel;
   }, [
     activeAgent,
     effectiveAgentA.name,
@@ -1054,9 +1055,11 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
             </div>
           ) : null}
 
-          <div className="mt-4 inline-flex rounded-full border border-line bg-white/90 px-4 py-2 text-sm font-semibold text-black">
-            You are currently talking to {activeConversationLabel}
-          </div>
+          {activeConversationLabel !== notStartedLabel && (
+            <div className="mt-4 inline-flex rounded-full border border-line bg-white/90 px-4 py-2 text-sm font-semibold text-black">
+              You are currently talking to {activeConversationLabel}
+            </div>
+          )}
 
           <div
             className={`mt-14 grid gap-8 items-center justify-center justify-items-center ${
