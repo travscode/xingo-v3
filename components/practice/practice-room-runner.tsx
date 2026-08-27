@@ -773,7 +773,8 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     const bundle = getSessionBundle(activeAgent);
     bundle.session.stopPushToTalk();
     setIsPushToTalkActive(false);
-  }, [activeAgent, getSessionBundle, isPushToTalkActive]);
+    void ensureAudioPlayback(bundle.audioElement);
+  }, [activeAgent, ensureAudioPlayback, getSessionBundle, isPushToTalkActive]);
 
   const sessionIsLive = Boolean(attemptId);
 
