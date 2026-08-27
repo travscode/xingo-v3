@@ -143,7 +143,7 @@ export function LivePracticeResults({ scenarioId }: { scenarioId: string }) {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="surface-card rounded-[2rem] p-6">
+        <div className="surface-card rounded-4xl p-6">
           <p className="eyebrow">Score breakdown</p>
           <div className="mt-5 space-y-3">
             {Object.entries(session.assessment.breakdown).map(

@@ -724,16 +724,46 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     switchActiveAgent,
   ]);
 
+  /**
+   * Stops all agent audio playback immediately and clears speaking state.
+   * Called when the interpreter starts recording so the microphone does not
+   * pick up any agent speech mid-phrase.
+   */
+  const stopAllAgentPlayback = useCallback(() => {
+    const audioA = agentAAudioRef.current;
+    if (audioA && !audioA.paused) {
+      try {
+        audioA.pause();
+        audioA.currentTime = 0;
+      } catch {
+        // Some browsers throw on currentTime assignment for streaming media; ignore.
+      }
+    }
+    clearSpeakingForAgent("agent_a");
+
+    const audioB = agentBAudioRef.current;
+    if (audioB && !audioB.paused) {
+      try {
+        audioB.pause();
+        audioB.currentTime = 0;
+      } catch {
+        // Some browsers throw on currentTime assignment for streaming media; ignore.
+      }
+    }
+    clearSpeakingForAgent("agent_b");
+  }, [clearSpeakingForAgent]);
+
   const handlePushToTalkStart = useCallback(() => {
     if (!activeAgent) {
       return;
     }
 
+    stopAllAgentPlayback();
     const bundle = getSessionBundle(activeAgent);
     bundle.session.startPushToTalk();
     setIsPushToTalkActive(true);
     markSpeaking("interpreter");
-  }, [activeAgent, getSessionBundle, markSpeaking]);
+  }, [activeAgent, getSessionBundle, markSpeaking, stopAllAgentPlayback]);
 
   const handlePushToTalkEnd = useCallback(() => {
     if (!activeAgent || !isPushToTalkActive) {
@@ -809,6 +839,8 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
         return;
       }
 
+      stopAllAgentPlayback();
+
       spaceKeyDownAtRef.current = Date.now();
       spaceHoldActiveRef.current = false;
       spaceHoldTimeoutRef.current = window.setTimeout(() => {
@@ -864,6 +896,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     handlePushToTalkEnd,
     handlePushToTalkStart,
     sessionIsLive,
+    stopAllAgentPlayback,
     toggleActiveAgent,
   ]);
 
