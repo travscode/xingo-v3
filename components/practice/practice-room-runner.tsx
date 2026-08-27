@@ -66,6 +66,7 @@ function ParticipantAvatar({
   isSpeaking,
   isActive,
   onSelect,
+  isRecording,
 }: {
   label: string;
   subLabel: string;
@@ -74,6 +75,7 @@ function ParticipantAvatar({
   isSpeaking: boolean;
   isActive?: boolean;
   onSelect?: () => void;
+  isRecording?: boolean;
 }) {
   return (
     <button
@@ -88,7 +90,10 @@ function ParticipantAvatar({
         <div
           className={cn(
             "relative z-10 flex h-[190px] w-[190px] items-center justify-center overflow-hidden rounded-full bg-[#f0f0f0] text-4xl font-semibold text-black border-10 border-transparent",
-            isActive && "bg-[#001EFF] text-white border-[#001EFFAA]",
+            isActive &&
+              !isRecording &&
+              "bg-[#001EFF] text-white border-[#001EFFAA]",
+            isActive && isRecording && "bg-[#001EFFAA] border-[#001EFFAA]",
           )}
         >
           {imageUrl ? (
@@ -1268,6 +1273,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
                 initials={getInitials(agentBConfig.name || agentBConfig.role)}
                 isSpeaking={speakingKey === "agent_b"}
                 isActive={activeAgent === "agent_b"}
+                isRecording={isPushToTalkActive}
                 onSelect={() => void switchActiveAgent("agent_b")}
               />
             ) : null}
@@ -1280,6 +1286,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
               )}
               isSpeaking={speakingKey === "agent_a"}
               isActive={activeAgent === "agent_a"}
+              isRecording={isPushToTalkActive}
               onSelect={() => void switchActiveAgent("agent_a")}
             />
           </div>
