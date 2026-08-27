@@ -175,6 +175,11 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   const agentASpeakingActiveRef = useRef(false);
   const agentBSpeakingActiveRef = useRef(false);
   const audioEventListenersAttachedRef = useRef<Set<AgentKey>>(new Set());
+  const [cameraPermission, setCameraPermission] = useState<
+    "idle" | "requesting" | "granted" | "denied" | "unavailable"
+  >("idle");
+  const userVideoRef = useRef<HTMLVideoElement | null>(null);
+  const userCameraStreamRef = useRef<MediaStream | null>(null);
   const canStartPractice =
     isClerkLoaded &&
     isSignedIn &&
@@ -764,6 +769,89 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
     clearSpeakingForAgent("agent_b");
   }, [clearSpeakingForAgent]);
 
+  /**
+   * Stops all active camera tracks and clears the video element src so the
+   * browser camera indicator light turns off. Idempotent — safe to call even
+   * when the camera is already disabled.
+   */
+  const disableUserCamera = useCallback(() => {
+    const stream = userCameraStreamRef.current;
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      userCameraStreamRef.current = null;
+    }
+    const videoEl = userVideoRef.current;
+    if (videoEl) {
+      videoEl.srcObject = null;
+    }
+  }, []);
+
+  /**
+   * Requests user camera permission, wires the resulting MediaStream to the
+   * self-view <video> element, and tracks permission state. Falls back cleanly
+   * when the user denies permission, the device has no camera, or the API is
+   * unavailable (non-secure contexts, unsupported browsers).
+   */
+  const enableUserCamera = useCallback(async () => {
+    if (
+      typeof window === "undefined" ||
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia
+    ) {
+      setCameraPermission("unavailable");
+      return;
+    }
+    if (cameraPermission === "granted" && userCameraStreamRef.current) {
+      return;
+    }
+    if (cameraPermission === "requesting") {
+      return;
+    }
+
+    setCameraPermission("requesting");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: 640, height: 640 },
+        audio: false,
+      });
+      userCameraStreamRef.current = stream;
+      const videoEl = userVideoRef.current;
+      if (videoEl) {
+        videoEl.srcObject = stream;
+        videoEl.muted = true;
+        videoEl.playsInline = true;
+        await videoEl.play().catch(() => undefined);
+      }
+      setCameraPermission("granted");
+    } catch (err) {
+      const name = err instanceof Error ? err.name : "";
+      if (name === "NotAllowedError" || name === "SecurityError") {
+        setCameraPermission("denied");
+      } else if (
+        name === "NotFoundError" ||
+        name === "OverconstrainedError" ||
+        name === "NotReadableError"
+      ) {
+        setCameraPermission("unavailable");
+      } else {
+        setCameraPermission("denied");
+      }
+    }
+  }, [cameraPermission]);
+
+  /**
+   * Toggles the user camera on or off. Used by the small camera button next
+   * to the self-view so users can opt-in or disable the feed at any time.
+   */
+  const toggleUserCamera = useCallback(async () => {
+    if (cameraPermission === "granted" && userCameraStreamRef.current) {
+      disableUserCamera();
+      setCameraPermission("idle");
+      return;
+    }
+    await enableUserCamera();
+  }, [cameraPermission, disableUserCamera, enableUserCamera]);
+
   const handlePushToTalkStart = useCallback(() => {
     if (!activeAgent) {
       return;
@@ -923,8 +1011,9 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       if (speakingTimeoutRef.current) {
         window.clearTimeout(speakingTimeoutRef.current);
       }
+      disableUserCamera();
     };
-  }, []);
+  }, [disableUserCamera]);
 
   /**
    * Starts a visible countdown before opening the realtime session.
@@ -1300,26 +1389,107 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
               onTouchStart={handlePushToTalkStart}
               onTouchEnd={handlePushToTalkEnd}
               disabled={!sessionIsLive || !activeAgent}
-              className={`flex h-[220px] w-[220px] items-center justify-center rounded-full ${
-                isPushToTalkActive ? "bg-[#FF000D]" : "bg-black"
-              } text-white disabled:opacity-60`}
+              className={`relative overflow-hidden h-[220px] w-[220px] items-center justify-center rounded-full text-white disabled:opacity-60 ${
+                isPushToTalkActive ? "ring-4 ring-[#FF000D]/60" : ""
+              }`}
             >
-              <svg
-                width="64"
-                height="64"
-                className="h-16 w-16"
-                viewBox="0 0 99 99"
-                fill="currentColor"
-                aria-hidden
-              >
-                <path
-                  d="M49.5 68.0625C54.4215 68.0574 59.14 66.1001 62.62 62.62C66.1001 59.14 68.0574 54.4215 68.0625 49.5V24.75C68.0625 19.8269 66.1068 15.1055 62.6257 11.6243C59.1445 8.14319 54.4231 6.1875 49.5 6.1875C44.5769 6.1875 39.8555 8.14319 36.3743 11.6243C32.8932 15.1055 30.9375 19.8269 30.9375 24.75V49.5C30.9426 54.4215 32.8999 59.14 36.38 62.62C39.86 66.1001 44.5785 68.0574 49.5 68.0625ZM37.125 24.75C37.125 21.4679 38.4288 18.3203 40.7496 15.9996C43.0703 13.6788 46.2179 12.375 49.5 12.375C52.7821 12.375 55.9297 13.6788 58.2504 15.9996C60.5712 18.3203 61.875 21.4679 61.875 24.75V49.5C61.875 52.7821 60.5712 55.9297 58.2504 58.2504C55.9297 60.5712 52.7821 61.875 49.5 61.875C46.2179 61.875 43.0703 60.5712 40.7496 58.2504C38.4288 55.9297 37.125 52.7821 37.125 49.5V24.75ZM52.5938 80.2828V92.8125C52.5938 93.633 52.2678 94.4199 51.6876 95.0001C51.1074 95.5803 50.3205 95.9062 49.5 95.9062C48.6795 95.9062 47.8926 95.5803 47.3124 95.0001C46.7322 94.4199 46.4062 93.633 46.4062 92.8125V80.2828C38.7788 79.5067 31.71 75.9298 26.567 70.2438C21.4239 64.5579 18.5719 57.1669 18.5625 49.5C18.5625 48.6795 18.8884 47.8926 19.4686 47.3124C20.0488 46.7322 20.8357 46.4062 21.6562 46.4062C22.4768 46.4062 23.2637 46.7322 23.8439 47.3124C24.4241 47.8926 24.75 48.6795 24.75 49.5C24.75 56.0641 27.3576 62.3594 31.9991 67.0009C36.6406 71.6424 42.9359 74.25 49.5 74.25C56.0641 74.25 62.3594 71.6424 67.0009 67.0009C71.6424 62.3594 74.25 56.0641 74.25 49.5C74.25 48.6795 74.5759 47.8926 75.1561 47.3124C75.7363 46.7322 76.5232 46.4062 77.3438 46.4062C78.1643 46.4062 78.9512 46.7322 79.5314 47.3124C80.1116 47.8926 80.4375 48.6795 80.4375 49.5C80.4281 57.1669 77.5761 64.5579 72.433 70.2438C67.29 75.9298 60.2212 79.5067 52.5938 80.2828Z"
-                  fill="white"
-                />
-              </svg>
+              <video
+                ref={userVideoRef}
+                autoPlay
+                playsInline
+                muted
+                className={`absolute inset-0 h-full w-full rounded-full object-cover ${
+                  cameraPermission === "granted" ? "opacity-100" : "opacity-0"
+                }`}
+                style={{ transform: "scaleX(-1)" }}
+              />
+              <div
+                className={`absolute inset-0 rounded-full ${
+                  isPushToTalkActive
+                    ? cameraPermission === "granted"
+                      ? "bg-[#FF000D]/50"
+                      : "bg-[#FF000D]"
+                    : cameraPermission === "granted"
+                      ? "bg-black/50"
+                      : "bg-black"
+                }`}
+              />
+              <div className="relative z-10 flex h-full w-full items-center justify-center">
+                <svg
+                  width="64"
+                  height="64"
+                  className="h-16 w-16 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]"
+                  viewBox="0 0 99 99"
+                  fill="currentColor"
+                  aria-hidden
+                >
+                  <path
+                    d="M49.5 68.0625C54.4215 68.0574 59.14 66.1001 62.62 62.62C66.1001 59.14 68.0574 54.4215 68.0625 49.5V24.75C68.0625 19.8269 66.1068 15.1055 62.6257 11.6243C59.1445 8.14319 54.4231 6.1875 49.5 6.1875C44.5769 6.1875 39.8555 8.14319 36.3743 11.6243C32.8932 15.1055 30.9375 19.8269 30.9375 24.75V49.5C30.9426 54.4215 32.8999 59.14 36.38 62.62C39.86 66.1001 44.5785 68.0574 49.5 68.0625ZM37.125 24.75C37.125 21.4679 38.4288 18.3203 40.7496 15.9996C43.0703 13.6788 46.2179 12.375 49.5 12.375C52.7821 12.375 55.9297 13.6788 58.2504 15.9996C60.5712 18.3203 61.875 21.4679 61.875 24.75V49.5C61.875 52.7821 60.5712 55.9297 58.2504 58.2504C55.9297 60.5712 52.7821 61.875 49.5 61.875C46.2179 61.875 43.0703 60.5712 40.7496 58.2504C38.4288 55.9297 37.125 52.7821 37.125 49.5V24.75ZM52.5938 80.2828V92.8125C52.5938 93.633 52.2678 94.4199 51.6876 95.0001C51.1074 95.5803 50.3205 95.9062 49.5 95.9062C48.6795 95.9062 47.8926 95.5803 47.3124 95.0001C46.7322 94.4199 46.4062 93.633 46.4062 92.8125V80.2828C38.7788 79.5067 31.71 75.9298 26.567 70.2438C21.4239 64.5579 18.5719 57.1669 18.5625 49.5C18.5625 48.6795 18.8884 47.8926 19.4686 47.3124C20.0488 46.7322 20.8357 46.4062 21.6562 46.4062C22.4768 46.4062 23.2637 46.7322 23.8439 47.3124C24.4241 47.8926 24.75 48.6795 24.75 49.5C24.75 56.0641 27.3576 62.3594 31.9991 67.0009C36.6406 71.6424 42.9359 74.25 49.5 74.25C56.0641 74.25 62.3594 71.6424 67.0009 67.0009C71.6424 62.3594 74.25 56.0641 74.25 49.5C74.25 48.6795 74.5759 47.8926 75.1561 47.3124C75.7363 46.7322 76.5232 46.4062 77.3438 46.4062C78.1643 46.4062 78.9512 46.7322 79.5314 47.3124C80.1116 47.8926 80.4375 48.6795 80.4375 49.5C80.4281 57.1669 77.5761 64.5579 72.433 70.2438C67.29 75.9298 60.2212 79.5067 52.5938 80.2828Z"
+                    fill="white"
+                  />
+                </svg>
+              </div>
             </button>
-            <div className="mt-4 text-[32px] font-semibold leading-none tracking-[-0.03em] text-black">
-              You
+            <div className="mt-4 flex items-center gap-3">
+              <div className="text-[32px] font-semibold leading-none tracking-[-0.03em] text-black">
+                You
+              </div>
+              <button
+                type="button"
+                onClick={() => void toggleUserCamera()}
+                disabled={cameraPermission === "requesting"}
+                title={
+                  cameraPermission === "granted"
+                    ? "Turn off camera"
+                    : cameraPermission === "denied"
+                      ? "Camera permission denied — check browser settings"
+                      : cameraPermission === "unavailable"
+                        ? "Camera not available on this device"
+                        : "Enable camera"
+                }
+                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+                  cameraPermission === "granted"
+                    ? "border-[#001EFF] bg-[#001EFF] text-white"
+                    : "border-line bg-white text-black hover:bg-[#f5f5f5] disabled:opacity-50"
+                }`}
+              >
+                {cameraPermission === "granted" ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-5 w-5"
+                    aria-hidden
+                  >
+                    <path d="M23 7l-7 5 7 5V7z" />
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                  </svg>
+                ) : cameraPermission === "requesting" ? (
+                  <div
+                    className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                    aria-label="Requesting camera"
+                    role="status"
+                  />
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-5 w-5"
+                    aria-hidden
+                  >
+                    <path d="M23 7l-7 5 7 5V7z" />
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                )}
+              </button>
             </div>
           </div>
 
