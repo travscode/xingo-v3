@@ -13,6 +13,7 @@ import { useActiveLanguagePair } from "@/components/providers/language-pair-cont
 import type { Scenario, VoiceAgent } from "@/types/scenario";
 import type { TranscriptEntry } from "@/types/session";
 import soundWavesAnimation from "@/public/animations/sound-waves.json";
+import { cn } from "@/lib/utils";
 
 type AgentKey = "agent_a" | "agent_b";
 type SpeakingKey = AgentKey | "interpreter" | null;
@@ -84,7 +85,12 @@ function ParticipantAvatar({
         {isSpeaking || isActive ? (
           <span className="avatar-speaking-ring" aria-hidden />
         ) : null}
-        <div className="relative z-10 flex h-[190px] w-[190px] items-center justify-center overflow-hidden rounded-full bg-[#f0f0f0] text-4xl font-semibold text-black">
+        <div
+          className={cn(
+            "relative z-10 flex h-[190px] w-[190px] items-center justify-center overflow-hidden rounded-full bg-[#f0f0f0] text-4xl font-semibold text-black border border-4 border-transparent",
+            isActive && "bg-[#001EFF] text-white border-[#001EFFAA]",
+          )}
+        >
           {imageUrl ? (
             // Uses a native image element to avoid Next.js optimizer issues with signed Convex URLs.
             // eslint-disable-next-line @next/next/no-img-element
