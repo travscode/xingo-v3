@@ -87,7 +87,7 @@ function ParticipantAvatar({
         ) : null}
         <div
           className={cn(
-            "relative z-10 flex h-[190px] w-[190px] items-center justify-center overflow-hidden rounded-full bg-[#f0f0f0] text-4xl font-semibold text-black border border-4 border-transparent",
+            "relative z-10 flex h-[190px] w-[190px] items-center justify-center overflow-hidden rounded-full bg-[#f0f0f0] text-4xl font-semibold text-black border-10 border-transparent",
             isActive && "bg-[#001EFF] text-white border-[#001EFFAA]",
           )}
         >
@@ -104,7 +104,7 @@ function ParticipantAvatar({
             <span>{isSpeaking ? "" : initials}</span>
           )}
           {isSpeaking ? (
-            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px]">
+            <div className="absolute inset-0 flex items-center justify-center rounded-full backdrop-blur-[2px]">
               <div className="h-[110px] w-[110px]">
                 <Lottie
                   src={soundWavesAnimation as object}
