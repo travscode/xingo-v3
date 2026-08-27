@@ -180,6 +180,7 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
   >("idle");
   const userVideoRef = useRef<HTMLVideoElement | null>(null);
   const userCameraStreamRef = useRef<MediaStream | null>(null);
+  const autoRequestedCameraRef = useRef(false);
   const canStartPractice =
     isClerkLoaded &&
     isSignedIn &&
@@ -1014,6 +1015,26 @@ export function PracticeRoomRunner({ scenario }: PracticeRoomRunnerProps) {
       disableUserCamera();
     };
   }, [disableUserCamera]);
+
+  /**
+   * On page load, proactively requests camera permission so the self-view
+   * appears without users needing to discover the camera toggle. Uses a
+   * one-shot ref guard so the prompt is never re-issued across effect
+   * re-runs; if the browser blocks auto-prompts (non-gesture policy) or
+   * the user denies, the manual camera button next to the avatar is the
+   * always-available retry path.
+   */
+  useEffect(() => {
+    if (autoRequestedCameraRef.current) {
+      return;
+    }
+    if (cameraPermission !== "idle") {
+      autoRequestedCameraRef.current = true;
+      return;
+    }
+    autoRequestedCameraRef.current = true;
+    void enableUserCamera();
+  }, [cameraPermission, enableUserCamera]);
 
   /**
    * Starts a visible countdown before opening the realtime session.
