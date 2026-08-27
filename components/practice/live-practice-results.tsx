@@ -147,15 +147,33 @@ export function LivePracticeResults({ scenarioId }: { scenarioId: string }) {
           <p className="eyebrow">Score breakdown</p>
           <div className="mt-5 space-y-3">
             {Object.entries(session.assessment.breakdown).map(
-              ([key, value]) => (
-                <div
-                  key={key}
-                  className="flex items-center justify-between rounded-[1.25rem] border border-line bg-white p-4"
-                >
-                  <span className="capitalize">{key}</span>
-                  <span className="font-semibold">{Math.round(value)}%</span>
-                </div>
-              ),
+              ([key, value]) => {
+                const roundedValue = Math.round(value);
+                const barColorClass =
+                  roundedValue >= 70
+                    ? "bg-emerald-500/15"
+                    : roundedValue >= 40
+                      ? "bg-amber-500/15"
+                      : "bg-red-500/20";
+                return (
+                  <div
+                    key={key}
+                    className="relative flex items-center justify-between overflow-hidden rounded-[1.25rem] border border-line bg-white p-4"
+                  >
+                    <div
+                      aria-hidden
+                      className={`pointer-events-none absolute inset-y-0 left-0 ${barColorClass} rounded-[1.25rem]`}
+                      style={{
+                        width: `${Math.min(100, Math.max(0, roundedValue))}%`,
+                      }}
+                    />
+                    <span className="relative z-10 capitalize">{key}</span>
+                    <span className="relative z-10 font-semibold">
+                      {roundedValue}%
+                    </span>
+                  </div>
+                );
+              },
             )}
           </div>
           <div className="mt-5 rounded-[1.5rem] border border-line bg-white p-4 text-sm leading-6 text-muted">
