@@ -94,13 +94,13 @@ function ParticipantAvatar({
               loading="lazy"
             />
           ) : (
-            <span>{initials}</span>
+            <span>{isSpeaking ? "" : initials}</span>
           )}
           {isSpeaking ? (
             <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px]">
               <div className="h-[110px] w-[110px]">
                 <Lottie
-                  animationData={soundWavesAnimation}
+                  src={soundWavesAnimation as object}
                   loop={true}
                   autoplay={true}
                 />

@@ -1288,8 +1288,9 @@ function AgentForm({
           <div className="w-full rounded-[1rem] border border-dashed border-line bg-slate-50 px-4 py-3 text-sm text-muted">
             <div className="font-semibold text-slate-600">{language}</div>
             <p className="mt-1 text-xs leading-5">
-              Not editable here. This agent's spoken language is overridden at
-              practice time by the learner's topbar language pair selection.
+              Not editable here. This agent&apos;s spoken language is overridden
+              at practice time by the learner&apos;s topbar language pair
+              selection.
             </p>
           </div>
         </Field>
