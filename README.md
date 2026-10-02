@@ -1,73 +1,49 @@
 # XINGO
 
-XINGO is an AI interpreter training platform built on Next.js. This repository now contains a live foundation matching the supplied PRD: marketing site, Clerk auth, Convex-backed dashboard data, protected routes, Stripe billing endpoints, seeded module/scenario data, and a realtime OpenAI-powered practice flow with transcript assessment.
+AI role-play practice for spoken interpreting. Two AI participants who can't understand each
+other, one human interpreter, an instant examiner-style score. Built for NAATI CCL candidates
+and working community, medical and legal interpreters.
 
-## Stack
+**Stack:** Next.js 16 (App Router) · React 19 · Tailwind v4 · Convex (database + backend) · Clerk (auth) · Stripe (payments) · OpenAI Realtime + Responses · GA4.
 
-- Next.js App Router
-- TypeScript
-- Tailwind CSS v4
-- Clerk
-- Convex
-- Stripe
-- OpenAI Realtime + assessment pipeline
+## Docs
 
-## Available routes
+| | |
+|---|---|
+| [docs/product.md](docs/product.md) | What XINGO is, who it's for, the experience, pricing, roadmap (PRD v2) |
+| [docs/architecture.md](docs/architecture.md) | System design, data model, practice engine, metering, billing, environments |
+| [docs/decisions.md](docs/decisions.md) | Decision log (why things are the way they are) |
+| [docs/design-system.md](docs/design-system.md) | Visual language, tokens, components, copy voice |
+| [docs/analytics.md](docs/analytics.md) | GA4 events and how to read the funnel |
+| [docs/findings-2026-10.md](docs/findings-2026-10.md) | Production data review, security fixes, team feedback log |
+| [docs/known-issues.md](docs/known-issues.md) | Open risks and follow-ups |
+| [docs/runbooks/stripe-setup.md](docs/runbooks/stripe-setup.md) | Step-by-step payments setup |
+| [docs/runbooks/release-v4.md](docs/runbooks/release-v4.md) | Cutover to the production deployment, admin access, rollback |
 
-- `/`
-- `/pricing`
-- `/how-it-works`
-- `/for-interpreters`
-- `/for-organizations`
-- `/sign-in`
-- `/sign-up`
-- `/dashboard`
-- `/modules`
-- `/modules/[moduleId]`
-- `/practice/[scenarioId]`
-- `/progress`
-- `/credentials`
-- `/jobs`
-- `/billing`
-- `/account`
-- `/help`
-
-## Project structure
-
-- `app/`: route groups for marketing and dashboard surfaces
-- `components/`: shared UI, dashboard, modules, and practice components
-- `lib/`: navigation, integration helpers, and Stripe/Convex utilities
-- `types/`: domain models from the architecture spec
-- `utils/`: scoring and permission helpers
-- `convex/`: live schema, auth config, seed data, and backend functions
-
-## Environment
-
-Copy `.env.example` and provide the values required for Clerk, Convex, Stripe, and OpenAI.
-
-For a fully live billing flow, you still need Stripe price IDs:
-
-- `STRIPE_PROFESSIONAL_PRICE_ID`
-- `STRIPE_ORGANIZATION_PRICE_ID`
-
-For live practice sessions and post-assessment you also need:
-
-- `OPENAI_API_KEY`
-- `OPENAI_REALTIME_MODEL` (optional, defaults to `gpt-realtime`)
-- `OPENAI_ASSESSMENT_MODEL` (optional, defaults to `gpt-4.1-mini`)
-
-## Scripts
+## Run locally
 
 ```bash
-npm run dev
-npm run lint
-npm run typecheck
-npm run build
+pnpm install
+npx convex dev          # starts/attaches your dev Convex deployment and watches convex/
+pnpm dev                # Next.js on http://localhost:3000
 ```
 
-## Next build stages
+`.env.local` needs `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` (Clerk **Development** instance keys), `NEXT_PUBLIC_CONVEX_URL` and `CONVEX_DEPLOYMENT` (written by `npx convex dev`). Server secrets (OpenAI, Stripe, Clerk issuer) are Convex environment variables, set with `npx convex env set` — see [architecture §8](docs/architecture.md#8-environments).
 
-1. Replace the authentication placeholder pages with Clerk components and middleware.
-2. Expand the live Convex model into organization admin workflows, credentials, and notifications.
-3. Add Stripe price IDs and test checkout plus webhook flows end to end.
-4. Expand the realtime runner into richer scenario orchestration, admin-authored prompts, and organization analytics.
+First time on an empty deployment:
+
+```bash
+npx convex run seed:seedBaseData
+npx convex run users:setRole '{"email":"you@example.com","role":"platform_admin"}'   # after signing in once
+```
+
+## Checks
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test        # Convex business rules (convex-test)
+pnpm build
+```
+
+CI runs typecheck, lint and tests on every pull request (`.github/workflows/ci.yml`).
