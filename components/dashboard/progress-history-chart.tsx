@@ -196,10 +196,10 @@ export function ProgressHistoryChart({
 
   if (!chart || !primarySeries || primarySeries.points.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-line bg-white px-5 py-12 text-center">
+      <div className="mt-5 rounded-xl bg-gray-50 px-5 py-12 text-center">
         <div className="text-sm font-semibold text-foreground">{title}</div>
         <p className="mt-2 text-sm text-muted">
-          No completed attempts match the current filters yet.
+          No scored sessions for this selection. Try a longer period or “Everything I’ve practised”.
         </p>
       </div>
     );
@@ -227,14 +227,14 @@ export function ProgressHistoryChart({
   const usableWidth = chart.width - chart.padding.left - chart.padding.right;
 
   return (
-    <div className="rounded-xl border border-line bg-white p-5">
+    <div className="border-t border-gray-200 pt-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="text-base font-semibold text-foreground">{title}</div>
           <p className="mt-1 text-sm text-muted">{subtitle}</p>
         </div>
         <div className="text-right">
-          <div className="text-xs uppercase tracking-[0.16em] text-muted">
+          <div className="text-xs font-semibold text-gray-500">
             Latest
           </div>
           <div className="mt-1 text-lg font-semibold text-foreground">
@@ -249,7 +249,7 @@ export function ProgressHistoryChart({
         {series.map((item) => (
           <div
             key={item.id}
-            className="inline-flex items-center gap-2 rounded-full border border-line bg-[#fafafa] px-3 py-1.5 text-sm text-muted"
+            className="inline-flex items-center gap-2 rounded-md bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-700"
           >
             <span
               className="h-2.5 w-2.5 rounded-full"

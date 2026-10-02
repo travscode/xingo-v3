@@ -2,141 +2,124 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  CalendarDays,
-  Check,
-  ChevronDown,
-  FolderOpen,
-  MapIcon,
-} from "lucide-react";
+import { Download } from "lucide-react";
 import { useQuery } from "convex/react";
 import { Card, PageHeader, Skeleton } from "@/components/ui/primitives";
 import { AchievementBadges } from "@/components/dashboard/achievement-badges";
 import { displayMaxScore, toDisplayScore } from "@/lib/scoring";
 import { ProgressHistoryChart } from "@/components/dashboard/progress-history-chart";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { isCclModule } from "@/lib/scoring";
 import { api } from "@/convex/_generated/api";
 
-type HistoryTabId = "scores" | "assessment" | "practice" | "coverage" | "ccl";
-type QuickRangeId =
-  | "overall"
-  | "thisWeek"
-  | "thisMonth"
-  | "lastMonth"
-  | "thisYear"
-  | "custom";
-type ComparisonModeId = "single" | "avgVsBest";
+type PeriodId = "all" | "7d" | "30d" | "90d" | "year" | "custom";
 
-const historyTabs: Array<{ id: HistoryTabId; label: string }> = [
-  { id: "scores", label: "Scores" },
-  { id: "assessment", label: "Assessment" },
-  { id: "practice", label: "Practice" },
-  { id: "coverage", label: "Coverage" },
-  { id: "ccl", label: "CCL" },
+/** What the chart can show. Each view maps to one or two metrics. */
+const viewOptions = [
+  { id: "scores", group: "Scores", label: "Average and best score", metrics: ["averageScore", "bestScore"] },
+  { id: "averageScore", group: "Scores", label: "Average score", metrics: ["averageScore"] },
+  { id: "passRate", group: "Scores", label: "Pass rate", metrics: ["passRate"] },
+  { id: "accuracy", group: "Skills", label: "Accuracy", metrics: ["accuracy"] },
+  { id: "terminology", group: "Skills", label: "Terminology", metrics: ["terminology"] },
+  { id: "fluency", group: "Skills", label: "Fluency", metrics: ["fluency"] },
+  { id: "turnManagement", group: "Skills", label: "Turn management", metrics: ["turnManagement"] },
+  { id: "professionalism", group: "Skills", label: "Professionalism", metrics: ["professionalism"] },
+  { id: "practiceMinutes", group: "Activity", label: "Practice time", metrics: ["practiceMinutes"] },
+  { id: "attempts", group: "Activity", label: "Scored sessions", metrics: ["attempts"] },
+  { id: "scenariosPracticed", group: "Activity", label: "Different dialogues practised", metrics: ["scenariosPracticed"] },
+] as const;
+
+type ViewId = (typeof viewOptions)[number]["id"];
+
+const periodOptions: Array<{ id: PeriodId; label: string }> = [
+  { id: "all", label: "All time" },
+  { id: "7d", label: "Last 7 days" },
+  { id: "30d", label: "Last 30 days" },
+  { id: "90d", label: "Last 90 days" },
+  { id: "year", label: "This year" },
+  { id: "custom", label: "Custom dates…" },
 ];
-
-const tabMetrics = {
-  scores: ["averageScore", "bestScore"],
-  assessment: [
-    "accuracy",
-    "terminology",
-    "fluency",
-    "turnManagement",
-    "professionalism",
-  ],
-  practice: ["practiceMinutes", "attempts"],
-  coverage: ["modulesPracticed", "scenariosPracticed"],
-  ccl: ["averageScore90", "bestScore90", "passRate"],
-} as const;
 
 const metricMeta = {
   averageScore: {
     label: "Average score",
-    subtitle: "Average result across completed attempts in each time bucket.",
-    formatValue: (value: number) => `${Math.round(value)}%`,
+    subtitle: "Average score out of 100 across scored sessions.",
+    formatValue: (value: number) => `${Math.round(value)}`,
   },
   bestScore: {
     label: "Best score",
-    subtitle: "Strongest score reached in each time bucket.",
-    formatValue: (value: number) => `${Math.round(value)}%`,
+    subtitle: "Your best score out of 100 in each period.",
+    formatValue: (value: number) => `${Math.round(value)}`,
   },
   averageScore90: {
     label: "Average score (/90)",
     subtitle:
-      "Average NAATI CCL result across completed attempts in each time bucket.",
+      "Average NAATI CCL-style score out of 90.",
     formatValue: (value: number) => `${Math.round(value)}/90`,
   },
   bestScore90: {
     label: "Best score (/90)",
-    subtitle: "Strongest NAATI CCL result reached in each time bucket.",
+    subtitle: "Your best CCL-style score out of 90.",
     formatValue: (value: number) => `${Math.round(value)}/90`,
   },
   passRate: {
     label: "Pass rate",
     subtitle:
-      "Share of completed CCL attempts meeting the 63/90 pass threshold.",
+      "Share of scored sessions at or above the pass mark.",
     formatValue: (value: number) => `${Math.round(value)}%`,
   },
   accuracy: {
     label: "Accuracy",
-    subtitle: "Average accuracy breakdown score over time.",
-    formatValue: (value: number) => `${Math.round(value)}%`,
+    subtitle: "How completely and faithfully you carried meaning (out of 100).",
+    formatValue: (value: number) => `${Math.round(value)}`,
   },
   terminology: {
     label: "Terminology",
-    subtitle: "Average terminology handling score over time.",
-    formatValue: (value: number) => `${Math.round(value)}%`,
+    subtitle: "How well you handled specialist terms (out of 100).",
+    formatValue: (value: number) => `${Math.round(value)}`,
   },
   fluency: {
     label: "Fluency",
-    subtitle: "Average fluency score across completed assessments.",
-    formatValue: (value: number) => `${Math.round(value)}%`,
+    subtitle: "How natural your delivery sounded (out of 100).",
+    formatValue: (value: number) => `${Math.round(value)}`,
   },
   turnManagement: {
     label: "Turn management",
-    subtitle: "Average turn management score across finished practice.",
-    formatValue: (value: number) => `${Math.round(value)}%`,
+    subtitle: "How promptly and correctly you relayed each turn (out of 100).",
+    formatValue: (value: number) => `${Math.round(value)}`,
   },
   professionalism: {
     label: "Professionalism",
-    subtitle: "Average professionalism score across finished assessments.",
-    formatValue: (value: number) => `${Math.round(value)}%`,
+    subtitle: "First person, no added commentary, appropriate register (out of 100).",
+    formatValue: (value: number) => `${Math.round(value)}`,
   },
   practiceMinutes: {
     label: "Practice time",
-    subtitle: "Total finished practice minutes per time bucket.",
+    subtitle: "Minutes spent in scored sessions.",
     formatValue: (value: number) =>
       value >= 60
         ? `${(value / 60).toFixed(value % 60 === 0 ? 0 : 1)}h`
         : `${Math.round(value)}m`,
   },
   attempts: {
-    label: "Attempts",
-    subtitle: "Completed practice attempts per time bucket.",
+    label: "Scored sessions",
+    subtitle: "How many sessions were scored.",
     formatValue: (value: number) => `${Math.round(value)}`,
   },
   modulesPracticed: {
-    label: "Modules practiced",
-    subtitle: "Unique modules completed in each time bucket.",
+    label: "Courses practised",
+    subtitle: "Different courses you practised.",
     formatValue: (value: number) => `${Math.round(value)}`,
   },
   scenariosPracticed: {
-    label: "Scenarios practiced",
-    subtitle: "Unique scenarios completed in each time bucket.",
+    label: "Dialogues practised",
+    subtitle: "Different dialogues you practised.",
     formatValue: (value: number) => `${Math.round(value)}`,
   },
 } as const;
 
 type MetricId = keyof typeof metricMeta;
 
-const CCL_MODULE_ID = "naati-certification-practice-ccl";
 const ATTEMPT_HISTORY_PAGE_SIZE = 10;
 const ATTEMPT_HISTORY_PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 
@@ -227,59 +210,22 @@ function toDateInputValue(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-/**
- * Returns the Monday of the current local week.
- */
-function getStartOfWeek(date: Date) {
-  const next = new Date(date);
-  const day = next.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  next.setDate(next.getDate() + diff);
-  next.setHours(0, 0, 0, 0);
-  return next;
-}
-
-/**
- * Computes preset date filters used by the progress quick-range buttons.
- */
-function getQuickRange(range: Exclude<QuickRangeId, "custom">) {
+/** Start/end dates (inclusive, yyyy-mm-dd) for a preset period. */
+function getPeriodRange(period: Exclude<PeriodId, "custom">) {
   const now = new Date();
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
 
-  if (range === "overall") {
+  if (period === "all") {
     return { startDate: "", endDate: "" };
   }
 
-  if (range === "thisWeek") {
-    return {
-      startDate: toDateInputValue(getStartOfWeek(today)),
-      endDate: toDateInputValue(now),
-    };
+  if (period === "year") {
+    return { startDate: toDateInputValue(new Date(now.getFullYear(), 0, 1)), endDate: toDateInputValue(now) };
   }
 
-  if (range === "thisMonth") {
-    return {
-      startDate: toDateInputValue(
-        new Date(now.getFullYear(), now.getMonth(), 1),
-      ),
-      endDate: toDateInputValue(now),
-    };
-  }
-
-  if (range === "lastMonth") {
-    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const end = new Date(now.getFullYear(), now.getMonth(), 0);
-    return {
-      startDate: toDateInputValue(start),
-      endDate: toDateInputValue(end),
-    };
-  }
-
-  return {
-    startDate: toDateInputValue(new Date(now.getFullYear(), 0, 1)),
-    endDate: toDateInputValue(now),
-  };
+  const days = period === "7d" ? 7 : period === "30d" ? 30 : 90;
+  const start = new Date(now);
+  start.setDate(start.getDate() - (days - 1));
+  return { startDate: toDateInputValue(start), endDate: toDateInputValue(now) };
 }
 
 /**
@@ -357,28 +303,6 @@ function getVisibleHistoryPages(currentPage: number, totalPages: number) {
 }
 
 /**
- * Returns the label shown on each history-tab dropdown trigger.
- */
-function getHistoryTriggerLabel(
-  tabId: HistoryTabId,
-  selectedTab: HistoryTabId,
-  selectedMetric: MetricId,
-  comparisonMode: ComparisonModeId,
-) {
-  const tab = historyTabs.find((item) => item.id === tabId);
-
-  if (selectedTab !== tabId) {
-    return tab?.label ?? tabId;
-  }
-
-  if (comparisonMode === "avgVsBest") {
-    return "Average vs best";
-  }
-
-  return metricMeta[selectedMetric].label;
-}
-
-/**
  * Renders the paginated attempt-history controls above or below the list.
  */
 function AttemptHistoryPaginationControls({
@@ -415,7 +339,7 @@ function AttemptHistoryPaginationControls({
           <select
             value={pageSize}
             onChange={(event) => onPageSizeChange(Number(event.target.value))}
-            className="rounded-full border border-line bg-white px-3 py-1.5 text-foreground outline-none"
+            className="rounded-lg border border-gray-200 bg-paper px-2 py-1.5 text-ink outline-none"
             aria-label="Attempts per page"
           >
             {ATTEMPT_HISTORY_PAGE_SIZE_OPTIONS.map((option) => (
@@ -431,7 +355,7 @@ function AttemptHistoryPaginationControls({
           type="button"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className="action-secondary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Previous
         </button>
@@ -448,10 +372,10 @@ function AttemptHistoryPaginationControls({
               key={page}
               type="button"
               onClick={() => onPageChange(page)}
-              className={`rounded-full px-3 py-2 text-sm font-semibold transition ${
+              className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
                 currentPage === page
                   ? "bg-ink text-paper"
-                  : "border border-line bg-white text-muted hover:text-foreground"
+                  : "border border-gray-200 bg-paper text-gray-500 hover:text-ink"
               }`}
             >
               {page}
@@ -462,7 +386,7 @@ function AttemptHistoryPaginationControls({
           type="button"
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className="action-secondary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Next
         </button>
@@ -472,16 +396,12 @@ function AttemptHistoryPaginationControls({
 }
 
 export function LiveProgress() {
-  const [selectedTab, setSelectedTab] = useState<HistoryTabId>("scores");
-  const [selectedMetric, setSelectedMetric] =
-    useState<MetricId>("averageScore");
-  const [selectedRange, setSelectedRange] = useState<QuickRangeId>("overall");
-  const [comparisonMode, setComparisonMode] =
-    useState<ComparisonModeId>("single");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [selectedModuleId, setSelectedModuleId] = useState("all");
-  const [selectedScenarioId, setSelectedScenarioId] = useState("all");
+  const [view, setView] = useState<ViewId>("scores");
+  const [period, setPeriod] = useState<PeriodId>("all");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  /** "all", "module:<id>" or "scenario:<id>" */
+  const [scope, setScope] = useState("all");
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPageSize, setHistoryPageSize] = useState(
     ATTEMPT_HISTORY_PAGE_SIZE,
@@ -489,21 +409,30 @@ export function LiveProgress() {
   const sessions = useQuery(api.sessions.listForCurrentUser, {});
   const modules = useQuery(api.modules.list, {});
   const scenarios = useQuery(api.scenarios.list, {});
-  const activeMetrics = useMemo<MetricId[]>(() => {
-    if (comparisonMode !== "avgVsBest") {
-      return [selectedMetric];
-    }
 
-    if (selectedTab === "ccl") {
-      return ["averageScore90", "bestScore90"];
-    }
+  const { startDate, endDate } =
+    period === "custom" ? { startDate: customStart, endDate: customEnd } : getPeriodRange(period);
+  const selectedModuleId = scope.startsWith("module:")
+    ? scope.slice("module:".length)
+    : scope.startsWith("scenario:")
+      ? (scenarios ?? []).find((scenario) => scenario.id === scope.slice("scenario:".length))?.moduleId ?? "all"
+      : "all";
+  const selectedScenarioId = scope.startsWith("scenario:") ? scope.slice("scenario:".length) : "all";
+  // NAATI CCL is scored out of 90; switch scales when looking only at CCL.
+  const useCclScale = selectedModuleId !== "all" && isCclModule(selectedModuleId);
+  const viewOption = viewOptions.find((option) => option.id === view) ?? viewOptions[0];
 
-    if (selectedTab === "scores") {
-      return ["averageScore", "bestScore"];
-    }
-
-    return [selectedMetric];
-  }, [comparisonMode, selectedMetric, selectedTab]);
+  const activeMetrics = useMemo<MetricId[]>(
+    () =>
+      viewOption.metrics.map((metric) =>
+        useCclScale && metric === "averageScore"
+          ? "averageScore90"
+          : useCclScale && metric === "bestScore"
+            ? "bestScore90"
+            : metric,
+      ),
+    [useCclScale, viewOption],
+  );
   const history = useQuery(api.sessions.progressHistoryForCurrentUser, {
     metrics: activeMetrics,
     startDate: startDate || undefined,
@@ -522,12 +451,6 @@ export function LiveProgress() {
     () => new Map((modules ?? []).map((module) => [module.id, module.title])),
     [modules],
   );
-  const visibleScenarios = useMemo(() => {
-    return (scenarios ?? []).filter(
-      (scenario) =>
-        selectedModuleId === "all" || scenario.moduleId === selectedModuleId,
-    );
-  }, [scenarios, selectedModuleId]);
   const completedSessions = useMemo(
     () =>
       (sessions ?? []).filter(
@@ -552,26 +475,6 @@ export function LiveProgress() {
     const startIndex = (currentHistoryPage - 1) * historyPageSize;
     return completedSessions.slice(startIndex, startIndex + historyPageSize);
   }, [completedSessions, currentHistoryPage, historyPageSize]);
-  const activeMetricMeta = metricMeta[selectedMetric];
-  const isCclTab = selectedTab === "ccl";
-
-  /**
-   * Applies a new chart view from the unified history-tab dropdown controls.
-   */
-  const selectHistoryView = (
-    tabId: HistoryTabId,
-    metric: MetricId,
-    mode: ComparisonModeId = "single",
-  ) => {
-    setSelectedTab(tabId);
-    setSelectedMetric(metric);
-    setComparisonMode(mode);
-    setHistoryPage(1);
-
-    if (tabId === "ccl" && selectedModuleId === "all") {
-      setSelectedModuleId(CCL_MODULE_ID);
-    }
-  };
 
   if (!sessions || !scenarios || !modules || !history) {
     return <Skeleton className="h-64" />;
@@ -584,247 +487,189 @@ export function LiveProgress() {
     points: item.points,
     formatValue: metricMeta[item.metric].formatValue,
   }));
-  const chartTitle =
-    comparisonMode === "avgVsBest" && selectedTab === "scores"
-      ? "Average vs best score"
-      : comparisonMode === "avgVsBest" && selectedTab === "ccl"
-        ? "Average vs best CCL score"
-        : activeMetricMeta.label;
+  const chartTitle = viewOption.label;
   const chartSubtitle =
-    comparisonMode === "avgVsBest" && selectedTab === "scores"
-      ? "Compare your average result and strongest result in the same trend view."
-      : comparisonMode === "avgVsBest" && selectedTab === "ccl"
-        ? "Track average and best NAATI CCL results together on a /90 scale."
-        : activeMetricMeta.subtitle;
+    viewOption.id === "scores"
+      ? `Your average and best result in each ${history.bucket}.`
+      : `${metricMeta[activeMetrics[0]].subtitle}`;
+
+  const scopeLabel =
+    selectedScenarioId !== "all"
+      ? scenarioTitleById.get(selectedScenarioId) ?? "One dialogue"
+      : selectedModuleId !== "all"
+        ? `${moduleTitleById.get(selectedModuleId) ?? "One course"} (all dialogues)`
+        : "all dialogues";
+  const periodLabel =
+    period === "custom"
+      ? customStart || customEnd
+        ? `${customStart ? new Date(customStart).toLocaleDateString() : "the start"} to ${customEnd ? new Date(customEnd).toLocaleDateString() : "today"}`
+        : "all time"
+      : (periodOptions.find((option) => option.id === period)?.label ?? "").toLowerCase();
+  const isFiltered = view !== "scores" || period !== "all" || scope !== "all";
+  const scoreSuffix = useCclScale ? "/90" : "";
+  const formatScore = (value: number) => (useCclScale ? `${value}/90` : `${value}`);
+
+  const resetFilters = () => {
+    setView("scores");
+    setPeriod("all");
+    setCustomStart("");
+    setCustomEnd("");
+    setScope("all");
+    setHistoryPage(1);
+  };
 
   return (
     <div className="space-y-8">
       <PageHeader title="Progress" description="Scores from assessed sessions. Practice sessions aren't included." />
       <AchievementBadges sessions={sessions} modules={modules} />
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {isCclTab ? (
-          <>
-            <StatCard
-              label="Average score"
-              value={`${history.summary.averageScore90}/90`}
-            />
-            <StatCard
-              label="Best score"
-              value={`${history.summary.bestScore90}/90`}
-            />
-            <StatCard
-              label="Pass rate"
-              value={`${history.summary.passRate}%`}
-            />
-          </>
-        ) : (
-          <>
-            <StatCard
-              label="Average score"
-              value={`${history.summary.averageScore}%`}
-            />
-            <StatCard
-              label="Best score"
-              value={`${history.summary.bestScore}%`}
-            />
-            <StatCard
-              label="Practice time"
-              value={metricMeta.practiceMinutes.formatValue(
-                history.summary.practiceMinutes,
-              )}
-            />
-          </>
-        )}
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard
-          label="Completed attempts"
-          value={`${history.summary.attemptCount}`}
+          label="Average score"
+          value={formatScore(useCclScale ? history.summary.averageScore90 : history.summary.averageScore)}
         />
+        <StatCard
+          label="Best score"
+          value={formatScore(useCclScale ? history.summary.bestScore90 : history.summary.bestScore)}
+        />
+        {useCclScale ? (
+          <StatCard label="Pass rate" value={`${history.summary.passRate}%`} />
+        ) : (
+          <StatCard
+            label="Practice time"
+            value={metricMeta.practiceMinutes.formatValue(history.summary.practiceMinutes)}
+          />
+        )}
+        <StatCard label="Scored sessions" value={`${history.summary.attemptCount}`} />
       </section>
 
-      <section className="surface-card rounded-xl p-6">
-        <div className="flex items-center justify-between mt-6  gap-4  rounded-xl border border-line bg-gray-50">
-          <div className=" p-4">
-            <div className="mt-6 flex flex-wrap gap-2">
-              {historyTabs.map((tab) => (
-                <DropdownMenu key={tab.id}>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${
-                        selectedTab === tab.id
-                          ? "bg-ink text-paper"
-                          : "border border-line bg-white text-muted hover:text-foreground"
-                      }`}
-                    >
-                      <span>
-                        {getHistoryTriggerLabel(
-                          tab.id,
-                          selectedTab,
-                          selectedMetric,
-                          comparisonMode,
-                        )}
-                      </span>
-                      <ChevronDown className="h-4 w-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="min-w-60">
-                    <DropdownMenuLabel>{tab.label}</DropdownMenuLabel>
-                    {tabMetrics[tab.id].map((metric) => {
-                      const isActiveMetric =
-                        selectedTab === tab.id &&
-                        comparisonMode === "single" &&
-                        selectedMetric === metric;
-
-                      return (
-                        <DropdownMenuItem
-                          key={metric}
-                          onSelect={() => selectHistoryView(tab.id, metric)}
-                          className="justify-between"
-                        >
-                          <span>{metricMeta[metric].label}</span>
-                          {isActiveMetric ? (
-                            <Check className="h-4 w-4" />
-                          ) : null}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                    {tab.id === "scores" || tab.id === "ccl" ? (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onSelect={() =>
-                            selectHistoryView(
-                              tab.id,
-                              tabMetrics[tab.id][0],
-                              "avgVsBest",
-                            )
-                          }
-                          className="justify-between"
-                        >
-                          <span>Average vs best</span>
-                          {selectedTab === tab.id &&
-                          comparisonMode === "avgVsBest" ? (
-                            <Check className="h-4 w-4" />
-                          ) : null}
-                        </DropdownMenuItem>
-                      </>
-                    ) : null}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+      <Card className="p-4 sm:p-6">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.4fr)_auto] lg:items-end">
+          <FilterField label="Show" htmlFor="progress-view">
+            <select
+              id="progress-view"
+              value={view}
+              onChange={(event) => {
+                setView(event.target.value as ViewId);
+                setHistoryPage(1);
+              }}
+              className={selectClass}
+            >
+              {(["Scores", "Skills", "Activity"] as const).map((group) => (
+                <optgroup key={group} label={group}>
+                  {viewOptions
+                    .filter((option) => option.group === group)
+                    .map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                </optgroup>
               ))}
-            </div>
-          </div>
+            </select>
+          </FilterField>
 
-          <div className="p-4">
-            <div className="mt-3 flex flex-nowrap items-center gap-3 overflow-x-auto pb-1">
-              <label className="flex min-w-[170px] items-center gap-2 rounded-xl border border-line bg-white px-3 py-2 text-sm text-muted">
-                <CalendarDays size={16} className="shrink-0 text-muted" />
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(event) => {
-                    setSelectedRange("custom");
-                    setStartDate(event.target.value);
-                    setHistoryPage(1);
-                  }}
-                  aria-label="Start date"
-                  className="w-full bg-transparent text-foreground outline-none"
-                />
-              </label>
-              <label className="flex min-w-[170px] items-center gap-2 rounded-xl border border-line bg-white px-3 py-2 text-sm text-muted">
-                <CalendarDays size={16} className="shrink-0 text-muted" />
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(event) => {
-                    setSelectedRange("custom");
-                    setEndDate(event.target.value);
-                    setHistoryPage(1);
-                  }}
-                  aria-label="End date"
-                  className="w-full bg-transparent text-foreground outline-none"
-                />
-              </label>
-              <label className="flex min-w-[220px] items-center gap-2 rounded-xl border border-line bg-white px-3 py-2 text-sm text-muted">
-                <FolderOpen size={16} className="shrink-0 text-muted" />
-                <select
-                  value={selectedModuleId}
-                  onChange={(event) => {
-                    const nextModuleId = event.target.value;
-                    setSelectedModuleId(nextModuleId);
-                    setHistoryPage(1);
-                    const scenarioStillMatches =
-                      selectedScenarioId === "all" ||
-                      (scenarios ?? []).some(
-                        (scenario) =>
-                          scenario.id === selectedScenarioId &&
-                          (nextModuleId === "all" ||
-                            scenario.moduleId === nextModuleId),
-                      );
+          <FilterField label="Period" htmlFor="progress-period">
+            <select
+              id="progress-period"
+              value={period}
+              onChange={(event) => {
+                setPeriod(event.target.value as PeriodId);
+                setHistoryPage(1);
+              }}
+              className={selectClass}
+            >
+              {periodOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </FilterField>
 
-                    if (!scenarioStillMatches) {
-                      setSelectedScenarioId("all");
-                    }
-                  }}
-                  aria-label="Module"
-                  className="w-full bg-transparent text-foreground outline-none"
-                >
-                  <option value="all">All modules</option>
-                  {modules.map((module) => (
-                    <option key={module.id} value={module.id}>
-                      {module.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex min-w-[220px] items-center gap-2 rounded-xl border border-line bg-white px-3 py-2 text-sm text-muted">
-                <MapIcon size={16} className="shrink-0 text-muted" />
-                <select
-                  value={selectedScenarioId}
-                  onChange={(event) => {
-                    const nextScenarioId = event.target.value;
-                    setSelectedScenarioId(nextScenarioId);
-                    setHistoryPage(1);
-                    if (nextScenarioId === "all") {
-                      return;
-                    }
+          <FilterField label="Dialogues" htmlFor="progress-scope">
+            <select
+              id="progress-scope"
+              value={scope}
+              onChange={(event) => {
+                setScope(event.target.value);
+                setHistoryPage(1);
+              }}
+              className={selectClass}
+            >
+              <option value="all">Everything I&apos;ve practised</option>
+              {modules.map((learningModule) => (
+                <optgroup key={learningModule.id} label={learningModule.title}>
+                  <option value={`module:${learningModule.id}`}>All of {learningModule.title}</option>
+                  {scenarios
+                    .filter((scenario) => scenario.moduleId === learningModule.id)
+                    .map((scenario) => (
+                      <option key={scenario.id} value={`scenario:${scenario.id}`}>
+                        {scenario.title}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
+            </select>
+          </FilterField>
 
-                    const matchedScenario = scenarios.find(
-                      (scenario) => scenario.id === nextScenarioId,
-                    );
-
-                    if (matchedScenario && selectedModuleId === "all") {
-                      setSelectedModuleId(matchedScenario.moduleId);
-                    }
-                  }}
-                  aria-label="Scenario"
-                  className="w-full bg-transparent text-foreground outline-none"
-                >
-                  <option value="all">All scenarios</option>
-                  {visibleScenarios.map((scenario) => (
-                    <option key={scenario.id} value={scenario.id}>
-                      {scenario.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  const rows = buildChartCsvRows(chartSeries);
-                  const filePrefix = isCclTab ? "ccl-progress" : "progress";
-                  downloadCsv(
-                    `${filePrefix}-${selectedTab}-${selectedMetric}.csv`,
-                    rows,
-                  );
-                }}
-                className="rounded-full font-semibold not-last:px-4 py-2 text-sm border border-line bg-white text-muted  hover:bg-brand hover:text-white"
-              >
-                Export CSV
-              </button>
-            </div>
-          </div>
+          <Button
+            variant="outline"
+            className="sm:col-span-2 lg:col-span-1"
+            onClick={() => {
+              downloadCsv(`xingo-progress-${view}.csv`, buildChartCsvRows(chartSeries));
+            }}
+            disabled={chartSeries.every((series) => series.points.length === 0)}
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
         </div>
+
+        {period === "custom" ? (
+          <div className="mt-3 grid gap-3 rounded-xl bg-gray-50 p-3 sm:grid-cols-2">
+            <FilterField label="From" htmlFor="progress-from">
+              <input
+                id="progress-from"
+                type="date"
+                value={customStart}
+                max={customEnd || undefined}
+                onChange={(event) => {
+                  setCustomStart(event.target.value);
+                  setHistoryPage(1);
+                }}
+                className={selectClass}
+              />
+            </FilterField>
+            <FilterField label="To" htmlFor="progress-to">
+              <input
+                id="progress-to"
+                type="date"
+                value={customEnd}
+                min={customStart || undefined}
+                onChange={(event) => {
+                  setCustomEnd(event.target.value);
+                  setHistoryPage(1);
+                }}
+                className={selectClass}
+              />
+            </FilterField>
+          </div>
+        ) : null}
+
+        <p className="mt-4 text-sm text-gray-500">
+          Showing <span className="font-semibold text-ink">{viewOption.label.toLowerCase()}</span> for{" "}
+          <span className="font-semibold text-ink">{scopeLabel}</span>, {periodLabel}
+          {" "}· {history.summary.attemptCount} scored session{history.summary.attemptCount === 1 ? "" : "s"}
+          {scoreSuffix ? " · CCL scores out of 90" : ""}.
+          {isFiltered ? (
+            <>
+              {" "}
+              <button type="button" onClick={resetFilters} className="font-semibold text-ink underline underline-offset-2">
+                Reset
+              </button>
+            </>
+          ) : null}
+        </p>
 
         <div className="mt-6">
           <ProgressHistoryChart
@@ -833,7 +678,7 @@ export function LiveProgress() {
             series={chartSeries}
           />
         </div>
-      </section>
+      </Card>
 
       <section className="surface-card rounded-xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -924,5 +769,19 @@ function StatCard({ label, value }: { label: string; value: string }) {
       <p className="text-sm text-gray-500">{label}</p>
       <p className="mt-1 text-3xl font-bold tracking-[-0.03em] tabular-nums">{value}</p>
     </Card>
+  );
+}
+
+const selectClass =
+  "h-11 w-full min-w-0 appearance-none rounded-lg border border-gray-200 bg-paper bg-[length:16px] bg-[right_12px_center] bg-no-repeat pl-3 pr-9 text-sm font-semibold text-ink outline-none focus:border-ink [background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")] [&[type=date]]:bg-none [&[type=date]]:pr-3";
+
+function FilterField({ label, htmlFor, children }: { label: string; htmlFor: string; children: React.ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <label htmlFor={htmlFor} className="text-xs font-semibold text-gray-500">
+        {label}
+      </label>
+      {children}
+    </div>
   );
 }
