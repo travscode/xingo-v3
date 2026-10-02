@@ -9,7 +9,7 @@ import type { FunctionReturnType } from "convex/server";
 import { friendlyError } from "@/lib/errors";
 import { getGoal } from "@/lib/goals";
 import { cn } from "@/lib/utils";
-import { AdminStudio } from "@/components/admin/admin-studio";
+import { ContentIndex } from "@/components/admin/content/content-index";
 import { Badge, Card, EmptyState, PageHeader, SectionTitle, Skeleton, Stat } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 
@@ -87,7 +87,7 @@ export function AdminConsole() {
       {tab === "overview" ? <OverviewTab /> : null}
       {tab === "users" ? <UsersTab myClerkId={me.user.clerkId} /> : null}
       {tab === "invites" ? <InvitesTab /> : null}
-      {tab === "content" ? <AdminStudio /> : null}
+      {tab === "content" ? <ContentIndex /> : null}
     </div>
   );
 }
