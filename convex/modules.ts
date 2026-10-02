@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
+import { requirePlatformAdmin } from "./model/auth";
 
 const difficultyLevel = v.union(
   v.literal("beginner"),
@@ -36,26 +37,6 @@ function slugify(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 48);
-}
-
-async function requirePlatformAdmin(ctx: MutationCtx) {
-  const identity = await ctx.auth.getUserIdentity();
-
-  if (!identity) {
-    throw new Error("Not authenticated");
-  }
-
-  const clerkId = identity.subject ?? identity.tokenIdentifier;
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
-    .unique();
-
-  if (!user || user.role !== "platform_admin") {
-    throw new Error("Not authorized");
-  }
-
-  return user;
 }
 
 async function ensureUniqueId(ctx: MutationCtx, base: string, currentId?: string) {

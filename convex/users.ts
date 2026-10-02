@@ -1,23 +1,40 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { demoSessionsForClerk } from "./seedData";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import {
+  getClerkIdFromIdentity,
+  getUserByClerkId,
+  requireUser,
+} from "./model/auth";
+import { getEntitlement } from "./model/entitlements";
 
 const languagePreference = v.object({
   sourceLanguage: v.string(),
   targetLanguage: v.string(),
 });
 
-function normalizeRole(role?: string) {
-  if (
-    role === "interpreter" ||
-    role === "student" ||
-    role === "organization_admin" ||
-    role === "platform_admin"
-  ) {
-    return role;
-  }
+const platformRole = v.union(
+  v.literal("interpreter"),
+  v.literal("student"),
+  v.literal("organization_admin"),
+  v.literal("platform_admin"),
+);
 
-  return "interpreter" as const;
+const subscriptionStatus = v.union(
+  v.literal("free"),
+  v.literal("professional"),
+  v.literal("organization"),
+);
+
+function cleanLanguagePairs(
+  pairs: Array<{ sourceLanguage: string; targetLanguage: string }>,
+) {
+  return pairs
+    .map((pair) => ({
+      sourceLanguage: pair.sourceLanguage.trim(),
+      targetLanguage: pair.targetLanguage.trim(),
+    }))
+    .filter((pair) => pair.sourceLanguage && pair.targetLanguage)
+    .slice(0, 10);
 }
 
 export const current = query({
@@ -29,21 +46,47 @@ export const current = query({
       return null;
     }
 
-    const clerkId = identity.subject ?? identity.tokenIdentifier;
-    return ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
-      .unique();
+    return getUserByClerkId(ctx, getClerkIdFromIdentity(identity));
   },
 });
 
+/**
+ * Everything the app shell needs about the signed-in user in one subscription:
+ * profile, plan and remaining practice minutes.
+ */
+export const me = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      return null;
+    }
+
+    const user = await getUserByClerkId(ctx, getClerkIdFromIdentity(identity));
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      user,
+      entitlement: await getEntitlement(ctx, user),
+    };
+  },
+});
+
+/**
+ * Creates or refreshes the signed-in user's profile from their Clerk identity.
+ *
+ * Roles are never accepted from the client; they are changed only through
+ * `users:setRole` (internal, run from the Convex dashboard or CLI).
+ */
 export const syncCurrentUser = mutation({
   args: {
-    clerkId: v.string(),
     email: v.string(),
     name: v.string(),
     imageUrl: v.optional(v.string()),
-    role: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -52,64 +95,42 @@ export const syncCurrentUser = mutation({
       throw new Error("Not authenticated");
     }
 
-    const clerkId = identity.subject ?? identity.tokenIdentifier;
-
-    if (clerkId !== args.clerkId) {
-      throw new Error("Clerk identity mismatch");
-    }
-
-    const existing = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
-      .unique();
-
+    const clerkId = getClerkIdFromIdentity(identity);
+    const existing = await getUserByClerkId(ctx, clerkId);
     const now = new Date().toISOString();
+    const email = (identity.email ?? args.email).trim().toLowerCase();
+    const name = args.name.trim().slice(0, 120) || "Interpreter";
 
     if (existing) {
-      await ctx.db.patch(existing._id, {
-        email: args.email || existing.email,
-        name: args.name || existing.name,
-        imageUrl: args.imageUrl ?? existing.imageUrl,
-        role: args.role ? normalizeRole(args.role) : existing.role,
-        updatedAt: now,
-      });
-    } else {
-      await ctx.db.insert("users", {
-        clerkId,
-        email: args.email,
-        name: args.name,
-        imageUrl: args.imageUrl,
-        role: normalizeRole(args.role),
-        subscriptionStatus: "free",
-        languagePreferences: [],
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-
-    const existingSessions = await ctx.db
-      .query("sessions")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
-      .collect();
-
-    if (existingSessions.length === 0) {
-      for (const session of demoSessionsForClerk(clerkId)) {
-        await ctx.db.insert("sessions", session);
+      if (
+        existing.email !== email ||
+        existing.name !== name ||
+        existing.imageUrl !== args.imageUrl
+      ) {
+        await ctx.db.patch(existing._id, {
+          email: email || existing.email,
+          name,
+          imageUrl: args.imageUrl ?? existing.imageUrl,
+          updatedAt: now,
+        });
       }
+
+      return { created: false };
     }
 
-    const assignedJob = await ctx.db
-      .query("jobs")
-      .withIndex("by_public_id", (q) => q.eq("id", "job_1"))
-      .unique();
+    await ctx.db.insert("users", {
+      clerkId,
+      email,
+      name,
+      imageUrl: args.imageUrl,
+      role: "interpreter",
+      subscriptionStatus: "free",
+      languagePreferences: [],
+      createdAt: now,
+      updatedAt: now,
+    });
 
-    if (assignedJob && !assignedJob.assignedInterpreterClerkId) {
-      await ctx.db.patch(assignedJob._id, {
-        assignedInterpreterClerkId: clerkId,
-      });
-    }
-
-    return { ok: true };
+    return { created: true };
   },
 });
 
@@ -118,29 +139,10 @@ export const updateLanguagePreferences = mutation({
     languagePreferences: v.array(languagePreference),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    const clerkId = identity.subject ?? identity.tokenIdentifier;
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
-      .unique();
-
-    if (!user) {
-      throw new Error("User profile not found");
-    }
+    const user = await requireUser(ctx);
 
     await ctx.db.patch(user._id, {
-      languagePreferences: args.languagePreferences
-        .map((pair) => ({
-          sourceLanguage: pair.sourceLanguage.trim(),
-          targetLanguage: pair.targetLanguage.trim(),
-        }))
-        .filter((pair) => pair.sourceLanguage && pair.targetLanguage),
+      languagePreferences: cleanLanguagePairs(args.languagePreferences),
       updatedAt: new Date().toISOString(),
     });
 
@@ -148,37 +150,113 @@ export const updateLanguagePreferences = mutation({
   },
 });
 
-export const applyStripeSubscription = mutation({
+/** Saves the answers from the first-run welcome flow. */
+export const completeOnboarding = mutation({
   args: {
-    clerkId: v.optional(v.string()),
-    email: v.optional(v.string()),
-    stripeCustomerId: v.optional(v.string()),
-    stripeSubscriptionId: v.optional(v.string()),
-    subscriptionStatus: v.union(
-      v.literal("free"),
-      v.literal("professional"),
-      v.literal("organization"),
-    ),
+    practiceGoal: v.string(),
+    languagePair: languagePreference,
   },
   handler: async (ctx, args) => {
-    let user = args.clerkId
-      ? await ctx.db
-          .query("users")
-          .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId!))
-          .unique()
-      : null;
+    const user = await requireUser(ctx);
+    const [pair] = cleanLanguagePairs([args.languagePair]);
 
-    if (!user && args.email) {
-      user = await ctx.db
-        .query("users")
-        .withIndex("by_email", (q) => q.eq("email", args.email!))
-        .unique();
+    if (!pair) {
+      throw new Error("Choose a language pair to continue.");
     }
+
+    const otherPairs = (user.languagePreferences ?? []).filter(
+      (existing) =>
+        existing.sourceLanguage.toLowerCase() !== pair.sourceLanguage.toLowerCase() ||
+        existing.targetLanguage.toLowerCase() !== pair.targetLanguage.toLowerCase(),
+    );
+    const now = new Date().toISOString();
+
+    await ctx.db.patch(user._id, {
+      practiceGoal: args.practiceGoal.trim().slice(0, 60),
+      languagePreferences: [pair, ...otherPairs].slice(0, 10),
+      onboardedAt: user.onboardedAt ?? now,
+      updatedAt: now,
+    });
+
+    return { ok: true };
+  },
+});
+
+export const getByClerkIdInternal = internalQuery({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => getUserByClerkId(ctx, args.clerkId),
+});
+
+export const getByStripeCustomerIdInternal = internalQuery({
+  args: { stripeCustomerId: v.string() },
+  handler: async (ctx, args) =>
+    ctx.db
+      .query("users")
+      .withIndex("by_stripeCustomerId", (q) =>
+        q.eq("stripeCustomerId", args.stripeCustomerId),
+      )
+      .unique(),
+});
+
+/**
+ * Promotes or demotes a user. Run from the Convex dashboard or CLI, e.g.
+ * `npx convex run users:setRole '{"email":"you@example.com","role":"platform_admin"}'`
+ */
+export const setRole = internalMutation({
+  args: { email: v.string(), role: platformRole },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email.trim().toLowerCase()))
+      .unique();
+
+    if (!user) {
+      throw new Error(`No user with email ${args.email}`);
+    }
+
+    await ctx.db.patch(user._id, {
+      role: args.role,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return { ok: true, clerkId: user.clerkId };
+  },
+});
+
+export const setStripeCustomerId = internalMutation({
+  args: { clerkId: v.string(), stripeCustomerId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await getUserByClerkId(ctx, args.clerkId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(user._id, {
+      stripeCustomerId: args.stripeCustomerId,
+      updatedAt: new Date().toISOString(),
+    });
+  },
+});
+
+/** Applies a Stripe subscription state change. Called only from the webhook. */
+export const applySubscription = internalMutation({
+  args: {
+    clerkId: v.optional(v.string()),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+    stripeSubscriptionStatus: v.optional(v.string()),
+    subscriptionStatus,
+  },
+  handler: async (ctx, args) => {
+    let user = args.clerkId ? await getUserByClerkId(ctx, args.clerkId) : null;
 
     if (!user && args.stripeCustomerId) {
       user = await ctx.db
         .query("users")
-        .withIndex("by_stripeCustomerId", (q) => q.eq("stripeCustomerId", args.stripeCustomerId!))
+        .withIndex("by_stripeCustomerId", (q) =>
+          q.eq("stripeCustomerId", args.stripeCustomerId!),
+        )
         .unique();
     }
 
@@ -190,6 +268,8 @@ export const applyStripeSubscription = mutation({
       subscriptionStatus: args.subscriptionStatus,
       stripeCustomerId: args.stripeCustomerId ?? user.stripeCustomerId,
       stripeSubscriptionId: args.stripeSubscriptionId ?? user.stripeSubscriptionId,
+      stripeSubscriptionStatus:
+        args.stripeSubscriptionStatus ?? user.stripeSubscriptionStatus,
       updatedAt: new Date().toISOString(),
     });
 

@@ -8,9 +8,21 @@
  * @module
  */
 
+import type * as billing from "../billing.js";
+import type * as billingData from "../billingData.js";
+import type * as catalog from "../catalog.js";
+import type * as crons from "../crons.js";
+import type * as http from "../http.js";
 import type * as jobs from "../jobs.js";
+import type * as migrations from "../migrations.js";
+import type * as model_auth from "../model/auth.js";
+import type * as model_entitlements from "../model/entitlements.js";
+import type * as model_grading from "../model/grading.js";
+import type * as model_scenario from "../model/scenario.js";
 import type * as modules from "../modules.js";
 import type * as organizations from "../organizations.js";
+import type * as practice from "../practice.js";
+import type * as practiceActions from "../practiceActions.js";
 import type * as scenarios from "../scenarios.js";
 import type * as seed from "../seed.js";
 import type * as seedData from "../seedData.js";
@@ -25,9 +37,21 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  billing: typeof billing;
+  billingData: typeof billingData;
+  catalog: typeof catalog;
+  crons: typeof crons;
+  http: typeof http;
   jobs: typeof jobs;
+  migrations: typeof migrations;
+  "model/auth": typeof model_auth;
+  "model/entitlements": typeof model_entitlements;
+  "model/grading": typeof model_grading;
+  "model/scenario": typeof model_scenario;
   modules: typeof modules;
   organizations: typeof organizations;
+  practice: typeof practice;
+  practiceActions: typeof practiceActions;
   scenarios: typeof scenarios;
   seed: typeof seed;
   seedData: typeof seedData;

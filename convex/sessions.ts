@@ -1,32 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-
-const transcriptEntry = v.object({
-  id: v.string(),
-  role: v.union(v.literal("assistant"), v.literal("user"), v.literal("system")),
-  speaker: v.string(),
-  text: v.string(),
-  createdAt: v.string(),
-});
-
-const sessionAssessment = v.object({
-  overallScore: v.number(),
-  summary: v.string(),
-  strengths: v.array(v.string()),
-  improvementAreas: v.array(v.string()),
-  recommendedNextStep: v.string(),
-  completionDecision: v.union(
-    v.literal("completed"),
-    v.literal("needs_review"),
-  ),
-  breakdown: v.object({
-    accuracy: v.number(),
-    terminology: v.number(),
-    fluency: v.number(),
-    turnManagement: v.number(),
-    professionalism: v.number(),
-  }),
-});
+import { query } from "./_generated/server";
+import { isPassingScore } from "../lib/scoring";
 
 const progressMetric = v.union(
   v.literal("averageScore"),
@@ -62,7 +36,7 @@ type ProgressMetric =
   | "scenariosPracticed";
 
 type SessionStatusRecord = {
-  completionStatus: "in_progress" | "completed" | "needs_review";
+  completionStatus: "in_progress" | "completed" | "needs_review" | "ungraded" | "abandoned";
 };
 
 type CompletedSessionRecord = SessionStatusRecord & {
@@ -82,7 +56,6 @@ type CompletedSessionRecord = SessionStatusRecord & {
   };
 };
 
-const CCL_PASS_SCORE = 63;
 
 function getClerkId(identity: {
   subject?: string | null;
@@ -92,11 +65,13 @@ function getClerkId(identity: {
 }
 
 /**
- * Returns only finished practice attempts that should contribute to progress history.
+ * Returns only graded practice attempts; these are the ones that contribute to progress.
  */
 function getCompletedSessions<T extends SessionStatusRecord>(sessions: T[]) {
   return sessions.filter(
-    (session) => session.completionStatus !== "in_progress",
+    (session) =>
+      session.completionStatus === "completed" ||
+      session.completionStatus === "needs_review",
   );
 }
 
@@ -208,18 +183,24 @@ function getBucketMetricValue(
   }
 
   switch (metric) {
-    case "averageScore":
     case "averageScore90":
+      return Math.round(
+        (sessions.reduce((sum, session) => sum + session.score, 0) /
+          sessions.length) *
+          0.9,
+      );
+    case "bestScore90":
+      return Math.round(Math.max(...sessions.map((session) => session.score)) * 0.9);
+    case "averageScore":
       return Math.round(
         sessions.reduce((sum, session) => sum + session.score, 0) /
           sessions.length,
       );
     case "bestScore":
-    case "bestScore90":
       return Math.max(...sessions.map((session) => session.score));
     case "passRate":
       return Math.round(
-        (sessions.filter((session) => session.score >= CCL_PASS_SCORE).length /
+        (sessions.filter((session) => isPassingScore(session.moduleId, session.score)).length /
           sessions.length) *
           100,
       );
@@ -296,18 +277,19 @@ function getProgressSummary(sortedSessions: CompletedSessionRecord[]) {
     averageScore90:
       attemptCount > 0
         ? Math.round(
-            sortedSessions.reduce((sum, session) => sum + session.score, 0) /
-              attemptCount,
+            (sortedSessions.reduce((sum, session) => sum + session.score, 0) /
+              attemptCount) *
+              0.9,
           )
         : 0,
     bestScore90:
       attemptCount > 0
-        ? Math.max(...sortedSessions.map((session) => session.score))
+        ? Math.round(Math.max(...sortedSessions.map((session) => session.score)) * 0.9)
         : 0,
     passRate:
       attemptCount > 0
         ? Math.round(
-            (sortedSessions.filter((session) => session.score >= CCL_PASS_SCORE)
+            (sortedSessions.filter((session) => isPassingScore(session.moduleId, session.score))
               .length /
               attemptCount) *
               100,
@@ -330,7 +312,7 @@ function calculateMetrics(
     score: number;
     moduleId: string;
     durationMinutes: number;
-    completionStatus: "in_progress" | "completed" | "needs_review";
+    completionStatus: SessionStatusRecord["completionStatus"];
   }>,
 ) {
   const completedSessions = getCompletedSessions(sessions);
@@ -359,7 +341,7 @@ function calculateMetrics(
     ) / 10;
   const completedModuleIds = new Set(
     completedSessions
-      .filter((session) => session.score >= 75)
+      .filter((session) => isPassingScore(session.moduleId, session.score))
       .map((session) => session.moduleId),
   );
 
@@ -600,106 +582,10 @@ export const getLatestCompletedByScenarioForCurrentUser = query({
         .filter(
           (session) =>
             session.clerkId === clerkId &&
-            session.completionStatus !== "in_progress",
+            (session.completionStatus === "completed" ||
+              session.completionStatus === "needs_review"),
         )
         .sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0] ?? null
     );
-  },
-});
-
-export const startAttempt = mutation({
-  args: {
-    id: v.string(),
-    moduleId: v.string(),
-    scenarioId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    const clerkId = getClerkId(identity);
-    const now = new Date().toISOString();
-    const existing = await ctx.db
-      .query("sessions")
-      .withIndex("by_public_id", (q) => q.eq("id", args.id))
-      .unique();
-
-    if (existing) {
-      return { id: existing.id };
-    }
-
-    await ctx.db.insert("sessions", {
-      id: args.id,
-      clerkId,
-      moduleId: args.moduleId,
-      scenarioId: args.scenarioId,
-      startedAt: now,
-      endedAt: undefined,
-      durationSeconds: 0,
-      durationMinutes: 0,
-      score: 0,
-      completionStatus: "in_progress",
-      transcriptSummary: "Practice session in progress.",
-      transcriptEntries: [],
-      assessment: undefined,
-      timestamp: now,
-    });
-
-    return { id: args.id };
-  },
-});
-
-export const completeAttempt = mutation({
-  args: {
-    id: v.string(),
-    endedAt: v.string(),
-    durationSeconds: v.number(),
-    durationMinutes: v.number(),
-    score: v.number(),
-    completionStatus: v.union(
-      v.literal("completed"),
-      v.literal("needs_review"),
-    ),
-    transcriptSummary: v.string(),
-    transcriptEntries: v.array(transcriptEntry),
-    assessment: sessionAssessment,
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    const clerkId = getClerkId(identity);
-    const existing = await ctx.db
-      .query("sessions")
-      .withIndex("by_public_id", (q) => q.eq("id", args.id))
-      .unique();
-
-    if (!existing) {
-      throw new Error("Practice attempt not found");
-    }
-
-    if (existing.clerkId !== clerkId) {
-      throw new Error("Practice attempt ownership mismatch");
-    }
-
-    await ctx.db.patch(existing._id, {
-      endedAt: args.endedAt,
-      durationSeconds: args.durationSeconds,
-      durationMinutes: args.durationMinutes,
-      score: args.score,
-      completionStatus: args.completionStatus,
-      transcriptSummary: args.transcriptSummary,
-      transcriptEntries: args.transcriptEntries,
-      assessment: args.assessment,
-      timestamp: args.endedAt,
-    });
-
-    return { ok: true };
   },
 });

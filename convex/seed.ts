@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import {
   seedJobs,
   seedModules,
@@ -57,7 +57,8 @@ function resolveSeedAgentCount(scenario: SeedScenarioRecord): 1 | 2 {
   return scenario.aiAgentB ? 2 : 1;
 }
 
-export const seedBaseData = mutation({
+/** Seeds reference data into an empty deployment. `npx convex run seed:seedBaseData` */
+export const seedBaseData = internalMutation({
   args: {},
   handler: async (ctx) => {
     let insertedOrganizations = 0;
@@ -152,7 +153,8 @@ export const seedBaseData = mutation({
   },
 });
 
-export const syncScenarioRuntime = mutation({
+/** Overwrites seeded scenarios with seedData.ts. Destructive to admin edits. */
+export const syncScenarioRuntime = internalMutation({
   args: {},
   handler: async (ctx) => {
     let updated = 0;

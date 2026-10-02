@@ -85,6 +85,14 @@ const stripeChargeStatus = v.union(
   v.literal("failed"),
 );
 
+const attemptStatus = v.union(
+  v.literal("in_progress"),
+  v.literal("completed"),
+  v.literal("needs_review"),
+  v.literal("ungraded"),
+  v.literal("abandoned"),
+);
+
 const sessionAssessment = v.object({
   overallScore: v.number(),
   summary: v.string(),
@@ -109,7 +117,10 @@ export default defineSchema({
     subscriptionStatus,
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
+    stripeSubscriptionStatus: v.optional(v.string()),
     languagePreferences: v.optional(v.array(languagePreference)),
+    practiceGoal: v.optional(v.string()),
+    onboardedAt: v.optional(v.string()),
     createdAt: v.string(),
     updatedAt: v.string(),
   })
@@ -160,6 +171,8 @@ export default defineSchema({
     practiceRuntime: v.optional(practiceRuntime),
     expectedSkills: v.array(v.string()),
     difficultyLevel,
+    /** Playable on the free plan even when the parent module is premium. */
+    isFreePreview: v.optional(v.boolean()),
   })
     .index("by_public_id", ["id"])
     .index("by_moduleId", ["moduleId"]),
@@ -174,20 +187,25 @@ export default defineSchema({
     durationSeconds: v.optional(v.number()),
     durationMinutes: v.number(),
     score: v.number(),
-    completionStatus: v.union(
-      v.literal("in_progress"),
-      v.literal("completed"),
-      v.literal("needs_review"),
-    ),
+    completionStatus: attemptStatus,
     transcriptSummary: v.string(),
     transcriptEntries: v.optional(v.array(transcriptEntry)),
     assessment: v.optional(sessionAssessment),
     timestamp: v.string(),
+    /** Server-side metering (ms since epoch). Absent on pre-v4 attempts. */
+    startedAtMs: v.optional(v.number()),
+    lastActiveAtMs: v.optional(v.number()),
+    realtimeKeysIssued: v.optional(v.number()),
+    chargedMinutes: v.optional(v.number()),
+    sourceLanguage: v.optional(v.string()),
+    targetLanguage: v.optional(v.string()),
+    ungradedReason: v.optional(v.string()),
   })
     .index("by_public_id", ["id"])
     .index("by_clerkId", ["clerkId"])
     .index("by_moduleId", ["moduleId"])
-    .index("by_scenarioId", ["scenarioId"]),
+    .index("by_scenarioId", ["scenarioId"])
+    .index("by_status", ["completionStatus"]),
 
   aiUsageEvents: defineTable({
     id: v.string(),
@@ -201,10 +219,10 @@ export default defineSchema({
     promptTokens: v.number(),
     completionTokens: v.number(),
     totalTokens: v.number(),
-    usageCredits: v.number(),
-    overageCredits: v.number(),
-    overageChargeCents: v.number(),
-    stripeChargeStatus,
+    usageCredits: v.optional(v.number()),
+    overageCredits: v.optional(v.number()),
+    overageChargeCents: v.optional(v.number()),
+    stripeChargeStatus: v.optional(stripeChargeStatus),
     stripeInvoiceItemId: v.optional(v.string()),
     stripeChargeError: v.optional(v.string()),
     billingMonth: v.string(),
@@ -214,6 +232,40 @@ export default defineSchema({
     .index("by_clerkId", ["clerkId"])
     .index("by_clerkId_billingMonth", ["clerkId", "billingMonth"])
     .index("by_attemptId", ["attemptId"]),
+
+  /** One row per attempt that consumed practice minutes. */
+  usageCharges: defineTable({
+    clerkId: v.string(),
+    attemptId: v.string(),
+    minutes: v.number(),
+    fromAllowance: v.number(),
+    fromPacks: v.number(),
+    billingMonth: v.string(),
+    createdAt: v.string(),
+  })
+    .index("by_clerkId_billingMonth", ["clerkId", "billingMonth"])
+    .index("by_clerkId", ["clerkId"])
+    .index("by_attemptId", ["attemptId"]),
+
+  /** Purchased or granted practice minutes outside the monthly allowance. */
+  minuteGrants: defineTable({
+    clerkId: v.string(),
+    minutes: v.number(),
+    source: v.union(v.literal("pack"), v.literal("admin"), v.literal("promo")),
+    packId: v.optional(v.string()),
+    stripeCheckoutSessionId: v.optional(v.string()),
+    note: v.optional(v.string()),
+    createdAt: v.string(),
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_stripeCheckoutSessionId", ["stripeCheckoutSessionId"]),
+
+  /** Processed Stripe webhook events, for idempotency. */
+  stripeEvents: defineTable({
+    eventId: v.string(),
+    type: v.string(),
+    processedAt: v.string(),
+  }).index("by_eventId", ["eventId"]),
 
   jobs: defineTable({
     id: v.string(),
