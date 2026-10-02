@@ -96,16 +96,15 @@ export const generateMissing = internalAction({
     }
 
     const target = missing[0];
+    const model = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1";
+    // gpt-image-1 needs a verified OpenAI organisation; set OPENAI_IMAGE_MODEL=dall-e-3 if it's refused.
+    const body = model.startsWith("dall-e")
+      ? { model, prompt: portraitPrompt(target, look), size: "1024x1024", quality: "standard", response_format: "b64_json", n: 1 }
+      : { model, prompt: portraitPrompt(target, look), size: "1024x1024", quality: "medium", n: 1 };
     const response = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1",
-        prompt: portraitPrompt(target, look),
-        size: "1024x1024",
-        quality: "medium",
-        n: 1,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
