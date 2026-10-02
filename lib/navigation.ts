@@ -3,6 +3,7 @@ import { CircleHelp, CreditCard, Home, Mic, TrendingUp, UserRound } from "lucide
 
 export const marketingNavigation = [
   { href: "/naati/ccl", label: "NAATI CCL" },
+  { href: "/exams", label: "Exams" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/for-organizations", label: "For teams" },
   { href: "/pricing", label: "Pricing" },

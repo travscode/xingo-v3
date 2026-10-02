@@ -48,7 +48,7 @@ export function LiveDashboard() {
           {isNew ? `Let's get you speaking, ${firstName}.` : `Welcome back, ${firstName}.`}
         </h1>
         <p className="mt-2 text-gray-500">
-          Practising English ⇄ {activePair.targetLanguage} ·{" "}
+          {activePair.targetLanguage.toLowerCase() !== "english" ? `Practising English ⇄ ${activePair.targetLanguage} · ` : ""}
           {Math.floor(me.entitlement.remainingMinutes)} minutes left this month
         </p>
       </div>

@@ -94,6 +94,11 @@ export function normalizeScenario<
       openingSpeaker: "agent_a" | "agent_b";
       briefing: string;
       assessmentFocus: string[];
+      practiceType?: "interpreting" | "roleplay";
+      learnerRole?: string;
+      taskCard?: string;
+      learnerOpens?: boolean;
+      timeLimitMinutes?: number;
     };
     expectedSkills: string[];
   },

@@ -1,18 +1,26 @@
 import { v } from "convex/values";
-import { internalMutation } from "./_generated/server";
+import { internalMutation, type MutationCtx } from "./_generated/server";
 import { packModules, packScenarios } from "./content/australiaPack";
+import { examModules, examScenarios } from "./content/examsPack";
 
 /**
  * Inserts the Australia content pack. Insert-only: existing modules and
  * scenarios (including admin edits) are left untouched.
  * `npx convex run content:seedAustraliaPack '{"dryRun":true}'`
  */
-export const seedAustraliaPack = internalMutation({
-  args: { dryRun: v.boolean() },
-  handler: async (ctx, args) => {
-    const inserted = { modules: [] as string[], scenarios: [] as string[] };
+type PackModule = (typeof packModules)[number] | (typeof examModules)[number];
+type PackScenario = (typeof packScenarios)[number] | (typeof examScenarios)[number];
 
-    for (const learningModule of packModules) {
+async function seedPack(
+  ctx: MutationCtx,
+  modules: readonly PackModule[],
+  scenarios: readonly PackScenario[],
+  dryRun: boolean,
+) {
+    const inserted = { modules: [] as string[], scenarios: [] as string[] };
+    const args = { dryRun };
+
+    for (const learningModule of modules) {
       const existing = await ctx.db
         .query("modules")
         .withIndex("by_public_id", (q) => q.eq("id", learningModule.id))
@@ -29,7 +37,7 @@ export const seedAustraliaPack = internalMutation({
       }
     }
 
-    for (const scenario of packScenarios) {
+    for (const scenario of scenarios) {
       const existing = await ctx.db
         .query("scenarios")
         .withIndex("by_public_id", (q) => q.eq("id", scenario.id))
@@ -44,5 +52,18 @@ export const seedAustraliaPack = internalMutation({
     }
 
     return { dryRun: args.dryRun, inserted };
-  },
+}
+
+export const seedAustraliaPack = internalMutation({
+  args: { dryRun: v.boolean() },
+  handler: async (ctx, args) => seedPack(ctx, packModules, packScenarios, args.dryRun),
+});
+
+/**
+ * Exam practice modules (OET, IELTS, AMC, NMBA OSCE, US medical interpreter oral).
+ * `npx convex run content:seedExamPack '{"dryRun":true}'`
+ */
+export const seedExamPack = internalMutation({
+  args: { dryRun: v.boolean() },
+  handler: async (ctx, args) => seedPack(ctx, examModules, examScenarios, args.dryRun),
 });

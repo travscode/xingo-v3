@@ -1,3 +1,5 @@
+import { rubricForModule } from "./rubrics";
+
 /**
  * Scoring constants shared by Convex grading and the UI.
  */
@@ -36,7 +38,7 @@ export function displayMaxScore(moduleId: string) {
 export function isPassingScore(moduleId: string, score: number) {
   return isCclModule(moduleId)
     ? toDisplayScore(moduleId, score) >= CCL_PASS_SCORE
-    : score >= PASS_SCORE;
+    : score >= rubricForModule(moduleId).passScore;
 }
 
 export function displayPassMark(moduleId: string) {

@@ -4,7 +4,7 @@ import { action, type ActionCtx } from "./_generated/server";
 import { getClerkIdFromIdentity } from "./model/auth";
 import { assessmentJsonSchema, buildGradingPrompt } from "./model/grading";
 import { MIN_INTERPRETER_TURNS_TO_GRADE } from "../lib/plans";
-import { PASS_SCORE } from "../lib/scoring";
+import { rubricForModule } from "../lib/rubrics";
 
 const OPENAI_API = "https://api.openai.com/v1";
 
@@ -176,6 +176,9 @@ type GradingInput = {
       targetLanguage: string;
       briefing: string;
       assessmentFocus: string[];
+      practiceType?: "interpreting" | "roleplay";
+      learnerRole?: string;
+      taskCard?: string;
     };
     expectedSkills: string[];
   } | null;
@@ -239,7 +242,8 @@ async function grade(
       Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
     const overallScore = clamp(parsed.overallScore);
     // The pass decision is derived from the score here, not trusted from the model.
-    const completionDecision = overallScore >= PASS_SCORE ? "completed" : "needs_review";
+    const completionDecision =
+      overallScore >= rubricForModule(input.moduleId).passScore ? "completed" : "needs_review";
     const list = (value: unknown) =>
       Array.isArray(value) ? value.map(String).slice(0, 6) : [];
 

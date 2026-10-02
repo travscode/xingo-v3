@@ -147,3 +147,40 @@ const transcriptionCodes: Record<string, string> = {
 export function transcriptionLanguageCode(language: string) {
   return transcriptionCodes[language.trim().toLowerCase()];
 }
+
+/**
+ * Instructions for English-only role-plays (OET, IELTS, OSCE/AMC stations).
+ * The learner plays themselves (a nurse, doctor or test candidate); the AI plays
+ * the patient, relative, colleague or examiner described by the scenario.
+ */
+export function buildRoleplayInstructions(args: { scenario: Scenario; agent: VoiceAgent }) {
+  const { scenario, agent } = args;
+  const runtime = scenario.practiceRuntime;
+  const learner = runtime.learnerRole ?? "candidate";
+  const endCondition = agent.endCondition?.trim();
+
+  return [
+    `You are ${agent.name}, ${agent.role}, in a spoken practice role-play. The person talking to you is a ${learner}.`,
+    `Scenario: ${scenario.title}. ${scenario.description}`,
+    `Your manner: ${agent.demeanor}.`,
+    `What you want from this conversation: ${agent.goal}`,
+    agent.instructions ? `Your role card (follow it closely):\n${agent.instructions}` : "",
+    "",
+    "Rules:",
+    "- Stay in character the whole time. Never mention that this is practice, an exam or AI.",
+    "- Never coach, hint, praise or evaluate the learner, and never take over their task.",
+    "- Speak naturally in short turns, then wait. If the learner is silent, stay silent.",
+    "- Reveal details from your card only when the learner asks about them or it would be natural to mention them.",
+    "- If the learner uses jargon you wouldn't understand, ask what it means.",
+    runtime.learnerOpens === false
+      ? `- You speak first. ${agent.openingLine ? `Open with: ${agent.openingLine}` : "Open the conversation as your role would."}`
+      : `- The learner speaks first. ${agent.openingLine ? `Your first reply should carry this meaning: ${agent.openingLine}` : ""}`,
+    endCondition
+      ? `- When ${endCondition}, give a brief natural closing line, then call the ${END_CONVERSATION_TOOL} tool.`
+      : "- If the learner closes the conversation, say a brief goodbye.",
+    "",
+    "LANGUAGE RULE (overrides everything above): speak only English, at a natural pace with everyday vocabulary that suits your character.",
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
+}

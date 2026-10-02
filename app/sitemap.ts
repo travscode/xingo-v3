@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { examPages } from "@/lib/exam-pages";
 import { cclLanguagePages, SITE_URL, topicPages } from "@/lib/seo-pages";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -15,6 +16,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     page("/naati/ccl", 0.9),
     page("/naati/cpi", 0.8),
     page("/interpreting", 0.7),
+    page("/exams", 0.8),
+    ...examPages.map((exam) => page(`/exams/${exam.slug}`, 0.8)),
     page("/pricing", 0.7),
     page("/how-it-works", 0.6),
     page("/for-interpreters", 0.5),

@@ -6,7 +6,7 @@ import { useConvex, useMutation, useQuery } from "convex/react";
 import { ArrowLeft, Check, Mic, Repeat, Trophy, Users } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { track } from "@/lib/analytics";
-import { practiceGoals, type PracticeGoalId } from "@/lib/goals";
+import { isSpeakingGoal, practiceGoals, type PracticeGoalId } from "@/lib/goals";
 import { createLanguagePair, flagEmoji, practiceLanguages } from "@/lib/languages";
 import { plans } from "@/lib/plans";
 import { cn } from "@/lib/utils";
@@ -42,7 +42,11 @@ export function WelcomeFlow() {
   const [error, setError] = useState<string | null>(null);
 
   const firstName = me?.user.name.split(" ")[0];
-  const chosenLanguage = language === "__custom" ? customLanguage.trim() : language;
+  const speakingOnly = isSpeakingGoal(goal);
+  // English-only exams skip the language step.
+  const chosenLanguage = speakingOnly ? "English" : language === "__custom" ? customLanguage.trim() : language;
+  const totalSteps = speakingOnly ? 2 : TOTAL_STEPS;
+  const visibleStep = speakingOnly && step === 3 ? 2 : step;
 
   const finish = async () => {
     if (!goal || !chosenLanguage) return;
@@ -80,11 +84,11 @@ export function WelcomeFlow() {
           <XingoMark className="h-7 w-auto" />
           <span className="text-lg font-bold tracking-[-0.03em]">XINGO</span>
         </div>
-        <div className="flex items-center gap-1.5" aria-label={`Step ${step} of ${TOTAL_STEPS}`}>
-          {Array.from({ length: TOTAL_STEPS }, (_, index) => (
+        <div className="flex items-center gap-1.5" aria-label={`Step ${visibleStep} of ${totalSteps}`}>
+          {Array.from({ length: totalSteps }, (_, index) => (
             <span
               key={index}
-              className={cn("h-1.5 w-8 rounded-full", index < step ? "bg-ink" : "bg-gray-200")}
+              className={cn("h-1.5 w-8 rounded-full", index < visibleStep ? "bg-ink" : "bg-gray-200")}
             />
           ))}
         </div>
@@ -94,7 +98,7 @@ export function WelcomeFlow() {
         {step > 1 ? (
           <button
             type="button"
-            onClick={() => setStep(step - 1)}
+            onClick={() => setStep(speakingOnly && step === 3 ? 1 : step - 1)}
             className="mb-6 inline-flex w-fit items-center gap-1 text-sm font-semibold text-gray-500 hover:text-ink"
           >
             <ArrowLeft className="h-4 w-4" /> Back
@@ -107,18 +111,30 @@ export function WelcomeFlow() {
               {firstName ? `Welcome, ${firstName}.` : "Welcome."} What are you preparing for?
             </h1>
             <p className="mt-2 text-gray-500">We&apos;ll put the right dialogues first. You can practise anything later.</p>
-            <div className="mt-8 grid gap-3">
-              {practiceGoals.map((option) => (
-                <ChoiceCard
-                  key={option.id}
-                  selected={goal === option.id}
-                  onClick={() => setGoal(option.id)}
-                  title={option.label}
-                  description={option.description}
-                />
-              ))}
-            </div>
-            <Button size="lg" className="mt-8" disabled={!goal} onClick={() => setStep(2)}>
+            {(
+              [
+                ["speaking", "English speaking exams"],
+                ["interpreting", "Interpreting"],
+              ] as const
+            ).map(([kind, heading]) => (
+              <div key={kind} className="mt-8">
+                <p className="mb-3 text-sm font-semibold text-gray-500">{heading}</p>
+                <div className="grid gap-3">
+                  {practiceGoals
+                    .filter((option) => option.kind === kind)
+                    .map((option) => (
+                      <ChoiceCard
+                        key={option.id}
+                        selected={goal === option.id}
+                        onClick={() => setGoal(option.id)}
+                        title={option.label}
+                        description={option.description}
+                      />
+                    ))}
+                </div>
+              </div>
+            ))}
+            <Button size="lg" className="mt-8" disabled={!goal} onClick={() => setStep(speakingOnly ? 3 : 2)}>
               Continue
             </Button>
           </>
@@ -177,25 +193,39 @@ export function WelcomeFlow() {
           <>
             <h1 className="text-3xl font-bold tracking-[-0.035em] sm:text-4xl">Here&apos;s how a session works.</h1>
             <div className="mt-8 grid gap-3">
-              <HowItWorksRow
-                icon={<Users className="h-5 w-5" />}
-                title="Two AI people, one interpreter: you"
-                body={`An English-speaking professional and a ${chosenLanguage}-speaking client. They can't understand each other — only you can.`}
-              />
+              {speakingOnly ? (
+                <HowItWorksRow
+                  icon={<Users className="h-5 w-5" />}
+                  title="A realistic role-play partner"
+                  body="The AI plays the patient, relative, colleague or examiner from the exam. You play yourself, with your task card on screen."
+                />
+              ) : (
+                <HowItWorksRow
+                  icon={<Users className="h-5 w-5" />}
+                  title="Two AI people, one interpreter: you"
+                  body={`An English-speaking professional and a ${chosenLanguage}-speaking client. They can't understand each other — only you can.`}
+                />
+              )}
               <HowItWorksRow
                 icon={<Mic className="h-5 w-5" />}
                 title="Hold to talk, tap to switch"
                 body={
                   <>
-                    Hold <Kbd>Space</Kbd> (or the mic button) while you speak. Tap <Kbd>Space</Kbd> to switch who
-                    you&apos;re talking to. Start by introducing yourself to the client.
+                    Hold <Kbd>Space</Kbd> (or the mic button) while you speak, then release.{" "}
+                    {speakingOnly
+                      ? "Sessions are timed like the real exam."
+                      : "Tap Space to switch who you're talking to. Start by introducing yourself to the client."}
                   </>
                 }
               />
               <HowItWorksRow
                 icon={<Trophy className="h-5 w-5" />}
                 title="Finish and get scored"
-                body="You'll get a score, feedback on accuracy and terminology, and one thing to work on next."
+                body={
+                  speakingOnly
+                    ? "You'll get an estimated score against the exam's criteria and specific feedback on what to improve."
+                    : "You'll get a score, feedback on accuracy and terminology, and one thing to work on next."
+                }
               />
               <HowItWorksRow
                 icon={<Repeat className="h-5 w-5" />}

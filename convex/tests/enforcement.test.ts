@@ -408,3 +408,29 @@ describe("avatars", () => {
     await expect(t.action(internal.avatars.generateMissing, { dryRun: true })).resolves.toMatchObject({ missing: 3 });
   });
 });
+
+describe("exam pack", () => {
+  test("seeds exam modules; role-plays are single-agent English with a task card and time limit", async () => {
+    const t = setup();
+    const result = await t.mutation(internal.content.seedExamPack, { dryRun: false });
+    expect(result.inserted.modules).toHaveLength(6);
+    expect(result.inserted.scenarios.length).toBeGreaterThanOrEqual(34);
+
+    const scenarios = await t.run((ctx) => ctx.db.query("scenarios").collect());
+    const roleplays = scenarios.filter((s) => s.practiceRuntime?.practiceType === "roleplay");
+    expect(roleplays.length).toBeGreaterThanOrEqual(28);
+
+    for (const scenario of roleplays) {
+      expect(scenario.agentCount).toBe(1);
+      expect(scenario.aiAgentA.language).toBe("English");
+      expect(scenario.practiceRuntime?.taskCard).toBeTruthy();
+      expect(scenario.practiceRuntime?.timeLimitMinutes).toBeGreaterThan(0);
+    }
+
+    // Every module has a free preview so the paywall comes after a taste.
+    const modules = await t.run((ctx) => ctx.db.query("modules").collect());
+    for (const learningModule of modules) {
+      expect(scenarios.some((s) => s.moduleId === learningModule.id && s.isFreePreview)).toBe(true);
+    }
+  });
+});

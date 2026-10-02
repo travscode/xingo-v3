@@ -102,3 +102,11 @@ Format: **ID — title** · date · status. Context → Decision → Consequence
 ### D-024 — Generated portrait avatars · 2026-10-02 · proposed
 **Context.** Only one scenario had avatars; initials circles feel impersonal.
 **Decision.** `avatars:generateMissing` creates one portrait per participant with the OpenAI Images API and stores it in Convex. Admin uploads are never replaced. Style (monochrome vs colour) to be chosen by the founder.
+
+### D-025 — English-only role-play mode · 2026-10-02 · accepted
+**Context.** The engine isn't only for bilinguals: OET, IELTS, AMC and OSCE candidates practise spoken role-plays where they play themselves.
+**Decision.** Scenarios can set `practiceRuntime.practiceType = "roleplay"` with `learnerRole`, `taskCard`, `learnerOpens` and `timeLimitMinutes`. One AI participant (patient/relative/colleague/examiner) speaks English; the task card stays on screen; sessions end at the exam time limit. Grading uses a per-exam rubric (`lib/rubrics.ts`) mapped onto the five stored dimension slots, with honest caveats (no pronunciation from transcripts). Scores display on the exam's scale (OET /500 + grade, IELTS band /9, CCL /90) as estimates.
+**Consequences.** One engine for interpreting and speaking exams. Speaking goals skip the language step in onboarding.
+
+### D-026 — Exam selection · 2026-10-02 · accepted
+**Decision.** Build OET (Nursing, Medicine), IELTS Speaking, AMC Clinical, NMBA OSCE and one US medical interpreter oral module serving both CMI and CHI landing pages. **Do not** market NAATI CI practice: the CI test has no dialogue task. Court interpreting and UK DPSI are next candidates. See [research/exams-2026-10.md](research/exams-2026-10.md).

@@ -10,6 +10,7 @@ import { api } from "@/convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
 import {
   buildRealtimeAgentInstructions,
+  buildRoleplayInstructions,
   END_CONVERSATION_TOOL,
   planAgentLanguages,
   retargetLanguage,
@@ -98,14 +99,18 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
   // ---- Who speaks what -------------------------------------------------------
 
-  const hasSecondAgent = scenario.agentCount === 2 && Boolean(scenario.aiAgentB);
+  const runtime = scenario.practiceRuntime;
+  // English-only role-play (OET, IELTS, clinical stations): the learner speaks as themselves.
+  const isRoleplay = runtime.practiceType === "roleplay";
+  const timeLimitMs = runtime.timeLimitMinutes ? runtime.timeLimitMinutes * 60_000 : null;
+  const hasSecondAgent = !isRoleplay && scenario.agentCount === 2 && Boolean(scenario.aiAgentB);
   const languagePlan = useMemo(
     () => planAgentLanguages(scenario, activePair),
     [scenario, activePair],
   );
   const agentAConfig = useMemo<VoiceAgent>(
-    () => ({ ...scenario.aiAgentA, language: languagePlan.agentALanguage }),
-    [scenario.aiAgentA, languagePlan.agentALanguage],
+    () => ({ ...scenario.aiAgentA, language: isRoleplay ? "English" : languagePlan.agentALanguage }),
+    [isRoleplay, scenario.aiAgentA, languagePlan.agentALanguage],
   );
   const agentBConfig = useMemo<VoiceAgent | null>(
     () =>
@@ -274,6 +279,16 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       const counterpart = hasSecondAgent ? configFor(key === "agent_a" ? "agent_b" : "agent_a") : undefined;
       const isProfessional = key === professionalKey;
 
+      if (isRoleplay) {
+        return new RealtimeAgent({
+          name: config.name,
+          voice: config.voice,
+          handoffs: [],
+          tools: [endConversationTool],
+          instructions: buildRoleplayInstructions({ scenario, agent: config }),
+        });
+      }
+
       return new RealtimeAgent({
         name: config.name,
         voice: config.voice,
@@ -291,7 +306,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
         }),
       });
     },
-    [configFor, endConversationTool, hasSecondAgent, professionalKey, scenario],
+    [configFor, endConversationTool, hasSecondAgent, isRoleplay, professionalKey, scenario],
   );
 
   const agentA = useMemo(() => buildAgent("agent_a"), [buildAgent]);
@@ -433,6 +448,10 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       void ensureAudioPlayback(bundleFor(clientKey).audio);
       setPhase("live");
 
+      if (isRoleplay && runtime.learnerOpens === false) {
+        bundleFor(clientKey).session.sendHiddenInstruction("Begin the conversation now, in character.");
+      }
+
       if (hasSecondAgent) {
         void connectAgent(professionalKey)
           .then(() => bundleFor(professionalKey).session.mute(true))
@@ -468,8 +487,10 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     disconnectAll,
     ensureAudioPlayback,
     hasSecondAgent,
+    isRoleplay,
     mode,
     professionalKey,
+    runtime.learnerOpens,
     scenario.id,
     scenario.moduleId,
     startAttempt,
@@ -586,6 +607,13 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     const interval = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => window.clearInterval(interval);
   }, [phase]);
+
+  // Exam-style time limit: end the session like the real test would.
+  useEffect(() => {
+    if (phase === "live" && timeLimitMs !== null && startedAtMs !== null && nowMs - startedAtMs >= timeLimitMs) {
+      finishSessionRef.current("time_up");
+    }
+  }, [nowMs, phase, startedAtMs, timeLimitMs]);
 
   // ---- Push-to-talk -----------------------------------------------------------
 
@@ -732,8 +760,10 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
   // ---- Coaching -------------------------------------------------------------------
 
+  const effectiveAllowedMs =
+    allowedMs !== null && timeLimitMs !== null ? Math.min(allowedMs, timeLimitMs) : (allowedMs ?? timeLimitMs);
   const remainingMs =
-    allowedMs !== null && startedAtMs !== null ? allowedMs - (nowMs - startedAtMs) : null;
+    effectiveAllowedMs !== null && startedAtMs !== null ? effectiveAllowedMs - (nowMs - startedAtMs) : null;
   const totalTurns = turns.agent_a + turns.agent_b;
 
   const coach = useMemo(() => {
@@ -750,6 +780,22 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
         tone: "warning" as const,
         title: "Less than a minute left.",
         detail: "Finish your current turn. The session ends automatically when time runs out.",
+      };
+    }
+
+    if (isRoleplay) {
+      if (totalTurns === 0) {
+        return runtime.learnerOpens === false
+          ? { title: `Listen — ${client.name} will start.`, detail: "Hold Space (or the mic button) while you answer, then release." }
+          : {
+              title: `Start the conversation with ${client.name}.`,
+              detail: "Introduce yourself and begin your first task. Hold Space (or the mic button) while you talk.",
+            };
+      }
+
+      return {
+        title: "Work through your task card.",
+        detail: timeLimitMs ? "Keep an eye on the timer — the session ends automatically, like the real test." : "Press Finish when you're done.",
       };
     }
 
@@ -787,7 +833,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       title: "Interpret each turn.",
       detail: "When someone finishes speaking, switch to the other person and relay everything they said.",
     };
-  }, [client, clientKey, conversationEnded, hasSecondAgent, mode, professional, professionalKey, remainingMs, totalTurns, turns]);
+  }, [client, clientKey, conversationEnded, hasSecondAgent, isRoleplay, mode, professional, professionalKey, remainingMs, runtime.learnerOpens, timeLimitMs, totalTurns, turns]);
 
   const tileState = (key: AgentKey) => {
     if (speakingKey === key) return "speaking" as const;
@@ -859,6 +905,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       {phase === "setup" || phase === "countdown" ? (
         <SetupPanel
           data={data}
+          isRoleplay={isRoleplay}
           client={client}
           professional={professional}
           hasSecondAgent={hasSecondAgent}
@@ -925,7 +972,8 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
           </section>
 
           <aside className="flex min-h-0 flex-col gap-4 lg:sticky lg:top-6 lg:h-[calc(100dvh-8rem)]">
-            {mode === "practice" ? (
+            {isRoleplay && runtime.taskCard ? <TaskCard text={runtime.taskCard} learnerRole={runtime.learnerRole} /> : null}
+            {isRoleplay && mode === "assessed" ? null : mode === "practice" ? (
               <Card className="flex min-h-[260px] flex-1 flex-col overflow-hidden">
                 <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
                   <p className="text-sm font-bold">Live transcript</p>
@@ -945,7 +993,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
                       >
                         <div className="mb-0.5 flex items-center justify-between gap-3 text-[11px] font-semibold opacity-60">
                           <span>{entry.speaker}</span>
-                          {translations[entry.id] ? (
+                          {isRoleplay ? null : translations[entry.id] ? (
                             <span>English</span>
                           ) : (
                             <button
@@ -1027,6 +1075,7 @@ function RoomFrame({
 
 function SetupPanel({
   data,
+  isRoleplay,
   client,
   professional,
   hasSecondAgent,
@@ -1037,6 +1086,7 @@ function SetupPanel({
   onStart,
 }: {
   data: PracticeRoomData;
+  isRoleplay: boolean;
   client: VoiceAgent;
   professional: VoiceAgent;
   hasSecondAgent: boolean;
@@ -1077,15 +1127,32 @@ function SetupPanel({
           ))}
         </div>
 
+        {isRoleplay && scenario.practiceRuntime.taskCard ? (
+          <div className="mt-6">
+            <TaskCard text={scenario.practiceRuntime.taskCard} learnerRole={scenario.practiceRuntime.learnerRole} />
+          </div>
+        ) : null}
+
         <ol className="mt-8 space-y-4">
-          {[
+          {(isRoleplay
+            ? [
+                "Read your task card. It stays on screen during the session.",
+                scenario.practiceRuntime.learnerOpens === false
+                  ? `${professional.name} starts the conversation.`
+                  : `Start by introducing yourself to ${professional.name}.`,
+                "Hold Space (or the mic button) while you talk, then release.",
+                scenario.practiceRuntime.timeLimitMinutes
+                  ? `You have ${scenario.practiceRuntime.timeLimitMinutes} minutes — the session ends automatically, like the real test.`
+                  : "Press Finish when you're done.",
+              ]
+            : [
             hasSecondAgent
               ? `Introduce yourself to ${client.name} in ${client.language} and explain you'll interpret everything.`
               : `Introduce yourself to ${professional.name}.`,
             hasSecondAgent ? `Switch to ${professional.name} and introduce yourself in ${professional.language}.` : null,
             "Interpret every turn. Hold Space (or the mic button) to talk; tap Space to switch person.",
             "When the conversation wraps up, press Finish.",
-          ]
+          ])
             .filter(Boolean)
             .map((text, index) => (
               <li key={index} className="flex gap-3">
@@ -1146,5 +1213,18 @@ function SetupPanel({
         </p>
       </Card>
     </div>
+  );
+}
+
+/** The candidate card for role-play exams (OET, AMC, OSCE, IELTS). */
+function TaskCard({ text, learnerRole }: { text: string; learnerRole?: string }) {
+  return (
+    <Card className="flex flex-col overflow-hidden">
+      <div className="border-b border-gray-200 px-4 py-3">
+        <p className="text-sm font-bold">Your task card</p>
+        {learnerRole ? <p className="text-xs text-gray-500">You are: {learnerRole}</p> : null}
+      </div>
+      <div className="max-h-[50vh] overflow-y-auto whitespace-pre-line px-4 py-3 text-sm leading-6">{text}</div>
+    </Card>
   );
 }

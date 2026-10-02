@@ -7,13 +7,8 @@ import { useAction, useQuery } from "convex/react";
 import { ArrowRight, Check, RotateCcw, TrendingDown, TrendingUp } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { track } from "@/lib/analytics";
-import {
-  assessmentDimensions,
-  displayMaxScore,
-  displayPassMark,
-  isPassingScore,
-  toDisplayScore,
-} from "@/lib/scoring";
+import { isPassingScore } from "@/lib/scoring";
+import { rubricForModule } from "@/lib/rubrics";
 import { Badge, Card, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -139,10 +134,9 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
   }
 
   const assessment = session.assessment;
+  const rubric = rubricForModule(session.moduleId);
   const passed = isPassingScore(session.moduleId, session.score);
-  const display = toDisplayScore(session.moduleId, session.score);
-  const max = displayMaxScore(session.moduleId);
-  const passMark = displayPassMark(session.moduleId);
+  const display = rubric.display(session.score);
   const delta = previousScore !== null ? session.score - previousScore : null;
 
   return (
@@ -152,26 +146,29 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
       <Card tone="inverse" className="overflow-hidden">
         <div className="grid gap-8 p-8 sm:grid-cols-[auto_1fr] sm:items-center sm:p-10">
           <div>
-            <p className="text-sm font-semibold text-paper/60">Your score</p>
+            <p className="text-sm font-semibold text-paper/60">{display.note ?? "Your score"}</p>
             <p className="mt-1 text-7xl font-bold tracking-[-0.05em] tabular-nums">
-              {display}
-              <span className="text-3xl text-paper/50">/{max}</span>
+              {display.value}
+              {display.max ? <span className="text-3xl text-paper/50">/{display.max}</span> : null}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Badge tone={passed ? "accent" : "neutral"}>
                 {passed ? <Check className="h-3 w-3" /> : null}
-                {passed ? "Pass" : `Pass mark ${passMark}`}
+                {passed ? "At target" : rubric.passLabel}
               </Badge>
               {delta !== null && delta !== 0 ? (
                 <span className="inline-flex items-center gap-1 text-sm text-paper/70">
                   {delta > 0 ? <TrendingUp className="h-4 w-4 text-accent" /> : <TrendingDown className="h-4 w-4" />}
                   {delta > 0 ? "+" : ""}
-                  {toDisplayScore(session.moduleId, Math.abs(delta)) * Math.sign(delta)} since last attempt
+                  {Math.abs(delta)} points since last attempt
                 </span>
               ) : null}
             </div>
           </div>
-          <p className="text-lg leading-7 text-paper/85">{assessment.summary}</p>
+          <div>
+            <p className="text-lg leading-7 text-paper/85">{assessment.summary}</p>
+            {rubric.caveat ? <p className="mt-3 text-xs text-paper/50">{rubric.caveat}</p> : null}
+          </div>
         </div>
         <div className="flex flex-wrap gap-2 border-t border-paper/10 px-8 py-5 sm:px-10">
           <Button asChild variant="accent">
@@ -191,7 +188,7 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
         <Card className="p-6">
           <SectionTitle>Breakdown</SectionTitle>
           <div className="space-y-4">
-            {assessmentDimensions.map((dimension) => {
+            {rubric.dimensions.map((dimension) => {
               const value = Math.round(assessment.breakdown[dimension.key]);
               return (
                 <div key={dimension.key}>

@@ -8,6 +8,11 @@ import { marketingNavigation } from "@/lib/navigation";
 const footerLinks = [
   { href: "/naati/ccl", label: "NAATI CCL practice" },
   { href: "/naati/cpi", label: "NAATI CPI practice" },
+  { href: "/exams/oet-speaking", label: "OET Speaking practice" },
+  { href: "/exams/ielts-speaking", label: "IELTS Speaking practice" },
+  { href: "/exams/amc-clinical-exam", label: "AMC clinical practice" },
+  { href: "/exams/nmba-osce", label: "NMBA OSCE practice" },
+  { href: "/exams", label: "All exams" },
   { href: "/interpreting", label: "Interpreting practice" },
   { href: "/interpreting/medical-interpreting-practice", label: "Medical interpreting" },
   { href: "/interpreting/ndis-interpreting", label: "NDIS interpreting" },

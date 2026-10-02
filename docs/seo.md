@@ -17,6 +17,7 @@ Traffic rose after the NAATI CCL page went up. Competitors already rank for gene
 | `/interpreting/legal-interpreting-practice` | court / tribunal interpreting practice | Courtroom + Immigration modules (+ new Local Court, Tribunal) |
 | `/interpreting/diploma-of-interpreting-practice` | Diploma of Interpreting students | CPI + community + phone |
 | `/interpreting` | hub for internal linking | — |
+| `/exams` + `/exams/[slug]` | OET Speaking, IELTS Speaking, AMC Clinical, NMBA OSCE, CMI oral, CCHI CHI oral | Exam pack (`convex/content/examsPack.ts`) |
 
 Every page: one `h1`, unique title/description, canonical URL, FAQ with `FAQPage` JSON-LD, links to sibling pages, and a sign-up CTA that lands in the welcome flow with **goal and language preselected** (`signUpHref`).
 
@@ -24,7 +25,7 @@ Technical: `app/sitemap.ts`, `app/robots.ts` (app routes disallowed), `metadataB
 
 ## After deploying
 1. Google Search Console → add `xingo.ai` (DNS verification) → submit `https://www.xingo.ai/sitemap.xml`.
-2. Run the content seed so every advertised dialogue exists: `npx convex run content:seedAustraliaPack '{"dryRun":true}'` then `false`.
+2. Run the content seeds so every advertised scenario exists: `content:seedAustraliaPack` and `content:seedExamPack` (dry run first).
 3. In GA4, compare sign-ups by landing page (see analytics.md) after 4–6 weeks; expand languages/topics that convert.
 
 ## Writing rules
@@ -34,6 +35,6 @@ Technical: `app/sitemap.ts`, `app/robots.ts` (app routes disallowed), `metadataB
 - If a page lists a dialogue, it must exist in the app.
 
 ## Next ideas (not built)
-- **OET Speaking (nurses/doctors)** — large adjacent market; same role-play engine but monolingual and scored on OET criteria. Product decision, not just a page.
+- More OET professions (pharmacy, physiotherapy, dentistry…), court consecutive, UK DPSI.
 - Per-language CCL dialogue variants (names, places) and per-language sample vocab lists.
 - Blog-style guides: "CCL marking criteria explained", "How to prepare for the CCL in 4 weeks".

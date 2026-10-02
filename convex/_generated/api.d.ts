@@ -16,6 +16,7 @@ import type * as billingData from "../billingData.js";
 import type * as catalog from "../catalog.js";
 import type * as content from "../content.js";
 import type * as content_australiaPack from "../content/australiaPack.js";
+import type * as content_examsPack from "../content/examsPack.js";
 import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as jobs from "../jobs.js";
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   catalog: typeof catalog;
   content: typeof content;
   "content/australiaPack": typeof content_australiaPack;
+  "content/examsPack": typeof content_examsPack;
   crons: typeof crons;
   http: typeof http;
   jobs: typeof jobs;

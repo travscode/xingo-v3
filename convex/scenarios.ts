@@ -32,6 +32,16 @@ const practiceRuntime = v.object({
   openingSpeaker: v.union(v.literal("agent_a"), v.literal("agent_b")),
   briefing: v.string(),
   assessmentFocus: v.array(v.string()),
+  /** "interpreting" (default): learner bridges two speakers. "roleplay": learner speaks as themselves (OET, IELTS, OSCE). */
+  practiceType: v.optional(v.union(v.literal("interpreting"), v.literal("roleplay"))),
+  /** Who the learner plays in a role-play, e.g. "Registered nurse", "IELTS candidate". */
+  learnerRole: v.optional(v.string()),
+  /** Candidate card / instructions shown before and during the session. */
+  taskCard: v.optional(v.string()),
+  /** Role-play only: true when the learner speaks first (OET, AMC); false when the AI opens (IELTS examiner). */
+  learnerOpens: v.optional(v.boolean()),
+  /** Exam-style time limit for the live session. */
+  timeLimitMinutes: v.optional(v.number()),
 });
 
 const scenarioFields = {
