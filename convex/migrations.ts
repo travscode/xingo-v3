@@ -156,3 +156,35 @@ export const renamePractitionerRole = internalMutation({
     return { dryRun: args.dryRun, changed };
   },
 });
+
+/**
+ * Refunds minutes charged for attempts where nothing was said (e.g. the voice
+ * service failed to connect). Matches abandoned attempts with an empty transcript.
+ */
+export const refundSilentAttempts = internalMutation({
+  args: { dryRun: v.boolean() },
+  handler: async (ctx, args) => {
+    const charges = await ctx.db.query("usageCharges").collect();
+    const refunded: Array<{ attemptId: string; minutes: number }> = [];
+
+    for (const charge of charges) {
+      const attempt = await ctx.db
+        .query("sessions")
+        .withIndex("by_public_id", (q) => q.eq("id", charge.attemptId))
+        .unique();
+
+      if (!attempt || attempt.completionStatus !== "abandoned" || (attempt.transcriptEntries ?? []).length > 0) {
+        continue;
+      }
+
+      refunded.push({ attemptId: charge.attemptId, minutes: charge.minutes });
+
+      if (!args.dryRun) {
+        await ctx.db.delete(charge._id);
+        await ctx.db.patch(attempt._id, { chargedMinutes: 0 });
+      }
+    }
+
+    return { dryRun: args.dryRun, refunded };
+  },
+});

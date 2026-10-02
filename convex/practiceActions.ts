@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { action, type ActionCtx } from "./_generated/server";
 import { getClerkIdFromIdentity } from "./model/auth";
@@ -110,35 +110,53 @@ export const createRealtimeSecret = action({
   args: { attemptId: v.string() },
   handler: async (ctx, args): Promise<{ value: string; model: string }> => {
     const clerkId = await requireActionClerkId(ctx);
+    const key = process.env.OPENAI_API_KEY;
+
+    if (!key) {
+      console.error("[createRealtimeSecret] OPENAI_API_KEY is not set on this Convex deployment.");
+      throw new ConvexError("VOICE_NOT_CONFIGURED");
+    }
+
     await ctx.runMutation(internal.practice.reserveRealtimeKey, {
       attemptId: args.attemptId,
       clerkId,
     });
 
     const model = process.env.OPENAI_REALTIME_MODEL ?? "gpt-realtime";
-    const response = await fetch(`${OPENAI_API}/realtime/client_secrets`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${openAiKey()}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        expires_after: { anchor: "created_at", seconds: 600 },
-        session: { type: "realtime", model },
-      }),
-    });
 
-    if (!response.ok) {
-      throw new Error(`Could not start the voice session (${response.status}).`);
+    try {
+      const response = await fetch(`${OPENAI_API}/realtime/client_secrets`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          expires_after: { anchor: "created_at", seconds: 600 },
+          session: { type: "realtime", model },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI client_secrets ${response.status}: ${(await response.text()).slice(0, 300)}`);
+      }
+
+      const data = (await response.json()) as { value?: string };
+
+      if (!data.value) {
+        throw new Error("OpenAI client_secrets returned no value");
+      }
+
+      return { value: data.value, model };
+    } catch (error) {
+      // A failed mint must not count towards reconnect limits or billing.
+      await ctx.runMutation(internal.practice.releaseRealtimeKey, {
+        attemptId: args.attemptId,
+        clerkId,
+      });
+      console.error("[createRealtimeSecret]", error);
+      throw new ConvexError("VOICE_UNAVAILABLE");
     }
-
-    const data = (await response.json()) as { value?: string };
-
-    if (!data.value) {
-      throw new Error("Could not start the voice session.");
-    }
-
-    return { value: data.value, model };
   },
 });
 

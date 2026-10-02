@@ -372,13 +372,20 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
       try {
         await connectAgent(key);
+        setError(null);
         bundleFor(key).session.mute(false);
         void ensureAudioPlayback(bundleFor(key).audio);
       } catch (connectError) {
-        setError(friendlyError(connectError, "Couldn't connect to that participant. Try again."));
+        console.error("[PracticeRoom] connect", key, connectError);
+        setError(
+          friendlyError(
+            connectError,
+            `Couldn't connect to ${configFor(key).name}. Check your connection and tap their card to retry.`,
+          ),
+        );
       }
     },
-    [bundleFor, connectAgent, ensureAudioPlayback, hasSecondAgent],
+    [bundleFor, configFor, connectAgent, ensureAudioPlayback, hasSecondAgent],
   );
 
   const disconnectAll = useCallback(() => {
@@ -401,6 +408,10 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     setConversationEnded(false);
 
     try {
+      // Fail fast on microphone problems, before an attempt exists.
+      const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
+      probe.getTracks().forEach((track) => track.stop());
+
       const result = await startAttempt({
         scenarioId: scenario.id,
         sourceLanguage: activePair.sourceLanguage,
@@ -415,7 +426,11 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       track("practice_start", { scenario_id: scenario.id, module_id: scenario.moduleId, mode });
 
       // The interpreter opens by introducing themselves to the client (Thomas, Aug 2026).
-      await selectAgent(clientKey);
+      // Only go live once that first voice is actually connected.
+      setActiveAgent(clientKey);
+      await connectAgent(clientKey);
+      bundleFor(clientKey).session.mute(false);
+      void ensureAudioPlayback(bundleFor(clientKey).audio);
       setPhase("live");
 
       if (hasSecondAgent) {
@@ -424,9 +439,18 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
           .catch(() => undefined);
       }
     } catch (startError) {
+      console.error("[PracticeRoom] start", startError);
       const code = getErrorCode(startError);
       setError(friendlyError(startError, "We couldn't start the session. Check your connection and try again."));
       setPhase("setup");
+
+      // Nothing was spoken, so release the attempt (no voice connected = no charge).
+      const id = attemptIdRef.current;
+      if (id) {
+        attemptIdRef.current = null;
+        setAttemptId(null);
+        void cancelAttempt({ attemptId: id }).catch(() => undefined);
+      }
 
       if (code === "OUT_OF_MINUTES" || code === "PREMIUM_REQUIRED") {
         track("paywall_view", { reason: code, scenario_id: scenario.id });
@@ -438,15 +462,16 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     activePair.sourceLanguage,
     activePair.targetLanguage,
     bundleFor,
+    cancelAttempt,
     clientKey,
     connectAgent,
     disconnectAll,
+    ensureAudioPlayback,
     hasSecondAgent,
     mode,
     professionalKey,
     scenario.id,
     scenario.moduleId,
-    selectAgent,
     startAttempt,
   ]);
 
@@ -584,11 +609,16 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       return;
     }
 
+    if (!connectedAgentsRef.current.has(activeAgent) || bundleFor(activeAgent).session.status !== "CONNECTED") {
+      setError(`Still connecting to ${configFor(activeAgent).name}… try again in a second.`);
+      return;
+    }
+
     stopAllAgentPlayback();
     bundleFor(activeAgent).session.startPushToTalk();
     setIsRecording(true);
     markSpeaking("interpreter");
-  }, [activeAgent, bundleFor, markSpeaking, phase, stopAllAgentPlayback]);
+  }, [activeAgent, bundleFor, configFor, markSpeaking, phase, stopAllAgentPlayback]);
 
   const stopTalking = useCallback(() => {
     if (!activeAgent || !isRecording) {

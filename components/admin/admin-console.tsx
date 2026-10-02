@@ -94,6 +94,41 @@ export function AdminConsole() {
 
 type Finance = FunctionReturnType<typeof api.adminActions.financeSnapshot>;
 
+function SetupChecklist() {
+  const config = useQuery(api.admin.configStatus, {});
+
+  if (!config) {
+    return null;
+  }
+
+  const missingRequired = config.filter((item) => item.required && !item.present);
+  const missingOptional = config.filter((item) => !item.required && !item.present);
+
+  if (missingRequired.length === 0 && missingOptional.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card className={cn("p-5", missingRequired.length > 0 ? "border-2 border-record" : "")}>
+      <p className="font-bold">
+        {missingRequired.length > 0 ? "Server setup incomplete — learners are affected" : "Optional setup remaining"}
+      </p>
+      <p className="mt-1 text-sm text-gray-500">
+        Set these on the Convex deployment with <code>npx convex env set NAME value</code> (see docs/runbooks).
+      </p>
+      <ul className="mt-3 space-y-1.5 text-sm">
+        {[...missingRequired, ...missingOptional].map((item) => (
+          <li key={item.name} className="flex flex-wrap items-center gap-2">
+            <Badge tone={item.required ? "dark" : "neutral"}>{item.required ? "Required" : "Optional"}</Badge>
+            <code className="font-semibold">{item.name}</code>
+            <span className="text-gray-500">— {item.purpose}</span>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
 function OverviewTab() {
   const overview = useQuery(api.admin.overview, {});
   const financeSnapshot = useAction(api.adminActions.financeSnapshot);
@@ -114,6 +149,7 @@ function OverviewTab() {
 
   return (
     <div className="space-y-10">
+      <SetupChecklist />
       <section>
         <SectionTitle
           action={

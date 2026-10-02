@@ -118,6 +118,7 @@ describe("metering", () => {
       scenarioId: "free-scn",
       ...pair,
     });
+    await t.mutation(internal.practice.reserveRealtimeKey, { attemptId, clerkId: "user_m" });
 
     vi.advanceTimersByTime(4 * 60_000 + 5_000);
     await t.mutation(internal.practice.closeForGrading, {
@@ -176,6 +177,7 @@ describe("metering", () => {
       scenarioId: "free-scn",
       ...pair,
     });
+    await t.mutation(internal.practice.reserveRealtimeKey, { attemptId, clerkId: "user_split" });
 
     vi.advanceTimersByTime(14 * 60_000);
     await t.mutation(internal.practice.closeForGrading, {
@@ -217,6 +219,7 @@ describe("metering", () => {
       scenarioId: "free-scn",
       ...pair,
     });
+    await t.mutation(internal.practice.reserveRealtimeKey, { attemptId, clerkId: "user_ab" });
 
     vi.advanceTimersByTime(3 * 60_000);
     await asUser.mutation(api.practice.heartbeat, { attemptId });
@@ -249,6 +252,25 @@ describe("metering", () => {
     await expect(
       t.mutation(internal.practice.reserveRealtimeKey, { attemptId, clerkId: "user_rt" }),
     ).rejects.toThrow("Too many reconnects");
+  });
+});
+
+describe("failed voice connections", () => {
+  test("an attempt that never opened a voice session costs nothing", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    const asUser = await seedUser(t, "user_novoice");
+    const { attemptId } = await asUser.mutation(api.practice.startAttempt, { scenarioId: "free-scn", ...pair });
+
+    // Reservation made, then OpenAI failed and the action released it.
+    await t.mutation(internal.practice.reserveRealtimeKey, { attemptId, clerkId: "user_novoice" });
+    await t.mutation(internal.practice.releaseRealtimeKey, { attemptId, clerkId: "user_novoice" });
+
+    vi.advanceTimersByTime(3 * 60_000);
+    await asUser.mutation(api.practice.cancelAttempt, { attemptId });
+
+    const me = await asUser.query(api.users.me, {});
+    expect(me?.entitlement.allowanceUsed).toBe(0);
   });
 });
 

@@ -282,3 +282,34 @@ export const recordInvite = internalMutation({
     return { existingUser: Boolean(existing) };
   },
 });
+
+/**
+ * Which server settings are present on this deployment (names only, never values).
+ * Shown as a checklist in Admin → Overview so misconfiguration is visible.
+ */
+export const configStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    await requirePlatformAdmin(ctx);
+
+    const check = (name: string, purpose: string, required: boolean) => ({
+      name,
+      purpose,
+      required,
+      present: Boolean(process.env[name]?.trim()),
+    });
+
+    return [
+      check("OPENAI_API_KEY", "Voice practice, scoring and translation", true),
+      check("CLERK_JWT_ISSUER_DOMAIN", "Signing in to the backend", true),
+      check("SITE_URL", "Return links from Stripe and invite emails", true),
+      check("CLERK_SECRET_KEY", "Sending invite emails", false),
+      check("STRIPE_SECRET_KEY", "Payments", false),
+      check("STRIPE_WEBHOOK_SECRET", "Applying purchases after payment", false),
+      check("STRIPE_PRO_PRICE_ID", "Pro subscription checkout", false),
+      check("STRIPE_PACK_STARTER_PRICE_ID", "CCL Starter pack checkout", false),
+      check("STRIPE_PACK_PLUS_PRICE_ID", "Practice Plus pack checkout", false),
+      check("STRIPE_PACK_SPRINT_PRICE_ID", "Exam Sprint pack checkout", false),
+    ];
+  },
+});

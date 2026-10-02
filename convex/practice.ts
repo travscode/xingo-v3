@@ -99,7 +99,11 @@ async function closeAndCharge(
     .withIndex("by_attemptId", (q) => q.eq("attemptId", attempt.id))
     .first();
 
-  if (user && !existingCharge && attempt.startedAtMs !== undefined) {
+  // Attempts where no voice session was ever opened are free (e.g. configuration
+  // or network failures before the conversation started).
+  const voiceStarted = (attempt.realtimeKeysIssued ?? 0) > 0;
+
+  if (user && !existingCharge && attempt.startedAtMs !== undefined && voiceStarted) {
     const entitlement = await getEntitlement(ctx, user, new Date(endMs));
     const split = splitCharge(entitlement, billableMinutesFromMs(durationMs));
 
@@ -302,6 +306,18 @@ export const reserveRealtimeKey = internalMutation({
     });
 
     return { ok: true };
+  },
+});
+
+/** Undoes a reservation whose OpenAI call failed. */
+export const releaseRealtimeKey = internalMutation({
+  args: { attemptId: v.string(), clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const attempt = await requireOwnedAttempt(ctx, args.attemptId, args.clerkId);
+
+    await ctx.db.patch(attempt._id, {
+      realtimeKeysIssued: Math.max(0, (attempt.realtimeKeysIssued ?? 0) - 1),
+    });
   },
 });
 
