@@ -1,146 +1,186 @@
-import Link from "next/link";
 import Image from "next/image";
-import { ModuleCard } from "@/components/modules/module-card";
-import { learningModules } from "@/lib/mock-data";
-import { ArrowRightIcon } from "@/components/ui/icons";
+import Link from "next/link";
+import { ArrowRight, Check } from "lucide-react";
+import { CtaBand } from "@/components/marketing/cta-band";
+import { howItWorksSteps, practiceModules } from "@/components/marketing/catalogue";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/primitives";
+import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "@/lib/scoring";
+import { packList, plans } from "@/lib/plans";
 
-const paths = [
-  {
-    title: "For interpreters",
-    copy: "Practice on your own schedule. Build confidence before the real thing.",
-    href: "/for-interpreters",
-    cta: "Start training",
-  },
-  {
-    title: "For teams",
-    copy: "Run cohorts, track performance, and see who is ready for more.",
-    href: "/for-organizations",
-    cta: "See team tools",
-  },
-];
+const cheapestPack = packList[0];
 
 export default function HomePage() {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 pb-10 pt-4 lg:px-10">
-      <section className="grid gap-8 rounded-[2.5rem] border border-line bg-white/80 px-6 py-8 shadow-[0_16px_44px_rgba(18,18,18,0.06)] lg:grid-cols-[1.15fr_0.85fr] lg:px-10 lg:py-12">
-        <div className="max-w-3xl">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-4 sm:gap-28 sm:px-6">
+      {/* Hero */}
+      <section className="grid items-center gap-10 pt-8 sm:pt-14 lg:grid-cols-[1.2fr_0.8fr]">
+        <div>
           <p className="eyebrow">Interpreter practice</p>
-          <h1 className="display mt-4 text-5xl font-semibold text-balance lg:text-7xl">
-            Practice live. Get scored. Keep improving.
+          <h1 className="mt-4 text-5xl font-bold tracking-[-0.04em] text-balance sm:text-7xl">
+            Practise interpreting out loud. Get scored in minutes.
           </h1>
-          <p className="mt-5 max-w-xl text-lg leading-8 text-muted">
-            Xingo gives interpreters a simple way to practice real conversations
-            in a safe space with AI actors.
+          <p className="mt-6 max-w-xl text-lg leading-7 text-gray-500">
+            XINGO puts you between two AI speakers in a realistic conversation. You interpret by voice. Then you get
+            a score and clear feedback.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/sign-up" className="action-primary">
-              Try free practice
-              <ArrowRightIcon className="inline-block ml-4" size={14} />
-            </Link>
-            <Link href="/how-it-works" className="action-secondary">
-              See how it works
-            </Link>
+            <Button asChild size="lg">
+              <Link href="/sign-up">
+                Start free
+                <ArrowRight size={18} />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="secondary">
+              <Link href="/how-it-works">See how it works</Link>
+            </Button>
           </div>
-          <div className="mt-18 flex flex-wrap gap-3 text-sm text-muted">
-            <span className="mono-chip rounded-full px-4 py-2 border-0 bg-brand-orange text-black font-semibold">
-              Real-time practice
-            </span>
-            <span className="mono-chip rounded-full px-4 py-2 border-0 bg-brand-green text-black font-semibold">
-              Saved assessments
-            </span>
-            <span className="mono-chip rounded-full px-4 py-2 border-0 bg-brand-pink text-black font-semibold">
-              Microcredentials
-            </span>
-          </div>
-        </div>
-
-        <div className=" ">
-          <div className="flex items-end justify-end">
-            <Image
-              src="/images/hero-interpreter-training.jpg"
-              width={357}
-              height={536}
-              alt="Woman interpreter training"
-              className="rounded-4xl"
-            />
-          </div>
-        </div>
-      </section>
-
-      <section className="section-frame rounded-[2.5rem] grid gap-10 p-6 lg:grid-cols-[1.1fr_0.9fr] lg:p-12 items-center">
-        <div className="max-w-xl">
-          <h2 className="display text-3xl font-bold lg:text-4xl leading-tight">
-            Build confidence, even in <br />
-            high-stakes moments
-          </h2>
-          <p className="mt-6 text-lg text-muted">
-            Practice real interpreting. Feel ready faster.
+          <p className="mt-4 text-sm text-gray-500">
+            {plans.free.monthlyMinutes} free practice minutes every month. No card needed.
           </p>
-          <div className="mt-10 flex items-center gap-8">
-            <Link href={paths[0].href} className="action-primary">
-              {paths[0].cta}
-              <ArrowRightIcon className="inline-block ml-4" size={14} />
-            </Link>
-            <Link
-              href={paths[1].href}
-              className="text-sm font-semibold underline underline-offset-4 hover:text-muted transition"
-            >
-              {paths[1].cta}
-            </Link>
-          </div>
         </div>
-        <div className="relative aspect-[1.8/1] w-full overflow-hidden rounded-4xl">
+        <div className="relative mx-auto aspect-[2/3] w-full max-w-sm overflow-hidden rounded-xl bg-gray-100">
           <Image
-            src="/images/doctor3.webp"
+            src="/images/hero-interpreter-training.jpg"
+            alt="An interpreter practising with a headset"
             fill
+            priority
+            sizes="(min-width: 1024px) 384px, 90vw"
             className="object-cover"
-            alt="Practice scene"
           />
         </div>
       </section>
 
-      <section className="space-y-6">
-        <div className="flex items-end justify-between gap-6">
-          <div className="max-w-2xl">
-            <p className="eyebrow">Start here</p>
-            <h2 className="display mt-3 text-4xl font-bold">
-              Learn in industries that matter
-            </h2>
-          </div>
-          <Link
-            href="/pricing"
-            className="hidden text-sm font-semibold text-muted transition hover:text-foreground md:block"
-          >
-            View pricing
-          </Link>
-        </div>
-        <div className="grid gap-6 lg:grid-cols-3">
-          {learningModules.slice(0, 3).map((module) => (
-            <ModuleCard key={module.id} module={module} />
+      {/* How it works */}
+      <section>
+        <p className="eyebrow">How it works</p>
+        <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
+          A real interpreting session, on demand.
+        </h2>
+        <ol className="mt-10 grid gap-4 md:grid-cols-3">
+          {howItWorksSteps.map((step, index) => (
+            <li key={step.title} className="rounded-xl border border-gray-200 p-6">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink text-sm font-bold text-paper">
+                {index + 1}
+              </span>
+              <h3 className="mt-5 text-lg font-bold tracking-[-0.02em]">{step.title}</h3>
+              <p className="mt-2 text-[15px] leading-6 text-gray-500">{step.description}</p>
+            </li>
           ))}
+        </ol>
+      </section>
+
+      {/* NAATI CCL callout */}
+      <section className="grid overflow-hidden rounded-xl bg-gray-50 lg:grid-cols-2">
+        <div className="p-6 sm:p-10">
+          <Badge tone="accent">NAATI CCL</Badge>
+          <h2 className="mt-4 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Preparing for the CCL test?</h2>
+          <p className="mt-4 max-w-md text-[15px] leading-6 text-gray-500">
+            Practise short community dialogues in the CCL format, in your language pair. Every attempt is scored out
+            of {CCL_MAX_SCORE}, with {CCL_PASS_SCORE} as the pass mark, so you can see where you stand before test
+            day.
+          </p>
+          <Button asChild className="mt-8">
+            <Link href="/naati/ccl">
+              Explore CCL practice
+              <ArrowRight size={16} />
+            </Link>
+          </Button>
+          <p className="mt-6 text-xs text-gray-500">XINGO is independent and not affiliated with NAATI.</p>
+        </div>
+        <div className="relative min-h-64">
+          <Image
+            src="/images/start-practice.jpg"
+            alt="A practice session in progress"
+            fill
+            sizes="(min-width: 1024px) 50vw, 100vw"
+            className="object-cover"
+          />
         </div>
       </section>
 
-      <section className="rounded-[2.25rem] border border-line bg-[#121212] px-6 py-8 text-white lg:px-10 lg:py-10">
-        <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
-            Ready
-          </p>
-          <h2 className="display mt-3 text-4xl font-semibold">
-            Start with one session.
+      {/* Modules */}
+      <section>
+        <p className="eyebrow">Modules</p>
+        <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <h2 className="max-w-2xl text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
+            Practise for the settings you work in.
           </h2>
-          <p className="mt-3 max-w-xl text-sm leading-7 text-white/70">
-            You do not need to learn the system first. Pick a module and begin.
+          <p className="max-w-sm text-sm text-gray-500">
+            Free modules are open to everyone. Every premium module includes one free preview dialogue.
           </p>
-          <Link
-            href="/sign-up"
-            className="action-secondary mt-6 bg-brand-green text-black hover:bg-white"
-          >
-            Create free account
-            <ArrowRightIcon className="inline-block ml-4" size={14} />
-          </Link>
+        </div>
+        <ul className="mt-10 grid gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-2 lg:grid-cols-3">
+          {practiceModules.map((module) => (
+            <li key={module.title} className="bg-paper p-6">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-base font-bold">{module.title}</h3>
+                {module.access === "free" ? <Badge tone="success">Free</Badge> : <Badge>Pro or pack</Badge>}
+              </div>
+              <p className="mt-2 text-sm leading-6 text-gray-500">{module.description}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Pricing teaser */}
+      <section className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <div>
+          <p className="eyebrow">Pricing</p>
+          <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Pay for practice time. Nothing else.</h2>
+          <p className="mt-4 max-w-md text-[15px] leading-6 text-gray-500">
+            You pay for minutes spent in a live session. Scoring and feedback are included.
+          </p>
+          <Button asChild variant="outline" className="mt-8">
+            <Link href="/pricing">See full pricing</Link>
+          </Button>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <PriceTile label={plans.free.label} price={plans.free.priceLabel} note={`${plans.free.monthlyMinutes} min / month`} />
+          <PriceTile
+            label={plans.professional.label}
+            price={plans.professional.priceLabel.replace(" / month", "")}
+            note={`${plans.professional.monthlyMinutes} min / month`}
+            highlight
+          />
+          <PriceTile label="Minute packs" price={`from ${cheapestPack.priceLabel}`} note="One-off. Never expire." />
         </div>
       </section>
+
+      <CtaBand
+        title="Start with a free session."
+        description="Create an account, pick a module and start talking."
+        secondary={
+          <ul className="flex flex-col gap-1 text-sm text-gray-300 sm:ml-4">
+            <li className="flex items-center gap-2">
+              <Check size={14} /> {plans.free.monthlyMinutes} free minutes every month
+            </li>
+            <li className="flex items-center gap-2">
+              <Check size={14} /> No card needed
+            </li>
+          </ul>
+        }
+      />
     </main>
+  );
+}
+
+function PriceTile({
+  label,
+  price,
+  note,
+  highlight,
+}: {
+  label: string;
+  price: string;
+  note: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className={highlight ? "rounded-xl bg-ink p-5 text-paper" : "rounded-xl border border-gray-200 p-5"}>
+      <div className={highlight ? "text-sm text-gray-300" : "text-sm text-gray-500"}>{label}</div>
+      <div className="mt-2 text-2xl font-bold tracking-[-0.03em]">{price}</div>
+      <div className={highlight ? "mt-1 text-xs text-gray-300" : "mt-1 text-xs text-gray-500"}>{note}</div>
+    </div>
   );
 }

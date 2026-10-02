@@ -1,289 +1,92 @@
-export const cclModuleId = "naati-certification-practice-ccl";
+import { CCL_MODULE_ID } from "@/lib/scoring";
+
+export const cclModuleId = CCL_MODULE_ID;
 export const cclModuleHref = `/modules/${cclModuleId}`;
 export const cclSignUpHref = `/sign-up?redirect=${encodeURIComponent(cclModuleHref)}`;
-export const cclSignInHref = `/sign-in?redirect=${encodeURIComponent(cclModuleHref)}`;
 
-export const heroStats = [
-  { label: "Languages", value: "24" },
-  { label: "Total dialogues", value: "1,904" },
-  { label: "AI scoring done", value: "5,715" },
+/** On-page sections, used by the hero's jump links. */
+export const pageSections = [
+  { id: "format", label: "Test format" },
+  { id: "languages", label: "Languages" },
+  { id: "practice", label: "What you practise" },
+  { id: "prepare", label: "How to prepare" },
+  { id: "pricing", label: "Pricing" },
 ] as const;
 
-export const heroTabs = [
-  "Mock Tests",
-  "Requirements",
-  "Common Mistakes",
-  "Course Details",
-  "Exam Format",
-  "Credit-based Model",
+export const heroPoints = [
+  "Dialogues modelled on the CCL format",
+  "Spoken practice with two AI voices",
+  "Scored out of 90, pass mark 63",
 ] as const;
 
-export const trustItems = [
-  "Focused on short-turn NAATI CCL-style dialogue practice",
-  "Built around the seeded XINGO CCL module",
-  "Direct signup flow into the module after authentication",
-] as const;
-
-export const outcomes = [
+export const formatFacts = [
   {
-    title: "Exam-style flow",
+    title: "Two dialogues",
     description:
-      "Practice compact bilingual exchanges that reward fast, complete transfer of meaning under pressure.",
+      "Each test has two recorded dialogues between an English speaker and a speaker of your other language, in a community setting.",
   },
   {
-    title: "Trackable repetition",
+    title: "Short segments",
     description:
-      "Repeat scenarios, compare attempts, and keep working on dates, instructions, and key detail retention.",
+      "Dialogues are split into short segments. After each segment, you interpret it into the other language.",
   },
   {
-    title: "Module-first onboarding",
+    title: "Marked out of 90",
     description:
-      "Send learners straight from signup to the seeded CCL module instead of a generic landing screen.",
+      "Each dialogue is marked out of 45. You need 63 out of 90 overall to pass, with a minimum score on each dialogue.",
   },
 ] as const;
 
-export const languages = [
+export const practiceColumns = [
   {
-    english: "English",
-    target: "Arabic",
-    region: "AU <> AE",
-    englishFlag: "AU",
-    targetFlag: "AE",
-  },
-  {
-    english: "English",
-    target: "Bangla",
-    region: "AU <> BD",
-    englishFlag: "AU",
-    targetFlag: "BD",
-  },
-  {
-    english: "English",
-    target: "Cantonese",
-    region: "AU <> HK",
-    englishFlag: "AU",
-    targetFlag: "HK",
-  },
-  {
-    english: "English",
-    target: "Filipino",
-    region: "AU <> PH",
-    englishFlag: "AU",
-    targetFlag: "PH",
-  },
-  {
-    english: "English",
-    target: "Hindi",
-    region: "AU <> IN",
-    englishFlag: "AU",
-    targetFlag: "IN",
-  },
-  {
-    english: "English",
-    target: "Japanese",
-    region: "AU <> JP",
-    englishFlag: "AU",
-    targetFlag: "JP",
-  },
-  {
-    english: "English",
-    target: "Mandarin",
-    region: "AU <> CN",
-    englishFlag: "AU",
-    targetFlag: "CN",
-  },
-  {
-    english: "English",
-    target: "Nepali",
-    region: "AU <> NP",
-    englishFlag: "AU",
-    targetFlag: "NP",
-  },
-  {
-    english: "English",
-    target: "Punjabi",
-    region: "AU <> IN",
-    englishFlag: "AU",
-    targetFlag: "IN",
-  },
-  {
-    english: "English",
-    target: "Spanish",
-    region: "AU <> ES",
-    englishFlag: "AU",
-    targetFlag: "ES",
-  },
-  {
-    english: "English",
-    target: "Tamil",
-    region: "AU <> IN",
-    englishFlag: "AU",
-    targetFlag: "IN",
-  },
-  {
-    english: "English",
-    target: "Thai",
-    region: "AU <> TH",
-    englishFlag: "AU",
-    targetFlag: "TH",
-  },
-  {
-    english: "English",
-    target: "Urdu",
-    region: "AU <> PK",
-    englishFlag: "AU",
-    targetFlag: "PK",
-  },
-  {
-    english: "English",
-    target: "Vietnamese",
-    region: "AU <> VN",
-    englishFlag: "AU",
-    targetFlag: "VN",
-  },
-  {
-    english: "English",
-    target: "Malayalam",
-    region: "AU <> IN",
-    englishFlag: "AU",
-    targetFlag: "IN",
-  },
-  {
-    english: "English",
-    target: "Malay",
-    region: "AU <> MY",
-    englishFlag: "AU",
-    targetFlag: "MY",
-  },
-] as const;
-
-export const overviewColumns = [
-  {
-    heading: "Scenario Types",
-    items: [
-      "Health booking",
-      "School meeting",
-      "Housing repair",
-      "Police statement",
-    ],
+    heading: "Settings",
+    items: ["Health", "Education", "Housing", "Legal and police", "Government services"],
   },
   {
     heading: "Skills",
-    items: [
-      "Short-turn recall",
-      "Instruction transfer",
-      "Chronology control",
-      "Natural delivery",
-    ],
-  },
-  {
-    heading: "Practice Focus",
-    items: ["Names and dates", "Deadlines", "Documents", "Service vocabulary"],
-  },
-  {
-    heading: "Outcome",
-    items: [
-      "Faster recall",
-      "Cleaner relay",
-      "Better confidence",
-      "Module readiness",
-    ],
+    items: ["Short-turn recall", "Numbers, names and dates", "Instructions", "Chronology", "Natural delivery"],
   },
 ] as const;
 
-export const featureStats = [
-  { label: "Seeded scenarios", value: "5" },
-  { label: "Module route", value: "Direct" },
-  { label: "Core language pair", value: "EN <> ES" },
-] as const;
-
+/** Mirrors the CCL scenarios seeded in convex/seedData.ts. */
 export const scenarioCards = [
   {
-    title: "Medical Scan Booking",
-    description:
-      "Timing, fasting instructions, referrals, and practical follow-up questions.",
+    title: "Medical scan booking",
+    description: "Timing, fasting instructions, referrals and follow-up questions.",
   },
   {
-    title: "School Absence Follow-up",
-    description:
-      "Attendance counts, certificates, and future reporting steps in plain language.",
+    title: "School absence follow-up",
+    description: "Attendance, certificates and how to report future absences.",
   },
   {
-    title: "Tenancy Maintenance Call",
-    description:
-      "Repair windows, access conditions, and concise practical instructions.",
+    title: "Tenancy maintenance call",
+    description: "Repair windows, access arrangements and practical instructions.",
   },
   {
-    title: "Centrelink Appointment Change",
-    description:
-      "Deadlines, identity documents, and next-step guidance in a public-service context.",
+    title: "Centrelink appointment change",
+    description: "Deadlines, identity documents and next steps.",
   },
   {
-    title: "Police Witness Statement",
-    description:
-      "Chronology, location detail, and neutral factual transfer in short alternating turns.",
+    title: "Police witness statement",
+    description: "Chronology, locations and neutral, factual transfer.",
   },
 ] as const;
 
-export const pricingReasons = [
+export const prepTips = [
   {
-    title: "Exam relevance",
-    description:
-      "Structured around the kind of compact service dialogues learners actually need to rehearse.",
+    title: "Practise out loud, every day",
+    description: "Reading transcripts is not the same as speaking under time pressure. Short daily sessions beat one long weekend cram.",
   },
   {
-    title: "Unlimited replay",
-    description:
-      "Repeat the same scenario until dates, conditions, and instructions become automatic.",
+    title: "Get every number and name",
+    description: "Dates, times, amounts and names are where marks go first. Note what you dropped and repeat that scenario.",
   },
   {
-    title: "Direct access",
-    description:
-      "Use a dedicated landing flow that pushes new learners straight into the CCL module.",
-  },
-] as const;
-
-export const pricingPlans = [
-  {
-    name: "Starter CCL",
-    price: "$19",
-    detail:
-      "Entry access for learners who want to open the module and begin with the core seeded scenarios.",
-    features: [
-      "Access the NAATI CCL landing flow",
-      "Open the seeded CCL module",
-      "Practice short community scenarios",
-      "Track your recent attempts",
-    ],
-    tone: "border-line bg-white",
-    ctaClass: "action-secondary",
+    title: "Keep it complete, not perfect",
+    description: "Missing information costs more than a slightly awkward phrase. Aim to carry every detail across.",
   },
   {
-    name: "Practice Plus",
-    price: "$39",
-    detail:
-      "Best for learners who want repeat practice sessions and a stronger exam-prep routine.",
-    features: [
-      "Everything in Starter CCL",
-      "Unlimited repeated attempts",
-      "Faster exposure to high-value details",
-      "Improved familiarity with service vocabulary",
-    ],
-    tone: "border-violet-200 bg-violet-50/70",
-    ctaClass: "action-primary",
-  },
-  {
-    name: "Exam Sprint",
-    price: "$69",
-    detail:
-      "For learners who want a concentrated prep phase with consistent repetition before test day.",
-    features: [
-      "Everything in Practice Plus",
-      "High-frequency scenario rehearsal",
-      "Focused exam-style preparation flow",
-      "Direct start into the CCL module after auth",
-    ],
-    tone: "border-blue-200 bg-blue-50/70",
-    ctaClass: "action-secondary",
+    title: "Watch your score trend",
+    description: "Each attempt is scored out of 90. Keep practising until you're clearing 63 consistently, not just once.",
   },
 ] as const;

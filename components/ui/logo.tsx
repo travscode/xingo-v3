@@ -44,10 +44,8 @@ export function XingoMark({ size = 113 * 0.7, className }: XingoMarkProps) {
 
 export function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-3">
-      <span className="flex h-14 w-12 shrink-0 items-center justify-center rounded-[1.25rem] shadow-[0_10px_25px_rgba(18,18,18,0.06)]">
-        <XingoMark />
-      </span>
+    <Link href="/" className="flex items-center gap-2" aria-label="XINGO home">
+      <XingoMark className="h-8 w-auto" />
       <div>
         <div className="display text-lg font-semibold tracking-tight">
           <svg

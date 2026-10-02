@@ -1,55 +1,26 @@
 import Link from "next/link";
-import { Download, FileText, ListChecks } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { plans } from "@/lib/plans";
 import { cclSignUpHref } from "./content";
 
-/**
- * Renders the download-style CTA block without copying external assets or copy.
- */
+/** Free-preview call to action. */
 export function NaatiCclStarterPackSection() {
   return (
-    <section className="grid gap-4 lg:grid-cols-[0.68fr_0.32fr]">
-      <div className="rounded-4xl bg-[#2b7fff] px-6 py-7 text-white shadow-[0_18px_50px_rgba(43,127,255,0.2)] lg:px-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
-          Download
+    <section className="flex flex-col gap-6 rounded-xl border border-gray-200 p-6 sm:p-10 md:flex-row md:items-center md:justify-between">
+      <div className="max-w-xl">
+        <h2 className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">Try a free CCL dialogue</h2>
+        <p className="mt-3 text-[15px] leading-6 text-gray-500">
+          Every free account includes one preview dialogue from the CCL module and {plans.free.monthlyMinutes} practice
+          minutes a month. No card needed.
         </p>
-        <h2 className="mt-3 text-4xl font-semibold">Open the CCL prep path.</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-white/80">
-          Use this block like the screenshot&apos;s download call-to-action:
-          create an account, unlock the route, and move directly into the seeded
-          module.
-        </p>
-        <Link
-          href={cclSignUpHref}
-          className="mt-6 inline-flex items-center gap-3 rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#2b7fff] transition hover:bg-white/90"
-        >
-          <Download size={16} />
-          Unlock starter access
+      </div>
+      <Button asChild size="lg">
+        <Link href={cclSignUpHref}>
+          Create free account
+          <ArrowRight size={18} />
         </Link>
-      </div>
-      <div className="rounded-4xl border border-[#eaebf2] bg-white p-6">
-        <div className="space-y-4 text-sm">
-          <div className="flex items-start gap-3">
-            <FileText className="mt-0.5 text-violet-600" size={18} />
-            <div>
-              <div className="font-semibold">What you get</div>
-              <div className="mt-1 leading-6 text-muted">
-                A cleaner first step into the NAATI CCL module and its seeded
-                practice scenarios.
-              </div>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <ListChecks className="mt-0.5 text-violet-600" size={18} />
-            <div>
-              <div className="font-semibold">Best used for</div>
-              <div className="mt-1 leading-6 text-muted">
-                Learners who want to reduce friction and start practicing the
-                highest-value dialogue types immediately.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      </Button>
     </section>
   );
 }

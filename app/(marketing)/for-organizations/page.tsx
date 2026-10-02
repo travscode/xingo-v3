@@ -1,62 +1,61 @@
-import Link from "next/link";
+import type { Metadata } from "next";
+import { MarketingIntro } from "@/components/marketing/cta-band";
+import { SALES_EMAIL } from "@/components/marketing/catalogue";
+import { Button } from "@/components/ui/button";
 
-const steps = [
-  "Invite learners or upload a cohort.",
-  "Assign practice and watch assessment history build over time.",
-  "Use scores and badges to spot who is ready for more.",
+export const metadata: Metadata = {
+  title: "For teams",
+  description: "Cohort access to XINGO for interpreter training providers and language service teams.",
+};
+
+const useCases = [
+  {
+    title: "Training providers",
+    description: "Give students more speaking practice between classes, in the settings they're training for.",
+  },
+  {
+    title: "NAATI test prep courses",
+    description: "Add CCL-style dialogue practice, scored out of 90, alongside your own teaching.",
+  },
+  {
+    title: "Language service providers",
+    description: "Offer interpreters a way to keep their skills current in medical, legal and community settings.",
+  },
 ];
 
-const features = [
-  "Per-candidate pricing",
-  "Progress reporting",
-  "Recruitment access on higher tiers",
-];
+const mailto = `mailto:${SALES_EMAIL}?subject=${encodeURIComponent("XINGO cohort access")}`;
 
 export default function ForOrganizationsPage() {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-6 pb-10 pt-4 lg:px-10">
-      <section className="rounded-[2.5rem] border border-line bg-white/82 px-6 py-8 shadow-[0_16px_44px_rgba(18,18,18,0.06)] lg:px-10 lg:py-12">
-        <p className="eyebrow">For teams</p>
-        <h1 className="display mt-4 max-w-3xl text-5xl font-semibold lg:text-6xl">
-          One place to train a cohort and see who is improving.
-        </h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
-          XINGO keeps interpreter practice, assessment history, and team
-          visibility together.
-        </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Link href="/pricing" className="action-primary">
-            View pricing
-          </Link>
-          <Link href="/sign-up" className="action-secondary">
-            Sign up now
-          </Link>
-        </div>
-      </section>
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-4 sm:px-6">
+      <MarketingIntro
+        eyebrow="For teams"
+        title="Practice access for your whole cohort."
+        description="We work directly with training providers and interpreting teams to set up access. Tell us about your group and we'll work out what fits."
+      >
+        <Button asChild size="lg">
+          <a href={mailto}>Talk to us</a>
+        </Button>
+      </MarketingIntro>
 
-      <section className="grid gap-5 lg:grid-cols-3">
-        {steps.map((step, index) => (
-          <article key={step} className="surface-card rounded-[2rem] p-6">
-            <div className="score-pill inline-flex rounded-full px-3 py-1.5 text-sm font-semibold">
-              0{index + 1}
-            </div>
-            <p className="mt-4 text-sm leading-7 text-muted">{step}</p>
+      <section className="grid gap-4 md:grid-cols-3">
+        {useCases.map((item) => (
+          <article key={item.title} className="rounded-xl border border-gray-200 p-6">
+            <h2 className="text-lg font-bold tracking-[-0.02em]">{item.title}</h2>
+            <p className="mt-2 text-[15px] leading-6 text-gray-500">{item.description}</p>
           </article>
         ))}
       </section>
 
-      <section className="section-frame rounded-[2rem] p-6 lg:p-8">
-        <p className="eyebrow">Built for rollout</p>
-        <div className="mt-5 grid gap-4 md:grid-cols-3">
-          {features.map((item) => (
-            <div
-              key={item}
-              className="rounded-[1.5rem] border border-line bg-white px-4 py-5 text-sm font-medium"
-            >
-              {item}
-            </div>
-          ))}
-        </div>
+      <section className="rounded-xl bg-ink px-6 py-10 text-paper sm:px-10 sm:py-12">
+        <h2 className="max-w-2xl text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Talk to us about cohort access</h2>
+        <p className="mt-3 max-w-xl text-[15px] leading-6 text-gray-300">
+          Send us a short note with your organisation, roughly how many learners, which languages, and what
+          they&apos;re preparing for. We&apos;ll reply by email.
+        </p>
+        <Button asChild variant="accent" size="lg" className="mt-8">
+          <a href={mailto}>Email {SALES_EMAIL}</a>
+        </Button>
       </section>
     </main>
   );

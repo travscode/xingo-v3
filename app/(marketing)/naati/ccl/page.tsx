@@ -11,20 +11,17 @@ import { NaatiCclWhySection } from "@/components/marketing/naati-ccl/why-section
 export const metadata: Metadata = {
   title: "NAATI CCL Practice",
   description:
-    "Prepare for the NAATI CCL test with focused short-dialogue practice inside XINGO.",
+    "Practise NAATI CCL-style dialogues out loud with AI speakers. Scored out of 90 with feedback after every attempt. Independent of NAATI.",
 };
 
-/**
- * Renders the NAATI CCL landing page using imported section components.
- */
 export default function NaatiCclLandingPage() {
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-14 px-6 pb-10 pt-4 lg:px-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-4 sm:gap-24 sm:px-6">
       <NaatiCclHeroSection />
       <NaatiCclWhySection />
       <NaatiCclLanguagesSection />
-      <NaatiCclStarterPackSection />
       <NaatiCclOverviewSection />
+      <NaatiCclStarterPackSection />
       <NaatiCclShowcaseSection />
       <NaatiCclPricingSection />
       <NaatiCclFinalCtaSection />

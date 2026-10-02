@@ -1,111 +1,49 @@
-import Link from "next/link";
-import { ArrowRightIcon } from "@/components/ui/icons";
-import { cclSignUpHref, scenarioCards } from "./content";
+import { CCL_MAX_SCORE, CCL_PASS_SCORE, assessmentDimensions } from "@/lib/scoring";
+import { Badge } from "@/components/ui/primitives";
+import { prepTips } from "./content";
 
-/**
- * Renders the product showcase section with an original dashboard-style mockup.
- */
+/** Preparation advice, plus an illustrative example of an attempt result. */
 export function NaatiCclShowcaseSection() {
   return (
-    <section className="space-y-8">
-      <div className="text-center">
-        <p className="eyebrow">Practice makes progress</p>
-        <h2 className="mt-3 text-4xl font-semibold tracking-tight lg:text-[2.35rem]">
-          Practice Makes Perfect
-        </h2>
-        <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-muted">
-          Build confidence with a cleaner replay loop, progress visibility, and
-          seeded scenarios that stay close to high-value CCL dialogue patterns.
-        </p>
-      </div>
+    <section id="prepare" className="scroll-mt-24">
+      <p className="eyebrow">How to prepare</p>
+      <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
+        Practise the way you&apos;ll be tested
+      </h2>
+      <div className="mt-8 grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+        <ol className="grid gap-4 sm:grid-cols-2">
+          {prepTips.map((tip, index) => (
+            <li key={tip.title} className="rounded-xl border border-gray-200 p-6">
+              <span className="text-sm font-semibold text-gray-500">0{index + 1}</span>
+              <h3 className="mt-3 text-base font-bold">{tip.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-gray-500">{tip.description}</p>
+            </li>
+          ))}
+        </ol>
 
-      <div className="rounded-[2.5rem] border border-[#e9eaf2] bg-white p-5 shadow-[0_16px_44px_rgba(18,18,18,0.06)] lg:p-6">
-        <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="rounded-[1.75rem] border border-line bg-[#fbfbff] p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-semibold">Attempt dashboard</div>
-                <div className="text-xs text-muted">
-                  Recent mock-practice activity
-                </div>
-              </div>
-              <div className="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
-                Live module
-              </div>
-            </div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl bg-white p-4">
-                <div className="text-xs uppercase tracking-[0.16em] text-muted">
-                  Attempts
-                </div>
-                <div className="mt-2 text-3xl font-semibold">12</div>
-              </div>
-              <div className="rounded-3xl bg-white p-4">
-                <div className="text-xs uppercase tracking-[0.16em] text-muted">
-                  Best score
-                </div>
-                <div className="mt-2 text-3xl font-semibold">84%</div>
-              </div>
-              <div className="rounded-3xl bg-white p-4">
-                <div className="text-xs uppercase tracking-[0.16em] text-muted">
-                  Focus area
-                </div>
-                <div className="mt-2 text-lg font-semibold">
-                  Dates and recall
-                </div>
-              </div>
-            </div>
-            <div className="mt-5 flex h-48 items-end gap-3 rounded-[1.75rem] bg-white p-4">
-              {[42, 58, 36, 72, 61, 80, 74, 84].map((height, index) => (
-                <div
-                  key={height}
-                  className="flex flex-1 flex-col items-center gap-2"
-                >
-                  <div
-                    className={`w-full rounded-t-2xl ${index % 2 === 0 ? "bg-blue-500" : "bg-violet-500"}`}
-                    style={{ height: `${height * 1.4}px` }}
-                  />
-                  <span className="text-[11px] text-muted">A{index + 1}</span>
-                </div>
-              ))}
-            </div>
+        <figure className="rounded-xl bg-gray-50 p-6">
+          <div className="flex items-center justify-between gap-3">
+            <figcaption className="text-sm font-semibold">What you see after an attempt</figcaption>
+            <Badge>Example</Badge>
           </div>
-
-          <div className="rounded-[1.75rem] border border-line bg-white p-5">
-            <div className="text-sm font-semibold">Seeded scenario lineup</div>
-            <div className="mt-4 space-y-3">
-              {scenarioCards.map((scenario) => (
-                <div
-                  key={scenario.title}
-                  className="rounded-3xl border border-line bg-[#fafafa] p-4"
-                >
-                  <div className="font-semibold">{scenario.title}</div>
-                  <div className="mt-2 text-sm leading-6 text-muted">
-                    {scenario.description}
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="mt-6 flex items-baseline gap-2">
+            <span className="text-5xl font-bold tracking-[-0.04em]">66</span>
+            <span className="text-lg text-gray-500">/ {CCL_MAX_SCORE}</span>
           </div>
-        </div>
-        <div className="mt-5 flex flex-col gap-3 rounded-[1.75rem] bg-linear-to-r from-blue-600 via-violet-600 to-fuchsia-600 px-5 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="text-sm font-semibold">
-              Go straight into the seeded CCL module.
-            </div>
-            <div className="mt-1 text-sm text-white/75">
-              Keep the funnel focused on signup, module open, and scenario
-              start.
-            </div>
-          </div>
-          <Link
-            href={cclSignUpHref}
-            className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-violet-700 transition hover:bg-white/90"
-          >
-            Start practicing
-            <ArrowRightIcon className="ml-3 inline-block" size={14} />
-          </Link>
-        </div>
+          <p className="mt-1 text-sm text-gray-500">Pass mark {CCL_PASS_SCORE}</p>
+          <p className="mt-6 text-xs font-semibold text-gray-500">Scored on</p>
+          <ul className="mt-2 space-y-2 text-sm">
+            {assessmentDimensions.map((dimension) => (
+              <li key={dimension.key} className="border-b border-gray-200 pb-2">
+                {dimension.label}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-sm leading-6 text-gray-500">
+            Plus written feedback on what you missed or changed, and your full transcript.
+          </p>
+          <p className="mt-4 text-xs text-gray-500">Illustrative example, not a real candidate&apos;s result.</p>
+        </figure>
       </div>
     </section>
   );

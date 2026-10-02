@@ -1,56 +1,107 @@
+import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
+import { howItWorksSteps } from "@/components/marketing/catalogue";
+import { Button } from "@/components/ui/button";
+import { assessmentDimensions } from "@/lib/scoring";
+import { MAX_ATTEMPT_MINUTES } from "@/lib/plans";
 
-const steps = [
+export const metadata: Metadata = {
+  title: "How it works",
+  description: "Pick a scenario, interpret between two AI speakers out loud, and get a score with feedback.",
+};
+
+const details = [
   {
-    title: "Pick a setting",
-    copy: "Start from a module, then choose a scenario that matches the kind of conversation you want to practice.",
+    title: "Choose your language pair",
+    description: "One side speaks English. The other speaks your language. You interpret both ways.",
   },
   {
-    title: "Interpret live",
-    copy: "Two AI participants move the conversation forward. You step in between them as the interpreter.",
+    title: "Start with an introduction",
+    description: "Introduce yourself as the interpreter, as you would at a real appointment. Then the conversation begins.",
   },
   {
-    title: "Finish and assess",
-    copy: "When the session ends, XINGO scores the attempt and saves the result to your progress history.",
+    title: "Talk when you're ready",
+    description: "Hold Space (or the mic button) to speak. Tap Space to switch which person you're talking to.",
+  },
+  {
+    title: "Finish when you're done",
+    description: `End the session whenever you like. A single session is capped at ${MAX_ATTEMPT_MINUTES} minutes.`,
   },
 ];
 
 export default function HowItWorksPage() {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-6 pb-10 pt-4 lg:px-10">
-      <section className="rounded-[2.5rem] border border-line bg-white/82 px-6 py-8 shadow-[0_16px_44px_rgba(18,18,18,0.06)] lg:px-10 lg:py-12">
-        <p className="eyebrow">How it works</p>
-        <h1 className="display mt-4 max-w-3xl text-5xl font-semibold lg:text-6xl">
-          A small flow. One task at a time.
-        </h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
-          XINGO is designed so first-time users can start practicing without learning a complex system.
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-4 sm:px-6">
+      <MarketingIntro
+        eyebrow="How it works"
+        title="A live interpreting session, whenever you want one."
+        description="No partner to book, no scripts to read. Two AI speakers hold a conversation, and you carry it between them."
+      >
+        <Button asChild size="lg">
+          <Link href="/sign-up">Start free</Link>
+        </Button>
+      </MarketingIntro>
+
+      <section>
+        <ol className="grid gap-4 md:grid-cols-3">
+          {howItWorksSteps.map((step, index) => (
+            <li key={step.title} className="rounded-xl border border-gray-200 p-6">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink text-sm font-bold text-paper">
+                {index + 1}
+              </span>
+              <h2 className="mt-5 text-lg font-bold tracking-[-0.02em]">{step.title}</h2>
+              <p className="mt-2 text-[15px] leading-6 text-gray-500">{step.description}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="grid gap-10 lg:grid-cols-2 lg:items-center">
+        <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-gray-100">
+          <Image
+            src="/images/doctor2.webp"
+            alt="A doctor in a consultation scenario"
+            fill
+            sizes="(min-width: 1024px) 50vw, 100vw"
+            className="object-cover"
+          />
+        </div>
+        <div>
+          <p className="eyebrow">In the session</p>
+          <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em]">What a session looks like</h2>
+          <dl className="mt-6 divide-y divide-gray-200 border-y border-gray-200">
+            {details.map((item) => (
+              <div key={item.title} className="py-4">
+                <dt className="font-semibold">{item.title}</dt>
+                <dd className="mt-1 text-[15px] leading-6 text-gray-500">{item.description}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      <section className="rounded-xl bg-gray-50 p-6 sm:p-10">
+        <p className="eyebrow">Your result</p>
+        <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.03em]">Scored on five things</h2>
+        <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
+          After each session you get an overall score, a breakdown, written feedback and your transcript. Results are
+          saved so you can track progress over time. NAATI CCL practice is scored out of 90.
+        </p>
+        <ul className="mt-8 flex flex-wrap gap-2">
+          {assessmentDimensions.map((dimension) => (
+            <li key={dimension.key} className="rounded-lg bg-paper px-4 py-2 text-sm font-semibold">
+              {dimension.label}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 text-xs text-gray-500">
+          Scores are AI-generated practice feedback. They are not an official assessment or credential.
         </p>
       </section>
 
-      <section className="space-y-4">
-        {steps.map((step, index) => (
-          <article key={step.title} className="surface-card rounded-[2rem] p-6 lg:p-8">
-            <div className="grid gap-4 lg:grid-cols-[140px_1fr] lg:items-start">
-              <div className="eyebrow">Step 0{index + 1}</div>
-              <div>
-                <h2 className="text-2xl font-semibold">{step.title}</h2>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">{step.copy}</p>
-              </div>
-            </div>
-          </article>
-        ))}
-      </section>
-
-      <section className="rounded-[2.25rem] border border-line bg-[#121212] px-6 py-8 text-white lg:px-10">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Start</p>
-          <h2 className="display mt-3 text-4xl font-semibold">Open a free module and begin.</h2>
-          <Link href="/sign-up" className="action-secondary mt-6 bg-white text-black hover:bg-white">
-            Create account
-          </Link>
-        </div>
-      </section>
+      <CtaBand title="Try your first session free." description="Free modules are open to everyone, with practice minutes every month." />
     </main>
   );
 }

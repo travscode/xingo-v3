@@ -20,23 +20,17 @@ export default async function SignUpPage({
   const redirectTarget = getSafeRedirectTarget(redirect);
 
   return (
-    <main className="mx-auto max-w-3xl px-6 pb-10 lg:px-10">
-      <section className="rounded-[2.5rem] px-4 py-8 sm:px-8 sm:py-12">
-        <div className="mb-8 text-center">
-          <p className="eyebrow">Create account</p>
-          <h1 className="display mt-4 text-5xl font-semibold tracking-tight">
-            Start training
-          </h1>
-        </div>
-        <div className="flex justify-center">
-          <SignUp
-            path="/sign-up"
-            routing="path"
-            signInUrl={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`}
-            fallbackRedirectUrl={redirectTarget}
-          />
-        </div>
-      </section>
+    <main className="mx-auto flex w-full max-w-md flex-col items-center px-4 py-12 sm:py-16">
+      <h1 className="text-center text-3xl font-bold tracking-[-0.03em]">Create your XINGO account</h1>
+      <p className="mt-2 text-center text-[15px] text-gray-500">Free practice minutes every month. No card needed.</p>
+      <div className="mt-8 flex w-full justify-center">
+        <SignUp
+          path="/sign-up"
+          routing="path"
+          signInUrl={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`}
+          fallbackRedirectUrl={redirectTarget}
+        />
+      </div>
     </main>
   );
 }

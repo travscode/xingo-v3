@@ -1,76 +1,56 @@
 import Link from "next/link";
-import { Check } from "lucide-react";
-import { cclSignUpHref, pricingPlans, pricingReasons } from "./content";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/primitives";
+import { CURRENCY_LABEL, packList, plans } from "@/lib/plans";
+import { cclSignUpHref } from "./content";
 
-/**
- * Renders the value and pricing portion of the CCL landing page.
- */
 export function NaatiCclPricingSection() {
   return (
-    <section className="space-y-6">
-      <div className="max-w-2xl">
-        <p className="eyebrow">Credit packages</p>
-        <h2 className="mt-3 text-3xl font-semibold tracking-tight lg:text-[2rem]">
-          Credit Packages
-        </h2>
-        <p className="mt-3 text-sm leading-7 text-muted">
-          Keep the familiar package rhythm from the screenshot, but position it
-          around XINGO access, seeded practice, and repeatable module work.
-        </p>
-      </div>
+    <section id="pricing" className="scroll-mt-24">
+      <p className="eyebrow">Pricing</p>
+      <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Minute packs for test prep</h2>
+      <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
+        Pay once. Pack minutes never expire, and they unlock every module while you have them. Scoring and feedback
+        are included. Prices in {CURRENCY_LABEL}.
+      </p>
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
+        {packList.map((pack) => {
+          const featured = pack.id === "sprint";
 
-      <div className="rounded-4xl border border-[#e9eaf2] bg-white p-6">
-        <div className="mb-5 text-center text-lg font-semibold">
-          Why Choose Our Credit System?
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {pricingReasons.map((reason) => (
-            <div
-              key={reason.title}
-              className="rounded-3xl border border-[#ececf3] bg-[#fafafe] p-5 text-center"
+          return (
+            <article
+              key={pack.id}
+              className={
+                featured
+                  ? "flex flex-col rounded-xl bg-ink p-6 text-paper"
+                  : "flex flex-col rounded-xl border border-gray-200 p-6"
+              }
             >
-              <div className="text-lg font-semibold">{reason.title}</div>
-              <p className="mt-3 text-sm leading-6 text-muted">
-                {reason.description}
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-base font-bold">{pack.label}</h3>
+                {featured ? <Badge tone="accent">Most minutes</Badge> : null}
+              </div>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-4xl font-bold tracking-[-0.03em]">{pack.priceLabel}</span>
+              </div>
+              <div className="mt-1 text-sm font-semibold">{pack.minutes} practice minutes</div>
+              <p className={featured ? "mt-3 flex-1 text-sm leading-6 text-gray-300" : "mt-3 flex-1 text-sm leading-6 text-gray-500"}>
+                {pack.description}
               </p>
-            </div>
-          ))}
-        </div>
+              <Button asChild variant={featured ? "accent" : "secondary"} block className="mt-6">
+                <Link href={cclSignUpHref}>Start with {pack.label}</Link>
+              </Button>
+            </article>
+          );
+        })}
       </div>
-
-      <div className="grid gap-4 xl:grid-cols-3">
-        {pricingPlans.map((plan) => (
-          <article
-            key={plan.name}
-            className={`rounded-4xl border p-6 shadow-[0_16px_44px_rgba(18,18,18,0.04)] ${plan.tone}`}
-          >
-            <div className="text-sm font-semibold uppercase tracking-[0.16em] text-muted">
-              {plan.name}
-            </div>
-            <div className="mt-4 text-5xl font-semibold">{plan.price}</div>
-            <p className="mt-3 text-sm leading-7 text-muted">{plan.detail}</p>
-            <div className="mt-6 space-y-3">
-              {plan.features.map((feature) => (
-                <div
-                  key={feature}
-                  className="flex items-start gap-3 text-sm leading-6"
-                >
-                  <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                    <Check size={13} />
-                  </span>
-                  <span>{feature}</span>
-                </div>
-              ))}
-            </div>
-            <Link
-              href={cclSignUpHref}
-              className={`${plan.ctaClass} mt-8 w-full justify-center`}
-            >
-              Choose {plan.name}
-            </Link>
-          </article>
-        ))}
-      </div>
+      <p className="mt-6 text-sm text-gray-500">
+        Practising for longer? {plans.professional.label} is {plans.professional.priceLabel} for{" "}
+        {plans.professional.monthlyMinutes} minutes a month.{" "}
+        <Link href="/pricing" className="font-semibold text-ink underline underline-offset-4">
+          Compare all plans
+        </Link>
+      </p>
     </section>
   );
 }

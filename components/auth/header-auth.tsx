@@ -2,43 +2,36 @@
 
 import Link from "next/link";
 import { UserButton, useAuth } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
 
 export function HeaderAuth() {
   const { isLoaded, userId } = useAuth();
 
   if (!isLoaded) {
-    return <div className="h-11 w-28 rounded-full bg-white/10" />;
+    return <div className="h-9 w-24 rounded-lg bg-gray-100" />;
   }
 
   if (userId) {
     return (
       <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard"
-          prefetch={false}
-          className="rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.16]"
-        >
-          Dashboard
-        </Link>
+        <Button asChild size="sm" className="hidden sm:inline-flex">
+          <Link href="/dashboard" prefetch={false}>
+            Dashboard
+          </Link>
+        </Button>
         <UserButton />
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <Link
-        href="/sign-in"
-        className="text-sm font-medium text-white transition hover:text-white/70"
-      >
-        Log in
-      </Link>
-      <Link
-        href="/sign-up"
-        className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
-      >
-        Create account
-      </Link>
+    <div className="flex items-center gap-1">
+      <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+        <Link href="/sign-in">Log in</Link>
+      </Button>
+      <Button asChild size="sm">
+        <Link href="/sign-up">Sign up</Link>
+      </Button>
     </div>
   );
 }
