@@ -7,6 +7,11 @@ import { marketingNavigation } from "@/lib/navigation";
 
 const footerLinks = [
   { href: "/naati/ccl", label: "NAATI CCL practice" },
+  { href: "/naati/cpi", label: "NAATI CPI practice" },
+  { href: "/interpreting", label: "Interpreting practice" },
+  { href: "/interpreting/medical-interpreting-practice", label: "Medical interpreting" },
+  { href: "/interpreting/ndis-interpreting", label: "NDIS interpreting" },
+  { href: "/interpreting/telephone-interpreting-practice", label: "Telephone interpreting" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/for-interpreters", label: "For interpreters" },
   { href: "/for-organizations", label: "For teams" },

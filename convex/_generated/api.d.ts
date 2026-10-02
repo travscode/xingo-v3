@@ -10,9 +10,12 @@
 
 import type * as admin from "../admin.js";
 import type * as adminActions from "../adminActions.js";
+import type * as avatars from "../avatars.js";
 import type * as billing from "../billing.js";
 import type * as billingData from "../billingData.js";
 import type * as catalog from "../catalog.js";
+import type * as content from "../content.js";
+import type * as content_australiaPack from "../content/australiaPack.js";
 import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as jobs from "../jobs.js";
@@ -41,9 +44,12 @@ import type {
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   adminActions: typeof adminActions;
+  avatars: typeof avatars;
   billing: typeof billing;
   billingData: typeof billingData;
   catalog: typeof catalog;
+  content: typeof content;
+  "content/australiaPack": typeof content_australiaPack;
   crons: typeof crons;
   http: typeof http;
   jobs: typeof jobs;

@@ -16,10 +16,12 @@ const sans = Inter({
 
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.xingo.ai"),
   title: {
     default: "XINGO",
     template: "%s | XINGO",
   },
+  openGraph: { siteName: "XINGO", locale: "en_AU", type: "website" },
   description:
     "Practise interpreting out loud with AI role-play partners, get scored instantly, and prepare for NAATI CCL and real assignments.",
 };

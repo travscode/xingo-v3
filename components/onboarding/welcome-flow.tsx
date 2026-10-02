@@ -29,9 +29,14 @@ export function WelcomeFlow() {
   const completeOnboarding = useMutation(api.users.completeOnboarding);
   const { setActivePair } = useActiveLanguagePair();
 
+  // Landing pages can preselect a goal and language (lib/seo-pages.ts → signUpHref).
+  const presetGoal = practiceGoals.find((option) => option.id === searchParams.get("goal"))?.id ?? null;
+  const presetLanguage = practiceLanguages.find(
+    (option) => option.name.toLowerCase() === (searchParams.get("language") ?? "").toLowerCase(),
+  )?.name ?? null;
   const [step, setStep] = useState(1);
-  const [goal, setGoal] = useState<PracticeGoalId | null>(null);
-  const [language, setLanguage] = useState<string | null>(null);
+  const [goal, setGoal] = useState<PracticeGoalId | null>(presetGoal);
+  const [language, setLanguage] = useState<string | null>(presetLanguage);
   const [customLanguage, setCustomLanguage] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

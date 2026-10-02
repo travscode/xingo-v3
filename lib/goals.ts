@@ -13,13 +13,19 @@ export const practiceGoals = [
     id: "naati_cpi",
     label: "NAATI Certified Provisional Interpreter",
     description: "Longer community and health dialogues.",
-    moduleOrder: ["naati-certification-practice-cpi", "naati-certification-practice-ccl", "medical-er-intake"],
+    moduleOrder: ["naati-certification-practice-cpi", "telephone-interpreting", "naati-certification-practice-ccl", "medical-er-intake"],
   },
   {
     id: "medical",
     label: "Medical interpreting",
     description: "Hospitals, clinics, emergency intake.",
     moduleOrder: ["medical-er-intake", "community-services"],
+  },
+  {
+    id: "ndis",
+    label: "NDIS & disability services",
+    description: "Planning meetings, reviews and support visits.",
+    moduleOrder: ["ndis-disability-services", "telephone-interpreting", "community-services"],
   },
   {
     id: "legal",

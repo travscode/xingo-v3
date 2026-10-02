@@ -94,3 +94,11 @@ Format: **ID — title** · date · status. Context → Decision → Consequence
 
 ### D-022 — Testing with convex-test, pinned to the installed Convex · 2026-10-02 · accepted
 **Decision.** Business rules are covered by `convex/tests/*.test.ts`. `convex-test` is pinned to 0.0.54 (peer `convex@^1.32`); upgrade both together.
+
+### D-023 — Long-tail SEO pages backed by real scenarios · 2026-10-02 · accepted
+**Context.** Traffic rose after the CCL landing page; generic CCL terms are competitive.
+**Decision.** Programmatic per-language CCL pages plus domain pages (NDIS, telephone, medical, legal, diploma, CPI), each listing only dialogues that exist. Content in `lib/seo-pages.ts`; new scenarios in an insert-only content pack. See [seo.md](seo.md).
+
+### D-024 — Generated portrait avatars · 2026-10-02 · proposed
+**Context.** Only one scenario had avatars; initials circles feel impersonal.
+**Decision.** `avatars:generateMissing` creates one portrait per participant with the OpenAI Images API and stores it in Convex. Admin uploads are never replaced. Style (monochrome vs colour) to be chosen by the founder.

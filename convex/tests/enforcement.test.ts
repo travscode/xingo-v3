@@ -367,3 +367,44 @@ describe("practice mode", () => {
     expect(closed.mode).toBe("practice");
   });
 });
+
+describe("content pack", () => {
+  test("seeds new modules and scenarios once, all valid against the schema", async () => {
+    const t = setup();
+    const first = await t.mutation(internal.content.seedAustraliaPack, { dryRun: false });
+    expect(first.inserted.modules).toHaveLength(2);
+    expect(first.inserted.scenarios.length).toBeGreaterThanOrEqual(16);
+
+    const second = await t.mutation(internal.content.seedAustraliaPack, { dryRun: false });
+    expect(second.inserted.scenarios).toHaveLength(0);
+
+    const scenarios = await t.run((ctx) => ctx.db.query("scenarios").collect());
+    for (const scenario of scenarios) {
+      expect(scenario.aiAgentA.language).toBe("English");
+      expect(JSON.stringify(scenario)).not.toMatch(/practitioner/i);
+      expect(scenario.aiAgentA.endCondition).toBeTruthy();
+    }
+  });
+});
+
+describe("avatars", () => {
+  test("lists participants without avatars and never overwrites an existing one", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    const missing = await t.query(internal.avatars.listMissing, {});
+    expect(missing.length).toBe(3);
+
+    const storageId = await t.run((ctx) => ctx.storage.store(new Blob(["x"], { type: "image/png" })));
+    const first = await t.mutation(internal.avatars.attachAvatar, { scenarioId: "free-scn", agent: "aiAgentA", storageId });
+    const second = await t.mutation(internal.avatars.attachAvatar, { scenarioId: "free-scn", agent: "aiAgentA", storageId });
+    expect(first.attached).toBe(true);
+    expect(second.attached).toBe(false);
+    expect((await t.query(internal.avatars.listMissing, {})).length).toBe(2);
+  });
+
+  test("dry run reports without generating", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    await expect(t.action(internal.avatars.generateMissing, { dryRun: true })).resolves.toMatchObject({ missing: 3 });
+  });
+});
