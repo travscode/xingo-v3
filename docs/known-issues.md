@@ -19,7 +19,7 @@ _Open items after the v4 foundation work (2026-10-02). Ordered by priority._
 10. **Transcripts are client-captured** (D-009). Move to server capture (Realtime sideband/webhooks) before anything credential-like.
 11. **Realtime token usage is client-reported** (analytics only). Cross-check monthly against the OpenAI usage dashboard.
 12. **Progress page** (`components/dashboard/live-progress.tsx`, ~900 lines) was restyled, not redesigned; it has unused code (`getQuickRange`, `selectedRange`) and could be simplified.
-13. **Admin studio** (`components/admin/admin-studio.tsx`, ~1,400 lines) still uses the older form styling and has no delete, draft/publish or preview.
+13. **Admin content** was redesigned into drill-down screens (Oct 2026). Still missing: delete/archive, draft vs published, and reordering dialogues.
 14. **Mobile practice room.** Hold-to-talk works with touch, but the room isn't tuned for small screens or iOS Safari audio quirks.
 15. **`convex-test` is pinned** to 0.0.54 for Convex 1.35; upgrade together.
 16. **Unused tables** `organizations`, `organizationMembers`, `jobs` and the `/jobs` page remain for future team features.
