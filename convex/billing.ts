@@ -1,7 +1,7 @@
 "use node";
 
 import Stripe from "stripe";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { action, internalAction, type ActionCtx } from "./_generated/server";
 import { getClerkIdFromIdentity } from "./model/auth";
@@ -19,7 +19,7 @@ function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
 
   if (!key) {
-    throw new Error("BILLING_NOT_CONFIGURED");
+    throw new ConvexError("BILLING_NOT_CONFIGURED");
   }
 
   return new Stripe(key);
@@ -39,7 +39,7 @@ function requirePriceId(envName: string) {
   const value = process.env[envName]?.trim();
 
   if (!value || !value.startsWith("price_")) {
-    throw new Error("BILLING_NOT_CONFIGURED");
+    throw new ConvexError("BILLING_NOT_CONFIGURED");
   }
 
   return value;
@@ -100,7 +100,7 @@ export const createCheckout = action({
 
     if (args.kind === "subscription") {
       if (user.subscriptionStatus !== "free") {
-        throw new Error("ALREADY_SUBSCRIBED");
+        throw new ConvexError("ALREADY_SUBSCRIBED");
       }
 
       const session = await stripe.checkout.sessions.create({
@@ -145,7 +145,7 @@ export const createPortal = action({
     const user = await requireUser(ctx);
 
     if (!user.stripeCustomerId) {
-      throw new Error("NO_BILLING_ACCOUNT");
+      throw new ConvexError("NO_BILLING_ACCOUNT");
     }
 
     const session = await getStripe().billingPortal.sessions.create({

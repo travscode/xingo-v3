@@ -42,6 +42,7 @@ export function normalizeAgent(
     demeanor?: string;
     instructions?: string;
     openingLine?: string;
+    endCondition?: string;
   },
   fallbackLanguage: string,
 ) {
@@ -71,6 +72,7 @@ export function normalizeScenario<
       demeanor?: string;
       instructions?: string;
       openingLine?: string;
+    endCondition?: string;
     };
     aiAgentB?: {
       name?: string;
@@ -83,6 +85,7 @@ export function normalizeScenario<
       demeanor?: string;
       instructions?: string;
       openingLine?: string;
+    endCondition?: string;
     };
     practiceRuntime?: {
       interpreterRole: string;

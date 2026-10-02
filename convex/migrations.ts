@@ -101,3 +101,58 @@ export const setFreePreviews = internalMutation({
     return { dryRun: args.dryRun, updated };
   },
 });
+
+function renamePractitioner(text: string | undefined) {
+  return text
+    ?.replace(/\bPractitioner\b/g, "Clinician")
+    .replace(/\bpractitioner\b/g, "clinician");
+}
+
+/**
+ * "Practitioner" also describes interpreters, so participant roles use
+ * "Clinician" (or a specific title set in the admin studio). Feedback: Thomas, Jul 2026.
+ */
+export const renamePractitionerRole = internalMutation({
+  args: { dryRun: v.boolean() },
+  handler: async (ctx, args) => {
+    const scenarios = await ctx.db.query("scenarios").collect();
+    const changed: string[] = [];
+
+    for (const scenario of scenarios) {
+      const agents = [scenario.aiAgentA, scenario.aiAgentB];
+      const mentions = agents.some(
+        (agent) =>
+          agent &&
+          /practitioner/i.test(
+            [agent.role, agent.name, agent.instructions, agent.openingLine, agent.goal].join(" "),
+          ),
+      );
+
+      if (!mentions) {
+        continue;
+      }
+
+      changed.push(scenario.id);
+
+      if (args.dryRun) {
+        continue;
+      }
+
+      const rename = <T extends typeof scenario.aiAgentA>(agent: T): T => ({
+        ...agent,
+        role: renamePractitioner(agent.role) ?? agent.role,
+        goal: renamePractitioner(agent.goal) ?? agent.goal,
+        instructions: renamePractitioner(agent.instructions),
+        openingLine: renamePractitioner(agent.openingLine),
+      });
+
+      await ctx.db.patch(scenario._id, {
+        aiAgentA: rename(scenario.aiAgentA),
+        aiAgentB: scenario.aiAgentB ? rename(scenario.aiAgentB) : undefined,
+        description: renamePractitioner(scenario.description) ?? scenario.description,
+      });
+    }
+
+    return { dryRun: args.dryRun, changed };
+  },
+});

@@ -1,147 +1,149 @@
 import type { Scenario, VoiceAgent } from "@/types/scenario";
-import type { TranscriptEntry } from "@/types/session";
+import type { LanguagePair } from "@/lib/languages";
 
-export interface ConversationTurn {
-  speaker: string;
-  message: string;
+/**
+ * Realtime agent prompts for the practice room.
+ *
+ * Language model (decision D-010, from Thomas's testing feedback):
+ *   - The English-speaking participant (the professional) always speaks the
+ *     pair's English side; the service user always speaks the learner's other
+ *     language. There is no "flip".
+ *   - Scenario text written for one language (e.g. a Spanish-speaking patient)
+ *     is re-pointed to the learner's language at runtime.
+ */
+
+export type AgentLanguagePlan = {
+  /** Which agent is the English-speaking professional. */
+  professionalKey: "agent_a" | "agent_b";
+  agentALanguage: string;
+  agentBLanguage: string;
+};
+
+function isEnglish(language: string | undefined) {
+  return (language ?? "").trim().toLowerCase().startsWith("english");
 }
 
-export function buildScenarioPrompt(scenario: Scenario) {
-  const promptLines = [
-    `Scenario: ${scenario.title}`,
-    `Description: ${scenario.description}`,
-    `Interpreter role: ${scenario.practiceRuntime.interpreterRole}`,
-    `Languages: ${scenario.practiceRuntime.sourceLanguage} <-> ${scenario.practiceRuntime.targetLanguage}`,
-    `Agent A: ${scenario.aiAgentA.name} (${scenario.aiAgentA.role})`,
-    `Agent A goal: ${scenario.aiAgentA.goal}`,
-  ];
+/**
+ * Decides who speaks what. The agent the scenario authored as English keeps the
+ * pair's source language; the other participant gets the target language.
+ */
+export function planAgentLanguages(scenario: Scenario, pair: LanguagePair): AgentLanguagePlan {
+  const aIsEnglish = isEnglish(scenario.aiAgentA.language);
+  const bIsEnglish = isEnglish(scenario.aiAgentB?.language);
+  const professionalKey = !aIsEnglish && bIsEnglish ? "agent_b" : "agent_a";
 
-  if (scenario.aiAgentB) {
-    promptLines.push(
-      `Agent B: ${scenario.aiAgentB.name} (${scenario.aiAgentB.role})`,
-      `Agent B goal: ${scenario.aiAgentB.goal}`,
-    );
+  return professionalKey === "agent_a"
+    ? {
+        professionalKey,
+        agentALanguage: pair.sourceLanguage,
+        agentBLanguage: pair.targetLanguage,
+      }
+    : {
+        professionalKey,
+        agentALanguage: pair.targetLanguage,
+        agentBLanguage: pair.sourceLanguage,
+      };
+}
+
+/** Replaces the language a scenario was authored in with the learner's language. */
+export function retargetLanguage(text: string | undefined, from: string | undefined, to: string) {
+  if (!text || !from || from.trim().toLowerCase() === to.trim().toLowerCase()) {
+    return text;
   }
 
-  promptLines.push(
-    `Briefing: ${scenario.practiceRuntime.briefing}`,
-    `Assessment focus: ${scenario.practiceRuntime.assessmentFocus.join(", ")}`,
-    `Skills: ${scenario.expectedSkills.join(", ")}`,
-  );
-
-  return promptLines.join("\n");
+  const escaped = from.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return text.replace(new RegExp(`\\b${escaped}\\b`, "gi"), to);
 }
 
-export function buildRealtimeAgentInstructions(
-  scenario: Scenario,
-  currentAgent: VoiceAgent,
-  counterpartAgent?: VoiceAgent,
-) {
+export const END_CONVERSATION_TOOL = "end_conversation";
+
+export function buildRealtimeAgentInstructions(args: {
+  scenario: Scenario;
+  agent: VoiceAgent;
+  authoredLanguage: string | undefined;
+  counterpart?: VoiceAgent;
+  isProfessional: boolean;
+}) {
+  const { scenario, agent, counterpart, isProfessional, authoredLanguage } = args;
+  const language = agent.language;
+  const endCondition = agent.endCondition?.trim() || agent.goal;
+
   return [
-    currentAgent.instructions,
+    retargetLanguage(agent.instructions, authoredLanguage, language),
     "",
-    `Scenario title: ${scenario.title}.`,
-    `Scenario context: ${scenario.description}.`,
-    `Your role: ${currentAgent.role}.`,
-    `Your name: ${currentAgent.name}.`,
-    `Your language: ${currentAgent.language}. Speak only in ${currentAgent.language}.`,
-    `Your demeanor: ${currentAgent.demeanor}.`,
-    `Your goal: ${currentAgent.goal}.`,
-    counterpartAgent
-      ? `The other participant is ${counterpartAgent.name}, the ${counterpartAgent.role}.`
-      : "A human interpreter is relaying between you and the learner.",
-    counterpartAgent
-      ? `A human ${scenario.practiceRuntime.interpreterRole.toLowerCase()} is relaying between both sides.`
-      : `A human ${scenario.practiceRuntime.interpreterRole.toLowerCase()} is relaying between you and the learner.`,
-    "Never act as the interpreter.",
-    counterpartAgent
-      ? "Never translate or summarise what the other participant said."
-      : "Never translate or summarise on behalf of the learner.",
-    "Speak in short, natural turns and wait for the interpreter before responding.",
-    "If the interpreter pauses, stay silent.",
-    currentAgent.openingLine
-      ? `When asked to begin, open with this idea: ${currentAgent.openingLine}`
+    `Scenario: ${scenario.title}. ${scenario.description}`,
+    `You are ${agent.name}, the ${agent.role}. Demeanor: ${agent.demeanor}.`,
+    `Your goal: ${retargetLanguage(agent.goal, authoredLanguage, language)}`,
+    counterpart
+      ? `The other participant is ${counterpart.name}, the ${counterpart.role}. You cannot hear them directly; a human interpreter relays everything between you.`
+      : "A human interpreter relays everything between you and the other party.",
+    "",
+    "How the conversation starts:",
+    isProfessional
+      ? "- The interpreter will first introduce themselves to the other party, then to you. When the interpreter introduces themselves to you, greet them briefly and begin with your first question or statement."
+      : "- The interpreter will introduce themselves to you first and explain how they will help. Acknowledge them briefly and wait. Then respond to what the interpreter relays.",
+    agent.openingLine
+      ? `- Your first real line should carry this meaning (say it naturally in ${language}): ${agent.openingLine}`
       : "",
+    "",
+    "Rules:",
+    "- Speak in short, natural turns of one to three sentences, then stop and wait for the interpreter.",
+    "- Never interpret, translate or summarise for anyone. Never act as the interpreter.",
+    "- If the interpreter is silent, stay silent.",
+    "- Stay in character. Do not mention that this is a simulation or training.",
+    isProfessional
+      ? `- When you have what you need (${endCondition}) and the other party has no outstanding questions, give a brief closing line, then call the ${END_CONVERSATION_TOOL} tool. Do not prolong the conversation after that.`
+      : "- If the other party says goodbye, say a short goodbye back.",
+    "",
+    `LANGUAGE RULE (overrides everything above): speak only ${language}. Every word you say must be in ${language}, even if the interpreter or any text above uses another language.`,
   ]
-    .filter(Boolean)
+    .filter((line) => line !== "")
     .join("\n");
 }
 
-export function buildTranscriptForAssessment(
-  transcriptEntries: TranscriptEntry[],
-) {
-  return transcriptEntries
-    .map((entry) => `[${entry.createdAt}] ${entry.speaker}: ${entry.text}`)
-    .join("\n");
-}
+/**
+ * ISO-639-1 codes for input transcription. Forcing the language stops the
+ * transcriber guessing (e.g. Greek heard as a Slavic language, Hindi vs Punjabi).
+ */
+const transcriptionCodes: Record<string, string> = {
+  arabic: "ar",
+  bangla: "bn",
+  bengali: "bn",
+  cantonese: "zh",
+  dari: "fa",
+  english: "en",
+  filipino: "tl",
+  tagalog: "tl",
+  french: "fr",
+  german: "de",
+  greek: "el",
+  gujarati: "gu",
+  "haitian creole": "ht",
+  hindi: "hi",
+  indonesian: "id",
+  italian: "it",
+  italiano: "it",
+  japanese: "ja",
+  korean: "ko",
+  malay: "ms",
+  malayalam: "ml",
+  mandarin: "zh",
+  nepali: "ne",
+  persian: "fa",
+  farsi: "fa",
+  portuguese: "pt",
+  punjabi: "pa",
+  russian: "ru",
+  sinhala: "si",
+  spanish: "es",
+  tamil: "ta",
+  telugu: "te",
+  thai: "th",
+  turkish: "tr",
+  urdu: "ur",
+  vietnamese: "vi",
+};
 
-export const practiceAssessmentSchema = {
-  name: "practice_assessment",
-  strict: true,
-  schema: {
-    type: "object",
-    additionalProperties: false,
-    properties: {
-      overallScore: { type: "number" },
-      summary: { type: "string" },
-      strengths: {
-        type: "array",
-        items: { type: "string" },
-      },
-      improvementAreas: {
-        type: "array",
-        items: { type: "string" },
-      },
-      recommendedNextStep: { type: "string" },
-      completionDecision: {
-        type: "string",
-        enum: ["completed", "needs_review"],
-      },
-      breakdown: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          accuracy: { type: "number" },
-          terminology: { type: "number" },
-          fluency: { type: "number" },
-          turnManagement: { type: "number" },
-          professionalism: { type: "number" },
-        },
-        required: [
-          "accuracy",
-          "terminology",
-          "fluency",
-          "turnManagement",
-          "professionalism",
-        ],
-      },
-    },
-    required: [
-      "overallScore",
-      "summary",
-      "strengths",
-      "improvementAreas",
-      "recommendedNextStep",
-      "completionDecision",
-      "breakdown",
-    ],
-  },
-} as const;
-
-export function buildAssessmentInstructions(
-  scenario: Scenario,
-  transcriptEntries: TranscriptEntry[],
-) {
-  return [
-    "You are assessing an interpreter training role-play.",
-    "Score the interpreter on fidelity, terminology, fluency, turn management, and professionalism.",
-    "The final overall score must be 0 to 100.",
-    "Mark completionDecision as completed only when the overall score is 75 or above; otherwise use needs_review.",
-    "Base the assessment on the transcript only and do not invent missing context.",
-    "",
-    buildScenarioPrompt(scenario),
-    "",
-    "Transcript:",
-    buildTranscriptForAssessment(transcriptEntries),
-  ].join("\n");
+export function transcriptionLanguageCode(language: string) {
+  return transcriptionCodes[language.trim().toLowerCase()];
 }

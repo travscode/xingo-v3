@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import {
   internalMutation,
@@ -142,6 +142,7 @@ export const startAttempt = mutation({
     scenarioId: v.string(),
     sourceLanguage: v.string(),
     targetLanguage: v.string(),
+    mode: v.optional(v.union(v.literal("assessed"), v.literal("practice"))),
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
@@ -181,11 +182,11 @@ export const startAttempt = mutation({
     const access = getScenarioAccess(entitlement, learningModule, scenario);
 
     if (!access.allowed) {
-      throw new Error("PREMIUM_REQUIRED");
+      throw new ConvexError("PREMIUM_REQUIRED");
     }
 
     if (entitlement.remainingMinutes < MIN_MINUTES_TO_START) {
-      throw new Error("OUT_OF_MINUTES");
+      throw new ConvexError("OUT_OF_MINUTES");
     }
 
     const attemptId = crypto.randomUUID();
@@ -208,6 +209,7 @@ export const startAttempt = mutation({
       transcriptEntries: [],
       sourceLanguage: args.sourceLanguage.trim().slice(0, 40),
       targetLanguage: args.targetLanguage.trim().slice(0, 40),
+      mode: args.mode ?? "assessed",
       timestamp: startedAt,
     });
 
@@ -291,7 +293,7 @@ export const reserveRealtimeKey = internalMutation({
     const elapsedMs = now - (attempt.startedAtMs ?? now);
 
     if (elapsedMs >= allowedDurationMs(entitlement?.remainingMinutes ?? 0)) {
-      throw new Error("OUT_OF_MINUTES");
+      throw new ConvexError("OUT_OF_MINUTES");
     }
 
     await ctx.db.patch(attempt._id, {
@@ -349,6 +351,7 @@ export const closeForGrading = internalMutation({
       sourceLanguage: attempt.sourceLanguage,
       targetLanguage: attempt.targetLanguage,
       moduleId: attempt.moduleId,
+      mode: attempt.mode ?? "assessed",
     };
   },
 });
@@ -381,6 +384,7 @@ export const prepareRegrade = internalMutation({
       sourceLanguage: attempt.sourceLanguage,
       targetLanguage: attempt.targetLanguage,
       moduleId: attempt.moduleId,
+      mode: attempt.mode ?? "assessed",
     };
   },
 });
@@ -388,7 +392,11 @@ export const prepareRegrade = internalMutation({
 export const markUngraded = internalMutation({
   args: {
     attemptId: v.string(),
-    reason: v.union(v.literal("too_short"), v.literal("grading_failed")),
+    reason: v.union(
+      v.literal("too_short"),
+      v.literal("grading_failed"),
+      v.literal("practice_mode"),
+    ),
   },
   handler: async (ctx, args) => {
     const attempt = await getAttemptById(ctx, args.attemptId);
@@ -434,7 +442,12 @@ export const getAttemptOwnerInternal = internalQuery({
       .unique();
 
     return attempt
-      ? { clerkId: attempt.clerkId, moduleId: attempt.moduleId, scenarioId: attempt.scenarioId }
+      ? {
+          clerkId: attempt.clerkId,
+          moduleId: attempt.moduleId,
+          scenarioId: attempt.scenarioId,
+          mode: attempt.mode ?? "assessed",
+        }
       : null;
   },
 });

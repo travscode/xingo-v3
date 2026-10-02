@@ -39,6 +39,8 @@ const voiceAgent = v.object({
   demeanor: v.optional(v.string()),
   instructions: v.optional(v.string()),
   openingLine: v.optional(v.string()),
+  /** What this participant must achieve before closing the conversation. */
+  endCondition: v.optional(v.string()),
 });
 
 const languagePreference = v.object({
@@ -110,6 +112,8 @@ export default defineSchema({
   users: defineTable({
     clerkId: v.string(),
     email: v.string(),
+    /** True when `email` came from the Clerk identity token rather than the client. */
+    emailVerified: v.optional(v.boolean()),
     name: v.string(),
     imageUrl: v.optional(v.string()),
     role: platformRole,
@@ -199,6 +203,8 @@ export default defineSchema({
     chargedMinutes: v.optional(v.number()),
     sourceLanguage: v.optional(v.string()),
     targetLanguage: v.optional(v.string()),
+    /** "assessed" is scored with the transcript hidden; "practice" shows it and is never scored. */
+    mode: v.optional(v.union(v.literal("assessed"), v.literal("practice"))),
     ungradedReason: v.optional(v.string()),
   })
     .index("by_public_id", ["id"])
@@ -259,6 +265,19 @@ export default defineSchema({
   })
     .index("by_clerkId", ["clerkId"])
     .index("by_stripeCheckoutSessionId", ["stripeCheckoutSessionId"]),
+
+  /** Admin-issued invitations. Roles apply when the invitee signs in with this email. */
+  invites: defineTable({
+    email: v.string(),
+    role: platformRole,
+    status: v.union(v.literal("pending"), v.literal("accepted"), v.literal("revoked")),
+    invitedByClerkId: v.string(),
+    clerkInvitationId: v.optional(v.string()),
+    createdAt: v.string(),
+    acceptedAt: v.optional(v.string()),
+  })
+    .index("by_email", ["email"])
+    .index("by_status", ["status"]),
 
   /** Processed Stripe webhook events, for idempotency. */
   stripeEvents: defineTable({

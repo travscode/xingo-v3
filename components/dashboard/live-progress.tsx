@@ -10,7 +10,9 @@ import {
   MapIcon,
 } from "lucide-react";
 import { useQuery } from "convex/react";
-import { StatCard } from "@/components/ui/stat-card";
+import { Card, PageHeader, Skeleton } from "@/components/ui/primitives";
+import { AchievementBadges } from "@/components/dashboard/achievement-badges";
+import { displayMaxScore, toDisplayScore } from "@/lib/scoring";
 import { ProgressHistoryChart } from "@/components/dashboard/progress-history-chart";
 import {
   DropdownMenu,
@@ -139,20 +141,20 @@ const ATTEMPT_HISTORY_PAGE_SIZE = 10;
 const ATTEMPT_HISTORY_PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 
 const metricColors: Record<MetricId, string> = {
-  averageScore: "#4f46e5",
-  bestScore: "#0f766e",
-  averageScore90: "#2563eb",
-  bestScore90: "#0f766e",
-  passRate: "#dc2626",
-  accuracy: "#7c3aed",
-  terminology: "#2563eb",
-  fluency: "#0891b2",
-  turnManagement: "#ea580c",
-  professionalism: "#16a34a",
-  practiceMinutes: "#4f46e5",
-  attempts: "#64748b",
-  modulesPracticed: "#7c3aed",
-  scenariosPracticed: "#2563eb",
+  averageScore: "#000000",
+  bestScore: "#276ef1",
+  averageScore90: "#000000",
+  bestScore90: "#276ef1",
+  passRate: "#05944f",
+  accuracy: "#000000",
+  terminology: "#276ef1",
+  fluency: "#05944f",
+  turnManagement: "#6b6b6b",
+  professionalism: "#b58a00",
+  practiceMinutes: "#000000",
+  attempts: "#276ef1",
+  modulesPracticed: "#000000",
+  scenariosPracticed: "#276ef1",
 };
 
 /**
@@ -448,7 +450,7 @@ function AttemptHistoryPaginationControls({
               onClick={() => onPageChange(page)}
               className={`rounded-full px-3 py-2 text-sm font-semibold transition ${
                 currentPage === page
-                  ? "bg-brand text-white"
+                  ? "bg-ink text-paper"
                   : "border border-line bg-white text-muted hover:text-foreground"
               }`}
             >
@@ -530,7 +532,8 @@ export function LiveProgress() {
     () =>
       (sessions ?? []).filter(
         (session) =>
-          session.completionStatus !== "in_progress" &&
+          (session.completionStatus === "completed" ||
+            session.completionStatus === "needs_review") &&
           matchesProgressFilters(session, {
             startDate,
             endDate,
@@ -571,7 +574,7 @@ export function LiveProgress() {
   };
 
   if (!sessions || !scenarios || !modules || !history) {
-    return <div className="surface-card h-64 rounded-[2rem] animate-pulse" />;
+    return <Skeleton className="h-64" />;
   }
 
   const chartSeries = history.series.map((item) => ({
@@ -593,14 +596,11 @@ export function LiveProgress() {
       : comparisonMode === "avgVsBest" && selectedTab === "ccl"
         ? "Track average and best NAATI CCL results together on a /90 scale."
         : activeMetricMeta.subtitle;
-  const cclScenarioIds = new Set(
-    scenarios
-      .filter((scenario) => scenario.moduleId === CCL_MODULE_ID)
-      .map((scenario) => scenario.id),
-  );
 
   return (
     <div className="space-y-8">
+      <PageHeader title="Progress" description="Scores from assessed sessions. Practice sessions aren't included." />
+      <AchievementBadges sessions={sessions} modules={modules} />
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {isCclTab ? (
           <>
@@ -641,8 +641,8 @@ export function LiveProgress() {
         />
       </section>
 
-      <section className="surface-card rounded-[2rem] p-6">
-        <div className="flex items-center justify-between mt-6  gap-4  rounded-[1.5rem] border border-line bg-[#fafafa]">
+      <section className="surface-card rounded-xl p-6">
+        <div className="flex items-center justify-between mt-6  gap-4  rounded-xl border border-line bg-gray-50">
           <div className=" p-4">
             <div className="mt-6 flex flex-wrap gap-2">
               {historyTabs.map((tab) => (
@@ -650,9 +650,9 @@ export function LiveProgress() {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                      className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${
                         selectedTab === tab.id
-                          ? "bg-brand text-white"
+                          ? "bg-ink text-paper"
                           : "border border-line bg-white text-muted hover:text-foreground"
                       }`}
                     >
@@ -835,7 +835,7 @@ export function LiveProgress() {
         </div>
       </section>
 
-      <section className="surface-card rounded-[2rem] p-6">
+      <section className="surface-card rounded-xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="eyebrow">Attempt history</p>
           {completedSessions.length > 0 ? (
@@ -863,7 +863,7 @@ export function LiveProgress() {
           {paginatedCompletedSessions.map((session) => (
             <div
               key={session._id}
-              className="rounded-[1.5rem] border border-line bg-white p-4"
+              className="rounded-xl border border-line bg-white p-4"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -873,23 +873,21 @@ export function LiveProgress() {
                   </div>
                   <div className="mt-1 text-sm text-muted">
                     {moduleTitleById.get(session.moduleId) ?? session.moduleId}{" "}
-                    · {new Date(session.timestamp).toLocaleDateString("en-AU")}{" "}
+                    · {new Date(session.timestamp).toLocaleDateString()}{" "}
                     · {session.durationMinutes} min ·{" "}
                     {session.completionStatus.replace("_", " ")}
                   </div>
                 </div>
-                <div className="score-pill rounded-full px-3 py-1.5 text-sm font-semibold">
-                  {cclScenarioIds.has(session.scenarioId)
-                    ? `${session.score}/90`
-                    : `${session.score}%`}
+                <div className="score-pill rounded-md px-3 py-1.5 text-sm font-semibold tabular-nums">
+                  {toDisplayScore(session.moduleId, session.score)}/{displayMaxScore(session.moduleId)}
                 </div>
               </div>
               <div className="mt-4">
                 <Link
-                  href={`/practice/${session.scenarioId}?attemptId=${session.id}`}
-                  className="text-sm font-semibold text-brand underline-offset-4 hover:underline"
+                  href={`/results/${session.id}`}
+                  className="text-sm font-semibold underline-offset-4 hover:underline"
                 >
-                  View practice results
+                  View results
                 </Link>
               </div>
             </div>
@@ -917,5 +915,14 @@ export function LiveProgress() {
         ) : null}
       </section>
     </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <Card className="p-5">
+      <p className="text-sm text-gray-500">{label}</p>
+      <p className="mt-1 text-3xl font-bold tracking-[-0.03em] tabular-nums">{value}</p>
+    </Card>
   );
 }

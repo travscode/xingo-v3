@@ -1,10 +1,10 @@
-import { LivePractice } from "@/components/practice/live-practice";
+import { redirect } from "next/navigation";
 
-export default async function PracticeRoomPage({
+export default async function LegacyRoomPage({
   params,
 }: {
   params: Promise<{ scenarioId: string }>;
 }) {
   const { scenarioId } = await params;
-  return <LivePractice scenarioId={scenarioId} />;
+  redirect(`/practice/${scenarioId}`);
 }

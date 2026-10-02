@@ -22,6 +22,7 @@ const voiceAgent = v.object({
   demeanor: v.optional(v.string()),
   instructions: v.optional(v.string()),
   openingLine: v.optional(v.string()),
+  endCondition: v.optional(v.string()),
 });
 
 const practiceRuntime = v.object({

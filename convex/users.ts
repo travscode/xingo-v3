@@ -1,5 +1,11 @@
 import { v } from "convex/values";
-import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+  type MutationCtx,
+} from "./_generated/server";
 import {
   getClerkIdFromIdentity,
   getUserByClerkId,
@@ -24,6 +30,34 @@ const subscriptionStatus = v.union(
   v.literal("professional"),
   v.literal("organization"),
 );
+
+/**
+ * Applies a pending admin invite (role) to a user. `verifiedEmail` must come from
+ * the Clerk identity token, never from client arguments.
+ */
+async function applyPendingInvite(ctx: MutationCtx, clerkId: string, verifiedEmail: string) {
+  const invites = await ctx.db
+    .query("invites")
+    .withIndex("by_email", (q) => q.eq("email", verifiedEmail))
+    .collect();
+  const invite = invites
+    .filter((candidate) => candidate.status === "pending")
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+
+  if (!invite) {
+    return;
+  }
+
+  const user = await getUserByClerkId(ctx, clerkId);
+
+  if (!user) {
+    return;
+  }
+
+  const now = new Date().toISOString();
+  await ctx.db.patch(user._id, { role: invite.role, updatedAt: now });
+  await ctx.db.patch(invite._id, { status: "accepted", acceptedAt: now });
+}
 
 function cleanLanguagePairs(
   pairs: Array<{ sourceLanguage: string; targetLanguage: string }>,
@@ -98,21 +132,29 @@ export const syncCurrentUser = mutation({
     const clerkId = getClerkIdFromIdentity(identity);
     const existing = await getUserByClerkId(ctx, clerkId);
     const now = new Date().toISOString();
-    const email = (identity.email ?? args.email).trim().toLowerCase();
+    const verifiedEmail =
+      identity.email && identity.emailVerified !== false ? identity.email.trim().toLowerCase() : null;
+    const email = (verifiedEmail ?? args.email).trim().toLowerCase();
     const name = args.name.trim().slice(0, 120) || "Interpreter";
 
     if (existing) {
       if (
         existing.email !== email ||
         existing.name !== name ||
-        existing.imageUrl !== args.imageUrl
+        existing.imageUrl !== args.imageUrl ||
+        existing.emailVerified !== Boolean(verifiedEmail)
       ) {
         await ctx.db.patch(existing._id, {
           email: email || existing.email,
+          emailVerified: Boolean(verifiedEmail),
           name,
           imageUrl: args.imageUrl ?? existing.imageUrl,
           updatedAt: now,
         });
+      }
+
+      if (verifiedEmail) {
+        await applyPendingInvite(ctx, clerkId, verifiedEmail);
       }
 
       return { created: false };
@@ -121,6 +163,7 @@ export const syncCurrentUser = mutation({
     await ctx.db.insert("users", {
       clerkId,
       email,
+      emailVerified: Boolean(verifiedEmail),
       name,
       imageUrl: args.imageUrl,
       role: "interpreter",
@@ -129,6 +172,10 @@ export const syncCurrentUser = mutation({
       createdAt: now,
       updatedAt: now,
     });
+
+    if (verifiedEmail) {
+      await applyPendingInvite(ctx, clerkId, verifiedEmail);
+    }
 
     return { created: true };
   },
@@ -179,6 +226,22 @@ export const completeOnboarding = mutation({
     });
 
     return { ok: true };
+  },
+});
+
+/** Applies a pending invite to an existing account (invited after signing up). */
+export const applyInviteForEmail = internalMutation({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const email = args.email.trim().toLowerCase();
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .unique();
+
+    if (user?.emailVerified) {
+      await applyPendingInvite(ctx, user.clerkId, email);
+    }
   },
 });
 

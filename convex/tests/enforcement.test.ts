@@ -278,3 +278,70 @@ describe("billing idempotency", () => {
     expect(await t.mutation(internal.billingData.claimStripeEvent, { eventId: "evt_1", type: "x" })).toBe(false);
   });
 });
+
+describe("admin invites", () => {
+  test("an admin invite applies only when the email is verified by Clerk", async () => {
+    const t = setup();
+    await t.run(async (ctx) => {
+      await ctx.db.insert("invites", {
+        email: "thomas@example.com",
+        role: "platform_admin",
+        status: "pending",
+        invitedByClerkId: "admin_1",
+        createdAt: "2026-10-01T00:00:00.000Z",
+      });
+    });
+
+    // Spoofed: email only in client args, not in the identity token.
+    const spoofer = t.withIdentity({ subject: "spoof", tokenIdentifier: "test|spoof" });
+    await spoofer.mutation(api.users.syncCurrentUser, { email: "thomas@example.com", name: "Not Thomas" });
+    expect((await spoofer.query(api.users.current, {}))?.role).toBe("interpreter");
+
+    const thomas = t.withIdentity({
+      subject: "thomas",
+      tokenIdentifier: "test|thomas",
+      email: "Thomas@Example.com",
+      emailVerified: true,
+    });
+    await thomas.mutation(api.users.syncCurrentUser, { email: "ignored@example.com", name: "Thomas" });
+    const user = await thomas.query(api.users.current, {});
+    expect(user?.role).toBe("platform_admin");
+    expect(user?.email).toBe("thomas@example.com");
+  });
+
+  test("admin queries reject non-admins", async () => {
+    const t = setup();
+    const asUser = await seedUser(t, "plain_user");
+    await expect(asUser.query(api.admin.overview, {})).rejects.toThrow("Not authorized");
+    await expect(asUser.query(api.admin.listUsers, {})).rejects.toThrow("Not authorized");
+
+    const asAdmin = await seedUser(t, "admin_user", { role: "platform_admin" });
+    await expect(asAdmin.query(api.admin.overview, {})).resolves.toMatchObject({ users: { total: 2 } });
+    await expect(
+      asAdmin.mutation(api.admin.setUserRole, { clerkId: "admin_user", role: "interpreter" }),
+    ).rejects.toThrow();
+  });
+});
+
+describe("practice mode", () => {
+  test("practice attempts are recorded as practice and flagged for no grading", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    const asUser = await seedUser(t, "user_pm");
+    const { attemptId } = await asUser.mutation(api.practice.startAttempt, {
+      scenarioId: "free-scn",
+      ...pair,
+      mode: "practice",
+    });
+
+    const owner = await t.query(internal.practice.getAttemptOwnerInternal, { attemptId });
+    expect(owner?.mode).toBe("practice");
+
+    const closed = await t.mutation(internal.practice.closeForGrading, {
+      attemptId,
+      clerkId: "user_pm",
+      transcriptEntries: [],
+    });
+    expect(closed.mode).toBe("practice");
+  });
+});

@@ -1,257 +1,113 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2, XCircle } from "lucide-react";
 import { useQuery } from "convex/react";
+import { ArrowLeft, Check } from "lucide-react";
 import { api } from "@/convex/_generated/api";
-
-/**
- * Normalizes a language pair to a lowercase comparison key.
- */
-function getLanguagePairKey(sourceLanguage: string, targetLanguage: string) {
-  return `${sourceLanguage.trim().toLowerCase()}::${targetLanguage.trim().toLowerCase()}`;
-}
-
-/**
- * Returns a small badge image for the module summary card.
- */
-function getModuleBadgeImage(moduleId: string) {
-  const badgeImages: Record<string, string> = {
-    "medical-interpreting-foundations":
-      "/images/badges/medical-distinction-badge.svg",
-    "courtroom-interpreting-intensive":
-      "/images/badges/court-certified-badge.svg",
-  };
-
-  return badgeImages[moduleId] ?? "/images/start-practice.jpg";
-}
+import { displayPassMark, displayMaxScore, isCclModule } from "@/lib/scoring";
+import { Badge, Card, EmptyState, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
+import { Button } from "@/components/ui/button";
+import { ScenarioRow } from "@/components/modules/scenario-row";
 
 export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
-  const learningModule = useQuery(api.modules.getById, { id: moduleId });
-  const scenarios = useQuery(api.scenarios.listByModule, { moduleId });
-  const sessions = useQuery(api.sessions.listByModuleForCurrentUser, {
-    moduleId,
-  });
-  const currentUser = useQuery(api.users.current, {});
+  const catalog = useQuery(api.catalog.forCurrentUser, {});
+  const me = useQuery(api.users.me, {});
 
-  if (
-    learningModule === undefined ||
-    scenarios === undefined ||
-    sessions === undefined ||
-    currentUser === undefined
-  ) {
-    return <div className="surface-card h-96 rounded-[2rem] animate-pulse" />;
+  if (!catalog) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-1/2" />
+        <Skeleton className="h-80" />
+      </div>
+    );
   }
 
-  const completedSessions = sessions.filter(
-    (session) => session.completionStatus !== "in_progress",
-  );
-  const preferredPairs = new Set(
-    (currentUser?.languagePreferences ?? []).map((pair) =>
-      getLanguagePairKey(pair.sourceLanguage, pair.targetLanguage),
-    ),
-  );
-  const scenarioMatchesPreference = (scenario: (typeof scenarios)[number]) =>
-    preferredPairs.has(
-      getLanguagePairKey(
-        scenario.practiceRuntime.sourceLanguage,
-        scenario.practiceRuntime.targetLanguage,
-      ),
-    );
-  const prioritizedScenarios =
-    preferredPairs.size > 0
-      ? [...scenarios].sort((left, right) => {
-          const leftMatched = scenarioMatchesPreference(left) ? 1 : 0;
-          const rightMatched = scenarioMatchesPreference(right) ? 1 : 0;
-          return rightMatched - leftMatched;
-        })
-      : scenarios;
-  const isNaatiCclModule = moduleId === "naati-certification-practice-ccl";
-  const scenarioPassThreshold = isNaatiCclModule ? 63 : 75;
-  const scenarioStatus = new Map(
-    prioritizedScenarios.map((scenario) => {
-      const related = completedSessions.filter(
-        (session) => session.scenarioId === scenario.id,
-      );
-      const highest =
-        related.length > 0
-          ? related.reduce((best, current) =>
-              current.score > best.score ? current : best,
-            )
-          : null;
-      return [scenario.id, highest];
-    }),
-  );
-  const nextScenario =
-    prioritizedScenarios.find((scenario) => !scenarioStatus.get(scenario.id)) ??
-    prioritizedScenarios.find(
-      (scenario) =>
-        (scenarioStatus.get(scenario.id)?.score ?? 0) < scenarioPassThreshold,
-    ) ??
-    prioritizedScenarios[0];
-  const bestScore = Math.max(
-    0,
-    ...completedSessions.map((session) => session.score),
-  );
+  const learningModule = catalog.modules.find((m) => m.id === moduleId);
 
   if (!learningModule) {
     return (
-      <section className="surface-card rounded-[2rem] p-6">
-        <p className="text-sm text-muted">Module not found.</p>
-      </section>
+      <EmptyState
+        title="Module not found"
+        action={
+          <Button asChild>
+            <Link href="/modules">Back to practice</Link>
+          </Button>
+        }
+      />
     );
   }
 
+  const locked = !learningModule.isFree && !(me?.entitlement.premiumAccess ?? false);
+  const total = learningModule.scenarios.length;
+  const firstPlayable = learningModule.scenarios.find((s) => !s.locked && !s.stats.passed) ??
+    learningModule.scenarios.find((s) => !s.locked);
+
   return (
     <div className="space-y-8">
-      <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
-        <p className="eyebrow">{learningModule.industryCategory}</p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-tight">
-          {learningModule.title}
-        </h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">
-          {learningModule.description}
-        </p>
-        <div className="mt-6 flex flex-wrap gap-2 text-sm text-muted">
-          <span className="mono-chip rounded-full px-3 py-2">
-            {learningModule.durationMinutes} min
-          </span>
-          <span className="mono-chip rounded-full px-3 py-2">
-            {learningModule.difficultyLevel}
-          </span>
-          <span className="mono-chip rounded-full px-3 py-2">
-            {learningModule.badgeIcon}
-          </span>
-        </div>
-        {nextScenario ? (
-          <div className="mt-8">
-            <div className="text-sm text-muted">Next: {nextScenario.title}</div>
-            <Link
-              href={`/practice/${nextScenario.id}/room`}
-              className="action-primary mt-3"
-            >
-              Start practice
-            </Link>
-          </div>
-        ) : null}
-      </section>
+      <Link href="/modules" className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-ink">
+        <ArrowLeft className="h-4 w-4" /> Practice
+      </Link>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className="surface-card rounded-[2rem] p-5">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-            Overall score
-          </div>
-          <div className="mt-3 text-4xl font-semibold">{bestScore}%</div>
+      <header>
+        <div className="flex flex-wrap items-center gap-2">
+          {learningModule.isFree ? <Badge tone="accent">Free</Badge> : <Badge>Premium</Badge>}
+          <Badge className="capitalize">{learningModule.difficultyLevel}</Badge>
+          {isCclModule(learningModule.id) ? <Badge tone="dark">Scored out of 90 · pass {displayPassMark(learningModule.id)}</Badge> : null}
         </div>
-        <div className="surface-card rounded-[2rem] p-5">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-            Completed attempts
-          </div>
-          <div className="mt-3 text-4xl font-semibold">
-            {completedSessions.length}
-          </div>
-        </div>
-
-        <div className="surface-card rounded-[2rem] p-5">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-            Module badge
-          </div>
-          <div className="mt-3 flex items-center gap-3 text-2xl font-semibold">
-            <div className="relative h-10 w-10 overflow-hidden rounded-2xl border border-line bg-white">
-              <Image
-                src={getModuleBadgeImage(learningModule.id)}
-                alt={`${learningModule.title} badge`}
-                fill
-                className="object-cover"
-                sizes="40px"
-              />
-            </div>
-            {learningModule.badgeIcon}
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-        <div className="surface-card rounded-[2rem] p-6">
-          <p className="eyebrow">What to focus on</p>
-          <div className="mt-5 space-y-3 text-sm leading-7 text-muted">
-            {learningModule.learningObjectives.map((objective) => (
-              <div
-                key={objective}
-                className="rounded-[1.25rem] border border-line bg-white p-4"
-              >
-                {objective}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="surface-card rounded-[2rem] p-6">
-          <p className="eyebrow">Scenarios</p>
-          {preferredPairs.size > 0 ? (
-            <p className="mt-2 text-sm text-muted">
-              Scenarios matching your language preferences are shown first.
-            </p>
+        <h1 className="mt-3 text-3xl font-bold tracking-[-0.035em] sm:text-4xl">{learningModule.title}</h1>
+        <p className="mt-3 max-w-3xl text-[15px] leading-7 text-gray-500">{learningModule.description}</p>
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          {firstPlayable ? (
+            <Button asChild size="lg">
+              <Link href={`/practice/${firstPlayable.id}`}>
+                {firstPlayable.stats.attempts > 0 ? "Continue" : "Start"}: {firstPlayable.title}
+              </Link>
+            </Button>
           ) : null}
-          <div className="mt-5 space-y-4">
-            {prioritizedScenarios.map((scenario) => (
-              <div
-                key={scenario._id}
-                className="rounded-[1.5rem] border border-line bg-white p-4"
-              >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <div className="font-semibold">{scenario.title}</div>
-                    <p className="mt-2 text-sm leading-6 text-muted">
-                      {scenario.description}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted">
-                      <span className="mono-chip rounded-full px-2.5 py-1.5">
-                        {scenario.practiceRuntime.sourceLanguage} to{" "}
-                        {scenario.practiceRuntime.targetLanguage}
-                      </span>
-                      {scenarioMatchesPreference(scenario) ? (
-                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-emerald-700">
-                          Preference match
-                        </span>
-                      ) : null}
-                    </div>
-                    {scenarioStatus.get(scenario.id) ? (
-                      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-                        <span className="text-muted">
-                          Highest score{" "}
-                          {isNaatiCclModule
-                            ? `${scenarioStatus.get(scenario.id)?.score}/90`
-                            : `${scenarioStatus.get(scenario.id)?.score}%`}
-                        </span>
-                        {(scenarioStatus.get(scenario.id)?.score ?? 0) >=
-                        scenarioPassThreshold ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-emerald-700">
-                            <CheckCircle2 size={14} />
-                            Pass
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1.5 text-red-700">
-                            <XCircle size={14} />
-                            Fail
-                          </span>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                  <Link
-                    href={`/practice/${scenario.id}/room`}
-                    className="action-secondary shrink-0 px-4 py-2 text-sm"
-                  >
-                    Start
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
+          {locked ? (
+            <Button asChild size="lg" variant="secondary">
+              <Link href="/billing">Unlock all dialogues</Link>
+            </Button>
+          ) : null}
         </div>
-      </section>
+      </header>
+
+      <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
+        <section>
+          <SectionTitle>
+            Dialogues · {learningModule.passedCount}/{total} passed
+          </SectionTitle>
+          <ProgressBar value={total ? learningModule.passedCount / total : 0} tone="accent" className="mb-3" />
+          <Card className="divide-y divide-gray-200 overflow-hidden">
+            {learningModule.scenarios.map((scenario) => (
+              <ScenarioRow key={scenario.id} scenario={scenario} moduleId={learningModule.id} showFreeBadge={locked} />
+            ))}
+          </Card>
+        </section>
+
+        <aside className="space-y-4">
+          {learningModule.learningObjectives.length > 0 ? (
+            <Card tone="muted" className="p-5">
+              <p className="font-bold">You&apos;ll practise</p>
+              <ul className="mt-3 space-y-2">
+                {learningModule.learningObjectives.map((objective) => (
+                  <li key={objective} className="flex gap-2 text-sm leading-6 text-gray-700">
+                    <Check className="mt-1 h-4 w-4 shrink-0" />
+                    {objective}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
+          <Card tone="muted" className="p-5 text-sm leading-6 text-gray-700">
+            <p className="font-bold text-ink">How scoring works</p>
+            <p className="mt-2">
+              Each assessed session is scored out of {displayMaxScore(learningModule.id)}. A dialogue counts as passed
+              at {displayPassMark(learningModule.id)} or above.
+            </p>
+          </Card>
+        </aside>
+      </div>
     </div>
   );
 }

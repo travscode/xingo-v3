@@ -11,6 +11,7 @@ export interface VoiceAgent {
   demeanor: string;
   instructions: string;
   openingLine?: string;
+  endCondition?: string;
 }
 
 export interface PracticeRuntime {
@@ -33,4 +34,5 @@ export interface Scenario {
   practiceRuntime: PracticeRuntime;
   expectedSkills: string[];
   difficultyLevel: DifficultyLevel;
+  isFreePreview?: boolean;
 }

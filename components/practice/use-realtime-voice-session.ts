@@ -6,7 +6,6 @@ import {
   RealtimeAgent,
   RealtimeSession,
 } from "@openai/agents/realtime";
-import { normalizeOpenAiUsage } from "@/lib/openai-usage-metrics";
 import type { TranscriptEntry } from "@/types/session";
 
 export type RealtimeConnectionStatus =
@@ -29,9 +28,13 @@ interface TranscriptCallbacks {
 }
 
 interface ConnectOptions {
-  getEphemeralKey: () => Promise<string>;
+  getEphemeralKey: () => Promise<{ value: string; model: string }>;
   agent: RealtimeAgent;
   audioElement: HTMLAudioElement;
+  /** Language the interpreter speaks to this participant, e.g. "Greek". */
+  transcriptionLanguage: string;
+  /** ISO-639-1 code when known; forces the transcriber instead of auto-detect. */
+  transcriptionLanguageCode?: string;
 }
 
 type RealtimeMessageItem = {
@@ -63,6 +66,21 @@ type RealtimeTransportEvent = {
     message?: string;
   };
 };
+
+/** Extracts token counts from a Realtime `response.done` usage payload. */
+function normalizeOpenAiUsage(value: unknown) {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const usage = value as Record<string, unknown>;
+  const promptTokens = typeof usage.input_tokens === "number" ? usage.input_tokens : 0;
+  const completionTokens = typeof usage.output_tokens === "number" ? usage.output_tokens : 0;
+  const totalTokens =
+    typeof usage.total_tokens === "number" ? usage.total_tokens : promptTokens + completionTokens;
+
+  return totalTokens > 0 ? { promptTokens, completionTokens, totalTokens } : null;
+}
 
 function extractMessageText(content: RealtimeMessageItem[] = []): string {
   if (!Array.isArray(content)) {
@@ -270,9 +288,9 @@ export function useRealtimeVoiceSession(
       if (transportEvent.type === "response.done") {
         const usage = normalizeOpenAiUsage(transportEvent.response?.usage);
         const eventId = transportEvent.response?.id;
-        const model = transportEvent.response?.model;
+        const model = transportEvent.response?.model ?? "gpt-realtime";
 
-        if (usage && eventId && model) {
+        if (usage && eventId) {
           callbacks.onUsage?.({
             eventId,
             model,
@@ -299,19 +317,27 @@ export function useRealtimeVoiceSession(
   );
 
   const connect = useCallback(
-    async ({ getEphemeralKey, agent, audioElement }: ConnectOptions) => {
+    async ({
+      getEphemeralKey,
+      agent,
+      audioElement,
+      transcriptionLanguage,
+      transcriptionLanguageCode,
+    }: ConnectOptions) => {
       if (sessionRef.current) {
         return;
       }
 
       setStatus("CONNECTING");
-      const apiKey = await getEphemeralKey();
+      const { value: apiKey, model } = await getEphemeralKey();
       const session = new RealtimeSession(agent, {
         transport: new OpenAIRealtimeWebRTC({ audioElement }),
-        model: "gpt-realtime",
+        model,
         config: {
           inputAudioTranscription: {
-            model: "gpt-4o-mini-transcribe",
+            model: "gpt-4o-transcribe",
+            language: transcriptionLanguageCode,
+            prompt: `The speaker is an interpreter speaking ${transcriptionLanguage}. Transcribe in ${transcriptionLanguage} exactly as spoken.`,
           },
         },
       });

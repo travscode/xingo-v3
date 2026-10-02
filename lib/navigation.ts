@@ -1,29 +1,32 @@
 import type { LucideIcon } from "lucide-react";
-import {
-  BadgeCheck,
-  BookOpen,
-  BriefcaseBusiness,
-  CircleHelp,
-  CreditCard,
-  LayoutDashboard,
-  TrendingUp,
-  UserRound,
-} from "lucide-react";
+import { CircleHelp, CreditCard, Home, Mic, TrendingUp, UserRound } from "lucide-react";
 
 export const marketingNavigation = [
+  { href: "/naati/ccl", label: "NAATI CCL" },
   { href: "/how-it-works", label: "How it works" },
-  { href: "/for-interpreters", label: "Interpreters" },
-  { href: "/for-organizations", label: "Teams" },
+  { href: "/for-organizations", label: "For teams" },
   { href: "/pricing", label: "Pricing" },
 ] as const;
 
-export const dashboardNavigation = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/modules", label: "Modules", icon: BookOpen },
+export type AppNavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  /** Other path prefixes that should highlight this item. */
+  matches?: string[];
+};
+
+export const dashboardNavigation: AppNavItem[] = [
+  { href: "/dashboard", label: "Home", icon: Home },
+  { href: "/modules", label: "Practice", icon: Mic, matches: ["/practice", "/results"] },
   { href: "/progress", label: "Progress", icon: TrendingUp },
-  { href: "/credentials", label: "Credentials", icon: BadgeCheck },
-  // { href: "/jobs", label: "Jobs", icon: BriefcaseBusiness },
-  { href: "/billing", label: "Billing", icon: CreditCard },
-  { href: "/account", label: "Profile", icon: UserRound },
+  { href: "/billing", label: "Plan & minutes", icon: CreditCard },
+  { href: "/account", label: "Account", icon: UserRound },
   { href: "/help", label: "Help", icon: CircleHelp },
-] satisfies readonly { href: string; label: string; icon: LucideIcon }[];
+];
+
+export function isNavItemActive(item: AppNavItem, pathname: string) {
+  return [item.href, ...(item.matches ?? [])].some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}

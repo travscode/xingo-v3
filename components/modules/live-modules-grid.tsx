@@ -1,62 +1,89 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "convex/react";
+import { ArrowRight } from "lucide-react";
 import { api } from "@/convex/_generated/api";
-import { ModuleCard } from "@/components/modules/module-card";
+import { Badge, Card, PageHeader, ProgressBar, Skeleton } from "@/components/ui/primitives";
+import { ScenarioRow } from "@/components/modules/scenario-row";
 
+/**
+ * The practice library: modules in the order that matches the learner's goal,
+ * each showing its first few dialogues so one click starts practice.
+ */
 export function LiveModulesGrid() {
-  const modules = useQuery(api.modules.list, {});
+  const catalog = useQuery(api.catalog.forCurrentUser, {});
+  const me = useQuery(api.users.me, {});
 
-  if (!modules) {
+  if (!catalog) {
     return (
-      <section className="section-frame rounded-[2rem] p-6">
-        <div className="grid gap-6 lg:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="surface-card h-72 rounded-[2rem] animate-pulse" />
-          ))}
-        </div>
-      </section>
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-1/3" />
+        <Skeleton className="h-64" />
+        <Skeleton className="h-64" />
+      </div>
     );
   }
 
-  const starterModules = modules.filter((module) => module.isFree);
-  const advancedModules = modules.filter((module) => !module.isFree);
+  const premiumAccess = me?.entitlement.premiumAccess ?? false;
 
   return (
-    <div className="space-y-8">
-      <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
-        <p className="eyebrow">Modules</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em]">Choose one thing to practice.</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-          Start with a free module, or go straight to a professional scenario if you already know the area you want.
-        </p>
-      </section>
+    <div className="space-y-10">
+      <PageHeader
+        title="Practice"
+        description="Pick a dialogue. Each one starts with a short briefing and a mic check."
+      />
 
-      <section className="space-y-5">
-        <div>
-          <p className="eyebrow">Start here</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">Free modules</h2>
-        </div>
-        <div className="grid gap-6 lg:grid-cols-2">
-          {(starterModules.length > 0 ? starterModules : modules).map((module) => (
-            <ModuleCard key={module._id} module={module} />
-          ))}
-        </div>
-      </section>
+      {catalog.modules.map((learningModule) => {
+        const total = learningModule.scenarios.length;
+        const preview = learningModule.scenarios.slice(0, 3);
+        const locked = !learningModule.isFree && !premiumAccess;
 
-      {advancedModules.length > 0 ? (
-        <section className="space-y-5">
-          <div>
-            <p className="eyebrow">Go deeper</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">Professional modules</h2>
-          </div>
-          <div className="grid gap-6 lg:grid-cols-2">
-            {advancedModules.map((module) => (
-              <ModuleCard key={module._id} module={module} />
-            ))}
-          </div>
-        </section>
-      ) : null}
+        return (
+          <section key={learningModule.id}>
+            <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-xl font-bold tracking-[-0.02em]">{learningModule.title}</h2>
+                  {learningModule.isFree ? <Badge tone="accent">Free</Badge> : locked ? <Badge>Premium</Badge> : null}
+                </div>
+                <p className="mt-1 text-sm text-gray-500">
+                  {total} dialogue{total === 1 ? "" : "s"} · {learningModule.passedCount} passed ·{" "}
+                  <span className="capitalize">{learningModule.difficultyLevel}</span>
+                </p>
+              </div>
+              <Link
+                href={`/modules/${learningModule.id}`}
+                className="inline-flex items-center gap-1 text-sm font-semibold hover:underline"
+              >
+                View module <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            {total > 0 ? (
+              <ProgressBar value={learningModule.passedCount / total} tone="accent" className="mb-3" />
+            ) : null}
+            <Card className="divide-y divide-gray-200 overflow-hidden">
+              {preview.map((scenario) => (
+                <ScenarioRow
+                  key={scenario.id}
+                  scenario={scenario}
+                  moduleId={learningModule.id}
+                  showFreeBadge={locked}
+                />
+              ))}
+              {total > preview.length ? (
+                <Link
+                  href={`/modules/${learningModule.id}`}
+                  className="block px-5 py-3 text-sm font-semibold text-gray-500 hover:bg-gray-50 hover:text-ink"
+                >
+                  {total - preview.length} more dialogue{total - preview.length === 1 ? "" : "s"}
+                </Link>
+              ) : null}
+              {total === 0 ? <p className="px-5 py-4 text-sm text-gray-500">Dialogues coming soon.</p> : null}
+            </Card>
+          </section>
+        );
+      })}
     </div>
   );
 }

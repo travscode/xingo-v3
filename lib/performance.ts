@@ -1,4 +1,7 @@
 import type { PracticeSession } from "@/types/session";
+import { isPassingScore } from "@/lib/scoring";
+
+type SessionLike = Pick<PracticeSession, "moduleId" | "score" | "completionStatus">;
 
 type ModuleLike = {
   id: string;
@@ -12,11 +15,14 @@ export type PerformanceBadge = {
   description: string;
 };
 
-export function getCompletedSessions(sessions: PracticeSession[]) {
-  return sessions.filter((session) => session.completionStatus !== "in_progress");
+/** Graded attempts only (assessed sessions that received a score). */
+export function getCompletedSessions<T extends SessionLike>(sessions: T[]) {
+  return sessions.filter(
+    (session) => session.completionStatus === "completed" || session.completionStatus === "needs_review",
+  );
 }
 
-export function getScenarioScoreSummary(sessions: PracticeSession[]) {
+export function getScenarioScoreSummary(sessions: SessionLike[]) {
   const completed = getCompletedSessions(sessions);
 
   if (completed.length === 0) {
@@ -38,7 +44,7 @@ export function getScenarioScoreSummary(sessions: PracticeSession[]) {
   };
 }
 
-export function getTopIndustry(modules: ModuleLike[], sessions: PracticeSession[]) {
+export function getTopIndustry(modules: ModuleLike[], sessions: SessionLike[]) {
   const completed = getCompletedSessions(sessions);
   const counts = new Map<string, number>();
 
@@ -55,13 +61,13 @@ export function getTopIndustry(modules: ModuleLike[], sessions: PracticeSession[
   return top ? top[0] : null;
 }
 
-export function getPerformanceBadges(modules: ModuleLike[], sessions: PracticeSession[]) {
+export function getPerformanceBadges(modules: ModuleLike[], sessions: SessionLike[]) {
   const completed = getCompletedSessions(sessions);
   const average =
     completed.length > 0
       ? completed.reduce((sum, session) => sum + session.score, 0) / completed.length
       : 0;
-  const passedModules = new Set(completed.filter((session) => session.score >= 75).map((session) => session.moduleId));
+  const passedModules = new Set(completed.filter((session) => isPassingScore(session.moduleId, session.score)).map((session) => session.moduleId));
   const topIndustry = getTopIndustry(modules, completed);
 
   const badges: PerformanceBadge[] = [];

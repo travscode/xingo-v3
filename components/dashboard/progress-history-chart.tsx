@@ -196,7 +196,7 @@ export function ProgressHistoryChart({
 
   if (!chart || !primarySeries || primarySeries.points.length === 0) {
     return (
-      <div className="rounded-[1.5rem] border border-dashed border-line bg-white px-5 py-12 text-center">
+      <div className="rounded-xl border border-dashed border-line bg-white px-5 py-12 text-center">
         <div className="text-sm font-semibold text-foreground">{title}</div>
         <p className="mt-2 text-sm text-muted">
           No completed attempts match the current filters yet.
@@ -227,7 +227,7 @@ export function ProgressHistoryChart({
   const usableWidth = chart.width - chart.padding.left - chart.padding.right;
 
   return (
-    <div className="rounded-[1.75rem] border border-line bg-white p-5">
+    <div className="rounded-xl border border-line bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="text-base font-semibold text-foreground">{title}</div>

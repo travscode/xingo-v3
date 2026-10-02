@@ -1,4 +1,4 @@
-export type CompletionStatus = "in_progress" | "completed" | "needs_review";
+export type CompletionStatus = "in_progress" | "completed" | "needs_review" | "ungraded" | "abandoned";
 
 export interface TranscriptEntry {
   id: string;
@@ -22,7 +22,7 @@ export interface SessionAssessment {
   strengths: string[];
   improvementAreas: string[];
   recommendedNextStep: string;
-  completionDecision: Exclude<CompletionStatus, "in_progress">;
+  completionDecision: "completed" | "needs_review";
   breakdown: SessionAssessmentBreakdown;
 }
 

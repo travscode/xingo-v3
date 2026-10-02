@@ -2,24 +2,18 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Suspense } from "react";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Fraunces, Manrope } from "next/font/google";
+import { Inter } from "next/font/google";
 import { AppBootstrap } from "@/components/auth/app-bootstrap";
 import { ConvexClientProvider } from "@/components/providers/convex-client-provider";
 import { GA4Analytics } from "@/components/providers/ga4-analytics";
+import { GA4_MEASUREMENT_ID } from "@/lib/analytics";
 import "./globals.css";
 
-const sans = Manrope({
-  variable: "--font-manrope",
+const sans = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const display = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-});
-
-const GA4_MEASUREMENT_ID =
-  process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID ?? "G-J7M1JVS5HM";
 
 export const metadata: Metadata = {
   title: {
@@ -27,7 +21,7 @@ export const metadata: Metadata = {
     template: "%s | XINGO",
   },
   description:
-    "AI interpreter training with repeatable voice simulations, score tracking, micro-credentials, and organization oversight.",
+    "Practise interpreting out loud with AI role-play partners, get scored instantly, and prepare for NAATI CCL and real assignments.",
 };
 
 export default function RootLayout({
@@ -50,7 +44,7 @@ export default function RootLayout({
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', '${GA4_MEASUREMENT_ID}', {
-                  send_page_view: true,
+                  send_page_view: false,
                   anonymize_ip: true,
                 });
               `}
@@ -59,7 +53,7 @@ export default function RootLayout({
         ) : null}
       </head>
       <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up">
-        <body className={`${sans.variable} ${display.variable} antialiased`}>
+        <body className={`${sans.variable} antialiased`}>
           <Suspense fallback={null}>
             <GA4Analytics />
           </Suspense>

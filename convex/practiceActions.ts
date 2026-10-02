@@ -164,10 +164,12 @@ type GradingInput = {
   sourceLanguage?: string;
   targetLanguage?: string;
   moduleId: string;
+  mode: "assessed" | "practice";
 };
 
 type GradeOutcome =
   | { status: "graded"; score: number; completionDecision: "completed" | "needs_review" }
+  | { status: "practice_mode" }
   | { status: "too_short" }
   | { status: "grading_failed" };
 
@@ -177,6 +179,11 @@ async function grade(
   attemptId: string,
   input: GradingInput,
 ): Promise<GradeOutcome> {
+  if (input.mode === "practice") {
+    await ctx.runMutation(internal.practice.markUngraded, { attemptId, reason: "practice_mode" });
+    return { status: "practice_mode" };
+  }
+
   if (!input.scenario || input.interpreterTurns < MIN_INTERPRETER_TURNS_TO_GRADE) {
     await ctx.runMutation(internal.practice.markUngraded, { attemptId, reason: "too_short" });
     return { status: "too_short" };
@@ -291,6 +298,10 @@ export const translateLine = action({
 
     if (!owner || owner.clerkId !== clerkId) {
       throw new Error("Practice attempt not found");
+    }
+
+    if (owner.mode !== "practice") {
+      throw new Error("Translation is only available in practice mode.");
     }
 
     const text = args.text.trim().slice(0, 1500);

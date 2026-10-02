@@ -589,3 +589,56 @@ export const getLatestCompletedByScenarioForCurrentUser = query({
     );
   },
 });
+
+/** One attempt with the context the results page needs. Updates live while grading runs. */
+export const resultForCurrentUser = query({
+  args: { attemptId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      return null;
+    }
+
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_public_id", (q) => q.eq("id", args.attemptId))
+      .unique();
+
+    if (!session || session.clerkId !== getClerkId(identity)) {
+      return null;
+    }
+
+    const [scenario, learningModule, previous] = await Promise.all([
+      ctx.db
+        .query("scenarios")
+        .withIndex("by_public_id", (q) => q.eq("id", session.scenarioId))
+        .unique(),
+      ctx.db
+        .query("modules")
+        .withIndex("by_public_id", (q) => q.eq("id", session.moduleId))
+        .unique(),
+      ctx.db
+        .query("sessions")
+        .withIndex("by_scenarioId", (q) => q.eq("scenarioId", session.scenarioId))
+        .collect(),
+    ]);
+    const earlier = previous
+      .filter(
+        (other) =>
+          other.clerkId === session.clerkId &&
+          other.id !== session.id &&
+          (other.completionStatus === "completed" || other.completionStatus === "needs_review") &&
+          other.timestamp < session.timestamp,
+      )
+      .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+
+    return {
+      session,
+      scenarioTitle: scenario?.title ?? "Practice",
+      moduleTitle: learningModule?.title ?? "",
+      previousScore: earlier[0]?.score ?? null,
+      bestPreviousScore: earlier.length ? Math.max(...earlier.map((s) => s.score)) : null,
+    };
+  },
+});

@@ -1,8 +1,7 @@
 "use client";
 
 import type { ChangeEvent, ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useMemo, useState, useTransition } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -62,6 +61,7 @@ type ScenarioFormState = {
   agentADemeanor: string;
   agentAOpeningLine: string;
   agentAInstructions: string;
+  agentAEndCondition: string;
   agentBName: string;
   agentBRole: string;
   agentBLanguage: string;
@@ -72,6 +72,8 @@ type ScenarioFormState = {
   agentBDemeanor: string;
   agentBOpeningLine: string;
   agentBInstructions: string;
+  agentBEndCondition: string;
+  isFreePreview: boolean;
 };
 
 const industryOptions: IndustryCategory[] = [
@@ -260,7 +262,7 @@ function createEmptyScenarioForm(): ScenarioFormState {
     briefing: "",
     assessmentFocus: "",
     agentAName: "",
-    agentARole: "Practitioner",
+    agentARole: "Clinician",
     agentALanguage: "English",
     agentAVoice: "cedar",
     agentAAvatarImageUrl: "",
@@ -268,6 +270,7 @@ function createEmptyScenarioForm(): ScenarioFormState {
     agentAGoal: "",
     agentADemeanor: "",
     agentAOpeningLine: "",
+    agentAEndCondition: "",
     agentAInstructions: "",
     agentBName: "",
     agentBRole: "Patient",
@@ -278,6 +281,8 @@ function createEmptyScenarioForm(): ScenarioFormState {
     agentBGoal: "",
     agentBDemeanor: "",
     agentBOpeningLine: "",
+    agentBEndCondition: "",
+    isFreePreview: false,
     agentBInstructions: "",
   };
 }
@@ -306,6 +311,7 @@ function createScenarioFormFromRecord(scenario: Scenario): ScenarioFormState {
     agentAGoal: scenario.aiAgentA.goal,
     agentADemeanor: scenario.aiAgentA.demeanor,
     agentAOpeningLine: scenario.aiAgentA.openingLine ?? "",
+    agentAEndCondition: scenario.aiAgentA.endCondition ?? "",
     agentAInstructions: scenario.aiAgentA.instructions,
     agentBName: scenario.aiAgentB?.name ?? "",
     agentBRole: scenario.aiAgentB?.role ?? "Client",
@@ -317,6 +323,8 @@ function createScenarioFormFromRecord(scenario: Scenario): ScenarioFormState {
     agentBGoal: scenario.aiAgentB?.goal ?? "",
     agentBDemeanor: scenario.aiAgentB?.demeanor ?? "",
     agentBOpeningLine: scenario.aiAgentB?.openingLine ?? "",
+    agentBEndCondition: scenario.aiAgentB?.endCondition ?? "",
+    isFreePreview: Boolean(scenario.isFreePreview),
     agentBInstructions: scenario.aiAgentB?.instructions ?? "",
   };
 }
@@ -324,12 +332,7 @@ function createScenarioFormFromRecord(scenario: Scenario): ScenarioFormState {
 /**
  * Reads a Clerk role value from public metadata when it is a valid string.
  */
-function getClerkRoleFromMetadata(value: unknown) {
-  return typeof value === "string" ? value : null;
-}
-
 export function AdminStudio() {
-  const { isLoaded: isClerkLoaded, user: clerkUser } = useUser();
   const currentUser = useQuery(api.users.current, {});
   const modules = useQuery(api.modules.list, {});
   const scenarios = useQuery(api.scenarios.list, {});
@@ -343,30 +346,6 @@ export function AdminStudio() {
   const [isCreatingScenario, setIsCreatingScenario] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [isPending, startTransition] = useTransition();
-  const lastDebugSignatureRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!isClerkLoaded || currentUser === undefined) {
-      return;
-    }
-
-    const clerkRole = getClerkRoleFromMetadata(clerkUser?.publicMetadata?.role);
-    const debugSignature = `${clerkUser?.id ?? "none"}|${clerkRole ?? "none"}|${currentUser?.clerkId ?? "none"}|${currentUser?.role ?? "none"}`;
-
-    if (lastDebugSignatureRef.current === debugSignature) {
-      return;
-    }
-
-    lastDebugSignatureRef.current = debugSignature;
-    console.info("[AdminStudio] Auth debug snapshot", {
-      clerkIdFromClerk: clerkUser?.id ?? null,
-      clerkPublicMetadata: clerkUser?.publicMetadata ?? null,
-      clerkRoleFromMetadata: clerkRole,
-      convexClerkId: currentUser?.clerkId ?? null,
-      convexRole: currentUser?.role ?? null,
-      convexEmail: currentUser?.email ?? null,
-    });
-  }, [clerkUser, currentUser, isClerkLoaded]);
 
   const resolvedModuleId = useMemo(() => {
     if (isCreatingModule || !modules || modules.length === 0) {
@@ -416,19 +395,18 @@ export function AdminStudio() {
     modules === undefined ||
     scenarios === undefined
   ) {
-    return <div className="surface-card h-80 rounded-[2rem] animate-pulse" />;
+    return <div className="surface-card h-80 rounded-xl animate-pulse" />;
   }
 
   if (!currentUser || currentUser.role !== "platform_admin") {
     return (
-      <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
+      <section className="section-frame rounded-xl p-6 lg:p-8">
         <p className="eyebrow">Admin</p>
         <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em]">
           You do not have access to the admin studio.
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-          Set the Clerk user&apos;s `publicMetadata.role` to `platform_admin`,
-          then sign out and back in.
+          Ask an existing admin to invite you from Admin → Invites.
         </p>
       </section>
     );
@@ -436,23 +414,13 @@ export function AdminStudio() {
 
   return (
     <div className="space-y-8">
-      <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
-        <p className="eyebrow">Admin studio</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em]">
-          Create modules and shape the practice flow.
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-          Modules define the training path. Scenarios define the live
-          conversation, voices, prompts, and assessment focus.
-        </p>
-        {statusMessage ? (
-          <p className="mt-4 text-sm font-medium">{statusMessage}</p>
-        ) : null}
-      </section>
+      {statusMessage ? (
+        <p className="rounded-xl bg-gray-50 px-4 py-3 text-sm font-medium">{statusMessage}</p>
+      ) : null}
 
       <section className="grid gap-6 xl:grid-cols-[280px_1fr]">
         <div className="space-y-6">
-          <div className="surface-card rounded-[2rem] p-5">
+          <div className="surface-card rounded-xl p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="eyebrow">Modules</p>
@@ -485,7 +453,7 @@ export function AdminStudio() {
                     setSelectedScenarioId("");
                     setStatusMessage("");
                   }}
-                  className={`w-full rounded-[1.25rem] border px-4 py-3 text-left transition ${
+                  className={`w-full rounded-xl border px-4 py-3 text-left transition ${
                     !isCreatingModule && resolvedModuleId === module.id
                       ? "border-black bg-black text-white"
                       : "border-line bg-white text-foreground"
@@ -502,7 +470,7 @@ export function AdminStudio() {
             </div>
           </div>
 
-          <div className="surface-card rounded-[2rem] p-5">
+          <div className="surface-card rounded-xl p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="eyebrow">Scenarios</p>
@@ -533,7 +501,7 @@ export function AdminStudio() {
                     setSelectedScenarioId(scenario.id);
                     setStatusMessage("");
                   }}
-                  className={`w-full rounded-[1.25rem] border px-4 py-3 text-left transition ${
+                  className={`w-full rounded-xl border px-4 py-3 text-left transition ${
                     !isCreatingScenario && resolvedScenarioId === scenario.id
                       ? "border-black bg-black text-white"
                       : "border-line bg-white text-foreground"
@@ -548,7 +516,7 @@ export function AdminStudio() {
                 </button>
               ))}
               {selectedModule && visibleScenarios.length === 0 ? (
-                <div className="rounded-[1.25rem] border border-line bg-white px-4 py-3 text-sm text-muted">
+                <div className="rounded-xl border border-line bg-white px-4 py-3 text-sm text-muted">
                   No scenarios for this module yet.
                 </div>
               ) : null}
@@ -648,6 +616,7 @@ export function AdminStudio() {
                   difficultyLevel: form.difficultyLevel,
                   agentCount: Number(form.agentCount) as 1 | 2,
                   expectedSkills: splitLines(form.expectedSkills),
+                  isFreePreview: form.isFreePreview,
                   practiceRuntime: {
                     interpreterRole: form.interpreterRole.trim(),
                     sourceLanguage: form.sourceLanguage.trim(),
@@ -667,6 +636,7 @@ export function AdminStudio() {
                     language: form.agentALanguage.trim(),
                     demeanor: form.agentADemeanor.trim() || undefined,
                     openingLine: form.agentAOpeningLine.trim() || undefined,
+                    endCondition: form.agentAEndCondition.trim() || undefined,
                     instructions: form.agentAInstructions.trim() || undefined,
                   },
                   aiAgentB:
@@ -685,6 +655,8 @@ export function AdminStudio() {
                           demeanor: form.agentBDemeanor.trim() || undefined,
                           openingLine:
                             form.agentBOpeningLine.trim() || undefined,
+                          endCondition:
+                            form.agentBEndCondition.trim() || undefined,
                           instructions:
                             form.agentBInstructions.trim() || undefined,
                         }
@@ -735,7 +707,7 @@ function ModuleEditor({
   const [form, setForm] = useState(initialState);
 
   return (
-    <section className="surface-card rounded-[2rem] p-6">
+    <section className="surface-card rounded-xl p-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="eyebrow">Module editor</p>
@@ -760,7 +732,7 @@ function ModuleEditor({
             onChange={(event) =>
               setForm((current) => ({ ...current, title: event.target.value }))
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Badge">
@@ -772,7 +744,7 @@ function ModuleEditor({
                 badgeIcon: event.target.value,
               }))
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Industry">
@@ -784,7 +756,7 @@ function ModuleEditor({
                 industryCategory: event.target.value as IndustryCategory,
               }))
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           >
             {industryOptions.map((option) => (
               <option key={option} value={option}>
@@ -802,7 +774,7 @@ function ModuleEditor({
                 difficultyLevel: event.target.value as DifficultyLevel,
               }))
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           >
             {difficultyOptions.map((option) => (
               <option key={option} value={option}>
@@ -822,7 +794,7 @@ function ModuleEditor({
                 durationMinutes: event.target.value,
               }))
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Accreditation provider">
@@ -834,7 +806,7 @@ function ModuleEditor({
                 accreditationProvider: event.target.value,
               }))
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
             disabled={!form.isAccredited}
           />
         </Field>
@@ -849,7 +821,7 @@ function ModuleEditor({
               description: event.target.value,
             }))
           }
-          className="min-h-28 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+          className="min-h-28 w-full rounded-xl border border-line bg-white px-4 py-3"
         />
       </Field>
 
@@ -862,7 +834,7 @@ function ModuleEditor({
               learningObjectives: event.target.value,
             }))
           }
-          className="min-h-28 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+          className="min-h-28 w-full rounded-xl border border-line bg-white px-4 py-3"
         />
       </Field>
 
@@ -902,7 +874,7 @@ function ScenarioEditor({
   const [form, setForm] = useState(initialState);
 
   return (
-    <section className="surface-card rounded-[2rem] p-6">
+    <section className="surface-card rounded-xl p-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="eyebrow">Scenario editor</p>
@@ -927,7 +899,7 @@ function ScenarioEditor({
             onChange={(event) =>
               setForm((current) => ({ ...current, title: event.target.value }))
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Difficulty">
@@ -939,7 +911,7 @@ function ScenarioEditor({
                 difficultyLevel: event.target.value as DifficultyLevel,
               }))
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           >
             {difficultyOptions.map((option) => (
               <option key={option} value={option}>
@@ -962,7 +934,7 @@ function ScenarioEditor({
                     : current.openingSpeaker,
               }))
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           >
             <option value="1">1 agent</option>
             <option value="2">2 agents</option>
@@ -979,7 +951,7 @@ function ScenarioEditor({
               description: event.target.value,
             }))
           }
-          className="min-h-24 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+          className="min-h-24 w-full rounded-xl border border-line bg-white px-4 py-3"
         />
       </Field>
 
@@ -993,7 +965,7 @@ function ScenarioEditor({
                 interpreterRole: event.target.value,
               }))
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Opening speaker">
@@ -1005,7 +977,7 @@ function ScenarioEditor({
                 openingSpeaker: event.target.value as "agent_a" | "agent_b",
               }))
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           >
             <option value="agent_a">Agent A</option>
             {form.agentCount === "2" ? (
@@ -1014,7 +986,7 @@ function ScenarioEditor({
           </select>
         </Field>
         <Field label="Source language">
-          <div className="w-full rounded-[1rem] border border-dashed border-line bg-slate-50 px-4 py-3 text-sm text-muted">
+          <div className="w-full rounded-xl border border-dashed border-line bg-gray-50 px-4 py-3 text-sm text-muted">
             <div className="font-semibold text-slate-600">
               {form.sourceLanguage}
             </div>
@@ -1026,7 +998,7 @@ function ScenarioEditor({
           </div>
         </Field>
         <Field label="Target language">
-          <div className="w-full rounded-[1rem] border border-dashed border-line bg-slate-50 px-4 py-3 text-sm text-muted">
+          <div className="w-full rounded-xl border border-dashed border-line bg-gray-50 px-4 py-3 text-sm text-muted">
             <div className="font-semibold text-slate-600">
               {form.targetLanguage}
             </div>
@@ -1045,7 +1017,7 @@ function ScenarioEditor({
           onChange={(event) =>
             setForm((current) => ({ ...current, briefing: event.target.value }))
           }
-          className="min-h-24 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+          className="min-h-24 w-full rounded-xl border border-line bg-white px-4 py-3"
         />
       </Field>
 
@@ -1059,7 +1031,7 @@ function ScenarioEditor({
                 expectedSkills: event.target.value,
               }))
             }
-            className="min-h-24 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="min-h-24 w-full rounded-xl border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Assessment focus" hint="One per line">
@@ -1071,9 +1043,19 @@ function ScenarioEditor({
                 assessmentFocus: event.target.value,
               }))
             }
-            className="min-h-24 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="min-h-24 w-full rounded-xl border border-line bg-white px-4 py-3"
           />
         </Field>
+      </div>
+
+      <div className="mt-4">
+        <Toggle
+          label="Free preview (playable on the Free plan inside a premium module)"
+          checked={form.isFreePreview}
+          onChange={(checked) =>
+            setForm((current) => ({ ...current, isFreePreview: checked }))
+          }
+        />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
@@ -1088,6 +1070,7 @@ function ScenarioEditor({
           goal={form.agentAGoal}
           demeanor={form.agentADemeanor}
           openingLine={form.agentAOpeningLine}
+          endCondition={form.agentAEndCondition}
           instructions={form.agentAInstructions}
           voices={voiceOptions}
           onChange={(field, value) =>
@@ -1106,6 +1089,7 @@ function ScenarioEditor({
             goal={form.agentBGoal}
             demeanor={form.agentBDemeanor}
             openingLine={form.agentBOpeningLine}
+            endCondition={form.agentBEndCondition}
             instructions={form.agentBInstructions}
             voices={voiceOptions}
             onChange={(field, value) =>
@@ -1113,7 +1097,7 @@ function ScenarioEditor({
             }
           />
         ) : (
-          <div className="rounded-[1.5rem] border border-dashed border-line bg-white p-5 text-sm text-muted">
+          <div className="rounded-xl border border-dashed border-line bg-white p-5 text-sm text-muted">
             This scenario uses one agent only. The learner interprets directly
             with Agent A in the practice room.
           </div>
@@ -1153,7 +1137,7 @@ function Toggle({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center gap-3 rounded-full border border-line bg-white px-4 py-3 text-sm font-medium">
+    <label className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium">
       <input
         type="checkbox"
         checked={checked}
@@ -1175,6 +1159,7 @@ function AgentForm({
   goal,
   demeanor,
   openingLine,
+  endCondition,
   instructions,
   voices,
   onChange,
@@ -1189,6 +1174,7 @@ function AgentForm({
   goal: string;
   demeanor: string;
   openingLine: string;
+  endCondition: string;
   instructions: string;
   voices: string[];
   onChange: (field: keyof ScenarioFormState, value: string) => void;
@@ -1257,7 +1243,7 @@ function AgentForm({
   }
 
   return (
-    <div className="rounded-[1.5rem] border border-line bg-white p-5">
+    <div className="rounded-xl border border-line bg-white p-5">
       <p className="eyebrow">{title}</p>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <Field label="Name">
@@ -1269,7 +1255,7 @@ function AgentForm({
                 event.target.value,
               )
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Role">
@@ -1281,11 +1267,11 @@ function AgentForm({
                 event.target.value,
               )
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           />
         </Field>
         <Field label="Language">
-          <div className="w-full rounded-[1rem] border border-dashed border-line bg-slate-50 px-4 py-3 text-sm text-muted">
+          <div className="w-full rounded-xl border border-dashed border-line bg-gray-50 px-4 py-3 text-sm text-muted">
             <div className="font-semibold text-slate-600">{language}</div>
             <p className="mt-1 text-xs leading-5">
               Not editable here. This agent&apos;s spoken language is overridden
@@ -1303,7 +1289,7 @@ function AgentForm({
                 event.target.value,
               )
             }
-            className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3"
           >
             {voices.map((item) => (
               <option key={item} value={item}>
@@ -1327,7 +1313,7 @@ function AgentForm({
                 );
               }}
               placeholder="https://... or upload below"
-              className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+              className="w-full rounded-xl border border-line bg-white px-4 py-3"
             />
             <div className="flex flex-wrap items-center gap-3">
               <input
@@ -1387,7 +1373,7 @@ function AgentForm({
               event.target.value,
             )
           }
-          className="min-h-20 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+          className="min-h-20 w-full rounded-xl border border-line bg-white px-4 py-3"
         />
       </Field>
       <Field label="Demeanor" className="mt-4">
@@ -1399,7 +1385,7 @@ function AgentForm({
               event.target.value,
             )
           }
-          className="w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+          className="w-full rounded-xl border border-line bg-white px-4 py-3"
         />
       </Field>
       <Field label="Opening line" className="mt-4">
@@ -1411,7 +1397,23 @@ function AgentForm({
               event.target.value,
             )
           }
-          className="min-h-20 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+          className="min-h-20 w-full rounded-xl border border-line bg-white px-4 py-3"
+        />
+      </Field>
+      <Field
+        label="End condition"
+        hint="For the English-speaking professional: what must be collected before they close the session (e.g. symptoms, onset, medications, allergies). Defaults to the goal."
+        className="mt-4"
+      >
+        <textarea
+          value={endCondition}
+          onChange={(event) =>
+            onChange(
+              `${prefix}EndCondition` as keyof ScenarioFormState,
+              event.target.value,
+            )
+          }
+          className="min-h-20 w-full rounded-xl border border-line bg-white px-4 py-3"
         />
       </Field>
       <Field label="Instructions" className="mt-4">
@@ -1423,7 +1425,7 @@ function AgentForm({
               event.target.value,
             )
           }
-          className="min-h-28 w-full rounded-[1rem] border border-line bg-white px-4 py-3"
+          className="min-h-28 w-full rounded-xl border border-line bg-white px-4 py-3"
         />
       </Field>
     </div>

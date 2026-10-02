@@ -1,136 +1,160 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
 import { useQuery } from "convex/react";
-import { StatCard } from "@/components/ui/stat-card";
+import { ArrowRight, Check, Play } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { displayMaxScore, isPassingScore, toDisplayScore } from "@/lib/scoring";
+import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
+import { Badge, Card, EmptyState, SectionTitle, Skeleton, Stat } from "@/components/ui/primitives";
+import { Button } from "@/components/ui/button";
 
+/**
+ * Home. One obvious next action, then light context. Designed for the learner
+ * who logs in and asks "what do I do now?"
+ */
 export function LiveDashboard() {
-  const metrics = useQuery(api.sessions.metricsForCurrentUser, {});
-  const modules = useQuery(api.modules.list, {});
+  const me = useQuery(api.users.me, {});
+  const catalog = useQuery(api.catalog.forCurrentUser, {});
   const sessions = useQuery(api.sessions.listForCurrentUser, {});
-  const scenarios = useQuery(api.scenarios.list, {});
-  const jobs = useQuery(api.jobs.listVisible, {});
-  const completedSessions = sessions?.filter((session) => session.completionStatus !== "in_progress") ?? [];
-  const nextModule = modules?.[0] ?? null;
-  const scenarioTitleById = useMemo(
-    () => new Map((scenarios ?? []).map((scenario) => [scenario.id, scenario.title])),
-    [scenarios],
+  const metrics = useQuery(api.sessions.metricsForCurrentUser, {});
+  const { activePair } = useActiveLanguagePair();
+
+  if (!me || !catalog || !sessions || !metrics) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-1/2" />
+        <Skeleton className="h-56" />
+        <Skeleton className="h-40" />
+      </div>
+    );
+  }
+
+  const firstName = me.user.name.split(" ")[0];
+  const graded = sessions.filter(
+    (session) => session.completionStatus === "completed" || session.completionStatus === "needs_review",
+  );
+  const isNew = graded.length === 0;
+  const nextUp = catalog.nextUp;
+  const recent = graded.slice(0, 4);
+  const scenarioTitles = new Map(
+    catalog.modules.flatMap((m) => m.scenarios.map((s) => [s.id, s.title] as const)),
   );
 
-  const cards = metrics
-    ? [
-        { label: "Average score", value: `${metrics.averageScore}%` },
-        { label: "Modules passed", value: `${metrics.modulesCompleted}` },
-        { label: "Practice time", value: `${metrics.practiceHours}h` },
-      ]
-    : null;
-
   return (
-    <div className="space-y-8">
-      <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
-        <p className="eyebrow">Today</p>
-        <div className="mt-3 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <h2 className="text-4xl font-semibold tracking-[-0.05em]">
-              {nextModule ? `Continue with ${nextModule.title}.` : "Start your first module."}
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-muted">
-              {nextModule
-                ? "Open one module, run one scenario, and let the assessment update your profile."
-                : "Once modules are available, this screen will always point to the next sensible action."}
-            </p>
-          </div>
-          {nextModule ? (
-            <Link href={`/modules/${nextModule.id}`} className="action-primary">
-              Continue
-            </Link>
-          ) : null}
-        </div>
-      </section>
+    <div className="space-y-10">
+      <div>
+        <h1 className="text-3xl font-bold tracking-[-0.035em] sm:text-4xl">
+          {isNew ? `Let's get you speaking, ${firstName}.` : `Welcome back, ${firstName}.`}
+        </h1>
+        <p className="mt-2 text-gray-500">
+          Practising English ⇄ {activePair.targetLanguage} ·{" "}
+          {Math.floor(me.entitlement.remainingMinutes)} minutes left this month
+        </p>
+      </div>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        {(cards ?? Array.from({ length: 3 })).map((metric, index) =>
-          metric ? (
-            <StatCard key={metric.label} label={metric.label} value={metric.value} />
-          ) : (
-            <div key={index} className="surface-card h-28 rounded-3xl animate-pulse" />
-          ),
-        )}
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <section className="surface-card rounded-[2rem] p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="eyebrow">Recent</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">Latest assessments</h2>
+      {nextUp ? (
+        <Card tone="inverse" className="overflow-hidden">
+          <div className="p-6 sm:p-8">
+            <Badge tone="accent">{isNew ? "Start here" : "Up next"}</Badge>
+            <p className="mt-4 text-sm font-semibold text-paper/60">{nextUp.moduleTitle}</p>
+            <h2 className="mt-1 text-2xl font-bold tracking-[-0.03em] sm:text-3xl">{nextUp.scenarioTitle}</h2>
+            <p className="mt-2 max-w-2xl text-paper/70">{nextUp.scenarioDescription}</p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Button asChild size="lg" variant="accent">
+                <Link href={`/practice/${nextUp.scenarioId}`}>
+                  <Play className="h-4 w-4 fill-current" />
+                  {nextUp.attempts > 0 ? "Try again" : "Start dialogue"}
+                </Link>
+              </Button>
+              <span className="text-sm text-paper/60">About 5–10 minutes · briefing and mic check first</span>
             </div>
           </div>
-          <div className="mt-5 space-y-3">
-            {completedSessions.slice(0, 3).map((session) => (
-              <div key={session._id} className="rounded-[1.5rem] border border-line bg-white p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="font-semibold">{scenarioTitleById.get(session.scenarioId) ?? session.scenarioId}</div>
-                  <div className="score-pill rounded-full px-3 py-1.5 text-sm font-semibold">{session.score}%</div>
-                </div>
-                <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">{session.transcriptSummary}</p>
-                <div className="mt-4">
-                  <Link
-                    href={`/practice/${session.scenarioId}?attemptId=${session.id}`}
-                    className="text-sm font-semibold text-brand underline-offset-4 hover:underline"
-                  >
-                    View practice results
-                  </Link>
-                </div>
+        </Card>
+      ) : (
+        <EmptyState
+          title="You've passed every dialogue you can open"
+          description="Unlock premium modules to keep going."
+          action={
+            <Button asChild>
+              <Link href="/billing">See plans</Link>
+            </Button>
+          }
+        />
+      )}
+
+      {isNew ? (
+        <section>
+          <SectionTitle>How it works</SectionTitle>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              ["1", "Read the briefing", "Meet the two people you'll interpret for, and check your mic."],
+              ["2", "Interpret out loud", "Introduce yourself to the client first. Hold Space to talk, tap to switch."],
+              ["3", "Get your score", "Feedback on accuracy, terminology and flow, plus what to practise next."],
+            ].map(([n, title, body]) => (
+              <div key={n} className="rounded-xl bg-gray-50 p-5">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink text-sm font-bold text-paper">
+                  {n}
+                </span>
+                <p className="mt-4 font-bold">{title}</p>
+                <p className="mt-1 text-sm leading-6 text-gray-500">{body}</p>
               </div>
             ))}
-            {sessions && completedSessions.length === 0 ? (
-              <p className="text-sm text-muted">No completed practice yet.</p>
-            ) : null}
           </div>
         </section>
+      ) : (
+        <section>
+          <SectionTitle
+            action={
+              <Link href="/progress" className="text-sm font-semibold hover:underline">
+                All progress
+              </Link>
+            }
+          >
+            Your progress
+          </SectionTitle>
+          <Card className="grid gap-6 p-6 sm:grid-cols-4">
+            <Stat label="Average score" value={metrics.averageScore} hint="out of 100" />
+            <Stat label="Dialogues passed" value={catalog.modules.reduce((sum, m) => sum + m.passedCount, 0)} />
+            <Stat label="Sessions scored" value={graded.length} />
+            <Stat label="Hours practised" value={metrics.practiceHours} />
+          </Card>
+        </section>
+      )}
 
-        <div className="space-y-6">
-          <section className="surface-card rounded-[2rem] p-6">
-            <p className="eyebrow">Available now</p>
-            <div className="mt-5 space-y-3">
-              {(modules ?? []).slice(0, 2).map((module) => (
-                <div key={module._id} className="rounded-[1.5rem] border border-line bg-white p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <div className="font-semibold">{module.title}</div>
-                      <div className="mt-1 text-sm text-muted">{module.durationMinutes} min</div>
-                    </div>
-                    <Link href={`/modules/${module.id}`} className="action-secondary px-4 py-2 text-sm">
-                      Open
-                    </Link>
-                  </div>
+      {recent.length > 0 ? (
+        <section>
+          <SectionTitle>Recent results</SectionTitle>
+          <Card className="divide-y divide-gray-200">
+            {recent.map((session) => (
+              <Link
+                key={session._id}
+                href={`/results/${session.id}`}
+                className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-gray-50"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">{scenarioTitles.get(session.scenarioId) ?? session.scenarioId}</p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(session.timestamp).toLocaleDateString(undefined, { day: "numeric", month: "short" })}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="surface-card rounded-[2rem] p-6">
-            <p className="eyebrow">Assignments</p>
-            <div className="mt-5 space-y-3">
-              {(jobs ?? []).slice(0, 2).map((job) => (
-                <div key={job._id} className="rounded-[1.5rem] border border-line bg-white p-4 text-sm">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="font-semibold">{job.title}</div>
-                      <div className="mt-1 text-muted">{job.location}</div>
-                    </div>
-                    <div className="capitalize text-muted">{job.status}</div>
-                  </div>
+                <div className="flex items-center gap-3">
+                  {isPassingScore(session.moduleId, session.score) ? (
+                    <Badge tone="success">
+                      <Check className="h-3 w-3" /> Pass
+                    </Badge>
+                  ) : null}
+                  <span className="text-lg font-bold tabular-nums">
+                    {toDisplayScore(session.moduleId, session.score)}
+                    <span className="text-sm text-gray-500">/{displayMaxScore(session.moduleId)}</span>
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-gray-500" />
                 </div>
-              ))}
-              {jobs && jobs.length === 0 ? <p className="text-sm text-muted">No jobs yet.</p> : null}
-            </div>
-          </section>
-        </div>
-      </section>
+              </Link>
+            ))}
+          </Card>
+        </section>
+      ) : null}
     </div>
   );
 }

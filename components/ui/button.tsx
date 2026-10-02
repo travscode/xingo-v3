@@ -5,24 +5,31 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold transition disabled:pointer-events-none disabled:opacity-50",
+export const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold transition-colors disabled:pointer-events-none disabled:opacity-40",
   {
     variants: {
       variant: {
-        default: "bg-brand text-white hover:bg-brand-strong",
-        secondary: "border border-line bg-white hover:bg-black/[0.04]",
-        ghost: "hover:bg-black/[0.04]",
+        primary: "bg-ink text-paper hover:bg-gray-700",
+        secondary: "bg-gray-100 text-ink hover:bg-gray-200",
+        outline: "border border-gray-200 bg-paper text-ink hover:bg-gray-50",
+        ghost: "text-ink hover:bg-gray-100",
+        accent: "bg-accent text-accent-ink hover:brightness-95",
+        inverse: "bg-paper text-ink hover:bg-gray-100",
       },
       size: {
-        default: "h-10 px-4",
-        sm: "h-9 px-3",
-        icon: "h-10 w-10 px-0",
+        sm: "h-9 px-3 text-sm",
+        md: "h-11 px-4 text-[15px]",
+        lg: "h-14 px-6 text-base",
+        icon: "h-10 w-10",
+      },
+      block: {
+        true: "w-full",
       },
     },
     defaultVariants: {
-      variant: "default",
-      size: "default",
+      variant: "primary",
+      size: "md",
     },
   },
 );
@@ -33,7 +40,7 @@ export interface ButtonProps
   asChild?: boolean;
 }
 
-export function Button({ className, variant, size, asChild, ...props }: ButtonProps) {
+export function Button({ className, variant, size, block, asChild, ...props }: ButtonProps) {
   const Comp = asChild ? Slot : "button";
-  return <Comp className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+  return <Comp className={cn(buttonVariants({ variant, size, block }), className)} {...props} />;
 }

@@ -2,70 +2,45 @@
 
 import { useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useMutation } from "convex/react";
+import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 
 /**
- * Returns a normalized Clerk public metadata role string when present.
+ * Keeps the Convex user profile in sync with Clerk. Roles are not sent from
+ * here; they are managed server-side (users:setRole, admin invites).
  */
-function getClerkPublicRole(value: unknown) {
-  return typeof value === "string" ? value : undefined;
-}
-
 export function AppBootstrap() {
   const { isLoaded, isSignedIn, user } = useUser();
-  const seedBaseData = useMutation(api.seed.seedBaseData);
+  const { isAuthenticated } = useConvexAuth();
   const syncCurrentUser = useMutation(api.users.syncCurrentUser);
-  const seededRef = useRef(false);
-  const lastSuccessfulSyncSignatureRef = useRef<string | null>(null);
-  const syncInFlightRef = useRef(false);
+  const lastSyncedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (seededRef.current) {
+    if (!isLoaded || !isSignedIn || !user || !isAuthenticated) {
       return;
     }
 
-    seededRef.current = true;
-    void seedBaseData();
-  }, [seedBaseData]);
+    const email = user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? "";
+    const name = user.fullName ?? user.username ?? "Interpreter";
+    const signature = `${user.id}|${email}|${name}|${user.imageUrl ?? ""}`;
 
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn || !user) {
+    if (lastSyncedRef.current === signature) {
       return;
     }
 
-    const primaryEmail = user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress;
-    const role = getClerkPublicRole(user.publicMetadata.role);
-    const syncSignature = `${user.id}|${primaryEmail ?? ""}|${user.fullName ?? user.username ?? "Interpreter"}|${user.imageUrl ?? ""}|${role ?? ""}`;
-
-    if (lastSuccessfulSyncSignatureRef.current === syncSignature || syncInFlightRef.current) {
-      return;
-    }
-
-    syncInFlightRef.current = true;
-    console.info("[AppBootstrap] Clerk user metadata snapshot", {
-      clerkId: user.id,
-      publicMetadata: user.publicMetadata,
-      resolvedRole: role ?? null,
-    });
-
-    void syncCurrentUser({
-      clerkId: user.id,
-      email: primaryEmail ?? "",
-      name: user.fullName ?? user.username ?? "Interpreter",
-      imageUrl: user.imageUrl ?? undefined,
-      role,
-    })
-      .then(() => {
-        lastSuccessfulSyncSignatureRef.current = syncSignature;
+    lastSyncedRef.current = signature;
+    void syncCurrentUser({ email, name, imageUrl: user.imageUrl ?? undefined })
+      .then((result) => {
+        if (result.created) {
+          track("sign_up", { method: "clerk" });
+        }
       })
       .catch((error: unknown) => {
-        console.error("[AppBootstrap] Failed to sync current user", error);
-      })
-      .finally(() => {
-        syncInFlightRef.current = false;
+        lastSyncedRef.current = null;
+        console.error("[AppBootstrap] Failed to sync user", error);
       });
-  }, [isLoaded, isSignedIn, syncCurrentUser, user]);
+  }, [isAuthenticated, isLoaded, isSignedIn, syncCurrentUser, user]);
 
   return null;
 }

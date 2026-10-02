@@ -184,18 +184,18 @@ export const seedScenarios = [
     moduleId: "medical-er-intake",
     title: "Emergency Room Triage",
     description:
-      "A practitioner assesses chest pain, prior medication use, and symptom onset while the patient is distressed.",
+      "A clinician assesses chest pain, prior medication use, and symptom onset while the patient is distressed.",
     aiAgentA: {
       name: "Callum Wallace",
-      role: "Practitioner",
+      role: "Clinician",
       voice: "cedar",
       goal: "Extract symptom details, confirm urgency, and recommend a safe next step.",
       language: "English",
       demeanor: "Calm, procedural, and reassuring",
       instructions:
-        "You are a clinical practitioner taking an urgent intake call through an interpreter. Use short, direct turns, ask structured questions, and speak only in English.",
+        "You are a clinical clinician taking an urgent intake call through an interpreter. Use short, direct turns, ask structured questions, and speak only in English.",
       openingLine:
-        "Hello, I am the practitioner on duty. Please let the caller know I need to ask a few questions about the chest pain.",
+        "Hello, I am the clinician on duty. Please let the caller know I need to ask a few questions about the chest pain.",
     },
     aiAgentB: {
       name: "Rosita Sanchez",
@@ -989,7 +989,7 @@ export function demoSessionsForClerk(clerkId: string) {
       transcriptEntries: buildTranscript(
         [
           {
-            speaker: "Practitioner",
+            speaker: "Clinician",
             role: "assistant",
             text: "Please ask when the chest pain started and whether any medication has already been taken.",
           },

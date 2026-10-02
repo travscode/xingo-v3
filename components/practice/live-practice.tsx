@@ -1,23 +1,35 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { PracticeRoomRunner } from "@/components/practice/practice-room-runner";
+import { PracticeRoom } from "@/components/practice/practice-room";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/primitives";
 
 export function LivePractice({ scenarioId }: { scenarioId: string }) {
-  const scenario = useQuery(api.scenarios.getById, { id: scenarioId });
+  const data = useQuery(api.catalog.scenarioForPractice, { scenarioId });
 
-  if (scenario === undefined) {
-    return <div className="surface-card h-96 rounded-[2rem] animate-pulse" />;
-  }
-
-  if (!scenario) {
+  if (data === undefined) {
     return (
-      <section className="surface-card rounded-[2rem] p-6">
-        <p className="text-sm text-muted">Scenario not found.</p>
-      </section>
+      <div className="mx-auto max-w-5xl space-y-4 p-6">
+        <Skeleton className="h-10 w-2/3" />
+        <Skeleton className="h-80" />
+      </div>
     );
   }
 
-  return <PracticeRoomRunner scenario={scenario} />;
+  if (data === null) {
+    return (
+      <div className="mx-auto max-w-md py-24 text-center">
+        <h1 className="text-2xl font-bold">We couldn&apos;t find that dialogue</h1>
+        <p className="mt-2 text-gray-500">It may have been renamed or removed.</p>
+        <Button asChild className="mt-6">
+          <Link href="/modules">Back to practice</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return <PracticeRoom data={data} />;
 }

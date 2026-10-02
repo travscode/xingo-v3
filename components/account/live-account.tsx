@@ -1,284 +1,164 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useState } from "react";
+import { useClerk } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
+import { Check, X } from "lucide-react";
 import { api } from "@/convex/_generated/api";
-import { getPerformanceBadges, getTopIndustry } from "@/lib/performance";
-import { StatCard } from "@/components/ui/stat-card";
-import type { LanguagePreference } from "@/types/user";
-
-/**
- * Returns an empty language preference row for settings forms.
- */
-function createEmptyLanguagePreference(): LanguagePreference {
-  return {
-    sourceLanguage: "",
-    targetLanguage: "",
-  };
-}
+import { practiceGoals } from "@/lib/goals";
+import { createLanguagePair, flagEmoji, practiceLanguages } from "@/lib/languages";
+import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
+import { Badge, Card, PageHeader, SectionTitle, Skeleton } from "@/components/ui/primitives";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function LiveAccount() {
-  const { user } = useUser();
-  const currentUser = useQuery(api.users.current, {});
-  const updateLanguagePreferences = useMutation(api.users.updateLanguagePreferences);
-  const metrics = useQuery(api.sessions.metricsForCurrentUser, {});
-  const sessions = useQuery(api.sessions.listForCurrentUser, {});
-  const modules = useQuery(api.modules.list, {});
-  const scenarios = useQuery(api.scenarios.list, {});
-  const [languagePreferences, setLanguagePreferences] = useState<LanguagePreference[]>([]);
-  const [isSavingPreferences, setIsSavingPreferences] = useState(false);
-  const [preferenceStatus, setPreferenceStatus] = useState("");
+  const me = useQuery(api.users.me, {});
+  const completeOnboarding = useMutation(api.users.completeOnboarding);
+  const updatePreferences = useMutation(api.users.updateLanguagePreferences);
+  const { activePair, setActivePair } = useActiveLanguagePair();
+  const clerk = useClerk();
+  const [adding, setAdding] = useState("");
 
-  const completedSessions = useMemo(
-    () => (sessions ?? []).filter((session) => session.completionStatus !== "in_progress"),
-    [sessions],
-  );
-
-  const latestSessions = useMemo(() => completedSessions.slice(0, 4), [completedSessions]);
-  const badges = useMemo(
-    () =>
-      modules && sessions
-        ? getPerformanceBadges(
-            modules.map((module) => ({
-              id: module.id,
-              title: module.title,
-              industryCategory: module.industryCategory,
-            })),
-            sessions.map((session) => ({
-              ...session,
-              userId: session.clerkId,
-              startedAt: session.startedAt ?? session.timestamp,
-              durationSeconds: session.durationSeconds ?? session.durationMinutes * 60,
-              transcriptEntries: session.transcriptEntries ?? [],
-            })),
-          )
-        : [],
-    [modules, sessions],
-  );
-
-  const topIndustry = useMemo(
-    () =>
-      modules && sessions
-        ? getTopIndustry(
-            modules.map((module) => ({
-              id: module.id,
-              title: module.title,
-              industryCategory: module.industryCategory,
-            })),
-            sessions.map((session) => ({
-              ...session,
-              userId: session.clerkId,
-              startedAt: session.startedAt ?? session.timestamp,
-              durationSeconds: session.durationSeconds ?? session.durationMinutes * 60,
-              transcriptEntries: session.transcriptEntries ?? [],
-            })),
-          )
-        : null,
-    [modules, sessions],
-  );
-
-  const scenarioTitleById = useMemo(
-    () => new Map((scenarios ?? []).map((scenario) => [scenario.id, scenario.title])),
-    [scenarios],
-  );
-
-  useEffect(() => {
-    if (!currentUser) {
-      return;
-    }
-
-    const saved = currentUser.languagePreferences ?? [];
-    setLanguagePreferences(saved.length > 0 ? saved : [createEmptyLanguagePreference()]);
-  }, [currentUser]);
-
-  if (!metrics || !sessions || !modules || !scenarios) {
-    return <div className="surface-card h-80 rounded-[1.75rem] animate-pulse" />;
+  if (!me) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-1/3" />
+        <Skeleton className="h-40" />
+      </div>
+    );
   }
 
+  const { user } = me;
+  const pairs = (user.languagePreferences ?? []).map((pair) =>
+    createLanguagePair(pair.sourceLanguage, pair.targetLanguage),
+  );
+
+  const savePairs = (next: typeof pairs) =>
+    updatePreferences({
+      languagePreferences: next.map(({ sourceLanguage, targetLanguage }) => ({ sourceLanguage, targetLanguage })),
+    });
+
+  const setGoal = (goalId: string) => {
+    const primary = pairs[0] ?? activePair;
+    void completeOnboarding({
+      practiceGoal: goalId,
+      languagePair: { sourceLanguage: primary.sourceLanguage, targetLanguage: primary.targetLanguage },
+    });
+  };
+
   return (
-    <div className="space-y-8">
-      <section className="section-frame rounded-[2.25rem] p-6 lg:p-8">
-        <p className="eyebrow">Profile</p>
-        <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="text-4xl font-semibold tracking-[-0.05em]">
-              {currentUser?.name ?? user?.fullName ?? "Interpreter"}
-            </h1>
-            <div className="mt-3 space-y-1.5 text-sm text-muted">
-              <p>{currentUser?.email ?? user?.primaryEmailAddress?.emailAddress ?? "No email"}</p>
-              <p className="capitalize">
-                {currentUser?.role ?? "interpreter"} · {currentUser?.subscriptionStatus ?? "free"}
-              </p>
+    <div className="space-y-10">
+      <PageHeader title="Account" />
+
+      <section>
+        <SectionTitle>Profile</SectionTitle>
+        <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
+          <div className="flex items-center gap-4">
+            {user.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.imageUrl} alt="" className="h-12 w-12 rounded-full object-cover" />
+            ) : null}
+            <div>
+              <p className="font-bold">{user.name}</p>
+              <p className="text-sm text-gray-500">{user.email}</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 text-sm">
-            <div className="score-pill rounded-full px-4 py-2">{completedSessions.length} attempts</div>
-            <div className="score-pill rounded-full px-4 py-2">
-              {topIndustry ? `${topIndustry} focus` : "No focus yet"}
-            </div>
-          </div>
+          <Button variant="outline" onClick={() => clerk.openUserProfile()}>
+            Edit name, email & password
+          </Button>
+        </Card>
+      </section>
+
+      <section>
+        <SectionTitle>Preparing for</SectionTitle>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {practiceGoals.map((goal) => (
+            <button
+              key={goal.id}
+              type="button"
+              onClick={() => setGoal(goal.id)}
+              className={cn(
+                "flex items-center justify-between rounded-xl border-2 px-4 py-3 text-left",
+                user.practiceGoal === goal.id ? "border-ink" : "border-transparent bg-gray-50 hover:bg-gray-100",
+              )}
+            >
+              <span>
+                <span className="block font-semibold">{goal.label}</span>
+                <span className="block text-sm text-gray-500">{goal.description}</span>
+              </span>
+              {user.practiceGoal === goal.id ? <Check className="h-4 w-4" /> : null}
+            </button>
+          ))}
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Average score" value={`${metrics.averageScore}%`} />
-        <StatCard label="Modules passed" value={`${metrics.modulesCompleted}`} />
-        <StatCard label="Practice time" value={`${metrics.practiceHours}h`} />
-        <StatCard label="Credentials" value={`${metrics.credentialsEarned}`} />
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="surface-card rounded-[2rem] p-6">
-          <p className="eyebrow">Badges</p>
-          <div className="mt-5 grid gap-3">
-            {badges.length > 0 ? (
-              badges.map((badge) => (
-                <div key={badge.id} className="rounded-[1.25rem] border border-line bg-white p-4">
-                  <div className="text-sm font-semibold">{badge.label}</div>
-                  <p className="mt-1 text-sm leading-6 text-muted">{badge.description}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted">Complete assessed practice to unlock badges.</p>
-            )}
-          </div>
-        </div>
-
-        <div className="surface-card rounded-[2rem] p-6">
-          <p className="eyebrow">Overview</p>
-          <div className="mt-5 space-y-4">
-            <div className="flex items-end justify-between border-b border-line pb-4">
-              <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-                  Highest assessment
-                </div>
-                <div className="mt-2 text-4xl font-semibold tracking-[-0.05em]">
-                  {Math.max(0, ...completedSessions.map((session) => session.score))}%
-                </div>
-              </div>
-              <div className="text-right text-sm text-muted">
-                {topIndustry ? `${topIndustry} strongest sector` : "Build a score history"}
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-                {modules
-                  .filter((module) =>
-                    completedSessions.some((session) => session.moduleId === module.id && session.score >= 75),
-                  )
-                  .slice(0, 4)
-                  .map((module) => (
-                    <div key={module.id} className="rounded-[1.25rem] border border-line bg-white p-4">
-                      <div className="text-sm font-semibold">{module.title}</div>
-                      <div className="mt-1 text-sm text-muted capitalize">{module.industryCategory}</div>
-                    </div>
-                ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="surface-card rounded-[2rem] p-6">
-        <p className="eyebrow">Language preferences</p>
-        <p className="mt-3 text-sm text-muted">
-          Set your working language pairs so XINGO can prioritize matching scenarios.
+      <section>
+        <SectionTitle>Your languages</SectionTitle>
+        <p className="-mt-1 mb-3 text-sm text-gray-500">
+          The English-speaking professional always speaks English; the client speaks the language you choose.
         </p>
-        <div className="mt-5 space-y-3">
-          {languagePreferences.map((pair, index) => (
-            <div key={`pref_${index}`} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-              <input
-                value={pair.sourceLanguage}
-                onChange={(event) =>
-                  setLanguagePreferences((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? { ...item, sourceLanguage: event.target.value }
-                        : item,
-                    ),
-                  )
-                }
-                placeholder="Source language"
-                className="w-full rounded-[1rem] border border-line bg-white px-4 py-3 text-sm"
-              />
-              <input
-                value={pair.targetLanguage}
-                onChange={(event) =>
-                  setLanguagePreferences((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? { ...item, targetLanguage: event.target.value }
-                        : item,
-                    ),
-                  )
-                }
-                placeholder="Target language"
-                className="w-full rounded-[1rem] border border-line bg-white px-4 py-3 text-sm"
-              />
-              <button
-                type="button"
-                onClick={() =>
-                  setLanguagePreferences((current) =>
-                    current.length > 1 ? current.filter((_, itemIndex) => itemIndex !== index) : current,
-                  )
-                }
-                className="action-secondary px-4 py-3 text-sm"
-              >
-                Remove
-              </button>
+        <Card className="divide-y divide-gray-200">
+          {pairs.map((pair, index) => (
+            <div key={pair.key} className="flex items-center justify-between gap-3 px-5 py-3">
+              <span className="font-semibold">
+                {pair.sourceLanguage} ⇄ {flagEmoji(pair.targetLanguage)} {pair.targetLanguage}
+              </span>
+              <div className="flex items-center gap-2">
+                {pair.key === activePair.key ? (
+                  <Badge tone="dark">Active</Badge>
+                ) : (
+                  <Button size="sm" variant="ghost" onClick={() => setActivePair(pair)}>
+                    Use
+                  </Button>
+                )}
+                {index > 0 || pairs.length > 1 ? (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Remove ${pair.targetLanguage}`}
+                    onClick={() => void savePairs(pairs.filter((other) => other.key !== pair.key))}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                ) : null}
+              </div>
             </div>
           ))}
-        </div>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() =>
-              setLanguagePreferences((current) => [...current, createEmptyLanguagePreference()])
-            }
-            className="action-secondary px-4 py-2 text-sm"
-          >
-            Add pair
-          </button>
-          <button
-            type="button"
-            onClick={async () => {
-              setIsSavingPreferences(true);
-              setPreferenceStatus("");
-              try {
-                await updateLanguagePreferences({
-                  languagePreferences: languagePreferences.filter(
-                    (pair) => pair.sourceLanguage.trim() && pair.targetLanguage.trim(),
-                  ),
-                });
-                setPreferenceStatus("Preferences saved.");
-              } catch (error) {
-                setPreferenceStatus(error instanceof Error ? error.message : "Could not save preferences.");
-              } finally {
-                setIsSavingPreferences(false);
-              }
+          <form
+            className="flex gap-2 px-5 py-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const name = adding.trim();
+              if (!name) return;
+              const pair = createLanguagePair("English", name);
+              void savePairs([...pairs.filter((p) => p.key !== pair.key), pair]);
+              setAdding("");
             }}
-            disabled={isSavingPreferences}
-            className="action-primary px-4 py-2 text-sm disabled:opacity-50"
           >
-            {isSavingPreferences ? "Saving..." : "Save preferences"}
-          </button>
-        </div>
-        {preferenceStatus ? <p className="mt-3 text-sm text-muted">{preferenceStatus}</p> : null}
+            <input
+              list="xingo-languages"
+              value={adding}
+              onChange={(event) => setAdding(event.target.value)}
+              placeholder="Add a language…"
+              className="h-10 min-w-0 flex-1 rounded-lg bg-gray-100 px-3 text-sm outline-none focus:ring-2 focus:ring-live"
+            />
+            <datalist id="xingo-languages">
+              {practiceLanguages.map((language) => (
+                <option key={language.name} value={language.name} />
+              ))}
+            </datalist>
+            <Button type="submit" variant="secondary">
+              Add
+            </Button>
+          </form>
+        </Card>
       </section>
 
-      <section className="surface-card rounded-[2rem] p-6">
-        <p className="eyebrow">Recent assessments</p>
-        <div className="mt-5 space-y-3">
-          {latestSessions.map((session) => (
-            <div key={session._id} className="rounded-[1.25rem] border border-line bg-white p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="font-semibold">{scenarioTitleById.get(session.scenarioId) ?? session.scenarioId}</div>
-                <div className="score-pill rounded-full px-3 py-1.5 text-sm font-semibold">{session.score}%</div>
-              </div>
-              <p className="mt-2 text-sm leading-6 text-muted">{session.transcriptSummary}</p>
-            </div>
-          ))}
-          {latestSessions.length === 0 ? <p className="text-sm text-muted">No assessed sessions yet.</p> : null}
-        </div>
+      <section>
+        <Button variant="ghost" onClick={() => void clerk.signOut({ redirectUrl: "/" })}>
+          Sign out
+        </Button>
       </section>
     </div>
   );
