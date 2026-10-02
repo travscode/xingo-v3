@@ -525,6 +525,12 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     return () => window.clearTimeout(timeout);
   }, [countdown, phase, startSession]);
 
+  // Latest finishSession for timers, so they aren't reset by every transcript update.
+  const finishSessionRef = useRef(finishSession);
+  useEffect(() => {
+    finishSessionRef.current = finishSession;
+  }, [finishSession]);
+
   // Server heartbeat: keeps the attempt alive and enforces the minute balance.
   useEffect(() => {
     if (phase !== "live" || !attemptId) {
@@ -537,14 +543,14 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
           setAllowedMs(result.allowedMs);
 
           if (result.shouldEnd) {
-            finishSession("time_up");
+            finishSessionRef.current("time_up");
           }
         })
         .catch(() => undefined);
     }, HEARTBEAT_INTERVAL_MS);
 
     return () => window.clearInterval(interval);
-  }, [attemptId, finishSession, heartbeat, phase]);
+  }, [attemptId, heartbeat, phase]);
 
   // Clock tick for the timer.
   useEffect(() => {
