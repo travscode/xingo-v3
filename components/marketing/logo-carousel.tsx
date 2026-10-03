@@ -4,11 +4,13 @@ import { cn } from "@/lib/utils";
 /**
  * Organisations 2M Language Services (XINGO's partner) works with. Shown under a
  * contract with 2M confirmed by the founder on 2026-10-03; framed as 2M's clients,
- * where XINGO-qualified interpreters can work — not as XINGO customers. Logos are
- * from Wikimedia Commons (public/images/logos/). Government bodies stay as text:
- * their emblems are protected separately. Only add organisations 2M has approved.
+ * where XINGO-qualified interpreters can work — not as XINGO customers. Logos come
+ * from Wikimedia Commons or the organisations' own sites (public/images/logos/) and
+ * are shown in solid black. Organisations without a logo file aren't shown.
+ * Not included: the Australian Federal Police — its name and insignia need the AFP's
+ * own written consent (Australian Federal Police Act), which 2M's contract doesn't give.
  */
-export type CarouselOrg = { name: string; logo?: string };
+export type CarouselOrg = { name: string; logo: string };
 
 export const partnerClients: CarouselOrg[] = [
   { name: "Microsoft", logo: "/images/logos/microsoft.svg" },
@@ -16,20 +18,16 @@ export const partnerClients: CarouselOrg[] = [
   { name: "Deloitte", logo: "/images/logos/deloitte.svg" },
   { name: "Rio Tinto", logo: "/images/logos/rio-tinto.svg" },
   { name: "Deutsche Bank", logo: "/images/logos/deutsche-bank.svg" },
-  { name: "Healthdirect Australia" },
-  { name: "Queensland Government" },
-  { name: "Australian Federal Police" },
+  { name: "Healthdirect Australia", logo: "/images/logos/healthdirect.svg" },
+  { name: "Emergency Management Victoria", logo: "/images/logos/emv-black.png" },
+  { name: "Queensland Government", logo: "/images/logos/qld-gov-black.png" },
 ];
 
 function Tile({ org }: { org: CarouselOrg }) {
   return (
     <li className="flex h-16 w-[33.333vw] shrink-0 items-center justify-center px-4 sm:w-[25vw] lg:w-[min(16.666vw,12rem)]" aria-label={org.name}>
-      {org.logo ? (
-        // SVGs are served as-is (the image optimiser doesn't process SVG).
-        <Image src={org.logo} alt={org.name} width={140} height={48} unoptimized className="h-8 w-auto max-w-[8.5rem] object-contain opacity-60 grayscale transition hover:opacity-100 hover:grayscale-0" />
-      ) : (
-        <span className="text-center text-[15px] font-semibold leading-tight tracking-[-0.01em] text-gray-500">{org.name}</span>
-      )}
+      {/* Solid black (brightness-0); files are tiny, so they're served as-is. */}
+      <Image src={org.logo} alt={org.name} width={140} height={48} unoptimized className="h-9 w-auto max-w-[8.5rem] object-contain brightness-0" />
     </li>
   );
 }

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
 import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
+import { LogoCarousel } from "@/components/marketing/logo-carousel";
 import { examPages } from "@/lib/exam-pages";
 import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "@/lib/scoring";
 import { packList, plans } from "@/lib/plans";
@@ -125,6 +126,18 @@ export default function HomePage() {
             </Link>
           </li>
         </ul>
+      </section>
+
+      {/* Where it leads: 2M's clients (under contract with 2M) */}
+      <section aria-labelledby="partners-heading">
+        <h2 id="partners-heading" className="text-center text-2xl font-bold tracking-[-0.03em] sm:text-3xl">
+          Practise here. Interpret for organisations like these.
+        </h2>
+        <p className="mx-auto mt-2 max-w-2xl text-center text-[15px] leading-7 text-gray-500">
+          XINGO is partnered with 2M Language Services, who interpret for organisations across Australia. Get qualified on XINGO and you
+          could work with them through 2M.
+        </p>
+        <LogoCarousel className="mt-8" />
       </section>
 
       {/* Two ways to practise */}
