@@ -9,7 +9,7 @@ import { api } from "@/convex/_generated/api";
 import { friendlyError } from "@/lib/errors";
 import { CREATOR_GUIDELINES } from "@/lib/marketplace";
 import { cn } from "@/lib/utils";
-import { Badge, Card, Skeleton } from "@/components/ui/primitives";
+import { Badge, Card, EmptyState, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/admin/content/fields";
 import { ListingEditor } from "@/components/marketplace/listing-editor";
@@ -68,6 +68,9 @@ function PublishPanel({ moduleId, onClose }: { moduleId: string; onClose: () => 
 export function CourseEditor({ moduleId }: { moduleId: string }) {
   const data = useQuery(api.marketplace.editorData, { moduleId });
   const unpublish = useMutation(api.marketplace.unpublish);
+  const deleteCourse = useMutation(api.marketplace.deleteCourse);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -78,6 +81,19 @@ export function CourseEditor({ moduleId }: { moduleId: string }) {
   const tab: Tab = requested && ["page", "scenarios", "insights"].includes(requested) ? requested : created ? "scenarios" : "page";
 
   if (data === undefined) return <Skeleton className="h-96" />;
+  if (data === null) {
+    return (
+      <EmptyState
+        title="This course has been deleted"
+        description="It's no longer on the marketplace or in anyone's library."
+        action={
+          <Button asChild>
+            <Link href="/marketplace?tab=yours">Back to your courses</Link>
+          </Button>
+        }
+      />
+    );
+  }
 
   const { listing, scenarios } = data;
   const published = listing.status === "published";
@@ -189,6 +205,35 @@ export function CourseEditor({ moduleId }: { moduleId: string }) {
       ) : (
         <CourseInsights moduleId={moduleId} />
       )}
+
+      <section className="mt-12 flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-semibold">Delete this course</p>
+          <p className="text-sm text-gray-500">
+            Removes the course, its scenarios and its page for good, and takes it out of learners&apos; libraries. Past results and
+            earnings already recorded are kept. This can&apos;t be undone.
+          </p>
+          {deleteError ? <p className="mt-1 text-sm text-record">{deleteError}</p> : null}
+        </div>
+        <Button
+          variant="outline"
+          className="shrink-0 border-record text-record hover:bg-record/10"
+          disabled={deleting}
+          onClick={() => {
+            if (!window.confirm(`Delete "${listing.title}" permanently? This can't be undone.`)) return;
+            setDeleting(true);
+            setDeleteError(null);
+            deleteCourse({ moduleId })
+              .then(({ orgHandle }) => router.replace(orgHandle ? `/marketplace/org/${orgHandle}?tab=courses` : "/marketplace?tab=yours"))
+              .catch((error) => {
+                setDeleteError(friendlyError(error));
+                setDeleting(false);
+              });
+          }}
+        >
+          {deleting ? "Deleting…" : "Delete course"}
+        </Button>
+      </section>
     </div>
   );
 }

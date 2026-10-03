@@ -3,7 +3,7 @@ import { getBillingMonthKey } from "../lib/plans";
 import { ORG_MAX_MONTHLY_MINUTES } from "../lib/orgs";
 import { mutation, query } from "./_generated/server";
 import { requirePlatformAdmin } from "./model/auth";
-import { getListing, houseOwnerId } from "./model/courses";
+import { deleteCommunityCourse, getListing, houseOwnerId } from "./model/courses";
 
 /**
  * Admin overrides for the whole marketplace (D-038): edit any creator profile,
@@ -106,25 +106,11 @@ export const deleteCourse = mutation({
   args: { moduleId: v.string() },
   handler: async (ctx, args) => {
     await requirePlatformAdmin(ctx);
-    const listing = await getListing(ctx, args.moduleId);
-    if (!listing) throw new Error("Course not found");
-    const course = await ctx.db.query("modules").withIndex("by_public_id", (q) => q.eq("id", args.moduleId)).unique();
-    if (course?.source !== "community") throw new Error("Only marketplace courses can be deleted here");
-
-    for (const scenario of await ctx.db.query("scenarios").withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId)).collect()) {
-      await ctx.db.delete(scenario._id);
-    }
-    for (const item of await ctx.db.query("libraryItems").withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId)).collect()) {
-      await ctx.db.delete(item._id);
-    }
-    for (const rating of await ctx.db.query("courseRatings").withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId)).collect()) {
-      await ctx.db.delete(rating._id);
-    }
-    await ctx.db.delete(listing._id);
-    if (course) await ctx.db.delete(course._id);
+    await deleteCommunityCourse(ctx, args.moduleId);
     return { ok: true };
   },
 });
+
 
 export const deleteRating = mutation({
   args: { ratingId: v.id("courseRatings") },

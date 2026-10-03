@@ -3,7 +3,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getClerkIdFromIdentity, getUserByClerkId, requirePlatformAdmin, requireUser } from "./model/auth";
-import { getCourse, getListing, isCourseOwner, isHouseOwner, libraryModuleIds } from "./model/courses";
+import { deleteCommunityCourse, getCourse, getListing, isCourseOwner, isHouseOwner, libraryModuleIds } from "./model/courses";
 import { normalizeAgent } from "./model/scenario";
 import { ensureCreatorProfile } from "./creators";
 import {
@@ -543,10 +543,11 @@ export const createCourse = mutation({
   },
 });
 
-/** Everything the course editor needs. */
+/** Everything the course editor needs. Null once the course has been deleted. */
 export const editorData = query({
   args: { moduleId: v.string() },
   handler: async (ctx, args) => {
+    if (!(await getListing(ctx, args.moduleId))) return null;
     const { listing } = await requireCourseEditor(ctx, args.moduleId);
     const scenarios = await ctx.db
       .query("scenarios")
@@ -718,6 +719,16 @@ export const publish = mutation({
       });
     }
     return { slug: listing.slug };
+  },
+});
+
+/** Permanently deletes a course. Its creator, the org team (org courses) or a platform admin. */
+export const deleteCourse = mutation({
+  args: { moduleId: v.string() },
+  handler: async (ctx, args) => {
+    const { listing } = await requireCourseEditor(ctx, args.moduleId);
+    await deleteCommunityCourse(ctx, args.moduleId);
+    return { orgHandle: listing.orgHandle ?? null };
   },
 });
 

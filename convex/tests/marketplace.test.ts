@@ -189,3 +189,24 @@ describe("ratings and originals", () => {
     expect(await t.run((ctx) => ctx.db.query("creatorEarnings").collect())).toHaveLength(0);
   });
 });
+
+describe("deleting a course", () => {
+  test("its creator can delete it; it leaves the marketplace and learners' libraries", async () => {
+    const t = setup();
+    const { creator, moduleId, slug } = await createPublished(t);
+    const learner = await seedUser(t, "learner");
+    await learner.mutation(api.marketplace.addToLibrary, { moduleId });
+
+    const other = await seedUser(t, "other");
+    await expect(other.mutation(api.marketplace.deleteCourse, { moduleId })).rejects.toThrow();
+
+    await expect(creator.mutation(api.marketplace.deleteCourse, { moduleId })).resolves.toEqual({ orgHandle: null });
+    expect(await learner.query(api.marketplace.listing, { slug })).toBeNull();
+    expect(await creator.query(api.marketplace.editorData, { moduleId })).toBeNull();
+    const leftovers = await t.run(async (ctx) => ({
+      scenarios: await ctx.db.query("scenarios").withIndex("by_moduleId", (q) => q.eq("moduleId", moduleId)).collect(),
+      library: await ctx.db.query("libraryItems").withIndex("by_moduleId", (q) => q.eq("moduleId", moduleId)).collect(),
+    }));
+    expect(leftovers).toEqual({ scenarios: [], library: [] });
+  });
+});

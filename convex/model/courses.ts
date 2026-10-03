@@ -156,3 +156,35 @@ export async function bumpCourseCounters(ctx: MutationCtx, moduleId: string, fie
   if (!listing) return;
   await ctx.db.patch(listing._id, { [field]: (listing[field] ?? 0) + 1 });
 }
+
+/**
+ * Deletes a marketplace course and everything hanging off it: scenarios, library
+ * entries, ratings, view counts, its listing and its place in organisation
+ * collections. Learners' past results and creators' recorded earnings are kept.
+ */
+export async function deleteCommunityCourse(ctx: MutationCtx, moduleId: string) {
+  const listing = await getListing(ctx, moduleId);
+  const course = await getCourse(ctx, moduleId);
+  if (!listing || !course || !isCommunityCourse(course)) throw new Error("Course not found");
+
+  for (const scenario of await ctx.db.query("scenarios").withIndex("by_moduleId", (q) => q.eq("moduleId", moduleId)).collect()) {
+    await ctx.db.delete(scenario._id);
+  }
+  for (const item of await ctx.db.query("libraryItems").withIndex("by_moduleId", (q) => q.eq("moduleId", moduleId)).collect()) {
+    await ctx.db.delete(item._id);
+  }
+  for (const rating of await ctx.db.query("courseRatings").withIndex("by_moduleId", (q) => q.eq("moduleId", moduleId)).collect()) {
+    await ctx.db.delete(rating._id);
+  }
+  for (const view of await ctx.db.query("courseViews").withIndex("by_module_day", (q) => q.eq("moduleId", moduleId)).collect()) {
+    await ctx.db.delete(view._id);
+  }
+  if (listing.orgHandle) {
+    const collections = await ctx.db.query("orgCollections").withIndex("by_org", (q) => q.eq("orgHandle", listing.orgHandle!)).collect();
+    for (const collection of collections.filter((c) => c.moduleIds.includes(moduleId))) {
+      await ctx.db.patch(collection._id, { moduleIds: collection.moduleIds.filter((id) => id !== moduleId) });
+    }
+  }
+  await ctx.db.delete(listing._id);
+  await ctx.db.delete(course._id);
+}
