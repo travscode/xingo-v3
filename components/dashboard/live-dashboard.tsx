@@ -50,7 +50,9 @@ export function LiveDashboard() {
         </h1>
         <p className="mt-2 text-gray-500">
           {activePair.targetLanguage.toLowerCase() !== "english" ? `Practising English ⇄ ${activePair.targetLanguage} · ` : ""}
-          {Math.floor(me.entitlement.remainingMinutes)} minutes left this month
+          {me.entitlement.planLabel === "Admin"
+            ? "Admin access — every module unlocked"
+            : `${Math.floor(me.entitlement.remainingMinutes)} minutes left this month`}
         </p>
       </div>
 
