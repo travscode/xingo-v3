@@ -29,12 +29,19 @@ export type Entitlement = {
  * Minutes are spent from the monthly allowance first, then from packs
  * (see `splitCharge`). Pack minutes never expire.
  */
+/** Platform admins can open every module and are never blocked by minutes (usage is still recorded). */
+const ADMIN_MONTHLY_MINUTES = 100_000;
+
 export async function getEntitlement(
   ctx: Ctx,
-  user: Pick<Doc<"users">, "clerkId" | "subscriptionStatus">,
+  user: Pick<Doc<"users">, "clerkId" | "subscriptionStatus"> & { role?: Doc<"users">["role"] },
   now = new Date(),
 ): Promise<Entitlement> {
-  const plan = getPlan(user.subscriptionStatus);
+  const isAdmin = user.role === "platform_admin";
+  const basePlan = getPlan(user.subscriptionStatus);
+  const plan = isAdmin
+    ? { ...basePlan, label: "Admin", monthlyMinutes: ADMIN_MONTHLY_MINUTES, premiumAccess: true }
+    : basePlan;
   const billingMonth = getBillingMonthKey(now);
 
   const [monthCharges, allCharges, grants] = await Promise.all([

@@ -1209,7 +1209,9 @@ function SetupPanel({
           </Button>
         )}
         <p className="mt-3 text-center text-xs text-gray-500">
-          {Math.floor(access.remainingMinutes)} practice minutes left · time counts while the session is live
+          {access.remainingMinutes > 10_000
+            ? "Admin access · minutes aren't limited"
+            : `${Math.floor(access.remainingMinutes)} practice minutes left · time counts while the session is live`}
         </p>
       </Card>
     </div>

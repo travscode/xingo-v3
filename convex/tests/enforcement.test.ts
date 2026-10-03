@@ -434,3 +434,29 @@ describe("exam pack", () => {
     }
   });
 });
+
+describe("admin access", () => {
+  test("platform admins can start premium scenarios on the free plan without running out of minutes", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    const asAdmin = await seedUser(t, "admin_free", { role: "platform_admin", subscriptionStatus: "free" });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("usageCharges", {
+        clerkId: "admin_free",
+        attemptId: "old",
+        minutes: 500,
+        fromAllowance: 500,
+        fromPacks: 0,
+        billingMonth: "2026-10",
+        createdAt: "2026-10-01T00:00:00.000Z",
+      });
+    });
+
+    await expect(
+      asAdmin.mutation(api.practice.startAttempt, { scenarioId: "paid-scn", ...pair }),
+    ).resolves.toBeTruthy();
+    const me = await asAdmin.query(api.users.me, {});
+    expect(me?.entitlement.premiumAccess).toBe(true);
+    expect(me?.entitlement.planLabel).toBe("Admin");
+  });
+});

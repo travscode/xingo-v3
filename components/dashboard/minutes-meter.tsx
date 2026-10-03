@@ -15,6 +15,17 @@ export function MinutesMeter() {
   }
 
   const { entitlement } = me;
+
+  if (entitlement.planLabel === "Admin") {
+    return (
+      <Link href="/admin" className="block rounded-xl bg-gray-50 p-4 transition-colors hover:bg-gray-100">
+        <span className="flex items-center gap-1.5 text-sm font-bold">
+          <Crown className="h-3.5 w-3.5" aria-hidden /> Admin
+        </span>
+        <p className="mt-2 text-sm text-gray-500">Every module unlocked. Minutes aren&apos;t limited.</p>
+      </Link>
+    );
+  }
   const total = entitlement.monthlyMinutes + entitlement.packMinutesPurchased - entitlement.packMinutesUsed;
   const low = entitlement.remainingMinutes <= 3;
 
