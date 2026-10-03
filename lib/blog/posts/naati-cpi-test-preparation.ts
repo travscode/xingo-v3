@@ -140,6 +140,11 @@ export const post: BlogPost = {
           type: "p",
           text: "XINGO's [CPI practice](/naati/cpi) runs CPI-style dialogues — GP registration, school enrolment, a rental repair, employment services, a police report — with two AI role-players, plus audio-only [telephone dialogues](/interpreting/telephone-interpreting-practice) for the remote task. Each assessed attempt gets feedback on accuracy, terminology, fluency, turn management and professionalism. It's independent practice and doesn't replace NAATI's assessment.",
         },
+        {
+          type: "callout",
+          title: "Moving to Australia?",
+          text: "New to Australia, or planning a career in interpreting? Read [how to become an interpreter in Australia](/migrate-to-australia/become-an-interpreter-in-australia), from NAATI eligibility to finding work.",
+        },
       ],
     },
   ],

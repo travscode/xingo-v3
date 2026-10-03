@@ -147,6 +147,11 @@ export const post: BlogPost = {
           type: "p",
           text: "Speaking to a real listener matters, because an examiner's silence feels different from talking to your phone. XINGO's [IELTS Speaking mock test](/exams/ielts-speaking) runs all three parts with an AI examiner on the real timings and gives an estimated band with feedback on fluency, vocabulary and grammar. It doesn't assess pronunciation, so the estimate is a guide, not an official score.",
         },
+        {
+          type: "callout",
+          title: "Moving to Australia?",
+          text: "Taking IELTS for a visa? See [English tests for Australian PR](/migrate-to-australia/english-test-for-australian-pr) for the levels and points, or compare [IELTS, PTE and OET](/migrate-to-australia/ielts-vs-pte-vs-oet).",
+        },
       ],
     },
   ],

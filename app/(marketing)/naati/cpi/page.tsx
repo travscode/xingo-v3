@@ -5,6 +5,7 @@ import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { Breadcrumbs } from "@/components/marketing/seo/breadcrumbs";
 import { FaqSection } from "@/components/marketing/seo/faq-section";
 import { GuideLinks } from "@/components/marketing/seo/guide-links";
+import { MigrationGuidesCallout } from "@/components/marketing/migration-guides-callout";
 import { HowSteps } from "@/components/marketing/seo/how-steps";
 import { CheckList, ScenarioList } from "@/components/marketing/seo/scenario-list";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,7 @@ export default function NaatiCpiPage() {
         ]}
       />
       <GuideLinks slugs={["naati-cpi-test-preparation", "telephone-interpreting-tips", "naati-ccl-note-taking"]} />
+      <MigrationGuidesCallout pagePath="/naati/cpi" />
       <CtaBand title="Try a CPI-style dialogue free." description="Free practice minutes every month. No card needed." href={href} label="Start free" />
     </main>
   );

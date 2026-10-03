@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Check, Info } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check } from "lucide-react";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { LogoCarousel } from "@/components/marketing/logo-carousel";
+import { HOME_AFFAIRS_URL, MigrationDisclaimer, OMARA_REGISTER_URL } from "@/components/marketing/migration-disclaimer";
 import { MigrationPathway } from "@/components/marketing/migration-pathway";
 import { Breadcrumbs } from "@/components/marketing/seo/breadcrumbs";
 import { FaqSection } from "@/components/marketing/seo/faq-section";
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { practiceLanguages } from "@/lib/languages";
 import { MAX_ATTEMPT_MINUTES, plans } from "@/lib/plans";
 import { CCL_MAX_SCORE } from "@/lib/scoring";
+import { MIGRATION_GUIDES_ANCHOR, migrationGuideGroups, migrationGuidePath } from "@/lib/migration-guides";
 import { pageMetadata } from "@/lib/seo-metadata";
 import { webPageJsonLd } from "@/lib/structured-data";
 import { TWO_M_URL, TwoMLink, withTwoMLinks } from "@/components/marketing/two-m-link";
@@ -35,8 +37,8 @@ const DESCRIPTION =
 
 export const metadata: Metadata = pageMetadata({ title: TITLE, description: DESCRIPTION, path: PATH });
 
-const HOME_AFFAIRS = "https://immi.homeaffairs.gov.au/";
-const OMARA_REGISTER = "https://portal.mara.gov.au/search-the-register-of-migration-agents/";
+const HOME_AFFAIRS = HOME_AFFAIRS_URL;
+const OMARA_REGISTER = OMARA_REGISTER_URL;
 
 const src = {
   englishTests: "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language",
@@ -63,6 +65,8 @@ type PathStep = {
   official: { label: string; href: string };
   practice: Array<{ label: string; href: string }>;
   note?: string;
+  /** Migration guide(s) covering this step in depth. */
+  guides: Array<{ label: string; slug: string }>;
 };
 
 const pathway: PathStep[] = [
@@ -72,6 +76,10 @@ const pathway: PathStep[] = [
     official: { label: "Home Affairs: visas and requirements", href: HOME_AFFAIRS },
     practice: [],
     note: "This step is yours and your agent's. XINGO doesn't give migration advice.",
+    guides: [
+      { label: "Finding a registered migration agent", slug: "find-a-registered-migration-agent" },
+      { label: "The points test explained", slug: "skilled-migration-points-test" },
+    ],
   },
   {
     title: "Prove your English",
@@ -81,12 +89,17 @@ const pathway: PathStep[] = [
       { label: "IELTS Speaking practice", href: "/exams/ielts-speaking" },
       { label: "OET Speaking practice", href: "/exams/oet-speaking" },
     ],
+    guides: [
+      { label: "English tests for Australian PR", slug: "english-test-for-australian-pr" },
+      { label: "IELTS, PTE or OET?", slug: "ielts-vs-pte-vs-oet" },
+    ],
   },
   {
     title: "Consider the NAATI CCL",
     body: "On points-tested skilled visas, a credentialled community language can add points. Most people use NAATI's Credentialed Community Language (CCL) test: two dialogues you interpret between English and your other language.",
     official: { label: "NAATI: the CCL test", href: src.ccl },
     practice: [{ label: "NAATI CCL practice", href: "/naati/ccl" }],
+    guides: [{ label: "Community language points", slug: "community-language-points" }],
   },
   {
     title: "Register in your profession",
@@ -96,12 +109,17 @@ const pathway: PathStep[] = [
       { label: "AMC clinical exam practice", href: "/exams/amc-clinical-exam" },
       { label: "NMBA OSCE practice", href: "/exams/nmba-osce" },
     ],
+    guides: [
+      { label: "Guide for nurses", slug: "nurses-moving-to-australia" },
+      { label: "Guide for doctors", slug: "doctors-moving-to-australia" },
+    ],
   },
   {
     title: "Put your languages to work",
     body: "To work as an interpreter you need NAATI certification. The Certified Provisional Interpreter (CPI) test is NAATI's entry-level generalist interpreting test, with prerequisites to meet before you sit it.",
     official: { label: "NAATI: Certified Provisional Interpreter", href: src.cpi },
     practice: [{ label: "NAATI CPI practice", href: "/naati/cpi" }],
+    guides: [{ label: "How to become an interpreter", slug: "become-an-interpreter-in-australia" }],
   },
 ];
 
@@ -146,7 +164,7 @@ const advice = [
   },
   {
     title: "Get documents translated properly",
-    body: "Home Affairs asks for an English translation of documents not in English. In Australia, it says to use a NAATI-accredited translator. Eligible permanent residents and some other visa holders can get up to 10 documents translated free within two years of their visa grant.",
+    body: "Home Affairs asks for an English translation of documents not in English. In Australia, it says to use a NAATI-accredited translator. After you arrive, eligible permanent residents and some other visa holders can get up to 10 settlement documents (such as a licence or qualifications) translated free within two years of their visa grant, but not documents needed for a visa or citizenship application.",
     link: { label: "Find a NAATI translator", href: src.naatiDirectory, external: true },
   },
   {
@@ -186,7 +204,7 @@ const faqs = [
     a: "Most people start with NAATI's Certified Provisional Interpreter (CPI) test, the entry-level generalist interpreting test. Before you sit it you need to meet NAATI's prerequisites, for example by completing an interpreting qualification and showing ethical and intercultural competency. NAATI's website explains each pathway.",
   },
   {
-    q: "Can I work with 2M Language Services after practising on XINGO?",
+    q: "Can I work with 2M after practising on XINGO?",
     a: "XINGO is partnered with 2M Language Services. Once you're NAATI certified, you can apply to work with 2M as an interpreter. 2M makes its own decisions about who it engages, and practising on XINGO doesn't give you a credential by itself.",
   },
   {
@@ -246,22 +264,6 @@ function ExternalLink({ href, children, className }: { href: string; children: R
   );
 }
 
-function Disclaimer({ className }: { className?: string }) {
-  return (
-    <aside
-      aria-label="General information, not migration advice"
-      className={`flex gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-[15px] leading-6 sm:p-5 ${className ?? ""}`}
-    >
-      <Info size={20} className="mt-0.5 shrink-0" aria-hidden />
-      <p className="text-gray-700">
-        <strong className="text-ink">General information, not migration advice.</strong> Visa rules change — check the{" "}
-        <ExternalLink href={HOME_AFFAIRS}>Department of Home Affairs</ExternalLink> and speak to a{" "}
-        <ExternalLink href={OMARA_REGISTER}>registered migration agent</ExternalLink> about your situation.
-      </p>
-    </aside>
-  );
-}
-
 export default function MigrateToAustraliaPage() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-24 px-4 sm:px-6">
@@ -302,7 +304,7 @@ export default function MigrateToAustraliaPage() {
             <a href="#pathway">See the pathway</a>
           </Button>
         </MarketingIntro>
-        <Disclaimer className="mt-10" />
+        <MigrationDisclaimer className="mt-10" />
       </div>
 
       {/* The journey at a glance */}
@@ -339,6 +341,14 @@ export default function MigrateToAustraliaPage() {
                   {step.official.label}
                   <ArrowUpRight size={14} aria-hidden />
                 </ExternalLink>
+                <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-gray-500">
+                  <span>Read the guide:</span>
+                  {step.guides.map((guide) => (
+                    <Link key={guide.slug} href={migrationGuidePath(guide.slug)} className="font-semibold text-ink underline underline-offset-4">
+                      {guide.label}
+                    </Link>
+                  ))}
+                </p>
               </div>
               <div className="md:border-l md:border-gray-200 md:pl-8">
                 {step.practice.length ? (
@@ -362,6 +372,42 @@ export default function MigrateToAustraliaPage() {
             </li>
           ))}
         </ol>
+      </section>
+
+      {/* Migration guides (topic cluster: lib/migration-guides) */}
+      <section aria-labelledby={MIGRATION_GUIDES_ANCHOR}>
+        <SectionHeading
+          id={MIGRATION_GUIDES_ANCHOR}
+          eyebrow="Migration guides"
+          title="Plain-English guides for each step."
+          description="Each guide explains one part of the move in more depth, links to the official sources and says where practice helps. General information only."
+        />
+        <div className="mt-10 divide-y divide-gray-200 border-y border-gray-200">
+          {migrationGuideGroups.map((entry) => (
+            <div key={entry.group} className="grid gap-4 py-6 md:grid-cols-[13rem_1fr] md:gap-8">
+              <div>
+                <h3 className="text-lg font-bold tracking-[-0.02em]">{entry.group}</h3>
+                <p className="mt-1 text-sm leading-6 text-gray-500">{entry.description}</p>
+              </div>
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {entry.guides.map((guide) => (
+                  <li key={guide.slug}>
+                    <Link
+                      href={migrationGuidePath(guide.slug)}
+                      className="mk-lift group flex h-full flex-col rounded-xl border border-gray-200 p-4 hover:border-ink"
+                    >
+                      <span className="inline-flex items-start gap-1.5 font-bold leading-6">
+                        {guide.title}
+                        <ArrowRight size={16} className="mt-1 shrink-0 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                      </span>
+                      <span className="mt-1 line-clamp-3 text-sm leading-6 text-gray-500">{guide.excerpt}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Where language skills count */}
@@ -668,7 +714,7 @@ export default function MigrateToAustraliaPage() {
       <FaqSection title="Questions from people moving to Australia" faqs={faqs} />
 
       <section aria-labelledby="sources-heading" className="space-y-6">
-        <Disclaimer />
+        <MigrationDisclaimer />
         <div>
           <h2 id="sources-heading" className="text-lg font-bold">
             Sources

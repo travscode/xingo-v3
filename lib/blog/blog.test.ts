@@ -5,6 +5,7 @@ import { cclVocabularyDomains } from "../ccl-vocabulary";
 import { examPages } from "../exam-pages";
 import { practiceGoals } from "../goals";
 import { cclLanguagePages, topicPages } from "../seo-pages";
+import { getAllMigrationGuides, MIGRATION_HUB_PATH, migrationGuidePath } from "../migration-guides";
 
 const posts = getAllPosts();
 
@@ -22,6 +23,8 @@ const knownPaths = new Set<string>([
   "/for-interpreters",
   "/for-organizations",
   "/staff-training",
+  MIGRATION_HUB_PATH,
+  ...getAllMigrationGuides().map((guide) => migrationGuidePath(guide.slug)),
   ...cclLanguagePages.map((page) => `/naati/ccl/${page.slug}`),
   ...topicPages.map((page) => `/interpreting/${page.slug}`),
   ...examPages.map((page) => `/exams/${page.slug}`),

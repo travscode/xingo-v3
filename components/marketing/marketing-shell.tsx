@@ -26,6 +26,7 @@ const footerLinks = [
   { href: "/for-interpreters", label: "For interpreters" },
   { href: "/staff-training", label: "Staff training" },
   { href: "/migrate-to-australia", label: "Migrating to Australia" },
+  { href: "/migrate-to-australia#guides", label: "Migration guides" },
   { href: "/for-organizations", label: "For training providers" },
   { href: "/sell-practice-courses", label: "Sell practice courses" },
   { href: "/marketplace", label: "Marketplace" },

@@ -3,6 +3,7 @@ import { fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { blogPostPath, BLOG_PATH, getAllPosts } from "@/lib/blog";
 import { examPages } from "@/lib/exam-pages";
+import { getAllMigrationGuides, migrationGuidePath } from "@/lib/migration-guides";
 import { cclLanguagePages, SITE_URL, topicPages } from "@/lib/seo-pages";
 
 /** Re-generate hourly so newly published marketplace courses appear. */
@@ -53,6 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page("/privacy", 0.2),
     page("/creator-terms", 0.2),
     page("/migrate-to-australia", 0.8),
+    ...getAllMigrationGuides().map((guide) => page(migrationGuidePath(guide.slug), 0.7, new Date(`${guide.updated}T00:00:00Z`))),
     page("/for-organizations", 0.5),
     ...cclLanguagePages.map((language) => page(`/naati/ccl/${language.slug}`, 0.8)),
     ...topicPages.map((topic) => page(`/interpreting/${topic.slug}`, 0.7)),

@@ -21,6 +21,7 @@ Traffic rose after the NAATI CCL page went up. Competitors already rank for gene
 | `/staff-training` | AI role-play training for staff, customer service training simulation, multilingual staff and volunteer training | Scenario builder, scoring, practice/assessed modes; team view, invites and private courses shown as **pilot** (D-021), demo labelled illustrative |
 | `/sell-practice-courses` | sell practice courses online, monetise your expertise, create AI role-play training, sell practice exams, earn money teaching | Marketplace landing (header "Marketplace" link); creator wizard, page tools, insights and the 25% share (D-031) are built; team-only courses shown as **pilot**; hero mock labelled illustrative. Cross-links /marketplace, /marketplace/create, /staff-training |
 | `/migrate-to-australia` | migrate to Australia English test, CCL points for PR, IELTS/OET for Australian visa, how to become an interpreter in Australia | Pathway hub linking IELTS, OET, CCL, AMC, OSCE, CPI pages + 2M partnership. General information only (registered migration agents give advice); facts sourced from Home Affairs/NAATI/Ahpra, re-check the points table before big promotion |
+| `/migrate-to-australia/[guide]` (13 guides) | Topic cluster around the hub — see table below | Typed data in `lib/migration-guides/guides/*.ts`, one route (`[guide]/page.tsx`). Each guide: at-a-glance box, migration disclaimer, "How XINGO helps", FAQ, official sources, related guides, back link to the hub. Article + BreadcrumbList + FAQPage JSON-LD |
 
 Every page: one `h1`, unique title/description, canonical URL, FAQ with `FAQPage` JSON-LD, links to sibling pages, and a sign-up CTA that lands in the welcome flow with **goal and language preselected** (`signUpHref`).
 
@@ -31,6 +32,30 @@ Technical: `app/sitemap.ts` (incl. blog dates and published marketplace courses)
 
 ### Adding a blog post
 Create `lib/blog/posts/<slug>.ts` exporting `post: BlogPost`, register it in `lib/blog/index.ts`. `lib/blog/blog.test.ts` checks length (800–1500 words), meta lengths, internal links, related slugs and the "course, not module" rule. Cite the official source for every exam fact and hedge anything that changes.
+
+### Migration guide cluster (`/migrate-to-australia/<slug>`)
+
+Hub: `/migrate-to-australia` ("Migration guides" section, anchor `#guides`, grouped cards; pathway steps also link the matching guide). Footer: one "Migration guides" link to `#guides`. Facts checked against official pages on 2026-10-03 (Home Affairs, NAATI, Ahpra/NMBA, AMC, Medical Board, OMARA, TIS National, Services Australia, ATO, Fair Work, DEWR).
+
+| Group | Slug | Target queries |
+|---|---|---|
+| Language & tests | `english-test-for-australian-pr` | english test for australian pr, competent/proficient/superior english points |
+| Language & tests | `ielts-vs-pte-vs-oet` | ielts vs pte for australia pr, oet or ielts for nurses, ahpra accepted tests |
+| Language & tests | `free-english-classes-amep` | free english classes for migrants, AMEP eligibility/time limits, SEE program |
+| Points & visas | `skilled-migration-points-test` | australian pr points test, points table 189, 65 points, SkillSelect EOI |
+| Points & visas | `community-language-points` | naati ccl points, credentialled community language, ccl vs cpi (complements the blog's CCL 5-points article — keep them distinct) |
+| Points & visas | `find-a-registered-migration-agent` | registered migration agent, check MARN, OMARA register, visa scams |
+| Points & visas | `translating-documents-for-a-visa` | naati translation for visa, free translating service |
+| Professions | `nurses-moving-to-australia` | nurses moving to australia, NMBA OSCE, Self-check streams, OET for nurses |
+| Professions | `doctors-moving-to-australia` | AMC pathways, AMC clinical exam format, IMG registration |
+| Settling in | `first-weeks-in-australia` | new migrant checklist, Medicare enrolment, TFN, work rights |
+| Settling in | `free-interpreter-services` | free interpreter australia, TIS National 131 450, free interpreting at GP |
+| Work | `become-an-interpreter-in-australia` | how to become an interpreter in australia, CPI eligibility, TIS panel; 2M partnership |
+| Work | `jobs-for-bilingual-migrants` | bilingual jobs, NAATI CLA test, bilingual worker vs interpreter; 2M partnership |
+
+Links into the cluster: `MigrationGuidesCallout` ("Moving to Australia?", 1–2 guides, mapping in `lib/migration-guides/index.ts`) on `/naati/ccl`, every `/naati/ccl/[language]`, `/naati/cpi`, `/interpreting`, and the IELTS, OET, AMC and NMBA OSCE exam pages; a "Moving to Australia?" callout in six blog posts (CCL 5 points, CPI prep, IELTS Part 2, OET role-play, AMC, NMBA OSCE).
+
+Rules (checked by `lib/migration-guides/guides.test.ts`): unique slug/title/meta, full `<title>` ≤ 60 chars, description 110–160, ≥ 700 words, 3–5 at-a-glance points, 4–6 FAQs, ≥ 3 https sources, 3–5 related siblings, no orphans, internal links resolve, no "module", no salaries/pass rates/processing times. "2M Language Services" only in body text/FAQ answers, where `RichText`/`FaqSection` auto-link it to 2m.com.au, and always with "2M makes its own decisions about who it engages". Re-check the English score tables and points table before big promotion.
 
 ## After deploying
 1. Google Search Console → add `xingo.ai` (DNS verification) → submit `https://www.xingo.ai/sitemap.xml`.

@@ -6,6 +6,7 @@ import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { Breadcrumbs } from "@/components/marketing/seo/breadcrumbs";
 import { FaqSection } from "@/components/marketing/seo/faq-section";
 import { GuideLinks } from "@/components/marketing/seo/guide-links";
+import { MigrationGuidesCallout } from "@/components/marketing/migration-guides-callout";
 import { HowSteps } from "@/components/marketing/seo/how-steps";
 import { ScenarioList } from "@/components/marketing/seo/scenario-list";
 import { Button } from "@/components/ui/button";
@@ -124,6 +125,8 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
       <HowSteps variant={isSpeakingGoal(page.goal) ? "roleplay" : "interpreting"} />
       <FaqSection faqs={page.faqs} />
       <GuideLinks pagePath={`/exams/${page.slug}`} />
+
+      <MigrationGuidesCallout pagePath={`/exams/${page.slug}`} />
 
       <CtaBand
         title={`Practise for the ${page.shortName} today.`}

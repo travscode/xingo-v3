@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
 import { GuideLinks } from "@/components/marketing/seo/guide-links";
+import { MigrationGuidesCallout } from "@/components/marketing/migration-guides-callout";
 import { NaatiCclFinalCtaSection } from "@/components/marketing/naati-ccl/final-cta-section";
 import { NaatiCclHeroSection } from "@/components/marketing/naati-ccl/hero-section";
 import { NaatiCclLanguagesSection } from "@/components/marketing/naati-ccl/languages-section";
@@ -49,6 +50,7 @@ export default function NaatiCclLandingPage() {
         ]}
         slugs={["naati-ccl-test-format-and-marking", "naati-ccl-free-practice-resources", "naati-ccl-5-points-australian-pr"]}
       />
+      <MigrationGuidesCallout pagePath="/naati/ccl" />
       <NaatiCclFinalCtaSection />
       <JsonLd
         data={[

@@ -174,6 +174,11 @@ export const post: BlogPost = {
           type: "p",
           text: "XINGO's [OET Speaking practice](/exams/oet-speaking) gives you original nursing and medicine cards and an AI patient or relative who reacts to what you say — scared, sceptical or angry — on a five-minute timer. Afterwards you get feedback against the clinical communication criteria and language. It can't assess intelligibility from a transcript, so keep recording yourself for pronunciation.",
         },
+        {
+          type: "callout",
+          title: "Moving to Australia?",
+          text: "Planning to register in Australia? Our guides for [nurses](/migrate-to-australia/nurses-moving-to-australia) and [doctors](/migrate-to-australia/doctors-moving-to-australia) explain where OET fits.",
+        },
       ],
     },
   ],

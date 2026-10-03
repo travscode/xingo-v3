@@ -137,6 +137,11 @@ export const post: BlogPost = {
           type: "p",
           text: "XINGO's [NMBA OSCE practice](/exams/nmba-osce) covers the talking parts of the OSCE: ISBAR calls to a rushed doctor, anticoagulant education, a falls conversation with an angry daughter, pain reassessment, transfusion consent and bedside handover, each timed, followed by feedback on structure and communication. Clinical skills still need hands-on practice.",
         },
+        {
+          type: "callout",
+          title: "Moving to Australia?",
+          text: "For the full registration picture, from the English standard to the Self-check, read our guide for [nurses moving to Australia](/migrate-to-australia/nurses-moving-to-australia).",
+        },
       ],
     },
   ],

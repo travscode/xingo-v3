@@ -1,16 +1,21 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
+import { withTwoMLinks } from "@/components/marketing/two-m-link";
 
 const TOKEN = /\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)/g;
 
-/** Renders blog inline markup: **bold** and [label](href). Everything else is plain text. */
+/**
+ * Renders blog inline markup: **bold** and [label](href). Everything else is plain
+ * text, except that "2M Language Services" always links to 2m.com.au (XINGO's partner).
+ */
 export function RichText({ text }: { text: string }) {
   const nodes: ReactNode[] = [];
   let last = 0;
+  const plain = (value: string, key: number) => <Fragment key={`t${key}`}>{withTwoMLinks(value)}</Fragment>;
 
   for (const match of text.matchAll(TOKEN)) {
     const index = match.index ?? 0;
-    if (index > last) nodes.push(text.slice(last, index));
+    if (index > last) nodes.push(plain(text.slice(last, index), last));
 
     if (match[1]) {
       nodes.push(
@@ -43,6 +48,6 @@ export function RichText({ text }: { text: string }) {
     last = index + match[0].length;
   }
 
-  if (last < text.length) nodes.push(text.slice(last));
+  if (last < text.length) nodes.push(plain(text.slice(last), last));
   return <>{nodes}</>;
 }

@@ -120,6 +120,11 @@ export const post: BlogPost = {
           type: "p",
           text: "XINGO's [CCL practice](/naati/ccl) lets you interpret CCL-style dialogues with two AI speakers in your language pair and get a score out of 90 after each assessed attempt. It's independent practice — it doesn't issue credentials or count towards points.",
         },
+        {
+          type: "callout",
+          title: "Moving to Australia?",
+          text: "For the bigger picture, see [the skilled migration points test explained](/migrate-to-australia/skilled-migration-points-test) and [which NAATI credentials count for community language points](/migrate-to-australia/community-language-points).",
+        },
       ],
     },
   ],

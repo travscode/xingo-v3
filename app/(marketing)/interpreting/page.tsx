@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
+import { MigrationGuidesCallout } from "@/components/marketing/migration-guides-callout";
 import { ScenePhoto } from "@/components/marketing/people";
 import { CCL_MAX_SCORE } from "@/lib/scoring";
 import { cclLanguagePages, topicPages } from "@/lib/seo-pages";
@@ -57,6 +58,7 @@ export default function InterpretingHubPage() {
           ))}
         </div>
       </section>
+      <MigrationGuidesCallout pagePath="/interpreting" />
       <CtaBand title="Start with a free dialogue." description="No card needed." />
     </main>
   );

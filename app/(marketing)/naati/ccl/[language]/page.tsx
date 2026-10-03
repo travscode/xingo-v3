@@ -6,6 +6,7 @@ import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { Breadcrumbs } from "@/components/marketing/seo/breadcrumbs";
 import { FaqSection } from "@/components/marketing/seo/faq-section";
 import { GuideLinks } from "@/components/marketing/seo/guide-links";
+import { MigrationGuidesCallout } from "@/components/marketing/migration-guides-callout";
 import { HowSteps } from "@/components/marketing/seo/how-steps";
 import { ScenarioList } from "@/components/marketing/seo/scenario-list";
 import { Button } from "@/components/ui/button";
@@ -164,6 +165,8 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
         ]}
         slugs={["naati-ccl-test-format-and-marking", "naati-ccl-repeats-and-self-correction", "naati-ccl-note-taking"]}
       />
+
+      <MigrationGuidesCallout pagePath="/naati/ccl/[language]" />
 
       <CtaBand
         title={`Start practising English ⇄ ${page.name} today.`}

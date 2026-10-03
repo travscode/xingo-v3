@@ -143,6 +143,11 @@ export const post: BlogPost = {
           type: "p",
           text: "XINGO's [AMC clinical exam practice](/exams/amc-clinical-exam) gives you eight-minute stations with an AI patient or relative who answers in character — fatigue with red flags, a febrile toddler, a pregnant patient on valproate, post-operative delirium, breaking bad news and a suicide risk assessment — followed by feedback on task completion and communication. It doesn't assess physical examination, so pair it with hands-on practice.",
         },
+        {
+          type: "callout",
+          title: "Moving to Australia?",
+          text: "For the full registration picture, read our guide for [doctors moving to Australia](/migrate-to-australia/doctors-moving-to-australia).",
+        },
       ],
     },
   ],
