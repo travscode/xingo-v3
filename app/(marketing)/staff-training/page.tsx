@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check, Languages, MessagesSquare } from "lucide-react";
 import { MarketingIntro } from "@/components/marketing/cta-band";
+import { LogoCarousel } from "@/components/marketing/logo-carousel";
 import { SALES_EMAIL } from "@/components/marketing/catalogue";
 import { Portrait, ScenePhoto, type SceneKey } from "@/components/marketing/people";
 import { Breadcrumbs } from "@/components/marketing/seo/breadcrumbs";
@@ -265,6 +266,17 @@ export default function StaffTrainingPage() {
           <Link href="/marketplace/create">Try the scenario builder</Link>
         </Button>
       </MarketingIntro>
+
+      {/* Partner: 2M Language Services and the organisations it works with (under contract with 2M). */}
+      <section aria-labelledby="partner-heading" className="-mt-6">
+        <p id="partner-heading" className="text-center text-sm font-semibold">
+          Partnered with 2M Language Services
+        </p>
+        <p className="mx-auto mt-1 max-w-xl text-center text-sm text-gray-500">
+          2M interprets for organisations including these. Qualify on XINGO and you could work with them through 2M.
+        </p>
+        <LogoCarousel className="mt-5" />
+      </section>
 
       {/* Team view */}
       <section>
