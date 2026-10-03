@@ -18,11 +18,20 @@ import {
   Search,
   Sparkles,
   Stethoscope,
+  X,
   Users,
   type LucideIcon,
 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
-import { groupForModule, isForYou, libraryGroups, type LibraryGroupId } from "@/lib/catalog-groups";
+import {
+  groupForModule,
+  isForYou,
+  libraryFilters,
+  libraryGroups,
+  matchesLibraryFilters,
+  type LibraryFilterId,
+  type LibraryGroupId,
+} from "@/lib/catalog-groups";
 import { cn } from "@/lib/utils";
 import { EmptyState, PageHeader, ProgressBar, Skeleton } from "@/components/ui/primitives";
 import { FreeBadge, IndustryIcon, PremiumBadge } from "@/components/ui/badges";
@@ -54,6 +63,7 @@ export function LiveModulesGrid() {
   const [selected, setSelected] = useState<LibraryGroupId | null>(null);
   const [search, setSearch] = useState("");
   const [visible, setVisible] = useState(PAGE_SIZE);
+  const [filters, setFilters] = useState<LibraryFilterId[]>([]);
 
   const groups = useMemo(() => {
     if (!catalog) return [];
@@ -86,14 +96,20 @@ export function LiveModulesGrid() {
   const activeId = selected ?? groups[0]?.id ?? "all";
   const term = search.trim().toLowerCase();
   const active = groups.find((group) => group.id === activeId) ?? groups[groups.length - 1];
-  const modules = term
-    ? catalog.modules.filter(
-        (m) =>
-          m.title.toLowerCase().includes(term) ||
-          m.description.toLowerCase().includes(term) ||
-          m.scenarios.some((s) => s.title.toLowerCase().includes(term)),
-      )
-    : active.modules;
+  const modules = (
+    term
+      ? catalog.modules.filter(
+          (m) =>
+            m.title.toLowerCase().includes(term) ||
+            m.description.toLowerCase().includes(term) ||
+            m.scenarios.some((s) => s.title.toLowerCase().includes(term)),
+        )
+      : active.modules
+  ).filter((m) => matchesLibraryFilters(m, filters));
+  const toggleFilter = (id: LibraryFilterId) => {
+    setFilters((current) => (current.includes(id) ? current.filter((f) => f !== id) : [...current, id]));
+    setVisible(PAGE_SIZE);
+  };
   const premiumAccess = me?.entitlement.premiumAccess ?? false;
 
   return (
@@ -129,6 +145,35 @@ export function LiveModulesGrid() {
         />
       ) : null}
 
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter modules">
+        {libraryFilters.map((filter) => {
+          const on = filters.includes(filter.id);
+          return (
+            <button
+              key={filter.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => toggleFilter(filter.id)}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors",
+                on ? "border-ink bg-ink text-paper" : "border-gray-200 bg-paper text-gray-700 hover:border-gray-300 hover:bg-gray-50",
+              )}
+            >
+              {filter.label}
+            </button>
+          );
+        })}
+        {filters.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setFilters([])}
+            className="inline-flex items-center gap-1 px-2 py-1.5 text-sm font-semibold text-gray-500 hover:text-ink"
+          >
+            <X className="h-3.5 w-3.5" aria-hidden /> Clear
+          </button>
+        ) : null}
+      </div>
+
       <section>
         <div className="mb-4 flex items-baseline justify-between gap-3">
           <h2 className="text-lg font-bold tracking-[-0.02em]">
@@ -140,7 +185,17 @@ export function LiveModulesGrid() {
         </div>
 
         {modules.length === 0 ? (
-          <EmptyState title="Nothing matches that search" description="Try a different word, or browse a category." />
+          <EmptyState
+            title={filters.length > 0 ? "No modules match these filters" : "Nothing matches that search"}
+            description={filters.length > 0 ? "Remove a filter or choose another category." : "Try a different word, or browse a category."}
+            action={
+              filters.length > 0 ? (
+                <Button variant="secondary" onClick={() => setFilters([])}>
+                  Clear filters
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           <>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
