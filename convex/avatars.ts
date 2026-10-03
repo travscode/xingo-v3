@@ -20,7 +20,15 @@ export const listMissing = internalQuery({
   args: {},
   handler: async (ctx) => {
     const scenarios = await ctx.db.query("scenarios").collect();
-    const missing: Array<{ scenarioId: string; agent: "aiAgentA" | "aiAgentB"; role: string; demeanor: string; setting: string }> = [];
+    const missing: Array<{
+      scenarioId: string;
+      agent: "aiAgentA" | "aiAgentB";
+      name: string;
+      role: string;
+      voice: string;
+      demeanor: string;
+      setting: string;
+    }> = [];
 
     for (const scenario of scenarios) {
       for (const agent of ["aiAgentA", "aiAgentB"] as const) {
@@ -30,7 +38,9 @@ export const listMissing = internalQuery({
           missing.push({
             scenarioId: scenario.id,
             agent,
+            name: participant.name ?? "",
             role: participant.role,
+            voice: participant.voice,
             demeanor: participant.demeanor ?? "",
             setting: scenario.title,
           });
@@ -64,13 +74,33 @@ export const attachAvatar = internalMutation({
   },
 });
 
-function portraitPrompt(target: { role: string; demeanor: string; setting: string }, look: "monochrome" | "colour") {
+/** The character speaks with this voice, so the portrait must match it (see lib/marketplace.ts creatorVoices). */
+const voiceGender: Record<string, "man" | "woman"> = {
+  cedar: "man",
+  ash: "man",
+  ballad: "man",
+  echo: "man",
+  verse: "man",
+  marin: "woman",
+  coral: "woman",
+  sage: "woman",
+  shimmer: "woman",
+};
+
+function portraitPrompt(
+  target: { name: string; role: string; voice: string; demeanor: string; setting: string },
+  look: "monochrome" | "colour",
+) {
+  const gender = voiceGender[target.voice] ?? "person";
   return [
-    `Professional editorial headshot of a person in Australia who is: ${target.role}.`,
-    `Context: ${target.setting}. Expression: ${target.demeanor || "neutral and approachable"}.`,
-    "Head and shoulders, facing the camera, plain light-grey studio background, soft natural light, realistic photograph, everyday clothing appropriate to the role.",
-    look === "monochrome" ? "Black and white photograph, high-key, crisp." : "Natural, muted colours.",
-    "No text, no logos, no uniforms with insignia, no hands in frame.",
+    // Name and gender are both given: without them the model guessed, and often got it wrong.
+    `Realistic editorial portrait photograph of a ${gender} named ${target.name || "(unnamed)"}, who is ${target.role}.`,
+    `Situation: ${target.setting}. Expression: ${target.demeanor || "calm and approachable"}.`,
+    "Dressed exactly as this role would be at work: a doctor in a white coat or scrubs with a stethoscope, a nurse in scrubs,",
+    "a police officer in a navy uniform, a lawyer or magistrate in a dark suit, a patient or client in everyday clothes.",
+    "Head and shoulders, facing the camera, the role's workplace softly blurred behind, soft natural light, photorealistic.",
+    look === "monochrome" ? "Black and white photograph, high-key, crisp." : "Natural colours.",
+    "No text, no readable writing, no logos, no hands in frame.",
   ].join(" ");
 }
 
