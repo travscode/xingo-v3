@@ -25,6 +25,22 @@ only needs matching products.
 
 ---
 
+## Current live configuration (set up 2026-10-03, Stripe account acct_1T9hS98VZhRrFpFv)
+
+Created via the Stripe CLI in **live mode** (no test sandbox was available). Old products "Xingo Professional" (A$14) and "Xingo Organisation" (A$499) were archived; they had no subscriptions or charges.
+
+| What | ID | Convex env |
+|---|---|---|
+| XINGO Pro, A$29/month (GST-inclusive), lookup `xingo_pro_monthly` | `price_1UMOUV8VZhRrFpFv1O3VfFmO` | `STRIPE_PRO_PRICE_ID` |
+| CCL Starter 30 min, A$19, lookup `xingo_pack_starter` | `price_1UMOUY8VZhRrFpFveraqZMv5` | `STRIPE_PACK_STARTER_PRICE_ID` |
+| Practice Plus 80 min, A$39, lookup `xingo_pack_plus` | `price_1UMOUc8VZhRrFpFvKv19MQtc` | `STRIPE_PACK_PLUS_PRICE_ID` |
+| Exam Sprint 160 min, A$69, lookup `xingo_pack_sprint` | `price_1UMOUf8VZhRrFpFvkc9FXoHM` | `STRIPE_PACK_SPRINT_PRICE_ID` |
+| Payments webhook → `deafening-cow-810.convex.site/stripe/webhook` (5 events) | `we_1UMOVE8VZhRrFpFv6EHKofNN` | `STRIPE_WEBHOOK_SECRET` (set) |
+| Connect webhook → `/stripe/connect-webhook` (`account.updated`) | `we_1UMOVJ8VZhRrFpFvxsQsx0HG` | `STRIPE_CONNECT_WEBHOOK_SECRET` (set) |
+| Customer portal (default): card update, invoices, cancel at period end | `bpc_1UMOWv8VZhRrFpFvmbl15KZG` | — |
+
+Still to do by the account owner: set `STRIPE_SECRET_KEY` (live secret key, never pasted into chat), finish Connect platform sign-up before `STRIPE_CONNECT_ENABLED=true`, add terms/privacy links to the portal once those pages exist.
+
 ## 1. Account basics (once)
 
 1. In the Stripe dashboard, make sure the account is set up for your Australian business (Settings → Business details) and the **default currency is AUD**.
