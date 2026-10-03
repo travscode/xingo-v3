@@ -43,6 +43,7 @@ export function MarketingIntro({
   description,
   children,
   breadcrumbs,
+  media,
 }: {
   eyebrow: string;
   title: ReactNode;
@@ -50,18 +51,39 @@ export function MarketingIntro({
   children?: ReactNode;
   /** Optional <Breadcrumbs className="mb-6 sm:mb-8" /> shown above the eyebrow. */
   breadcrumbs?: ReactNode;
+  /** Optional image or illustration shown beside the text from `lg` (below it on smaller screens). */
+  media?: ReactNode;
 }) {
-  return (
-    <section className={breadcrumbs ? "pt-6 sm:pt-8" : "pt-8 sm:pt-14"}>
-      {breadcrumbs}
+  const text = (
+    <>
       <p className="eyebrow">{eyebrow}</p>
-      <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-[-0.035em] text-balance sm:text-6xl">
+      <h1
+        className={
+          media
+            ? "mt-4 max-w-3xl text-4xl font-bold tracking-[-0.035em] text-balance sm:text-5xl xl:text-6xl"
+            : "mt-4 max-w-3xl text-4xl font-bold tracking-[-0.035em] text-balance sm:text-6xl"
+        }
+      >
         {title}
       </h1>
       {description ? (
         <p className="mt-5 max-w-2xl text-lg leading-7 text-gray-500">{description}</p>
       ) : null}
       {children ? <div className="mt-8 flex flex-col gap-3 sm:flex-row">{children}</div> : null}
+    </>
+  );
+
+  return (
+    <section className={breadcrumbs ? "pt-6 sm:pt-8" : "pt-8 sm:pt-14"}>
+      {breadcrumbs}
+      {media ? (
+        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
+          <div>{text}</div>
+          {media}
+        </div>
+      ) : (
+        text
+      )}
     </section>
   );
 }

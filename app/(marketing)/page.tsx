@@ -5,6 +5,7 @@ import { CtaBand } from "@/components/marketing/cta-band";
 import { practiceModules } from "@/components/marketing/catalogue";
 import { IllustratedSteps } from "@/components/marketing/illustrated-steps";
 import { Journey } from "@/components/marketing/journey";
+import { PortraitStack, ScenePhoto, type PersonKey, type SceneKey } from "@/components/marketing/people";
 import { RoomMock, ScoreMock } from "@/components/marketing/practice-mock";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
@@ -25,6 +26,34 @@ export const metadata: Metadata = pageMetadata({
 });
 
 const cheapestPack = packList[0];
+
+const practiceModes: Array<{
+  scene: SceneKey;
+  people: PersonKey[];
+  title: string;
+  description: string;
+  href: string;
+  link: string;
+}> = [
+  {
+    scene: "clinic",
+    people: ["drKim", "mei"],
+    title: "Interpret a conversation",
+    description:
+      "Two AI people who don't share a language, such as a doctor and a patient. You relay every turn, both ways. For NAATI CCL, CPI and medical interpreting.",
+    href: "/how-it-works",
+    link: "How interpreting practice works",
+  },
+  {
+    scene: "examPrep",
+    people: ["examiner"],
+    title: "Talk one-on-one",
+    description:
+      "One AI character plays the patient, relative, colleague or examiner, and you play yourself. For OET, IELTS, AMC and OSCE role-plays.",
+    href: "/how-it-works#roleplay",
+    link: "How role-play practice works",
+  },
+];
 
 const examLinks = [
   { href: "/naati/ccl", label: "NAATI CCL" },
@@ -95,6 +124,44 @@ export default function HomePage() {
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </li>
+        </ul>
+      </section>
+
+      {/* Two ways to practise */}
+      <section aria-labelledby="modes-heading">
+        <p className="eyebrow">Two ways to practise</p>
+        <h2 id="modes-heading" className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.03em] text-balance sm:text-4xl">
+          Interpret between two people, or talk with one.
+        </h2>
+        <ul className="mt-10 grid gap-4 md:grid-cols-2">
+          {practiceModes.map((mode) => (
+            <li key={mode.title}>
+              <Link
+                href={mode.href}
+                className="mk-lift group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-paper hover:border-ink"
+              >
+                <div className="relative">
+                  <ScenePhoto
+                    scene={mode.scene}
+                    sizes="(min-width: 1152px) 560px, (min-width: 768px) 50vw, calc(100vw - 32px)"
+                    className="aspect-[3/2] w-full rounded-none"
+                  />
+                  <span className="absolute bottom-3 left-3 flex items-center gap-2 rounded-full bg-paper py-1 pl-1 pr-3 text-xs font-semibold">
+                    <PortraitStack persons={mode.people} size={28} />
+                    {mode.people.length > 1 ? "Two AI voices + you" : "One AI voice + you"}
+                  </span>
+                </div>
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="text-xl font-bold tracking-[-0.02em]">{mode.title}</h3>
+                  <p className="mt-2 flex-1 text-[15px] leading-6 text-gray-500">{mode.description}</p>
+                  <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold">
+                    {mode.link}
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </Link>
+            </li>
+          ))}
         </ul>
       </section>
 

@@ -1,0 +1,123 @@
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+
+/*
+ * Illustrative people and scenes for the public site. All images are
+ * AI-generated, fictional people (public/images/people, public/images/scenes):
+ * portraits are 256×256 WebP, scenes 1200×800 WebP.
+ */
+
+export const people = {
+  drKim: "/images/people/dr-kim.webp",
+  mei: "/images/people/mei.webp",
+  jp: "/images/people/jp.webp",
+  nurse: "/images/people/nurse.webp",
+  lawyer: "/images/people/lawyer.webp",
+  examiner: "/images/people/examiner.webp",
+  interpreter: "/images/people/interpreter.webp",
+  candidate: "/images/people/candidate.webp",
+  sofia: "/images/people/sofia.webp",
+  linh: "/images/people/linh.webp",
+} as const;
+
+export type PersonKey = keyof typeof people;
+
+export const scenes = {
+  interpreterDesk: {
+    src: "/images/scenes/interpreter-desk.webp",
+    alt: "An interpreter wearing headphones practises out loud at her desk.",
+  },
+  clinic: {
+    src: "/images/scenes/clinic-consultation.webp",
+    alt: "A doctor speaks with an older patient while an interpreter takes notes beside her.",
+  },
+  examPrep: {
+    src: "/images/scenes/exam-prep.webp",
+    alt: "A nurse in scrubs rehearses a speaking exam at her kitchen table in the evening.",
+  },
+  team: {
+    src: "/images/scenes/team-training.webp",
+    alt: "A small group of interpreters practising together around a table with laptops and headphones.",
+  },
+  legal: {
+    src: "/images/scenes/legal-meeting.webp",
+    alt: "An interpreter speaks with a client in a meeting with a lawyer.",
+  },
+} as const;
+
+export type SceneKey = keyof typeof scenes;
+
+/** Round portrait of a demo person. Decorative by default (alt=""). */
+export function Portrait({
+  person,
+  size,
+  className,
+  alt = "",
+}: {
+  person: PersonKey;
+  /** Rendered size in CSS pixels (largest breakpoint). */
+  size: number;
+  className?: string;
+  alt?: string;
+}) {
+  return (
+    <Image
+      src={people[person]}
+      alt={alt}
+      width={size}
+      height={size}
+      sizes={`${size}px`}
+      className={cn("rounded-full bg-gray-200 object-cover", className)}
+    />
+  );
+}
+
+/** Overlapping row of portraits. */
+export function PortraitStack({
+  persons,
+  size = 40,
+  className,
+}: {
+  persons: readonly PersonKey[];
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <span className={cn("flex -space-x-2", className)} aria-hidden>
+      {persons.map((person) => (
+        <Portrait key={person} person={person} size={size} className="ring-2 ring-paper" />
+      ))}
+    </span>
+  );
+}
+
+/**
+ * Rounded scene photo that fills its box. Give the wrapper an aspect ratio or
+ * height via className. Set `priority` only for the one above-the-fold hero.
+ */
+export function ScenePhoto({
+  scene,
+  sizes,
+  className,
+  priority = false,
+  decorative = false,
+}: {
+  scene: SceneKey;
+  sizes: string;
+  className?: string;
+  priority?: boolean;
+  decorative?: boolean;
+}) {
+  return (
+    <div className={cn("relative overflow-hidden rounded-2xl bg-gray-100", className)}>
+      <Image
+        src={scenes[scene].src}
+        alt={decorative ? "" : scenes[scene].alt}
+        fill
+        sizes={sizes}
+        priority={priority}
+        className="object-cover"
+      />
+    </div>
+  );
+}

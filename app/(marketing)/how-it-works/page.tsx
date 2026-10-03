@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { IllustratedSteps } from "@/components/marketing/illustrated-steps";
 import { Journey } from "@/components/marketing/journey";
+import { ScenePhoto } from "@/components/marketing/people";
 import { RoomMock, ScoreMock } from "@/components/marketing/practice-mock";
 import { Button } from "@/components/ui/button";
 import { CCL_MAX_SCORE, assessmentDimensions } from "@/lib/scoring";
@@ -44,7 +45,15 @@ export default function HowItWorksPage() {
       <MarketingIntro
         eyebrow="How it works"
         title="Your practice partner, ready whenever you are."
-        description="No partner to book, no scripts to read. Two AI speakers hold a conversation, and you carry it between them."
+        description="No partner to book, no scripts to read. Talk one-on-one with an AI character, or interpret between two of them."
+        media={
+          <ScenePhoto
+            scene="interpreterDesk"
+            priority
+            sizes="(min-width: 1024px) 480px, calc(100vw - 32px)"
+            className="aspect-[4/3] w-full"
+          />
+        }
       >
         <Button asChild size="lg">
           <Link href="/sign-up">Start practising free</Link>
@@ -52,8 +61,25 @@ export default function HowItWorksPage() {
       </MarketingIntro>
 
       <section>
-        <h2 className="sr-only">Three steps</h2>
-        <IllustratedSteps />
+        <p className="eyebrow">Interpreting</p>
+        <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.03em] text-balance">
+          Two AI people, one conversation, and you in the middle.
+        </h2>
+        <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
+          For NAATI and medical interpreting practice: each side speaks a different language, and you relay every turn.
+        </p>
+        <IllustratedSteps className="mt-8" />
+      </section>
+
+      <section id="roleplay" className="scroll-mt-24">
+        <p className="eyebrow">Speaking exams and role-plays</p>
+        <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.03em] text-balance">
+          One-on-one with an AI patient, colleague or examiner.
+        </h2>
+        <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
+          For OET, IELTS, AMC and OSCE practice: you play yourself, and a single AI character plays the other part.
+        </p>
+        <IllustratedSteps variant="roleplay" className="mt-8" />
       </section>
 
       <section className="grid gap-10 lg:grid-cols-2 lg:items-center">
@@ -61,7 +87,7 @@ export default function HowItWorksPage() {
         <div>
           <p className="eyebrow">In the session</p>
           <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em]">
-            What a session looks like
+            What an interpreting session looks like
           </h2>
           <dl className="mt-6 divide-y divide-gray-200 border-y border-gray-200">
             {details.map((item) => (

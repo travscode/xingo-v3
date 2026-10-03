@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
+import { ScenePhoto } from "@/components/marketing/people";
 import { CCL_MAX_SCORE } from "@/lib/scoring";
 import { cclLanguagePages, topicPages } from "@/lib/seo-pages";
 import { pageMetadata } from "@/lib/seo-metadata";
@@ -26,6 +27,14 @@ export default function InterpretingHubPage() {
         eyebrow="Interpreting practice"
         title="Practise the interpreting you actually do."
         description="Choose a test or a setting. Every dialogue is spoken, two-way and scored."
+        media={
+          <ScenePhoto
+            scene="clinic"
+            priority
+            sizes="(min-width: 1024px) 480px, calc(100vw - 32px)"
+            className="aspect-[4/3] w-full"
+          />
+        }
       />
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => (

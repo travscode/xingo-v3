@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { practiceModules } from "@/components/marketing/catalogue";
+import { ScenePhoto } from "@/components/marketing/people";
 import { Button } from "@/components/ui/button";
 import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
 import { pageMetadata } from "@/lib/seo-metadata";
@@ -35,6 +36,14 @@ export default function ForInterpretersPage() {
         eyebrow="For interpreters"
         title="Stay sharp between assignments. Get ready for the next credential."
         description="Whether you're preparing for a test or keeping in practice, XINGO gives you realistic conversations to interpret out loud."
+        media={
+          <ScenePhoto
+            scene="legal"
+            priority
+            sizes="(min-width: 1024px) 480px, calc(100vw - 32px)"
+            className="aspect-[4/3] w-full"
+          />
+        }
       >
         <Button asChild size="lg">
           <Link href="/sign-up">Start practising free</Link>
@@ -53,20 +62,27 @@ export default function ForInterpretersPage() {
         ))}
       </section>
 
-      <section>
-        <p className="eyebrow">Courses</p>
-        <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em]">What you can practise</h2>
-        <ul className="mt-8 divide-y divide-gray-200 border-y border-gray-200">
-          {practiceModules.map((course) => (
-            <li key={course.title} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="font-semibold">{course.title}</div>
-                <div className="text-sm text-gray-500">{course.description}</div>
-              </div>
-              {course.access === "free" ? <FreeBadge /> : <PremiumBadge label="Pro or pack" />}
-            </li>
-          ))}
-        </ul>
+      <section className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start lg:gap-14">
+        <ScenePhoto
+          scene="interpreterDesk"
+          sizes="(min-width: 1024px) 440px, calc(100vw - 32px)"
+          className="hidden aspect-[4/5] w-full lg:sticky lg:top-24 lg:block"
+        />
+        <div>
+          <p className="eyebrow">Courses</p>
+          <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em]">What you can practise</h2>
+          <ul className="mt-8 divide-y divide-gray-200 border-y border-gray-200">
+            {practiceModules.map((course) => (
+              <li key={course.title} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="font-semibold">{course.title}</div>
+                  <div className="text-sm text-gray-500">{course.description}</div>
+                </div>
+                {course.access === "free" ? <FreeBadge /> : <PremiumBadge label="Pro or pack" />}
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       <CtaBand

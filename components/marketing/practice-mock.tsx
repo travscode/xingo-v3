@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { Mic } from "lucide-react";
+import { people, type PersonKey } from "@/components/marketing/people";
 import { Badge } from "@/components/ui/primitives";
 import { CCL_MAX_SCORE, CCL_PASS_SCORE, PASS_SCORE, assessmentDimensions } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
@@ -39,7 +41,7 @@ function VoiceBars({ className }: { className?: string }) {
 }
 
 function MockTile({
-  initials,
+  person,
   name,
   role,
   language,
@@ -48,7 +50,7 @@ function MockTile({
   listeningPhase,
   labels,
 }: {
-  initials: string;
+  person: PersonKey;
   name: string;
   role: string;
   language: string;
@@ -77,8 +79,8 @@ function MockTile({
             <span className="record-ring" />
           </span>
         ) : null}
-        <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-lg font-bold sm:h-20 sm:w-20 sm:text-2xl">
-          {initials}
+        <div className="relative h-14 w-14 overflow-hidden rounded-full bg-gray-200 sm:h-20 sm:w-20">
+          <Image src={people[person]} alt="" fill sizes="80px" className="object-cover" />
           {speakingPhase ? (
             <span
               className={`mk-p${speakingPhase} absolute inset-0 flex items-center justify-center bg-ink/50 text-paper`}
@@ -129,7 +131,7 @@ export function RoomMock({ className }: { className?: string }) {
 
         <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3">
           <MockTile
-            initials="DK"
+            person="drKim"
             name="Dr Kim"
             role="Doctor"
             language="English"
@@ -142,7 +144,7 @@ export function RoomMock({ className }: { className?: string }) {
             }}
           />
           <MockTile
-            initials="M"
+            person="mei"
             name="Mei"
             role="Patient"
             language="Mandarin"
@@ -232,15 +234,10 @@ export function ScoreMock({ scale = "general", className }: { scale?: "ccl" | "g
 
 /* ---- Small step illustrations (used inside step cards) ------------------- */
 
-function MiniAvatar({ initials, active }: { initials: string; active?: boolean }) {
+function MiniAvatar({ person, active }: { person: PersonKey; active?: boolean }) {
   return (
-    <span
-      className={cn(
-        "relative flex h-12 w-12 items-center justify-center rounded-full bg-paper text-sm font-bold",
-        active && "ring-2 ring-live",
-      )}
-    >
-      {initials}
+    <span className={cn("relative block h-12 w-12 rounded-full bg-paper", active && "ring-2 ring-live")}>
+      <Image src={people[person]} alt="" width={48} height={48} sizes="48px" className="rounded-full object-cover" />
       {active ? (
         <span className="absolute inset-0 flex items-center justify-center rounded-full bg-ink/50 text-paper">
           <VoiceBars className="h-3.5" />
@@ -255,7 +252,7 @@ export function SpeakersVisual() {
   return (
     <div className="flex w-full items-center justify-center gap-3" aria-hidden>
       <div className="flex flex-col items-center gap-1.5">
-        <MiniAvatar initials="DK" active />
+        <MiniAvatar person="drKim" active />
         <span className="text-[11px] font-semibold">English</span>
       </div>
       <div className="flex flex-1 items-center gap-1.5 text-gray-500">
@@ -264,7 +261,7 @@ export function SpeakersVisual() {
         <span className="h-px flex-1 border-t border-dashed border-gray-300" />
       </div>
       <div className="flex flex-col items-center gap-1.5">
-        <MiniAvatar initials="M" />
+        <MiniAvatar person="mei" />
         <span className="text-[11px] font-semibold">Your language</span>
       </div>
     </div>
@@ -348,7 +345,7 @@ export function PartnerVisual() {
   return (
     <div className="flex items-center gap-4" aria-hidden>
       <div className="flex flex-col items-center gap-1.5">
-        <MiniAvatar initials="JP" active />
+        <MiniAvatar person="jp" active />
         <span className="text-[11px] font-semibold text-live">Speaking</span>
       </div>
       <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-ink text-paper">

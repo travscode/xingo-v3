@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MarketingIntro } from "@/components/marketing/cta-band";
 import { SALES_EMAIL } from "@/components/marketing/catalogue";
+import { Portrait, ScenePhoto, type PersonKey } from "@/components/marketing/people";
 import { Button } from "@/components/ui/button";
 import { CCL_MAX_SCORE } from "@/lib/scoring";
 import { pageMetadata } from "@/lib/seo-metadata";
@@ -12,18 +13,21 @@ export const metadata: Metadata = pageMetadata({
   path: "/for-organizations",
 });
 
-const useCases = [
+const useCases: Array<{ title: string; description: string; person: PersonKey }> = [
   {
     title: "Training providers",
     description: "Give students more speaking practice between classes, in the settings they're training for.",
+    person: "linh",
   },
   {
     title: "NAATI test prep courses",
     description: `Add CCL-style dialogue practice, scored out of ${CCL_MAX_SCORE}, alongside your own teaching.`,
+    person: "candidate",
   },
   {
     title: "Language service providers",
     description: "Offer interpreters a way to keep their skills current in medical, legal and community settings.",
+    person: "sofia",
   },
 ];
 
@@ -36,6 +40,14 @@ export default function ForOrganizationsPage() {
         eyebrow="For teams"
         title="More speaking practice for your whole cohort."
         description="We work directly with training providers and interpreting teams to set up access. Tell us about your group and we'll work out what fits."
+        media={
+          <ScenePhoto
+            scene="team"
+            priority
+            sizes="(min-width: 1024px) 480px, calc(100vw - 32px)"
+            className="aspect-[4/3] w-full"
+          />
+        }
       >
         <Button asChild size="lg">
           <a href={mailto}>Talk to us</a>
@@ -45,7 +57,8 @@ export default function ForOrganizationsPage() {
       <section className="grid gap-4 md:grid-cols-3">
         {useCases.map((item) => (
           <article key={item.title} className="mk-lift rounded-xl border border-gray-200 p-6 hover:border-ink">
-            <h2 className="text-lg font-bold tracking-[-0.02em]">{item.title}</h2>
+            <Portrait person={item.person} size={48} />
+            <h2 className="mt-4 text-lg font-bold tracking-[-0.02em]">{item.title}</h2>
             <p className="mt-2 text-[15px] leading-6 text-gray-500">{item.description}</p>
           </article>
         ))}

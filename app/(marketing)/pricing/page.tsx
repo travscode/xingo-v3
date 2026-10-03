@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Check, Crown } from "lucide-react";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { SALES_EMAIL, SUPPORT_EMAIL } from "@/components/marketing/catalogue";
+import { ScenePhoto } from "@/components/marketing/people";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
 import { CURRENCY_LABEL, MAX_ATTEMPT_MINUTES, packList, plans } from "@/lib/plans";
@@ -96,12 +97,22 @@ export default function PricingPage() {
 
       {/* Packs */}
       <section id="packs" className="scroll-mt-24">
-        <p className="eyebrow">Minute packs</p>
-        <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Preparing for a test date?</h2>
-        <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
-          One-off payment, no subscription. Pack minutes never expire, and every course is unlocked while you have
-          them.
-        </p>
+        <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
+          <div>
+            <p className="eyebrow">Minute packs</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Preparing for a test date?</h2>
+            <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
+              One-off payment, no subscription. Pack minutes never expire, and every course is unlocked while you have
+              them.
+            </p>
+          </div>
+          <ScenePhoto
+            scene="examPrep"
+            decorative
+            sizes="(min-width: 768px) 320px, calc(100vw - 32px)"
+            className="aspect-[3/2] w-full md:w-80"
+          />
+        </div>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {packList.map((pack) => (
             <article key={pack.id} className="flex flex-col rounded-xl border border-gray-200 p-6">
