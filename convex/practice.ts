@@ -565,3 +565,25 @@ function summarizeTranscript(
   const lines = entries.slice(-4).map((entry) => `${entry.speaker}: ${entry.text}`);
   return lines.join(" ").slice(0, 400) || "No transcript captured.";
 }
+
+/**
+ * Showing the transcript during an assessed session makes it a practice session
+ * (one way: it won't be scored). Called when the learner chooses to reveal it.
+ */
+export const switchToPractice = mutation({
+  args: { attemptId: v.string() },
+  handler: async (ctx, args) => {
+    const clerkId = await requireClerkId(ctx);
+    const attempt = await requireOwnedAttempt(ctx, args.attemptId, clerkId);
+
+    if (attempt.completionStatus !== "in_progress") {
+      throw new Error("This practice attempt has already ended.");
+    }
+
+    if ((attempt.mode ?? "assessed") !== "practice") {
+      await ctx.db.patch(attempt._id, { mode: "practice" });
+    }
+
+    return { mode: "practice" as const };
+  },
+});

@@ -540,3 +540,27 @@ describe("admin access", () => {
     expect(me?.entitlement.planLabel).toBe("Admin");
   });
 });
+
+describe("transcript reveal", () => {
+  test("revealing the transcript makes an assessed attempt practice, so it isn't scored", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    const asUser = await seedUser(t, "user_reveal", { role: "platform_admin" });
+    const { attemptId } = await asUser.mutation(api.practice.startAttempt, { scenarioId: "free-scn", ...pair });
+
+    await asUser.mutation(api.practice.switchToPractice, { attemptId });
+    const outcome = await asUser.action(api.practiceActions.finishAttempt, { attemptId, transcriptEntries: [] });
+    expect(outcome).toEqual({ status: "practice_mode" });
+  });
+
+  test("live coaching is refused in assessed mode", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    const asUser = await seedUser(t, "user_coach", { role: "platform_admin" });
+    const { attemptId } = await asUser.mutation(api.practice.startAttempt, { scenarioId: "free-scn", ...pair });
+
+    await expect(
+      asUser.action(api.practiceActions.coachTurn, { attemptId, kind: "intro", rendition: "Hi, I'm the interpreter" }),
+    ).rejects.toThrow("only available in practice mode");
+  });
+});

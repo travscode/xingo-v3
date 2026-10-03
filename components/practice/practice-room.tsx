@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAction, useMutation } from "convex/react";
 import { RealtimeAgent, tool } from "@openai/agents/realtime";
-import { ArrowLeft, Clock, Eye, EyeOff, Languages, Lock } from "lucide-react";
+import { ArrowLeft, Clock, Lock } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
 import {
@@ -37,6 +37,8 @@ import { Badge, Card } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import type { Scenario, VoiceAgent } from "@/types/scenario";
 import type { TranscriptEntry } from "@/types/session";
+import { deriveInterpretingSteps, taskItems, type CoachResult, type Party } from "@/components/practice/session-guide";
+import { StepGuide, TaskChecklist, TranscriptSection } from "@/components/practice/session-panel";
 
 type AgentKey = "agent_a" | "agent_b";
 type Phase = "setup" | "countdown" | "connecting" | "live" | "finishing";
@@ -66,6 +68,8 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
   const createRealtimeSecret = useAction(api.practiceActions.createRealtimeSecret);
   const finishAttempt = useAction(api.practiceActions.finishAttempt);
   const translateLine = useAction(api.practiceActions.translateLine);
+  const coachTurn = useAction(api.practiceActions.coachTurn);
+  const switchToPractice = useMutation(api.practice.switchToPractice);
 
   const [phase, setPhase] = useState<Phase>("setup");
   const [mode, setMode] = useState<Mode>("assessed");
@@ -93,6 +97,11 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
   const [quietMs, setQuietMs] = useState(0);
   const [connectingNudge, setConnectingNudge] = useState(false);
   const [transcriptEntries, setTranscriptEntries] = useState<TranscriptEntry[]>([]);
+  /** Entries whose speech-to-text is final (the guide only judges finished turns). */
+  const [completedIds, setCompletedIds] = useState<Set<string>>(() => new Set());
+  const [coachResults, setCoachResults] = useState<Record<string, CoachResult | "pending" | undefined>>({});
+  const [coveredTasks, setCoveredTasks] = useState<Set<number>>(() => new Set());
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [translating, setTranslating] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
@@ -292,6 +301,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       return;
     }
 
+    setCompletedIds((current) => (current.has(entryId) ? current : new Set(current).add(entryId)));
     setTranscriptEntries((current) =>
       current.map((entry) => (entry.id === entryId ? { ...entry, text } : entry)),
     );
@@ -536,6 +546,10 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     setPhase("connecting");
     setTranscriptEntries([]);
     setTranslations({});
+    setCompletedIds(new Set());
+    setCoachResults({});
+    setCoveredTasks(new Set());
+    setTranscriptOpen(false);
     setTurns({ agent_a: 0, agent_b: 0 });
     turnsRef.current = { agent_a: 0, agent_b: 0 };
     setConversationEnd(null);
@@ -925,6 +939,94 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     [translateLine, translating, translations],
   );
 
+  // ---- Step guide (D-034) -----------------------------------------------------------
+
+  const taskLine = isRoleplay
+    ? `You're the ${runtime.learnerRole ?? "candidate"}. ${scenario.description}`
+    : hasSecondAgent
+      ? `Interpret between ${professional.name} (${professional.role}) and ${client.name} (${client.role}). ${scenario.description}`
+      : `Interpret for ${client.name} (${client.role}). ${scenario.description}`;
+  const roleplayTasks = useMemo(() => taskItems(runtime.taskCard), [runtime.taskCard]);
+
+  const guideSteps = useMemo(() => {
+    if (isRoleplay || !hasSecondAgent) return [];
+    const party = (key: AgentKey): Party => {
+      const config = configFor(key);
+      return { key, name: config.name, language: config.language, role: config.role };
+    };
+    const names = { agent_a: configFor("agent_a").name, agent_b: configFor("agent_b").name };
+    return deriveInterpretingSteps({
+      entries: transcriptEntries,
+      completed: completedIds,
+      client: party(clientKey),
+      professional: party(professionalKey),
+      partyOf: (entry) => {
+        for (const key of ["agent_a", "agent_b"] as const) {
+          if (entry.role === "assistant" ? entry.speaker === names[key] : entry.speaker === `You → ${names[key]}`) return key;
+        }
+        return null;
+      },
+      results: Object.fromEntries(Object.entries(coachResults).map(([id, r]) => [id, r === "pending" ? undefined : r])),
+      ended: conversationEnded,
+    });
+  }, [clientKey, coachResults, completedIds, configFor, conversationEnded, hasSecondAgent, isRoleplay, professionalKey, transcriptEntries]);
+
+  // Practice mode: check each finished attempt once.
+  useEffect(() => {
+    const id = attemptIdRef.current;
+    if (mode !== "practice" || !id || phase !== "live") return;
+    const textOf = new Map(transcriptEntries.map((entry) => [entry.id, entry.text]));
+
+    for (const step of guideSteps) {
+      for (const attemptId of step.attemptIds) {
+        if (coachResults[attemptId] !== undefined || !completedIds.has(attemptId)) continue;
+        setCoachResults((current) => ({ ...current, [attemptId]: "pending" }));
+        coachTurn({
+          attemptId: id,
+          kind: step.kind === "intro" ? "intro" : "segment",
+          rendition: textOf.get(attemptId) ?? "",
+          source: step.sourceText,
+          sourceLanguage: step.sourceLanguage,
+          targetLanguage: step.targetLanguage,
+        })
+          .then((result) => setCoachResults((current) => ({ ...current, [attemptId]: { verdict: result.verdict, tip: result.tip } })))
+          .catch(() => setCoachResults((current) => ({ ...current, [attemptId]: undefined })));
+      }
+    }
+  }, [coachResults, coachTurn, completedIds, guideSteps, mode, phase, transcriptEntries]);
+
+  // Practice mode role-plays: tick task-card items as they're covered.
+  const learnerTurnsDone = transcriptEntries.filter((entry) => entry.role === "user" && completedIds.has(entry.id)).length;
+  useEffect(() => {
+    const id = attemptIdRef.current;
+    if (!isRoleplay || mode !== "practice" || !id || learnerTurnsDone === 0 || roleplayTasks.length === 0) return;
+    const said = transcriptEntries
+      .filter((entry) => entry.role === "user" && entry.text.trim())
+      .map((entry) => entry.text)
+      .join("\n");
+    coachTurn({ attemptId: id, kind: "tasks", rendition: said, tasks: roleplayTasks })
+      .then((result) => setCoveredTasks((current) => new Set([...current, ...result.covered])))
+      .catch(() => undefined);
+    // Only when a new learner turn finishes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [learnerTurnsDone]);
+
+  const toggleTranscript = useCallback(() => {
+    if (transcriptOpen) {
+      setTranscriptOpen(false);
+      return;
+    }
+
+    const id = attemptIdRef.current;
+    if (mode === "assessed" && id) {
+      if (!window.confirm("Showing the transcript switches this session to Practice mode, so it won't be scored. Show it?")) return;
+      void switchToPractice({ attemptId: id }).catch(() => undefined);
+      setMode("practice");
+    }
+
+    setTranscriptOpen(true);
+  }, [mode, switchToPractice, transcriptOpen]);
+
   // ---- Coaching -------------------------------------------------------------------
 
   const effectiveAllowedMs = allowedMs !== null ? Math.min(allowedMs, timeLimitMs) : timeLimitMs;
@@ -1048,7 +1150,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
           </div>
           <h1 className="mt-5 text-3xl font-bold tracking-[-0.03em]">Unlock {data.module.title}</h1>
           <p className="mt-2 text-gray-500">
-            This dialogue is part of a premium module. Go Pro or buy a minute pack to practise every module.
+            This dialogue is part of a premium course. Go Pro or buy a minute pack to practise every course.
           </p>
           <div className="mt-6 flex justify-center gap-2">
             <Button asChild size="lg">
@@ -1083,6 +1185,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       title={scenario.title}
       subtitle={data.module.title}
       onExit={leaveRoom}
+      wide={phase !== "setup" && phase !== "countdown"}
       right={
         <div className="flex items-center gap-3">
           {timer}
@@ -1115,16 +1218,19 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
           }}
         />
       ) : (
-        <div className="grid flex-1 gap-6 lg:grid-cols-[1fr_360px]">
-          <section className="flex min-w-0 flex-col gap-6">
-            <CoachBar {...coach} />
+        <div className="flex flex-1 flex-col lg:flex-row">
+          <section className="flex min-w-0 flex-1 flex-col items-center gap-6 px-4 py-6 sm:px-8 lg:py-10">
+            <div className="w-full max-w-4xl">
+              <CoachBar {...coach} />
+            </div>
 
-            <div className={cn("grid gap-4", hasSecondAgent && "sm:grid-cols-2")}>
+            <div className={cn("grid w-full max-w-4xl gap-4 lg:gap-6", hasSecondAgent ? "sm:grid-cols-2" : "max-w-md")}>
               {(hasSecondAgent ? [clientKey, professionalKey] : (["agent_a"] as AgentKey[])).map((key) => {
                 const config = configFor(key);
                 return (
                   <ParticipantTile
                     key={key}
+                    size="lg"
                     name={config.name}
                     role={config.role}
                     language={config.language}
@@ -1155,7 +1261,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
               </p>
             ) : null}
             {audioBlocked ? (
-              <div className="rounded-xl bg-warning/30 px-4 py-3 text-sm">
+              <div className="w-full max-w-4xl rounded-xl bg-warning/30 px-4 py-3 text-sm">
                 Your browser blocked audio.{" "}
                 <button
                   type="button"
@@ -1166,69 +1272,43 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
                 </button>
               </div>
             ) : null}
-            {error ? <div className="rounded-xl bg-record/10 px-4 py-3 text-sm text-record">{error}</div> : null}
+            {error ? <div className="w-full max-w-4xl rounded-xl bg-record/10 px-4 py-3 text-sm text-record">{error}</div> : null}
           </section>
 
-          <aside className="flex min-h-0 flex-col gap-4 lg:sticky lg:top-6 lg:h-[calc(100dvh-8rem)]">
-            {isRoleplay && runtime.taskCard ? <TaskCard text={runtime.taskCard} learnerRole={runtime.learnerRole} /> : null}
-            {isRoleplay && mode === "assessed" ? null : mode === "practice" ? (
-              <Card className="flex min-h-[260px] flex-1 flex-col overflow-hidden">
-                <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-                  <p className="text-sm font-bold">Live transcript</p>
-                  <Eye className="h-4 w-4 text-gray-500" />
-                </div>
-                <div ref={transcriptScrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
-                  {visibleEntries.length === 0 ? (
-                    <p className="text-sm text-gray-500">The conversation will appear here.</p>
-                  ) : null}
-                  {visibleEntries.map((entry) => (
-                    <div key={entry.id} className={cn("flex", entry.role === "user" && "justify-end")}>
-                      <div
-                        className={cn(
-                          "max-w-[85%] rounded-xl px-3 py-2 text-sm",
-                          entry.role === "user" ? "bg-ink text-paper" : "bg-gray-100",
-                        )}
-                      >
-                        <div className="mb-0.5 flex items-center justify-between gap-3 text-[11px] font-semibold opacity-60">
-                          <span>{entry.speaker}</span>
-                          {isRoleplay ? null : translations[entry.id] ? (
-                            <span>English</span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => void translateEntry(entry.id, entry.text)}
-                              disabled={translating[entry.id]}
-                              className="inline-flex items-center gap-1 hover:opacity-100"
-                            >
-                              <Languages className="h-3 w-3" />
-                              {translating[entry.id] ? "…" : "Translate"}
-                            </button>
-                          )}
-                        </div>
-                        {translations[entry.id] ?? entry.text}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ) : (
-              <Card tone="muted" className="flex flex-1 flex-col justify-center p-6 text-center">
-                <EyeOff className="mx-auto h-6 w-6 text-gray-500" />
-                <p className="mt-3 font-bold">Transcript hidden</p>
-                <p className="mt-1 text-sm text-gray-500">
-                  Like the real test, you work from listening alone. You&apos;ll see the full transcript with your results.
-                </p>
-                <p className="mt-6 text-sm">
-                  <span className="text-3xl font-bold tabular-nums">{totalTurns}</span>
-                  <span className="ml-2 text-gray-500">turns interpreted</span>
-                </p>
-              </Card>
-            )}
+          <aside className="flex w-full flex-col gap-4 border-t border-gray-200 bg-gray-50/70 p-4 sm:p-6 lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[400px] lg:shrink-0 lg:border-l lg:border-t-0 xl:w-[460px]">
+            <div className={cn("shrink-0 overflow-y-auto", transcriptOpen ? "max-h-[45%]" : "flex-1")}>
+              {isRoleplay ? (
+                roleplayTasks.length > 0 ? (
+                  <TaskChecklist task={taskLine} items={roleplayTasks} covered={coveredTasks} live={mode === "practice"} />
+                ) : runtime.taskCard ? (
+                  <TaskCard text={runtime.taskCard} learnerRole={runtime.learnerRole} />
+                ) : (
+                  <TaskChecklist task={taskLine} items={[]} covered={coveredTasks} live={false} />
+                )
+              ) : hasSecondAgent ? (
+                <StepGuide task={taskLine} steps={guideSteps} results={coachResults} live={mode === "practice"} />
+              ) : (
+                <TaskChecklist task={taskLine} items={[]} covered={coveredTasks} live={false} />
+              )}
+            </div>
+
+            <TranscriptSection
+              open={transcriptOpen}
+              onToggle={toggleTranscript}
+              assessed={mode === "assessed"}
+              entries={visibleEntries}
+              translations={translations}
+              translating={translating}
+              onTranslate={(id, text) => void translateEntry(id, text)}
+              showTranslate={!isRoleplay && mode === "practice"}
+              scrollRef={transcriptScrollRef}
+            />
 
             <Button
               size="lg"
               variant={conversationEnded ? "accent" : "primary"}
               block
+              className="mt-auto shrink-0"
               disabled={phase !== "live"}
               onClick={() => finishSession("learner_finished")}
             >
@@ -1246,17 +1326,20 @@ function RoomFrame({
   subtitle,
   onExit,
   right,
+  wide = false,
   children,
 }: {
   title: string;
   subtitle?: string;
   onExit: () => void;
   right?: React.ReactNode;
+  /** Live session: use the full width (stage + docked side panel). */
+  wide?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex min-h-dvh flex-col bg-paper">
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-paper/95 px-4 py-3 backdrop-blur sm:px-6">
+      <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-gray-200 bg-paper/95 px-4 backdrop-blur sm:px-6">
         <Button variant="ghost" size="icon" onClick={onExit} aria-label="Leave session">
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -1266,7 +1349,7 @@ function RoomFrame({
         </div>
         {right}
       </header>
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-6 sm:px-6">{children}</main>
+      <main className={cn("flex w-full flex-1 flex-col", !wide && "mx-auto max-w-6xl px-4 py-6 sm:px-6")}>{children}</main>
     </div>
   );
 }

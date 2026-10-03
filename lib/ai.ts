@@ -68,6 +68,9 @@ export function buildRealtimeAgentInstructions(args: {
   const { scenario, agent, counterpart, isProfessional, authoredLanguage } = args;
   const language = agent.language;
   const timeLimitMinutes = args.timeLimitMinutes ?? 12;
+  // English-only practice (or any pair where both speak the same language): authored
+  // notes like "you do not speak English" would contradict the language rule.
+  const sharedLanguage = Boolean(counterpart?.language && language && counterpart.language.toLowerCase() === language.toLowerCase());
   const endCondition = agent.endCondition?.trim() || agent.goal;
 
   return [
@@ -75,6 +78,10 @@ export function buildRealtimeAgentInstructions(args: {
     "",
     `Scenario: ${scenario.title}. ${scenario.description}`,
     `You are ${agent.name}, the ${agent.role}. Demeanor: ${agent.demeanor}.`,
+    `IDENTITY (never break this): you are ${agent.name}, the ${agent.role}, and nothing else. You are NOT an interpreter. The human you are talking to is the interpreter. Never introduce yourself as an interpreter, never offer to interpret or translate, and never describe your job as helping anyone communicate.`,
+    sharedLanguage
+      ? `In this session you and ${counterpart?.name ?? "the other participant"} both speak ${language}. Ignore anything above that says you don't speak ${language}. You still only talk to the interpreter, who passes everything on between you.`
+      : "",
     `Your goal: ${retargetLanguage(agent.goal, authoredLanguage, language)}`,
     counterpart
       ? `The other participant is ${counterpart.name}, the ${counterpart.role}. You cannot hear them directly; a human interpreter relays everything between you.`
@@ -169,6 +176,7 @@ export function buildRoleplayInstructions(args: { scenario: Scenario; agent: Voi
 
   return [
     `You are ${agent.name}, ${agent.role}, in a spoken practice role-play. The person talking to you is a ${learner}.`,
+    `You are only ${agent.name}. You are never an interpreter or an assistant, and you never step out of your role.`,
     `Scenario: ${scenario.title}. ${scenario.description}`,
     `Your manner: ${agent.demeanor}.`,
     `What you want from this conversation: ${agent.goal}`,

@@ -37,7 +37,9 @@ export function ParticipantTile({
   state,
   disabled,
   onSelect,
+  size = "md",
 }: {
+  size?: "md" | "lg";
   name: string;
   role: string;
   language: string;
@@ -65,6 +67,7 @@ export function ParticipantTile({
       aria-pressed={state !== "idle"}
       className={cn(
         "group flex w-full flex-col items-center rounded-2xl border-2 p-5 text-center transition-colors sm:p-6",
+        size === "lg" && "xl:p-10",
         state === "idle" || state === "connecting"
           ? "border-transparent bg-gray-50 hover:bg-gray-100"
           : "border-live bg-paper",
@@ -76,7 +79,8 @@ export function ParticipantTile({
         {state === "listening" ? <span className="record-ring" aria-hidden /> : null}
         <div
           className={cn(
-            "relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-3xl font-bold sm:h-36 sm:w-36",
+            "relative flex items-center justify-center overflow-hidden rounded-full bg-gray-200 text-3xl font-bold",
+            size === "lg" ? "h-32 w-32 sm:h-40 sm:w-40 xl:h-52 xl:w-52" : "h-28 w-28 sm:h-36 sm:w-36",
             state !== "idle" && state !== "connecting" && "ring-4 ring-live",
           )}
         >
