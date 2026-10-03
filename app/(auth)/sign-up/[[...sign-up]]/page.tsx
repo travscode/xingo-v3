@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { SignUp } from "@clerk/nextjs";
+import { ClerkFailed, ClerkLoaded, ClerkLoading, SignUp } from "@clerk/nextjs";
+import { AuthFormFailed, AuthFormLoading } from "@/components/auth/auth-form-states";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Sign up", robots: { index: false } };
@@ -28,12 +29,20 @@ export default async function SignUpPage({
       <h1 className="text-center text-3xl font-bold tracking-[-0.03em]">Create your XINGO account</h1>
       <p className="mt-2 text-center text-[15px] text-gray-500">Free practice minutes every month. No card needed.</p>
       <div className="mt-8 flex w-full justify-center">
-        <SignUp
-          path="/sign-up"
-          routing="path"
-          signInUrl={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`}
-          fallbackRedirectUrl={redirectTarget}
-        />
+        <ClerkLoading>
+          <AuthFormLoading label="Loading secure sign-up…" />
+        </ClerkLoading>
+        <ClerkLoaded>
+          <SignUp
+            path="/sign-up"
+            routing="path"
+            signInUrl={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`}
+            fallbackRedirectUrl={redirectTarget}
+          />
+        </ClerkLoaded>
+        <ClerkFailed>
+          <AuthFormFailed />
+        </ClerkFailed>
       </div>
       <p className="mt-6 max-w-sm text-center text-xs leading-5 text-gray-500">
         By creating an account you agree to our{" "}

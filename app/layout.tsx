@@ -32,6 +32,9 @@ export default function RootLayout({
   return (
     <html lang="en-AU">
       <head>
+        {/* Clerk serves the sign-in form; connecting early saves a round trip on /sign-up and /sign-in. */}
+        <link rel="preconnect" href="https://clerk.xingo.ai" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://clerk.xingo.ai" />
         {GA4_MEASUREMENT_ID ? (
           <>
             <Script

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LEGAL_ABN, LEGAL_ENTITY } from "@/lib/legal";
 import type { ReactNode } from "react";
 import { HeaderAuth } from "@/components/auth/header-auth";
+import { AuthPrefetch } from "@/components/auth/auth-prefetch";
 import { MarketingMobileNav } from "@/components/marketing/mobile-nav";
 import { Logo } from "@/components/ui/logo";
 import { marketingNavItems } from "@/components/marketing/nav-items";
@@ -62,6 +63,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
+      <AuthPrefetch />
       <div className="flex-1">{children}</div>
 
       <footer className="mt-20 bg-ink text-paper">
