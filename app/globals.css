@@ -397,3 +397,34 @@ body {
     justify-content: center;
   }
 }
+
+/* ---- Home hero story (components/marketing/hero-story.tsx) ------------------- */
+@keyframes storyFill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes storyRing {
+  from {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@keyframes storyBar {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}

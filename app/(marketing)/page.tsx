@@ -6,7 +6,8 @@ import { practiceModules } from "@/components/marketing/catalogue";
 import { IllustratedSteps } from "@/components/marketing/illustrated-steps";
 import { Journey } from "@/components/marketing/journey";
 import { PortraitStack, ScenePhoto, type PersonKey, type SceneKey } from "@/components/marketing/people";
-import { RoomMock, ScoreMock } from "@/components/marketing/practice-mock";
+import { ScoreMock } from "@/components/marketing/practice-mock";
+import { HeroStory } from "@/components/marketing/hero-story";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
 import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
@@ -97,7 +98,7 @@ export default function HomePage() {
             {plans.free.monthlyMinutes} free practice minutes every month. No card needed.
           </p>
         </div>
-        <RoomMock className="mk-rise mk-delay-2 mx-auto w-full max-w-md" />
+        <HeroStory className="mk-rise mk-delay-2 mx-auto max-w-md" />
       </section>
 
       {/* Exams */}
