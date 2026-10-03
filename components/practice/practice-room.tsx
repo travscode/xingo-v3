@@ -19,7 +19,7 @@ import {
 import { track } from "@/lib/analytics";
 import { friendlyError, getErrorCode } from "@/lib/errors";
 import { flagEmoji } from "@/lib/languages";
-import { HEARTBEAT_INTERVAL_MS, scenarioTimeLimitMinutes, STALL_END_MS, STALL_WARNING_MS } from "@/lib/plans";
+import { HEARTBEAT_INTERVAL_MS, scenarioTimeLimitMinutes, STALL_END_MS, STALL_WARNING_MS, formatMinuteCount } from "@/lib/plans";
 import type { EndReason } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
@@ -1407,7 +1407,7 @@ function SetupPanel({
         <p className="mt-3 text-center text-xs text-gray-500">
           {access.remainingMinutes > 10_000
             ? "Admin access · minutes aren't limited"
-            : `${Math.floor(access.remainingMinutes)} practice minutes left · time counts while the session is live`}
+            : `${formatMinuteCount(access.remainingMinutes)} practice minutes left · time counts while the session is live`}
         </p>
       </Card>
     </div>

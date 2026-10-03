@@ -13,6 +13,7 @@ import { ContentIndex } from "@/components/admin/content/content-index";
 import { EmailList } from "@/components/admin/email/email-list";
 import { Badge, Card, EmptyState, PageHeader, SectionTitle, Skeleton, Stat } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
+import { formatMinuteCount } from "@/lib/plans";
 
 const tabs = [
   { id: "overview", label: "Overview" },
@@ -365,7 +366,7 @@ function UsersTab({ myClerkId }: { myClerkId: string }) {
                   {user.attempts}
                   <span className="block text-xs text-gray-500">last {shortDate(user.lastActive)}</span>
                 </td>
-                <td className="px-4 py-3 tabular-nums">{Math.floor(user.remainingMinutes)}</td>
+                <td className="px-4 py-3 tabular-nums">{formatMinuteCount(user.remainingMinutes)}</td>
                 <td className="px-4 py-3">
                   <Badge tone={user.plan === "free" ? "neutral" : "dark"}>{user.plan}</Badge>
                 </td>

@@ -182,7 +182,11 @@ export function billableMinutesFromMs(durationMs: number) {
   return Math.min(MAX_ATTEMPT_MINUTES, Math.ceil(durationMs / 60_000));
 }
 
+/** Whole minutes with thousands separators, e.g. 99,987. */
+export function formatMinuteCount(value: number) {
+  return Math.max(0, Math.floor(value)).toLocaleString("en-AU");
+}
+
 export function formatMinutes(value: number) {
-  const rounded = Math.max(0, Math.floor(value));
-  return `${rounded} min`;
+  return `${formatMinuteCount(value)} min`;
 }

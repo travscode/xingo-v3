@@ -7,7 +7,7 @@ import { Check, Clock, Crown, Package } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
-import { CURRENCY_LABEL, packList, plans, type PackId } from "@/lib/plans";
+import { CURRENCY_LABEL, packList, plans, type PackId, formatMinuteCount } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import { Badge, Card, PageHeader, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
@@ -92,7 +92,7 @@ export function LiveBilling() {
               <Clock className="h-3.5 w-3.5" aria-hidden /> Minutes left
             </p>
             <p className="mt-1 text-6xl font-bold tracking-[-0.05em] tabular-nums">
-              {Math.floor(summary.remainingMinutes)}
+              {formatMinuteCount(summary.remainingMinutes)}
             </p>
           </div>
           <Badge tone="accent">{summary.planLabel} plan</Badge>
@@ -102,7 +102,7 @@ export function LiveBilling() {
             <div className="flex justify-between text-sm">
               <span className="font-semibold">Monthly allowance</span>
               <span className="text-paper/60">
-                {Math.floor(summary.allowanceRemaining)} / {summary.monthlyMinutes} min
+                {formatMinuteCount(summary.allowanceRemaining)} / {formatMinuteCount(summary.monthlyMinutes)} min
               </span>
             </div>
             <ProgressBar value={allowanceRatio} tone="accent" className="mt-2 bg-paper/20" />
@@ -113,7 +113,7 @@ export function LiveBilling() {
           <div>
             <div className="flex justify-between text-sm">
               <span className="font-semibold">Pack minutes</span>
-              <span className="text-paper/60">{Math.floor(summary.packMinutesRemaining)} min</span>
+              <span className="text-paper/60">{formatMinuteCount(summary.packMinutesRemaining)} min</span>
             </div>
             <ProgressBar
               value={summary.packMinutesPurchased ? summary.packMinutesRemaining / summary.packMinutesPurchased : 0}

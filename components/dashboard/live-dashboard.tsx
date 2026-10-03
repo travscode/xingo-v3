@@ -9,6 +9,7 @@ import { displayMaxScore, isPassingScore, toDisplayScore } from "@/lib/scoring";
 import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
 import { Badge, Card, EmptyState, SectionTitle, Skeleton, Stat } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
+import { formatMinuteCount } from "@/lib/plans";
 
 /**
  * Home. One obvious next action, then light context. Designed for the learner
@@ -52,7 +53,7 @@ export function LiveDashboard() {
           {activePair.targetLanguage.toLowerCase() !== "english" ? `Practising English ⇄ ${activePair.targetLanguage} · ` : ""}
           {me.entitlement.planLabel === "Admin"
             ? "Admin access — every module unlocked"
-            : `${Math.floor(me.entitlement.remainingMinutes)} minutes left this month`}
+            : `${formatMinuteCount(me.entitlement.remainingMinutes)} minutes left this month`}
         </p>
       </div>
 

@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ProgressBar } from "@/components/ui/primitives";
 import { Clock, Crown } from "lucide-react";
+import { formatMinuteCount } from "@/lib/plans";
 
 /** Practice minutes left, always visible in the sidebar. */
 export function MinutesMeter() {
@@ -40,7 +41,7 @@ export function MinutesMeter() {
       </div>
       <p className="mt-2 flex items-baseline gap-1.5 text-2xl font-bold tabular-nums tracking-[-0.03em]">
         <Clock className="h-4 w-4 self-center text-gray-500" aria-hidden />
-        {Math.floor(entitlement.remainingMinutes)}
+        {formatMinuteCount(entitlement.remainingMinutes)}
         <span className="ml-1 text-sm font-semibold text-gray-500">min left</span>
       </p>
       <ProgressBar
