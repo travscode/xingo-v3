@@ -1,6 +1,23 @@
-# Runbook — Stripe setup
+# Runbook — Stripe setup (plans and minute packs)
 
-How to switch payments on for XINGO v4. Do it in **test mode** first, end to end, then repeat in live mode.
+How to switch payments on for XINGO. Do it in **test mode** first, end to end, then repeat in live mode.
+Creator payouts for the marketplace are a separate, later step: see [stripe-connect-setup.md](stripe-connect-setup.md).
+
+## Checklist (details below)
+
+- [ ] 1. Stripe account: AUD, business details, branding, receipts, GST decision
+- [ ] 2. Test mode: create 4 products (Pro A$29/month, packs A$19 / A$39 / A$69) and copy each `price_…` ID
+- [ ] 3. Test mode: activate the customer portal
+- [ ] 4. Test mode: add the webhook endpoint (5 events) and copy the `whsec_…` secret
+- [ ] 5. Put 7 values into Convex env (secret key, webhook secret, 4 price IDs, site URL)
+- [ ] 6. Run the test table in section 6 with card 4242 4242 4242 4242
+- [ ] 7. Repeat 2–5 in live mode, one real purchase, refund it
+- [ ] 8. Tidy the legacy test accounts
+
+> **Which Convex deployment?** Real users are currently served by the deployment named
+> `deafening-cow-810` (a "dev"-type deployment, see `docs/release-v4.md`). Plain `npx convex env set …`
+> from this repo targets it. Use `--prod` only after the planned cut-over to `grand-flamingo-29`.
+> Setting env vars changes the live app immediately, so do test-mode keys first.
 
 Everything Stripe-related now runs in **Convex** (not Vercel): checkout, portal, webhook and the
 admin finance view. Prices and minute amounts shown in the app come from `lib/plans.ts`; Stripe
@@ -79,7 +96,7 @@ Use card `4242 4242 4242 4242`, any future expiry, any CVC.
 
 | Test | Expected |
 |---|---|
-| Free user → Plan & minutes → **Buy** CCL Starter | Redirects to Stripe → pay → back to `/billing?status=success`; within seconds "Pack minutes" shows 30 and premium modules unlock |
+| Free user → Plan & minutes → **Buy** CCL Starter | Redirects to Stripe → pay → back to `/billing?status=success`; within seconds "Pack minutes" shows 30 and premium courses unlock |
 | **Upgrade to Pro** | Badge becomes "Pro plan", monthly allowance 150 |
 | **Invoices & payment** | Opens Stripe portal for that customer |
 | Cancel in portal ("at period end") | Stays Pro until period end. Stripe test clocks or **Cancel immediately** in the dashboard → plan returns to Free |
@@ -95,7 +112,7 @@ Watch it work: Convex dashboard → Logs (look for `billing:handleWebhook`); Str
 
 1. Complete Stripe account activation (identity, bank account for payouts).
 2. Turn **Test mode** off and repeat **steps 2–4** in live mode. Products, prices, portal and webhook are all separate per mode.
-3. Set the **live** values on the **production** Convex deployment (`npx convex env set --prod …`).
+3. Set the **live** values on the Convex deployment that serves real users (today `deafening-cow-810`: `npx convex env set …`; after the cut-over, `--prod`).
 4. Do one real purchase of the cheapest pack with your own card, check minutes appear, then refund it from the dashboard.
 5. Check Admin → Overview shows the green **Live** badge.
 

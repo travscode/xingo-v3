@@ -4,6 +4,7 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { requirePlatformAdmin } from "./model/auth";
 import { normalizeAgent, normalizeScenario } from "./model/scenario";
+import { courseVisibility } from "./model/courses";
 
 const difficultyLevel = v.union(
   v.literal("beginner"),
@@ -142,7 +143,7 @@ export const getById = query({
       .withIndex("by_public_id", (q) => q.eq("id", args.id))
       .unique();
 
-    if (!scenario) {
+    if (!scenario || !(await courseVisibility(ctx))(scenario.moduleId)) {
       return null;
     }
 
@@ -154,6 +155,10 @@ export const getById = query({
 export const listByModule = query({
   args: { moduleId: v.string() },
   handler: async (ctx, args) => {
+    if (!(await courseVisibility(ctx))(args.moduleId)) {
+      return [];
+    }
+
     const scenarios = await ctx.db
       .query("scenarios")
       .withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId))
@@ -169,7 +174,8 @@ export const listByModule = query({
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const scenarios = await ctx.db.query("scenarios").collect();
+    const [all, visible] = await Promise.all([ctx.db.query("scenarios").collect(), courseVisibility(ctx)]);
+    const scenarios = all.filter((scenario) => visible(scenario.moduleId));
     const enriched = await Promise.all(
       scenarios.map((scenario) => enrichScenarioAvatars(ctx, scenario)),
     );

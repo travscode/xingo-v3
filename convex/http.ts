@@ -26,6 +26,28 @@ http.route({
   }),
 });
 
+/**
+ * Stripe Connect webhook (creator payout accounts): https://<deployment>.convex.site/stripe/connect-webhook
+ */
+http.route({
+  path: "/stripe/connect-webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const signature = request.headers.get("stripe-signature");
+
+    if (!signature) {
+      return new Response("Missing signature", { status: 400 });
+    }
+
+    const result = await ctx.runAction(internal.connect.handleConnectWebhook, {
+      payload: await request.text(),
+      signature,
+    });
+
+    return new Response(result.message, { status: result.status });
+  }),
+});
+
 // ---- Email tracking (proxied from https://www.xingo.ai/e/* via next.config.ts) ------------
 
 // 43-byte transparent GIF.

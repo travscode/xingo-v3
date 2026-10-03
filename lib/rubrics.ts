@@ -8,7 +8,7 @@
  * Imported by Convex (grading) and the UI (results, progress) — keep framework-free.
  */
 
-export type RubricId = "interpreting" | "ccl" | "oet" | "ielts" | "clinical";
+export type RubricId = "interpreting" | "ccl" | "oet" | "ielts" | "clinical" | "roleplay";
 
 export type DimensionKey = "accuracy" | "terminology" | "fluency" | "turnManagement" | "professionalism";
 
@@ -111,6 +111,21 @@ export const rubrics: Record<RubricId, Rubric> = {
     graderRole: "an experienced clinical examiner (OSCE / AMC-style)",
     caveat: "Physical examination and hands-on skills aren't assessed in voice practice.",
   },
+  roleplay: {
+    id: "roleplay",
+    dimensions: [
+      { key: "accuracy", label: "Task completion", guidance: "achieving the goal of the conversation and covering everything the task requires" },
+      { key: "terminology", label: "Language", guidance: "clear, appropriate vocabulary and grammar for the situation and audience" },
+      { key: "fluency", label: "Fluency", guidance: "even pace, few hesitations, false starts or repetitions (judged from the transcript)" },
+      { key: "turnManagement", label: "Interaction", guidance: "listening, asking and answering questions, structuring the conversation" },
+      { key: "professionalism", label: "Professionalism", guidance: "tone, courtesy, empathy and staying in role" },
+    ],
+    passScore: 70,
+    display: percent,
+    passLabel: "Target 70",
+    graderRole: "an experienced communication skills assessor",
+    caveat: "Tone and pronunciation can't be judged from a transcript, so this is an estimate.",
+  },
 };
 
 /** Exam modules with their own rubric; everything else uses interpreting. */
@@ -124,5 +139,7 @@ const moduleRubric: Record<string, RubricId> = {
 };
 
 export function rubricForModule(moduleId: string): Rubric {
+  // Community role-play courses are created with an "rp-" id (lib/marketplace.ts).
+  if (moduleId.startsWith("rp-")) return rubrics.roleplay;
   return rubrics[moduleRubric[moduleId] ?? "interpreting"];
 }

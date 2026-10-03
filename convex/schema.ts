@@ -182,9 +182,13 @@ export default defineSchema({
     accreditationProvider: v.optional(v.string()),
     badgeIcon: v.string(),
     createdAt: v.string(),
+    /** "community" courses come from the marketplace and only appear for people who add them. Absent = XINGO. */
+    source: v.optional(v.union(v.literal("xingo"), v.literal("community"))),
+    ownerClerkId: v.optional(v.string()),
   })
     .index("by_public_id", ["id"])
-    .index("by_category", ["industryCategory"]),
+    .index("by_category", ["industryCategory"])
+    .index("by_owner", ["ownerClerkId"]),
 
   scenarios: defineTable({
     id: v.string(),
@@ -244,6 +248,124 @@ export default defineSchema({
     .index("by_moduleId", ["moduleId"])
     .index("by_scenarioId", ["scenarioId"])
     .index("by_status", ["completionStatus"]),
+
+  /** Marketplace page for a community course (one per course). */
+  courseListings: defineTable({
+    moduleId: v.string(),
+    ownerClerkId: v.string(),
+    status: v.union(v.literal("draft"), v.literal("published"), v.literal("removed")),
+    slug: v.string(),
+    kind: v.union(v.literal("roleplay"), v.literal("interpreting")),
+    title: v.string(),
+    tagline: v.string(),
+    description: v.string(),
+    keywords: v.array(v.string()),
+    whatYouGet: v.array(v.string()),
+    audience: v.optional(v.string()),
+    creatorName: v.string(),
+    bannerStorageId: v.optional(v.id("_storage")),
+    logoStorageId: v.optional(v.id("_storage")),
+    certifications: v.array(
+      v.object({
+        name: v.string(),
+        issuer: v.optional(v.string()),
+        url: v.optional(v.string()),
+        logoStorageId: v.optional(v.id("_storage")),
+      }),
+    ),
+    guidelinesAcceptedAt: v.optional(v.string()),
+    publishedAt: v.optional(v.string()),
+    removedAt: v.optional(v.string()),
+    removedReason: v.optional(v.string()),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+    /** Denormalised counters for sorting and analytics. */
+    viewCount: v.number(),
+    addCount: v.number(),
+  })
+    .index("by_moduleId", ["moduleId"])
+    .index("by_slug", ["slug"])
+    .index("by_owner", ["ownerClerkId"])
+    .index("by_status", ["status"]),
+
+  /** Courses a learner added from the marketplace. */
+  libraryItems: defineTable({
+    clerkId: v.string(),
+    moduleId: v.string(),
+    addedAt: v.string(),
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_moduleId", ["moduleId"])
+    .index("by_clerk_module", ["clerkId", "moduleId"]),
+
+  /** Listing page views per course per UTC day. */
+  courseViews: defineTable({
+    moduleId: v.string(),
+    day: v.string(),
+    views: v.number(),
+  }).index("by_module_day", ["moduleId", "day"]),
+
+  /** A creator's payout account (Stripe Connect Express). */
+  creatorAccounts: defineTable({
+    clerkId: v.string(),
+    stripeAccountId: v.optional(v.string()),
+    detailsSubmitted: v.boolean(),
+    payoutsEnabled: v.boolean(),
+    country: v.optional(v.string()),
+    updatedAt: v.string(),
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_stripeAccountId", ["stripeAccountId"]),
+
+  /** One row per charged attempt in a community course. Amounts in AUD cents. */
+  creatorEarnings: defineTable({
+    ownerClerkId: v.string(),
+    moduleId: v.string(),
+    attemptId: v.string(),
+    learnerClerkId: v.string(),
+    minutes: v.number(),
+    paidMinutes: v.number(),
+    amountCents: v.number(),
+    createdAt: v.string(),
+    payoutId: v.optional(v.id("creatorPayouts")),
+  })
+    .index("by_owner", ["ownerClerkId"])
+    .index("by_moduleId", ["moduleId"])
+    .index("by_attemptId", ["attemptId"]),
+
+  creatorPayouts: defineTable({
+    ownerClerkId: v.string(),
+    amountCents: v.number(),
+    status: v.union(v.literal("pending"), v.literal("paid"), v.literal("failed")),
+    stripeTransferId: v.optional(v.string()),
+    error: v.optional(v.string()),
+    createdAt: v.string(),
+    paidAt: v.optional(v.string()),
+  })
+    .index("by_owner", ["ownerClerkId"])
+    .index("by_status", ["status"]),
+
+  /** Learner reports about marketplace courses, reviewed in Admin → Reports. */
+  contentReports: defineTable({
+    moduleId: v.string(),
+    reporterClerkId: v.string(),
+    reason: v.union(
+      v.literal("inappropriate"),
+      v.literal("misleading"),
+      v.literal("copyright"),
+      v.literal("unsafe"),
+      v.literal("spam"),
+      v.literal("other"),
+    ),
+    details: v.string(),
+    status: v.union(v.literal("open"), v.literal("dismissed"), v.literal("actioned")),
+    createdAt: v.string(),
+    resolvedAt: v.optional(v.string()),
+    resolvedBy: v.optional(v.string()),
+    resolution: v.optional(v.string()),
+  })
+    .index("by_status", ["status"])
+    .index("by_moduleId", ["moduleId"]),
 
   aiUsageEvents: defineTable({
     id: v.string(),

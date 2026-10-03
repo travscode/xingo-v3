@@ -127,3 +127,19 @@ Format: **ID — title** · date · status. Context → Decision → Consequence
 ### D-029 — One voice at a time; the room is live only when everyone is connected · 2026-10-03 · accepted
 **Context.** Both AI participants could talk at once, and learners could talk or switch person before the voice connections were ready.
 **Decision.** Both participants connect in parallel before the room goes live. While connecting, tiles show "Connecting…", the mic is disabled and pressing Space explains why. Floor rule: when the learner holds to talk, every other participant is interrupted and muted; after the learner releases, only the person addressed may answer. As a backstop, if level meters detect two voices at once, the one the learner isn't addressing is cut off.
+
+### D-030 — "Course", not "module" · 2026-10-03 · accepted
+**Context.** "Module" sounds like enterprise LMS jargon, and the founder dislikes it.
+**Decision.** Learners and creators see **course** everywhere; the in-app library moved from `/modules` to `/courses` (permanent redirects in `next.config.ts`). A course contains **scenarios** (learners see dialogues or role-plays). Stored data and code identifiers keep `module` (`modules` table, `moduleId`) to avoid a risky migration. Glossary in `design-system.md`.
+
+### D-031 — Community marketplace with a 25% creator revenue share · 2026-10-03 · accepted
+**Context.** Growth through content we don't have to write ourselves: trainers, teachers and employers can turn the conversations they know into practice, including English-only role-plays, and earn from it.
+**Decision.**
+- Community courses are `modules` rows with `source: "community"` and an `ownerClerkId`, plus a `courseListings` row (marketing page: slug, tagline, banner, logo, keywords, what you'll get, certifications, status draft/published/removed). Ids start `rp-` (role-play) or `int-` (interpreting) so `rubricForModule` can pick the generic role-play rubric without a lookup.
+- They appear in a learner's library **only after the learner adds them** (`libraryItems`); unpublishing or removal hides them and blocks practice (`COURSE_UNAVAILABLE`). Owners and admins can always open their drafts.
+- Practice costs learners normal minutes; community courses are never plan-gated.
+- **Creator earnings:** 25% (`CREATOR_REVENUE_SHARE`) of XINGO's net revenue (after GST and ~3% card fees) from *paid* minutes practised in the course: Pro allowance minutes valued at price ÷ allowance, pack minutes at the cheapest pack's per-minute price. Free-plan minutes, the creator's own practice and admin practice earn nothing. Recorded per charged attempt in `creatorEarnings` at charge time (`closeAndCharge`).
+- **Payouts:** Stripe Connect Express, monthly, from A$50, after a 30-day hold, triggered by an admin (`connect.runPayouts`). Off until `STRIPE_CONNECT_ENABLED=true`. See `runbooks/stripe-connect-setup.md`.
+- **Moderation:** signed-in users report courses (one open report each); admins get an email and review in Admin → Reports (dismiss or take down). Admin → Marketplace lists every course with take-down/restore.
+**Consequences.** At current realtime costs XINGO's margin per minute is thin; the share is one constant to tune once `aiUsageEvents` has real cost data. Scenario prompts written by creators steer only their own course's AI; graders still treat transcripts as untrusted.
+**Open.** Creator terms (revenue share, takedown, withholding) need a legal page before payouts go live. Course ratings/reviews and team-private courses are not built.

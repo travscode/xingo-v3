@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { requirePlatformAdmin } from "./model/auth";
+import { courseVisibility } from "./model/courses";
 
 const difficultyLevel = v.union(
   v.literal("beginner"),
@@ -60,18 +61,19 @@ async function ensureUniqueId(ctx: MutationCtx, base: string, currentId?: string
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const modules = await ctx.db.query("modules").collect();
-    return modules.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const [modules, visible] = await Promise.all([ctx.db.query("modules").collect(), courseVisibility(ctx)]);
+    return modules.filter((course) => visible(course.id)).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   },
 });
 
 export const getById = query({
   args: { id: v.string() },
   handler: async (ctx, args) => {
-    return ctx.db
+    const course = await ctx.db
       .query("modules")
       .withIndex("by_public_id", (q) => q.eq("id", args.id))
       .unique();
+    return course && (await courseVisibility(ctx))(course.id) ? course : null;
   },
 });
 

@@ -8,6 +8,13 @@ import {
   type Entitlement,
 } from "./model/entitlements";
 import { normalizeScenario } from "./model/scenario";
+import {
+  canPractiseCourse,
+  getListing,
+  inLibrary,
+  libraryModuleIds,
+  publishedCommunityIds,
+} from "./model/courses";
 import { orderModulesForGoal } from "../lib/goals";
 import { isPassingScore } from "../lib/scoring";
 
@@ -71,7 +78,7 @@ export const forCurrentUser = query({
     const entitlement: Pick<Entitlement, "premiumAccess"> | Entitlement = user
       ? await getEntitlement(ctx, user)
       : { premiumAccess: false };
-    const [modules, scenarios, sessions] = await Promise.all([
+    const [allModules, scenarios, sessions, added, publishedIds, listings] = await Promise.all([
       ctx.db.query("modules").collect(),
       ctx.db.query("scenarios").collect(),
       user
@@ -80,7 +87,13 @@ export const forCurrentUser = query({
             .withIndex("by_clerkId", (q) => q.eq("clerkId", user.clerkId))
             .collect()
         : Promise.resolve([] as Doc<"sessions">[]),
+      user ? libraryModuleIds(ctx, user.clerkId) : Promise.resolve(new Set<string>()),
+      publishedCommunityIds(ctx),
+      ctx.db.query("courseListings").collect(),
     ]);
+    // Marketplace courses appear only once the learner adds them (or owns them).
+    const modules = allModules.filter((course) => inLibrary(course, user, added, publishedIds));
+    const listingByModule = new Map(listings.map((listing) => [listing.moduleId, listing]));
     const stats = statsByScenario(sessions);
 
     const catalogModules = await Promise.all(
@@ -137,6 +150,10 @@ export const forCurrentUser = query({
           isFree: learningModule.isFree,
           isAccredited: learningModule.isAccredited,
           accreditationProvider: learningModule.accreditationProvider,
+          source: learningModule.source ?? ("xingo" as const),
+          creatorName: listingByModule.get(learningModule.id)?.creatorName ?? null,
+          listingSlug: listingByModule.get(learningModule.id)?.slug ?? null,
+          listingStatus: listingByModule.get(learningModule.id)?.status ?? null,
           scenarios: moduleScenarios,
           passedCount: moduleScenarios.filter((s) => s.stats.passed).length,
           attemptCount: moduleScenarios.reduce((sum, s) => sum + s.stats.attempts, 0),
@@ -201,6 +218,10 @@ export const scenarioForPractice = query({
     const user = identity
       ? await getUserByClerkId(ctx, getClerkIdFromIdentity(identity))
       : null;
+
+    if (!canPractiseCourse(user, learningModule, await getListing(ctx, learningModule.id))) {
+      return null;
+    }
     const entitlement = user ? await getEntitlement(ctx, user) : null;
     const access = getScenarioAccess(
       entitlement ?? { premiumAccess: false },

@@ -32,4 +32,8 @@ export const protectedRoutePatterns = [
   "/billing(.*)",
   "/account(.*)",
   "/help(.*)",
+  // The marketplace is public; creating and managing courses needs an account.
+  "/marketplace/new(.*)",
+  "/marketplace/manage(.*)",
+  "/marketplace/earnings(.*)",
 ] as const;

@@ -23,6 +23,7 @@ import {
   TIME_LIMIT_GRACE_MS,
 } from "../lib/plans";
 import { resolveEndReason } from "../lib/scoring";
+import { canPractiseCourse, getListing, recordCreatorEarning } from "./model/courses";
 
 const transcriptEntry = v.object({
   id: v.string(),
@@ -148,6 +149,7 @@ async function closeAndCharge(
         billingMonth: getBillingMonthKey(new Date(endMs)),
         createdAt: new Date(endMs).toISOString(),
       });
+      await recordCreatorEarning(ctx, attempt, user, entitlement, split, new Date(endMs).toISOString());
     }
 
     chargedMinutes = split.charged;
@@ -196,7 +198,12 @@ export const startAttempt = mutation({
       .unique();
 
     if (!learningModule) {
-      throw new Error("Module not found");
+      throw new Error("Course not found");
+    }
+
+    // Community courses: practisable while published (owner and admins always).
+    if (!canPractiseCourse(user, learningModule, await getListing(ctx, learningModule.id))) {
+      throw new ConvexError("COURSE_UNAVAILABLE");
     }
 
     const now = Date.now();

@@ -24,6 +24,8 @@ export type PlanConfig = {
   /** Whether premium (non-free) modules are unlocked by the plan itself. */
   premiumAccess: boolean;
   priceLabel: string;
+  /** Monthly price in AUD cents incl. GST (0 when not self-serve). */
+  priceCents: number;
   tagline: string;
 };
 
@@ -32,6 +34,8 @@ export type PackConfig = {
   label: string;
   minutes: number;
   priceLabel: string;
+  /** AUD cents incl. GST. */
+  priceCents: number;
   description: string;
 };
 
@@ -44,6 +48,7 @@ export const plans: Record<PlanId, PlanConfig> = {
     monthlyMinutes: 10,
     premiumAccess: false,
     priceLabel: "A$0",
+    priceCents: 0,
     tagline: "Free courses plus one preview dialogue in every premium course.",
   },
   professional: {
@@ -52,6 +57,7 @@ export const plans: Record<PlanId, PlanConfig> = {
     monthlyMinutes: 150,
     premiumAccess: true,
     priceLabel: "A$29 / month",
+    priceCents: 2900,
     tagline: "Every course, 150 practice minutes each month.",
   },
   organization: {
@@ -60,6 +66,7 @@ export const plans: Record<PlanId, PlanConfig> = {
     monthlyMinutes: 600,
     premiumAccess: true,
     priceLabel: "Contact us",
+    priceCents: 0,
     tagline: "Seats for training providers. Talk to us.",
   },
 };
@@ -70,6 +77,7 @@ export const packs: Record<PackId, PackConfig> = {
     label: "CCL Starter",
     minutes: 30,
     priceLabel: "A$19",
+    priceCents: 1900,
     description: "Try the full CCL course. About 6 timed dialogues.",
   },
   plus: {
@@ -77,6 +85,7 @@ export const packs: Record<PackId, PackConfig> = {
     label: "Practice Plus",
     minutes: 80,
     priceLabel: "A$39",
+    priceCents: 3900,
     description: "Steady weekly practice across every course.",
   },
   sprint: {
@@ -84,6 +93,7 @@ export const packs: Record<PackId, PackConfig> = {
     label: "Exam Sprint",
     minutes: 160,
     priceLabel: "A$69",
+    priceCents: 6900,
     description: "Daily mock dialogues in the weeks before your test.",
   },
 };

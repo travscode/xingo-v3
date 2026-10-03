@@ -18,6 +18,7 @@ import {
   Search,
   Sparkles,
   Stethoscope,
+  Store,
   X,
   Users,
   type LucideIcon,
@@ -48,6 +49,7 @@ const groupIcons: Record<LibraryGroupId, LucideIcon> = {
   legal: Scale,
   community: Users,
   us: BookOpen,
+  marketplace: Store,
   all: LayoutGrid,
 };
 
@@ -72,13 +74,15 @@ export function LiveModulesGrid() {
       .map((group) => ({
         id: group.id as LibraryGroupId,
         label: group.label as string,
-        modules: catalog.modules.filter((m) => groupForModule(m.id, m.industryCategory) === group.id),
+        modules: catalog.modules.filter((m) => m.source !== "community" && groupForModule(m.id, m.industryCategory) === group.id),
       }))
       .filter((group) => group.modules.length > 0);
+    const fromMarketplace = catalog.modules.filter((m) => m.source === "community");
 
     return [
       ...(forYou.length > 0 ? [{ id: "for-you" as LibraryGroupId, label: "For you", modules: forYou }] : []),
       ...byGroup,
+      ...(fromMarketplace.length > 0 ? [{ id: "marketplace" as LibraryGroupId, label: "From the marketplace", modules: fromMarketplace }] : []),
       { id: "all" as LibraryGroupId, label: "All courses", modules: catalog.modules },
     ];
   }, [catalog]);
@@ -180,7 +184,7 @@ export function LiveModulesGrid() {
             {term ? `Results for “${search.trim()}”` : active.label}
           </h2>
           <span className="text-sm text-gray-500">
-            {modules.length} module{modules.length === 1 ? "" : "s"}
+            {modules.length} course{modules.length === 1 ? "" : "s"}
           </span>
         </div>
 
@@ -212,6 +216,13 @@ export function LiveModulesGrid() {
             ) : null}
           </>
         )}
+        <p className="mt-8 text-center text-sm text-gray-500">
+          Looking for something else?{" "}
+          <Link href="/marketplace" className="font-semibold text-ink underline">
+            Browse the marketplace
+          </Link>{" "}
+          for courses made by trainers and teachers.
+        </p>
       </section>
     </div>
   );
@@ -321,7 +332,15 @@ export function ModuleCard({ learningModule, premiumAccess }: { learningModule: 
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100">
           <IndustryIcon category={learningModule.industryCategory} />
         </span>
-        {learningModule.isFree ? <FreeBadge /> : locked ? <PremiumBadge /> : null}
+        {learningModule.source === "community" ? (
+          <span className="truncate text-xs text-gray-500">
+            By <span className="font-semibold text-ink">{learningModule.creatorName}</span>
+          </span>
+        ) : learningModule.isFree ? (
+          <FreeBadge />
+        ) : locked ? (
+          <PremiumBadge />
+        ) : null}
       </div>
       <Link href={`/courses/${learningModule.id}`} className="mt-3 font-bold hover:underline">
         {learningModule.title}
@@ -350,7 +369,7 @@ export function ModuleCard({ learningModule, premiumAccess }: { learningModule: 
         ) : null}
         <Button asChild size="sm" variant="ghost">
           <Link href={`/courses/${learningModule.id}`}>
-            View module <ArrowRight className="h-3.5 w-3.5" />
+            View course <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </Button>
       </div>

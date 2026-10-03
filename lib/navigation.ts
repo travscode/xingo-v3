@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { CircleHelp, CreditCard, Home, Mic, TrendingUp, UserRound } from "lucide-react";
+import { CircleHelp, CreditCard, Home, Mic, Store, TrendingUp, UserRound } from "lucide-react";
 
 export const marketingNavigation = [
   { href: "/naati/ccl", label: "NAATI CCL" },
@@ -21,6 +21,7 @@ export const dashboardNavigation: AppNavItem[] = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/courses", label: "Practice", icon: Mic, matches: ["/practice", "/results"] },
   { href: "/progress", label: "Progress", icon: TrendingUp },
+  { href: "/marketplace", label: "Marketplace", icon: Store },
   { href: "/billing", label: "Plan & minutes", icon: CreditCard },
   { href: "/account", label: "Account", icon: UserRound },
   { href: "/help", label: "Help", icon: CircleHelp },

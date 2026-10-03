@@ -11,6 +11,7 @@ import { getGoal } from "@/lib/goals";
 import { cn } from "@/lib/utils";
 import { ContentIndex } from "@/components/admin/content/content-index";
 import { EmailList } from "@/components/admin/email/email-list";
+import { MarketplaceAdmin, ReportsAdmin } from "@/components/admin/marketplace-admin";
 import { Badge, Card, EmptyState, PageHeader, SectionTitle, Skeleton, Stat } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { formatMinuteCount } from "@/lib/plans";
@@ -21,6 +22,8 @@ const tabs = [
   { id: "invites", label: "Invites" },
   { id: "email", label: "Email" },
   { id: "content", label: "Content" },
+  { id: "marketplace", label: "Marketplace" },
+  { id: "reports", label: "Reports" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -48,6 +51,7 @@ export function AdminConsole() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tab = (tabs.find((t) => t.id === searchParams.get("tab"))?.id ?? "overview") as TabId;
+  const openReports = useQuery(api.marketplace.adminOpenReportCount, {});
 
   if (me === undefined) {
     return <Skeleton className="h-80" />;
@@ -84,6 +88,9 @@ export function AdminConsole() {
             )}
           >
             {item.label}
+            {item.id === "reports" && openReports ? (
+              <span className="ml-1.5 rounded-full bg-record px-1.5 py-0.5 text-[11px] font-bold text-paper">{openReports}</span>
+            ) : null}
           </button>
         ))}
       </div>
@@ -92,6 +99,8 @@ export function AdminConsole() {
       {tab === "invites" ? <InvitesTab /> : null}
       {tab === "content" ? <ContentIndex /> : null}
       {tab === "email" ? <EmailList /> : null}
+      {tab === "marketplace" ? <MarketplaceAdmin /> : null}
+      {tab === "reports" ? <ReportsAdmin /> : null}
     </div>
   );
 }

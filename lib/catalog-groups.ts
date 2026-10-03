@@ -14,7 +14,7 @@ export const libraryGroups = [
   { id: "us", label: "US certification", modules: ["us-medical-interpreter-oral"] },
 ] as const;
 
-export type LibraryGroupId = (typeof libraryGroups)[number]["id"] | "for-you" | "all";
+export type LibraryGroupId = (typeof libraryGroups)[number]["id"] | "for-you" | "marketplace" | "all";
 
 const fallbackByIndustry: Record<string, LibraryGroupId> = {
   medical: "medical",

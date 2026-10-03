@@ -74,3 +74,17 @@ Room-specific: `ParticipantTile`, `MicButton`, `CoachBar`, `MicCheck`, `Headphon
 ## Copy voice
 
 Plain, warm, brief. Second person. Verbs on buttons ("Start session", "Finish and get my score", "Get more minutes"). Explain consequences before they happen ("Minutes used so far still count").
+
+## Words we use (D-030)
+
+| Say | Never say | Meaning |
+|---|---|---|
+| **course** | module | A set of practice scenarios on one theme (e.g. "NAATI CCL", "Retail interviews"). URL: `/courses/<id>`. |
+| **scenario** (creators), **dialogue** (interpreting learners), **role-play** (speaking learners) | lesson, exercise | One practice conversation with AI voice partners. |
+| **session** / **attempt** | test, exam (unless it is one) | One run of a scenario, scored when it finishes. |
+| **practice minutes** | credits, tokens | What learners spend while a session is live. |
+| **marketplace** | store, shop | Where community courses are found and added. |
+| **creator** | author, vendor | Someone who publishes a course on the marketplace. |
+
+Code still uses `module`/`moduleId` (the `modules` table, `api.modules.*`) because renaming stored
+data isn't worth the risk. That's fine, as long as the word never reaches the screen, emails or URLs.
