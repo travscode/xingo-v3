@@ -113,7 +113,7 @@ export function MarketplaceHero({ className }: { className?: string }) {
       )}
     >
       <p className="sr-only">
-        Illustrative example of the XINGO Marketplace: practice courses made by fictional creators, such as an exam
+        The XINGO Marketplace: practice courses made by creators, such as an exam
         coach, an interpreter trainer and a team trainer. Creators earn {share}% of the net revenue from paid minutes
         practised in their courses.
       </p>
@@ -130,9 +130,6 @@ export function MarketplaceHero({ className }: { className?: string }) {
       <div aria-hidden>
         <div className="flex items-center justify-between gap-3 text-xs font-semibold tracking-wide text-paper/60">
           <span>XINGO Marketplace</span>
-          <span className="rounded-md border border-dashed border-paper/40 px-2 py-0.5 text-[11px] uppercase tracking-[0.08em]">
-            Illustrative example
-          </span>
         </div>
 
         {/* Stack: back cards peek above the front one. */}

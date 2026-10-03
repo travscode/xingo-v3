@@ -108,7 +108,7 @@ export function MigrationPathway({ className }: { className?: string }) {
     >
       <p className="sr-only">
         A common pathway: find your visa&apos;s requirements, take an English test, sit the NAATI CCL, get NAATI certified as an
-        interpreter, then work. XINGO helps you practise the middle three. Illustrative only.
+        interpreter, then work. XINGO helps you practise the middle three.
       </p>
       <div
         aria-hidden
@@ -216,7 +216,7 @@ export function MigrationPathway({ className }: { className?: string }) {
         </div>
       )}
 
-      <p className="mt-4 text-[11px] text-paper/40">Illustrative. Not everyone takes every step.</p>
+      <p className="mt-4 text-[11px] text-paper/40">Not everyone takes every step.</p>
     </div>
   );
 }

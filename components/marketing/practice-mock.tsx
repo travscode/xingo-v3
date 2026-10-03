@@ -193,7 +193,6 @@ export function ScoreMock({ scale = "general", className }: { scale?: "ccl" | "g
     <figure className={cn("rounded-2xl border border-gray-200 bg-paper p-5 sm:p-6", className)}>
       <div className="flex items-center justify-between gap-3">
         <figcaption className="text-sm font-semibold">Your result</figcaption>
-        <Badge>Example</Badge>
       </div>
       <div className="mt-5 flex items-end justify-between gap-3">
         <div className="flex items-baseline gap-1.5">
@@ -227,7 +226,6 @@ export function ScoreMock({ scale = "general", className }: { scale?: "ccl" | "g
         <span className="font-semibold">Work on next: </span>
         <span className="text-gray-700">you dropped the appointment time in turn 4. Carry every number across.</span>
       </div>
-      <p className="mt-3 text-xs text-gray-500">Illustrative example, not a real result.</p>
     </figure>
   );
 }

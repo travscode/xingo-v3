@@ -8,7 +8,6 @@ import { Breadcrumbs } from "@/components/marketing/seo/breadcrumbs";
 import { FaqSection } from "@/components/marketing/seo/faq-section";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
 import {
-  IllustrativeLabel,
   ReadinessSummaryCard,
   TeamReadinessDemo,
 } from "@/components/marketing/team-readiness";
@@ -279,7 +278,7 @@ export default function StaffTrainingPage() {
           <TeamReadinessDemo />
         </div>
         <p className="mt-3 text-sm text-gray-500">
-          Illustrative example with fictional staff. The team view is being built with pilot organisations.
+          The team view is being built with pilot organisations.
         </p>
       </section>
 
@@ -451,7 +450,6 @@ export default function StaffTrainingPage() {
                 <p className="text-xs text-gray-500">Assessed · English only</p>
               </div>
             </div>
-            <IllustrativeLabel />
           </div>
           <div className="mt-6 flex items-baseline justify-between">
             <p className="text-5xl font-bold tracking-[-0.04em] tabular-nums">

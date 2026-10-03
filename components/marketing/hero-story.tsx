@@ -98,7 +98,7 @@ export function HeroStory({ className }: { className?: string }) {
     >
       <p className="sr-only">
         How XINGO works: listen to the speaker, interpret out loud, get scored against the test&apos;s criteria, and walk into
-        your test ready to work. Example only.
+        your test ready to work.
       </p>
 
       {/* Atmosphere: a soft lime glow that drifts between beats. */}
@@ -139,7 +139,6 @@ export function HeroStory({ className }: { className?: string }) {
         <span>
           <span className="tabular-nums text-paper">0{index + 1}</span> · {scenes[index].label}
         </span>
-        <span>Example session</span>
       </div>
 
       {/* 1 · Listen */}

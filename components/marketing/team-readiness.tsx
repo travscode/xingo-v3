@@ -95,27 +95,12 @@ function LanguagePair({ language }: { language: string | null }) {
   );
 }
 
-/** Label every illustrative mock carries. */
-export function IllustrativeLabel({ className }: { className?: string }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-md border border-dashed border-gray-500 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500",
-        className,
-      )}
-    >
-      Illustrative example
-    </span>
-  );
-}
-
 /** Small overlay card for the hero photo. */
 export function ReadinessSummaryCard({ className, compact = false }: { className?: string; compact?: boolean }) {
   return (
     <div className={cn("rounded-xl border border-gray-200 bg-paper p-4", className)}>
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-semibold text-gray-500">{COURSE}</p>
-        <IllustrativeLabel className="text-[10px]" />
       </div>
       <div className="mt-2 flex items-center justify-between gap-3">
         <p className={cn("font-bold tracking-[-0.03em] tabular-nums", compact ? "text-xl" : "text-2xl")}>
@@ -138,18 +123,14 @@ export function TeamReadinessDemo() {
   return (
     <figure className="overflow-hidden rounded-2xl border border-gray-200 bg-paper">
       <figcaption className="sr-only">
-        Illustrative example of a team view with fictional staff: {exampleReadySummary} for the {COURSE} course,{" "}
+        A team view: {exampleReadySummary} for the {COURSE} course,{" "}
         {practiceCount} needs more practice and {notStartedCount} has not started.
       </figcaption>
 
       {/* Header */}
       <div className="flex flex-col gap-4 border-b border-gray-200 bg-gray-50 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
         <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <IllustrativeLabel />
-            <span className="text-xs text-gray-500">Fictional staff</span>
-          </div>
-          <p className="mt-3 text-sm font-semibold text-gray-500">Guest services team · {COURSE}</p>
+          <p className="text-sm font-semibold text-gray-500">Guest services team · {COURSE}</p>
           <p className="mt-1 text-3xl font-bold tracking-[-0.035em] tabular-nums sm:text-4xl">{exampleReadySummary}</p>
         </div>
         <dl className="grid grid-cols-3 gap-2 text-center sm:min-w-[320px]" aria-hidden>
