@@ -19,7 +19,10 @@ import {
   MAX_ATTEMPT_MINUTES,
   MAX_REALTIME_KEYS_PER_ATTEMPT,
   MIN_MINUTES_TO_START,
+  scenarioTimeLimitMinutes,
+  TIME_LIMIT_GRACE_MS,
 } from "../lib/plans";
+import { resolveEndReason } from "../lib/scoring";
 
 const transcriptEntry = v.object({
   id: v.string(),
@@ -43,7 +46,23 @@ const assessment = v.object({
     turnManagement: v.number(),
     professionalism: v.number(),
   }),
+  completion: v.optional(
+    v.object({
+      reachedEnd: v.boolean(),
+      coveragePercent: v.number(),
+      rawScore: v.number(),
+      unfinished: v.string(),
+    }),
+  ),
 });
+
+const endReason = v.union(
+  v.literal("objective_met"),
+  v.literal("learner_finished"),
+  v.literal("time_up"),
+  v.literal("stalled"),
+  v.literal("out_of_minutes"),
+);
 
 const MAX_TRANSCRIPT_ENTRIES = 400;
 const MAX_ENTRY_CHARS = 2000;
@@ -69,6 +88,18 @@ async function requireOwnedAttempt(
   }
 
   return attempt;
+}
+
+async function getAttemptScenario(ctx: MutationCtx, attempt: Attempt) {
+  return ctx.db
+    .query("scenarios")
+    .withIndex("by_public_id", (q) => q.eq("id", attempt.scenarioId))
+    .unique();
+}
+
+/** The scenario's time limit in ms (lib/plans.ts defaults when unset). */
+function timeLimitMsFor(scenario: Doc<"scenarios"> | null) {
+  return (scenario ? scenarioTimeLimitMinutes(scenario) : MAX_ATTEMPT_MINUTES) * 60_000;
 }
 
 /**
@@ -236,7 +267,7 @@ export const heartbeat = mutation({
     const attempt = await requireOwnedAttempt(ctx, args.attemptId, clerkId);
 
     if (attempt.completionStatus !== "in_progress") {
-      return { shouldEnd: true, elapsedMs: 0, allowedMs: 0 };
+      return { shouldEnd: true, endReason: null, elapsedMs: 0, allowedMs: 0, timeLimitMs: 0 };
     }
 
     const user = await getUserByClerkId(ctx, clerkId);
@@ -244,11 +275,16 @@ export const heartbeat = mutation({
     const startedAtMs = attempt.startedAtMs ?? now;
     const entitlement = user ? await getEntitlement(ctx, user, new Date(now)) : null;
     const allowedMs = allowedDurationMs(entitlement?.remainingMinutes ?? 0);
+    const timeLimitMs = timeLimitMsFor(await getAttemptScenario(ctx, attempt));
     const elapsedMs = now - startedAtMs;
 
     await ctx.db.patch(attempt._id, { lastActiveAtMs: now });
 
-    return { shouldEnd: elapsedMs >= allowedMs, elapsedMs, allowedMs };
+    // The client ends on time itself; the server backstop allows a little slack.
+    const endReason: "out_of_minutes" | "time_up" | null =
+      elapsedMs >= allowedMs ? "out_of_minutes" : elapsedMs >= timeLimitMs + TIME_LIMIT_GRACE_MS ? "time_up" : null;
+
+    return { shouldEnd: endReason !== null, endReason, elapsedMs, allowedMs, timeLimitMs };
   },
 });
 
@@ -330,6 +366,7 @@ export const closeForGrading = internalMutation({
     attemptId: v.string(),
     clerkId: v.string(),
     transcriptEntries: v.array(transcriptEntry),
+    endReason: v.optional(endReason),
   },
   handler: async (ctx, args) => {
     const attempt = await requireOwnedAttempt(ctx, args.attemptId, args.clerkId);
@@ -337,6 +374,18 @@ export const closeForGrading = internalMutation({
     if (attempt.completionStatus !== "in_progress") {
       throw new Error("This practice attempt has already ended.");
     }
+
+    const now = Date.now();
+    const scenario = await getAttemptScenario(ctx, attempt);
+    const elapsedMs = now - (attempt.startedAtMs ?? now);
+    const timeLimitMs = timeLimitMsFor(scenario);
+    const user = await getUserByClerkId(ctx, args.clerkId);
+    const entitlement = user ? await getEntitlement(ctx, user, new Date(now)) : null;
+    const resolvedEndReason = resolveEndReason(args.endReason, {
+      elapsedMs,
+      timeLimitMs,
+      allowedMs: allowedDurationMs(entitlement?.remainingMinutes ?? 0),
+    });
 
     const transcriptEntries = args.transcriptEntries
       .slice(0, MAX_TRANSCRIPT_ENTRIES)
@@ -348,17 +397,13 @@ export const closeForGrading = internalMutation({
       .filter((entry) => entry.text.trim().length > 0);
     const interpreterTurns = transcriptEntries.filter((e) => e.role === "user").length;
 
-    await closeAndCharge(ctx, attempt, Date.now(), {
+    await closeAndCharge(ctx, attempt, now, {
       completionStatus: "ungraded",
       ungradedReason: "grading",
       transcriptEntries,
       transcriptSummary: summarizeTranscript(transcriptEntries),
+      endReason: resolvedEndReason,
     });
-
-    const scenario = await ctx.db
-      .query("scenarios")
-      .withIndex("by_public_id", (q) => q.eq("id", attempt.scenarioId))
-      .unique();
 
     return {
       interpreterTurns,
@@ -368,6 +413,9 @@ export const closeForGrading = internalMutation({
       targetLanguage: attempt.targetLanguage,
       moduleId: attempt.moduleId,
       mode: attempt.mode ?? "assessed",
+      endReason: resolvedEndReason,
+      elapsedMs,
+      timeLimitMs,
     };
   },
 });
@@ -401,6 +449,9 @@ export const prepareRegrade = internalMutation({
       targetLanguage: attempt.targetLanguage,
       moduleId: attempt.moduleId,
       mode: attempt.mode ?? "assessed",
+      endReason: attempt.endReason,
+      elapsedMs: (attempt.durationSeconds ?? 0) * 1000,
+      timeLimitMs: timeLimitMsFor(scenario),
     };
   },
 });

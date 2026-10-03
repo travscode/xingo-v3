@@ -110,6 +110,45 @@ export const MAX_REALTIME_KEYS_PER_ATTEMPT = 6;
 /** Interpreter turns required before an attempt is worth grading. */
 export const MIN_INTERPRETER_TURNS_TO_GRADE = 3;
 
+/**
+ * Default session time limits (minutes) for scenarios that don't set their own.
+ * A typical run takes roughly 60% of the limit: a two-party dialogue is ~6-8
+ * minutes of talk (a NAATI CCL dialogue is ~300 words), so 12 minutes leaves room
+ * to think without letting a session run forever. See D-028.
+ */
+export const DEFAULT_TIME_LIMIT_MINUTES = {
+  interpreting: 12,
+  interpretingSingle: 10,
+  roleplay: 10,
+} as const;
+
+/** Server-side slack after the time limit before the heartbeat ends the attempt. */
+export const TIME_LIMIT_GRACE_MS = 20 * 1000;
+
+/** Nobody has spoken for this long: the room warns the learner. */
+export const STALL_WARNING_MS = 45 * 1000;
+
+/** Nobody has spoken for this long: the session ends as "stalled". */
+export const STALL_END_MS = 90 * 1000;
+
+/** Time limit for a scenario in minutes; never above the per-attempt ceiling. */
+export function scenarioTimeLimitMinutes(scenario: {
+  agentCount?: 1 | 2;
+  aiAgentB?: unknown;
+  practiceRuntime?: { practiceType?: "interpreting" | "roleplay"; timeLimitMinutes?: number } | null;
+}) {
+  const runtime = scenario.practiceRuntime;
+  const fallback =
+    runtime?.practiceType === "roleplay"
+      ? DEFAULT_TIME_LIMIT_MINUTES.roleplay
+      : scenario.agentCount === 1 || !scenario.aiAgentB
+        ? DEFAULT_TIME_LIMIT_MINUTES.interpretingSingle
+        : DEFAULT_TIME_LIMIT_MINUTES.interpreting;
+  const minutes = runtime?.timeLimitMinutes && runtime.timeLimitMinutes > 0 ? runtime.timeLimitMinutes : fallback;
+
+  return Math.min(MAX_ATTEMPT_MINUTES, minutes);
+}
+
 export function isPackId(value: string): value is PackId {
   return value === "starter" || value === "plus" || value === "sprint";
 }

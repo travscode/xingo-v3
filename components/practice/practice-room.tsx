@@ -19,7 +19,8 @@ import {
 import { track } from "@/lib/analytics";
 import { friendlyError, getErrorCode } from "@/lib/errors";
 import { flagEmoji } from "@/lib/languages";
-import { HEARTBEAT_INTERVAL_MS } from "@/lib/plans";
+import { HEARTBEAT_INTERVAL_MS, scenarioTimeLimitMinutes, STALL_END_MS, STALL_WARNING_MS } from "@/lib/plans";
+import type { EndReason } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
 import { useRealtimeVoiceSession } from "@/components/practice/use-realtime-voice-session";
@@ -78,7 +79,19 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
   const [audible, setAudible] = useState<Record<AgentKey, boolean>>({ agent_a: false, agent_b: false });
   const [isRecording, setIsRecording] = useState(false);
   const [turns, setTurns] = useState<Record<AgentKey, number>>({ agent_a: 0, agent_b: 0 });
-  const [conversationEnded, setConversationEnded] = useState(false);
+  /** Set when the professional/role-player closes the conversation via the end tool. */
+  const [conversationEnd, setConversationEnd] = useState<{
+    reason: "objective_met" | "learner_stuck";
+    at: number;
+    turnsAtEnd: Record<AgentKey, number>;
+  } | null>(null);
+  const conversationEnded = conversationEnd !== null;
+  /** Participants whose voice connection has finished (not just started). */
+  const [ready, setReady] = useState<Record<AgentKey, boolean>>({ agent_a: false, agent_b: false });
+  /** Ms since anyone (learner or AI) last spoke, and since an AI was last heard. Updated by the clock tick. */
+  const [idleMs, setIdleMs] = useState(0);
+  const [quietMs, setQuietMs] = useState(0);
+  const [connectingNudge, setConnectingNudge] = useState(false);
   const [transcriptEntries, setTranscriptEntries] = useState<TranscriptEntry[]>([]);
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [translating, setTranslating] = useState<Record<string, boolean>>({});
@@ -99,13 +112,21 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
   const spaceHoldTimeoutRef = useRef<number | null>(null);
   const spaceHoldActiveRef = useRef(false);
   const transcriptScrollRef = useRef<HTMLDivElement>(null);
+  const turnsRef = useRef<Record<AgentKey, number>>({ agent_a: 0, agent_b: 0 });
+  const readyRef = useRef<Record<AgentKey, boolean>>({ agent_a: false, agent_b: false });
+  const activeAgentRef = useRef<AgentKey | null>(null);
+  const recordingRef = useRef(false);
+  const lastActivityRef = useRef(0);
+  const lastAgentHeardRef = useRef(0);
+  /** Silences a participant who starts talking over another (set once sessions exist). */
+  const floorGuardRef = useRef<(key: AgentKey) => void>(() => undefined);
 
   // ---- Who speaks what -------------------------------------------------------
 
   const runtime = scenario.practiceRuntime;
   // English-only role-play (OET, IELTS, clinical stations): the learner speaks as themselves.
   const isRoleplay = runtime.practiceType === "roleplay";
-  const timeLimitMs = runtime.timeLimitMinutes ? runtime.timeLimitMinutes * 60_000 : null;
+  const timeLimitMs = scenarioTimeLimitMinutes(scenario) * 60_000;
   const hasSecondAgent = !isRoleplay && scenario.agentCount === 2 && Boolean(scenario.aiAgentB);
   const languagePlan = useMemo(
     () => planAgentLanguages(scenario, activePair),
@@ -159,6 +180,8 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
       if (playing && rms > 0.015) {
         lastHeardRef.current[key] = now;
+        lastAgentHeardRef.current = Date.now();
+        lastActivityRef.current = Date.now();
       }
 
       const isAudible = playing && now - lastHeardRef.current[key] < 250;
@@ -166,6 +189,16 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
         next[key] = isAudible;
         changed = true;
       }
+    }
+
+    // Hard rule: only one participant is ever heard. If both are audible, the one
+    // the learner isn't addressing is cut off.
+    if (next.agent_a && next.agent_b) {
+      const intruder: AgentKey = activeAgentRef.current === "agent_a" ? "agent_b" : "agent_a";
+      floorGuardRef.current(intruder);
+      next[intruder] = false;
+      lastHeardRef.current[intruder] = 0;
+      changed = true;
     }
 
     if (changed) {
@@ -304,16 +337,17 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       tool({
         name: END_CONVERSATION_TOOL,
         description:
-          "Call this once you have everything you need and the other party has no outstanding questions, right after your closing line.",
+          "Ends the session. Call it right after your closing line: when your goal is met (objective_met), or when the other person clearly can't continue (learner_stuck).",
         parameters: {
           type: "object" as const,
-          properties: { reason: { type: "string" as const } },
+          properties: { reason: { type: "string" as const, enum: ["objective_met", "learner_stuck"] } },
           required: ["reason" as const],
           additionalProperties: false as const,
         },
         strict: true,
-        execute: async () => {
-          setConversationEnded(true);
+        execute: async (input: unknown) => {
+          const reason = (input as { reason?: string } | null)?.reason === "learner_stuck" ? "learner_stuck" : "objective_met";
+          setConversationEnd((current) => current ?? { reason, at: Date.now(), turnsAtEnd: { ...turnsRef.current } });
           return "The session is over. Do not say anything else.";
         },
       }),
@@ -351,10 +385,11 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
           authoredLanguage: authored?.language,
           counterpart,
           isProfessional,
+          timeLimitMinutes: timeLimitMs / 60_000,
         }),
       });
     },
-    [configFor, endConversationTool, hasSecondAgent, isRoleplay, professionalKey, scenario],
+    [configFor, endConversationTool, hasSecondAgent, isRoleplay, professionalKey, scenario, timeLimitMs],
   );
 
   const agentA = useMemo(() => buildAgent("agent_a"), [buildAgent]);
@@ -416,6 +451,8 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       bundle.session.setTurnDetectionEnabled(false);
       await ensureAudioPlayback(bundle.audio);
       attachLevelMeter(key, bundle.audio);
+      readyRef.current = { ...readyRef.current, [key]: true };
+      setReady(readyRef.current);
     },
     [attachLevelMeter, bundleFor, createRealtimeSecret, ensureAudioPlayback],
   );
@@ -426,10 +463,16 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
         return;
       }
 
+      // Switching is only possible once both voices are ready (the room isn't live before then).
+      if (connectedAgentsRef.current.has(key) && !readyRef.current[key]) {
+        return;
+      }
+
       setActiveAgent(key);
+      activeAgentRef.current = key;
       const other: AgentKey = key === "agent_a" ? "agent_b" : "agent_a";
 
-      if (connectedAgentsRef.current.has(other)) {
+      if (readyRef.current[other]) {
         bundleFor(other).session.mute(true);
       }
 
@@ -451,12 +494,38 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     [bundleFor, configFor, connectAgent, ensureAudioPlayback, hasSecondAgent],
   );
 
+  /** Stops every participant except `keep` mid-sentence and silences their audio. */
+  const silenceAgents = useCallback(
+    (keep: AgentKey | null) => {
+      for (const key of ["agent_a", "agent_b"] as const) {
+        if (key === keep || !readyRef.current[key]) continue;
+        const bundle = bundleFor(key);
+        bundle.session.interrupt();
+        if (bundle.audio) bundle.audio.muted = true;
+      }
+    },
+    [bundleFor],
+  );
+
+  useEffect(() => {
+    floorGuardRef.current = (key) => {
+      if (!readyRef.current[key]) return;
+      const bundle = bundleFor(key);
+      bundle.session.interrupt();
+      if (bundle.audio) bundle.audio.muted = true;
+    };
+  }, [bundleFor]);
+
   const disconnectAll = useCallback(() => {
     agentASession.disconnect();
     agentBSession.disconnect();
     connectedAgentsRef.current.clear();
+    readyRef.current = { agent_a: false, agent_b: false };
+    setReady(readyRef.current);
     setActiveAgent(null);
+    activeAgentRef.current = null;
     setIsRecording(false);
+    recordingRef.current = false;
     stopMeters();
   }, [agentASession, agentBSession, stopMeters]);
 
@@ -468,7 +537,9 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     setTranscriptEntries([]);
     setTranslations({});
     setTurns({ agent_a: 0, agent_b: 0 });
-    setConversationEnded(false);
+    turnsRef.current = { agent_a: 0, agent_b: 0 };
+    setConversationEnd(null);
+    setConnectingNudge(false);
 
     try {
       // Fail fast on microphone problems, before an attempt exists.
@@ -488,22 +559,20 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       setStartedAtMs(Date.now());
       track("practice_start", { scenario_id: scenario.id, module_id: scenario.moduleId, mode });
 
-      // The interpreter opens by introducing themselves to the client (Thomas, Aug 2026).
-      // Only go live once that first voice is actually connected.
+      // Connect everyone before going live, so the learner can't talk to or switch
+      // to someone who isn't there yet. The interpreter opens with the client (Thomas, Aug 2026).
+      await Promise.all(hasSecondAgent ? [connectAgent(clientKey), connectAgent(professionalKey)] : [connectAgent(clientKey)]);
+      if (hasSecondAgent) bundleFor(professionalKey).session.mute(true);
       setActiveAgent(clientKey);
-      await connectAgent(clientKey);
+      activeAgentRef.current = clientKey;
       bundleFor(clientKey).session.mute(false);
       void ensureAudioPlayback(bundleFor(clientKey).audio);
+      lastActivityRef.current = Date.now();
+      setIdleMs(0);
       setPhase("live");
 
       if (isRoleplay && runtime.learnerOpens === false) {
         bundleFor(clientKey).session.sendHiddenInstruction("Begin the conversation now, in character.");
-      }
-
-      if (hasSecondAgent) {
-        void connectAgent(professionalKey)
-          .then(() => bundleFor(professionalKey).session.mute(true))
-          .catch(() => undefined);
       }
     } catch (startError) {
       console.error("[PracticeRoom] start", startError);
@@ -545,7 +614,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
   ]);
 
   const finishSession = useCallback(
-    (reason: "user" | "time_up") => {
+    (reason: EndReason) => {
       const id = attemptIdRef.current;
 
       if (!id || finishingRef.current) {
@@ -568,11 +637,11 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
       track("practice_finish", { scenario_id: scenario.id, mode, reason, turns: turns.agent_a + turns.agent_b });
       // The action keeps running server-side; the results page updates live when grading lands.
-      void finishAttempt({ attemptId: id, transcriptEntries: entries }).catch((finishError) =>
+      void finishAttempt({ attemptId: id, transcriptEntries: entries, endReason: reason }).catch((finishError) =>
         console.error("[PracticeRoom] finish", finishError),
       );
       attemptIdRef.current = null;
-      router.push(`/results/${id}${reason === "time_up" ? "?ended=time" : ""}`);
+      router.push(`/results/${id}${reason === "learner_finished" ? "" : `?ended=${reason}`}`);
     },
     [disconnectAll, finishAttempt, mode, router, scenario.id, transcriptEntries, turns],
   );
@@ -637,7 +706,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
           setAllowedMs(result.allowedMs);
 
           if (result.shouldEnd) {
-            finishSessionRef.current("time_up");
+            finishSessionRef.current(result.endReason ?? "time_up");
           }
         })
         .catch(() => undefined);
@@ -646,37 +715,64 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     return () => window.clearInterval(interval);
   }, [attemptId, heartbeat, phase]);
 
-  // Clock tick for the timer.
+  // Clock tick: timer, plus how long the room has been silent.
   useEffect(() => {
     if (phase !== "live") {
       return;
     }
 
-    const interval = window.setInterval(() => setNowMs(Date.now()), 1000);
+    const interval = window.setInterval(() => {
+      const now = Date.now();
+      if (recordingRef.current) lastActivityRef.current = now;
+      setNowMs(now);
+      setIdleMs(now - lastActivityRef.current);
+      setQuietMs(now - lastAgentHeardRef.current);
+    }, 1000);
     return () => window.clearInterval(interval);
   }, [phase]);
 
-  // Exam-style time limit: end the session like the real test would.
+  // Every session has a time limit (lib/plans.ts): end it like the real test would.
   useEffect(() => {
-    if (phase === "live" && timeLimitMs !== null && startedAtMs !== null && nowMs - startedAtMs >= timeLimitMs) {
+    if (phase === "live" && startedAtMs !== null && nowMs - startedAtMs >= timeLimitMs) {
       finishSessionRef.current("time_up");
     }
   }, [nowMs, phase, startedAtMs, timeLimitMs]);
 
-  // ---- Push-to-talk -----------------------------------------------------------
-
-  const stopAllAgentPlayback = useCallback(() => {
-    for (const audio of [agentAAudioRef.current, agentBAudioRef.current]) {
-      if (audio && !audio.paused) {
-        try {
-          audio.pause();
-          audio.currentTime = 0;
-        } catch {
-          // Streaming media may refuse currentTime; pausing is enough.
-        }
-      }
+  // Nobody has spoken for a long time: the learner is stuck or has walked away.
+  useEffect(() => {
+    if (phase === "live" && !isRecording && idleMs >= STALL_END_MS) {
+      finishSessionRef.current("stalled");
     }
-  }, []);
+  }, [idleMs, isRecording, phase]);
+
+  // The AI closed the conversation: let the last words land, then wrap up automatically.
+  const AFTER_CLOSE_QUIET_MS = 2_500;
+  const LAST_RELAY_TIMEOUT_MS = 45_000;
+  const awaitingLastRelay =
+    conversationEnd !== null &&
+    conversationEnd.reason === "objective_met" &&
+    hasSecondAgent &&
+    turns[clientKey] <= conversationEnd.turnsAtEnd[clientKey];
+
+  useEffect(() => {
+    if (phase !== "live" || !conversationEnd || isRecording) {
+      return;
+    }
+
+    const sinceEnd = nowMs - conversationEnd.at;
+    const someoneSpeaking = audible.agent_a || audible.agent_b;
+
+    // Interpreting: the learner still has to relay the closing line to the other party.
+    if (awaitingLastRelay && sinceEnd < LAST_RELAY_TIMEOUT_MS) {
+      return;
+    }
+
+    if (!someoneSpeaking && sinceEnd >= AFTER_CLOSE_QUIET_MS && quietMs >= AFTER_CLOSE_QUIET_MS) {
+      finishSessionRef.current(conversationEnd.reason === "learner_stuck" ? "stalled" : "objective_met");
+    }
+  }, [audible, awaitingLastRelay, conversationEnd, isRecording, nowMs, phase, quietMs]);
+
+  // ---- Push-to-talk -----------------------------------------------------------
 
   const startTalking = useCallback(() => {
     if (!activeAgent || phase !== "live") {
@@ -688,10 +784,13 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       return;
     }
 
-    stopAllAgentPlayback();
+    // The learner takes the floor: everyone else stops talking.
+    silenceAgents(activeAgent);
     bundleFor(activeAgent).session.startPushToTalk();
     setIsRecording(true);
-  }, [activeAgent, bundleFor, configFor, phase, stopAllAgentPlayback]);
+    recordingRef.current = true;
+    lastActivityRef.current = Date.now();
+  }, [activeAgent, bundleFor, configFor, phase, silenceAgents]);
 
   const stopTalking = useCallback(() => {
     if (!activeAgent || !isRecording) {
@@ -701,9 +800,14 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     const bundle = bundleFor(activeAgent);
     bundle.session.stopPushToTalk();
     setIsRecording(false);
-    setTurns((current) => ({ ...current, [activeAgent]: current[activeAgent] + 1 }));
+    recordingRef.current = false;
+    lastActivityRef.current = Date.now();
+    turnsRef.current = { ...turnsRef.current, [activeAgent]: turnsRef.current[activeAgent] + 1 };
+    setTurns(turnsRef.current);
+    // Only the person just addressed may answer.
+    silenceAgents(activeAgent);
     void ensureAudioPlayback(bundle.audio);
-  }, [activeAgent, bundleFor, ensureAudioPlayback, isRecording]);
+  }, [activeAgent, bundleFor, ensureAudioPlayback, isRecording, silenceAgents]);
 
   const toggleAgent = useCallback(() => {
     if (phase !== "live" || !hasSecondAgent) {
@@ -729,7 +833,6 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       event.preventDefault();
       if (spaceDownAtRef.current !== null) return;
 
-      stopAllAgentPlayback();
       spaceDownAtRef.current = Date.now();
       spaceHoldActiveRef.current = false;
       spaceHoldTimeoutRef.current = window.setTimeout(() => {
@@ -772,7 +875,27 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
-  }, [phase, startTalking, stopAllAgentPlayback, stopTalking, toggleAgent]);
+  }, [phase, startTalking, stopTalking, toggleAgent]);
+
+  // Space while still connecting: explain why nothing happens yet.
+  useEffect(() => {
+    if (phase !== "connecting") {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== "Space") return;
+      event.preventDefault();
+      setConnectingNudge(true);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [phase]);
+
+  useEffect(() => {
+    activeAgentRef.current = activeAgent;
+  }, [activeAgent]);
 
   // ---- Practice-mode transcript --------------------------------------------------
 
@@ -804,18 +927,45 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
   // ---- Coaching -------------------------------------------------------------------
 
-  const effectiveAllowedMs =
-    allowedMs !== null && timeLimitMs !== null ? Math.min(allowedMs, timeLimitMs) : (allowedMs ?? timeLimitMs);
+  const effectiveAllowedMs = allowedMs !== null ? Math.min(allowedMs, timeLimitMs) : timeLimitMs;
   const remainingMs =
     effectiveAllowedMs !== null && startedAtMs !== null ? effectiveAllowedMs - (nowMs - startedAtMs) : null;
   const totalTurns = turns.agent_a + turns.agent_b;
 
   const coach = useMemo(() => {
-    if (conversationEnded) {
+    if (phase === "connecting") {
+      return {
+        title: "Setting up your session…",
+        detail: hasSecondAgent
+          ? `Connecting to ${client.name} and ${professional.name}. You can talk once both show Ready.`
+          : `Connecting to ${client.name}. You can talk once they show Ready.`,
+      };
+    }
+
+    if (conversationEnd) {
+      if (awaitingLastRelay) {
+        return {
+          tone: "done" as const,
+          title: `${professional.name} has wrapped up. Interpret their last line for ${client.name}.`,
+          detail: "The session ends automatically after that.",
+        };
+      }
+
       return {
         tone: "done" as const,
-        title: `${professional.name} has wrapped up the conversation.`,
-        detail: mode === "assessed" ? "Press Finish to see your score." : "Press Finish to end the session.",
+        title:
+          conversationEnd.reason === "learner_stuck"
+            ? "The conversation has stopped here."
+            : `${professional.name} has wrapped up the conversation.`,
+        detail: mode === "assessed" ? "Wrapping up and scoring your session…" : "Wrapping up…",
+      };
+    }
+
+    if (idleMs >= STALL_WARNING_MS) {
+      return {
+        tone: "warning" as const,
+        title: "Still there?",
+        detail: `Nobody has spoken for a while. The session ends in ${Math.max(0, Math.ceil((STALL_END_MS - idleMs) / 1000))} seconds unless you keep going.`,
       };
     }
 
@@ -839,7 +989,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
       return {
         title: "Work through your task card.",
-        detail: timeLimitMs ? "Keep an eye on the timer — the session ends automatically, like the real test." : "Press Finish when you're done.",
+        detail: "Keep an eye on the timer — the session ends when the conversation wraps up or time runs out.",
       };
     }
 
@@ -877,9 +1027,10 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       title: "Interpret each turn.",
       detail: "When someone finishes speaking, switch to the other person and relay everything they said.",
     };
-  }, [client, clientKey, conversationEnded, hasSecondAgent, isRoleplay, mode, professional, professionalKey, remainingMs, runtime.learnerOpens, timeLimitMs, totalTurns, turns]);
+  }, [awaitingLastRelay, client, clientKey, conversationEnd, hasSecondAgent, idleMs, isRoleplay, mode, phase, professional, professionalKey, remainingMs, runtime.learnerOpens, totalTurns, turns]);
 
   const tileState = (key: AgentKey) => {
+    if (!ready[key]) return "connecting" as const;
     if (audible[key]) return "speaking" as const;
     if (activeAgent === key && isRecording) return "listening" as const;
     if (activeAgent === key) return "selected" as const;
@@ -989,6 +1140,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
             <div className="flex flex-col items-center gap-4 pb-4">
               <MicButton
                 recording={isRecording}
+                connecting={phase === "connecting"}
                 disabled={phase !== "live" || !activeAgent}
                 onStart={startTalking}
                 onEnd={stopTalking}
@@ -997,8 +1149,10 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
               <SelfView />
             </div>
 
-            {phase === "connecting" ? (
-              <p className="text-center text-sm text-gray-500">Connecting to {client.name}…</p>
+            {phase === "connecting" && connectingNudge ? (
+              <p className="text-center text-sm text-gray-500" role="status">
+                Hang on — still connecting. Talking and switching unlock when everyone shows Ready.
+              </p>
             ) : null}
             {audioBlocked ? (
               <div className="rounded-xl bg-warning/30 px-4 py-3 text-sm">
@@ -1076,7 +1230,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
               variant={conversationEnded ? "accent" : "primary"}
               block
               disabled={phase !== "live"}
-              onClick={() => finishSession("user")}
+              onClick={() => finishSession("learner_finished")}
             >
               {phase === "finishing" ? "Finishing…" : mode === "assessed" ? "Finish and get my score" : "Finish session"}
             </Button>
@@ -1185,9 +1339,7 @@ function SetupPanel({
                   ? `${professional.name} starts the conversation.`
                   : `Start by introducing yourself to ${professional.name}.`,
                 "Hold Space (or the mic button) while you talk, then release.",
-                scenario.practiceRuntime.timeLimitMinutes
-                  ? `You have ${scenario.practiceRuntime.timeLimitMinutes} minutes — the session ends automatically, like the real test.`
-                  : "Press Finish when you're done.",
+                `You have ${scenarioTimeLimitMinutes(scenario)} minutes. The session ends when the conversation wraps up or time runs out.`,
               ]
             : [
             hasSecondAgent
@@ -1195,7 +1347,7 @@ function SetupPanel({
               : `Introduce yourself to ${professional.name}.`,
             hasSecondAgent ? `Switch to ${professional.name} and introduce yourself in ${professional.language}.` : null,
             "Interpret every turn. Hold Space (or the mic button) to talk; tap Space to switch person.",
-            "When the conversation wraps up, press Finish.",
+            `You have ${scenarioTimeLimitMinutes(scenario)} minutes. The session ends by itself when the conversation wraps up, time runs out, or nobody speaks for ${Math.round(STALL_END_MS / 1000)} seconds. Unfinished sessions score lower.`,
           ])
             .filter(Boolean)
             .map((text, index) => (

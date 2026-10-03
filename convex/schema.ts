@@ -116,6 +116,15 @@ const sessionAssessment = v.object({
     v.literal("needs_review"),
   ),
   breakdown: assessmentBreakdown,
+  /** Did the learner get through the task? Unfinished sessions are scaled down (lib/scoring.ts). */
+  completion: v.optional(
+    v.object({
+      reachedEnd: v.boolean(),
+      coveragePercent: v.number(),
+      rawScore: v.number(),
+      unfinished: v.string(),
+    }),
+  ),
 });
 
 export default defineSchema({
@@ -219,6 +228,16 @@ export default defineSchema({
     /** "assessed" is scored with the transcript hidden; "practice" shows it and is never scored. */
     mode: v.optional(v.union(v.literal("assessed"), v.literal("practice"))),
     ungradedReason: v.optional(v.string()),
+    /** Why the live session ended (lib/scoring.ts endReasons). */
+    endReason: v.optional(
+      v.union(
+        v.literal("objective_met"),
+        v.literal("learner_finished"),
+        v.literal("time_up"),
+        v.literal("stalled"),
+        v.literal("out_of_minutes"),
+      ),
+    ),
   })
     .index("by_public_id", ["id"])
     .index("by_clerkId", ["clerkId"])

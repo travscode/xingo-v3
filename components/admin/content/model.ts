@@ -1,6 +1,7 @@
 import type { Id } from "@/convex/_generated/dataModel";
 import type { DifficultyLevel, IndustryCategory } from "@/types/module";
 import type { Scenario } from "@/types/scenario";
+import { MAX_ATTEMPT_MINUTES } from "@/lib/plans";
 
 export const industryOptions: Array<{ value: IndustryCategory; label: string }> = [
   { value: "medical", label: "Medical & health" },
@@ -109,6 +110,10 @@ export type DialogueForm = {
   sourceLanguage: string;
   targetLanguage: string;
   openingSpeaker: "agent_a" | "agent_b";
+  /** Minutes; empty uses the default for the scenario type (lib/plans.ts). */
+  timeLimitMinutes: string;
+  /** Role-play settings authored in content packs; preserved on save, not edited here. */
+  roleplay?: Pick<Scenario["practiceRuntime"], "practiceType" | "learnerRole" | "taskCard" | "learnerOpens">;
 };
 
 const emptyParticipant = (role: string, voice: string, language: string): ParticipantForm => ({
@@ -140,6 +145,7 @@ export const emptyDialogueForm: DialogueForm = {
   sourceLanguage: "English",
   targetLanguage: "Spanish",
   openingSpeaker: "agent_a",
+  timeLimitMinutes: "",
 };
 
 function participantFromRecord(agent: Scenario["aiAgentA"] | undefined, fallbackLanguage: string): ParticipantForm {
@@ -175,6 +181,13 @@ export function dialogueFormFromRecord(scenario: Scenario): DialogueForm {
     sourceLanguage: scenario.practiceRuntime.sourceLanguage,
     targetLanguage: scenario.practiceRuntime.targetLanguage,
     openingSpeaker: scenario.practiceRuntime.openingSpeaker,
+    timeLimitMinutes: scenario.practiceRuntime.timeLimitMinutes ? String(scenario.practiceRuntime.timeLimitMinutes) : "",
+    roleplay: {
+      practiceType: scenario.practiceRuntime.practiceType,
+      learnerRole: scenario.practiceRuntime.learnerRole,
+      taskCard: scenario.practiceRuntime.taskCard,
+      learnerOpens: scenario.practiceRuntime.learnerOpens,
+    },
   };
 }
 
@@ -192,6 +205,11 @@ function participantPayload(participant: ParticipantForm) {
     avatarImageUrl: participant.avatarImageUrl.trim() || undefined,
     avatarStorageId: participant.avatarStorageId ? (participant.avatarStorageId as Id<"_storage">) : undefined,
   };
+}
+
+function parseTimeLimit(value: string) {
+  const minutes = Math.round(Number(value));
+  return Number.isFinite(minutes) && minutes > 0 ? Math.min(minutes, MAX_ATTEMPT_MINUTES) : undefined;
 }
 
 export function dialoguePayload(moduleId: string, form: DialogueForm) {
@@ -212,6 +230,8 @@ export function dialoguePayload(moduleId: string, form: DialogueForm) {
       openingSpeaker: form.openingSpeaker,
       briefing: form.briefing.trim(),
       assessmentFocus: form.assessmentFocus,
+      timeLimitMinutes: parseTimeLimit(form.timeLimitMinutes),
+      ...form.roleplay,
     },
   };
 }

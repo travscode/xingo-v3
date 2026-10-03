@@ -113,3 +113,17 @@ Format: **ID — title** · date · status. Context → Decision → Consequence
 
 ### D-027 — Admin email campaigns via Resend with first-party tracking · 2026-10-03 · accepted
 **Decision.** Campaigns live in Convex (`emailCampaigns`, `emailRecipients`, `emailClicks`); Resend's batch API delivers. Opens, clicks and unsubscribes are tracked by Convex HTTP routes proxied under `www.xingo.ai/e/*`, so links show the XINGO domain and work regardless of Resend plan. Batches are claimed atomically (no duplicate sends). Unsubscribes set `users.emailOptOut` and are always excluded. One-click `List-Unsubscribe` headers for Gmail/Yahoo bulk-sender rules. See [runbooks/email-setup.md](runbooks/email-setup.md).
+
+### D-028 — Every session has an end, and unfinished sessions score lower · 2026-10-03 · accepted
+**Context.** Learners reported that dialogues "never end": only exam role-plays had a time limit, and the room waited for the learner to press Finish.
+**Decision.**
+- **Time limit for every scenario.** `practiceRuntime.timeLimitMinutes`, or a default from `lib/plans.ts` (two-party interpreting 12 min, single speaker 10, role-play 10; roughly twice a typical run). The room ends the session at the limit; the heartbeat ends it server-side 20 s later as a backstop. Admins can set it per dialogue.
+- **Objective reached.** The professional/role-player calls `end_conversation` (`objective_met`) after a closing line. Role-play: the room wraps up once the audio goes quiet. Interpreting: the learner first relays the closing line to the other party (45 s fallback), then the room wraps up.
+- **Stuck.** The AI may end with `learner_stuck` when the learner clearly can't continue. The room also warns after 45 s with nobody speaking and ends the session as `stalled` at 90 s.
+- **End reason recorded.** `sessions.endReason` ∈ objective_met | learner_finished | time_up | stalled | out_of_minutes. The client's claim is checked against the server clock (`resolveEndReason`): "time up" before the limit becomes `learner_finished`.
+- **Completion-aware scoring.** The grader judges completion from the transcript (`reachedEnd`, `coveragePercent`, `unfinished`). An unfinished session's score is scaled by coverage (`applyCompletion` in `lib/scoring.ts`) and can never pass. A session that times out or stalls with fewer than 3 learner turns scores 0 rather than "too short". Leaving early by pressing Finish with < 3 turns stays ungraded. The results page explains the scaling.
+**Consequences.** Older attempts have no `endReason`/`completion` and display as before.
+
+### D-029 — One voice at a time; the room is live only when everyone is connected · 2026-10-03 · accepted
+**Context.** Both AI participants could talk at once, and learners could talk or switch person before the voice connections were ready.
+**Decision.** Both participants connect in parallel before the room goes live. While connecting, tiles show "Connecting…", the mic is disabled and pressing Space explains why. Floor rule: when the learner holds to talk, every other participant is interrupted and muted; after the learner releases, only the person addressed may answer. As a backstop, if level meters detect two voices at once, the one the learner isn't addressing is cut off.

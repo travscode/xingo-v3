@@ -211,6 +211,86 @@ describe("metering", () => {
     });
   });
 
+  test("every session has a time limit, even with plenty of minutes", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    const asUser = await seedUser(t, "user_limit", { role: "platform_admin" });
+    const { attemptId } = await asUser.mutation(api.practice.startAttempt, {
+      scenarioId: "free-scn",
+      ...pair,
+    });
+
+    // free-scn is a single-speaker interpreting scenario: 10 minute default limit.
+    vi.advanceTimersByTime(10 * 60_000);
+    expect(await asUser.mutation(api.practice.heartbeat, { attemptId })).toMatchObject({
+      shouldEnd: false,
+      timeLimitMs: 10 * 60_000,
+    });
+    vi.advanceTimersByTime(30_000);
+    expect(await asUser.mutation(api.practice.heartbeat, { attemptId })).toMatchObject({
+      shouldEnd: true,
+      endReason: "time_up",
+    });
+  });
+
+  test("the server only accepts end reasons the clock supports", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    const asUser = await seedUser(t, "user_reason", { role: "platform_admin" });
+    const { attemptId } = await asUser.mutation(api.practice.startAttempt, {
+      scenarioId: "free-scn",
+      ...pair,
+    });
+
+    vi.advanceTimersByTime(2 * 60_000);
+    const closed = await t.mutation(internal.practice.closeForGrading, {
+      attemptId,
+      clerkId: "user_reason",
+      transcriptEntries: [],
+      endReason: "time_up",
+    });
+    expect(closed.endReason).toBe("learner_finished");
+  });
+
+  test("a session that stalls before it starts scores 0 instead of going ungraded", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    const asUser = await seedUser(t, "user_stall", { role: "platform_admin" });
+    const { attemptId } = await asUser.mutation(api.practice.startAttempt, {
+      scenarioId: "free-scn",
+      ...pair,
+    });
+
+    vi.advanceTimersByTime(2 * 60_000);
+    const outcome = await asUser.action(api.practiceActions.finishAttempt, {
+      attemptId,
+      transcriptEntries: [],
+      endReason: "stalled",
+    });
+    expect(outcome).toMatchObject({ status: "graded", score: 0, completionDecision: "needs_review" });
+
+    const sessions = await asUser.query(api.sessions.listForCurrentUser, {});
+    expect(sessions[0]?.endReason).toBe("stalled");
+    expect(sessions[0]?.assessment?.completion?.reachedEnd).toBe(false);
+  });
+
+  test("a learner who quits early with too few turns is still ungraded", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    const asUser = await seedUser(t, "user_quit", { role: "platform_admin" });
+    const { attemptId } = await asUser.mutation(api.practice.startAttempt, {
+      scenarioId: "free-scn",
+      ...pair,
+    });
+
+    const outcome = await asUser.action(api.practiceActions.finishAttempt, {
+      attemptId,
+      transcriptEntries: [],
+      endReason: "learner_finished",
+    });
+    expect(outcome).toEqual({ status: "too_short" });
+  });
+
   test("abandoned attempts are closed by the sweeper and charged to last heartbeat", async () => {
     const t = setup();
     await seedCatalog(t);

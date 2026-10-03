@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { ExternalLink } from "lucide-react";
+import { DEFAULT_TIME_LIMIT_MINUTES, MAX_ATTEMPT_MINUTES } from "@/lib/plans";
 import { api } from "@/convex/_generated/api";
 import type { Scenario } from "@/types/scenario";
 import { friendlyError } from "@/lib/errors";
@@ -260,6 +261,22 @@ function DialogueEditor({
               <FormSection title="Learner briefing" description="Shown before the session starts and used to guide scoring.">
                 <Field label="Briefing" required htmlFor="dialogue-briefing" hint="What the learner should pay attention to, in one or two sentences.">
                   <TextArea id="dialogue-briefing" rows={3} value={form.briefing} onChange={(event) => update({ briefing: event.target.value })} />
+                </Field>
+                <Field
+                  label="Time limit (minutes)"
+                  htmlFor="dialogue-time-limit"
+                  hint={`The session ends automatically at this point and unfinished sessions score lower. Leave empty for the default (${form.roleplay?.practiceType === "roleplay" ? DEFAULT_TIME_LIMIT_MINUTES.roleplay : form.hasClient ? DEFAULT_TIME_LIMIT_MINUTES.interpreting : DEFAULT_TIME_LIMIT_MINUTES.interpretingSingle} min, about twice a typical run).`}
+                >
+                  <TextInput
+                    id="dialogue-time-limit"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={MAX_ATTEMPT_MINUTES}
+                    placeholder="Default"
+                    value={form.timeLimitMinutes}
+                    onChange={(event) => update({ timeLimitMinutes: event.target.value })}
+                  />
                 </Field>
                 <Field label="Interpreter role" htmlFor="dialogue-role" hint="e.g. Healthcare interpreter, Telephone interpreter, NAATI CCL dialogue candidate.">
                   <TextInput id="dialogue-role" value={form.interpreterRole} onChange={(event) => update({ interpreterRole: event.target.value })} />

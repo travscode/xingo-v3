@@ -63,9 +63,11 @@ export function buildRealtimeAgentInstructions(args: {
   authoredLanguage: string | undefined;
   counterpart?: VoiceAgent;
   isProfessional: boolean;
+  timeLimitMinutes?: number;
 }) {
   const { scenario, agent, counterpart, isProfessional, authoredLanguage } = args;
   const language = agent.language;
+  const timeLimitMinutes = args.timeLimitMinutes ?? 12;
   const endCondition = agent.endCondition?.trim() || agent.goal;
 
   return [
@@ -92,8 +94,14 @@ export function buildRealtimeAgentInstructions(args: {
     "- If the interpreter is silent, stay silent.",
     "- Stay in character. Do not mention that this is a simulation or training.",
     isProfessional
-      ? `- When you have what you need (${endCondition}) and the other party has no outstanding questions, give a brief closing line, then call the ${END_CONVERSATION_TOOL} tool. Do not prolong the conversation after that.`
+      ? `- When you have what you need (${endCondition}) and the other party has no outstanding questions, give a brief closing line, then call the ${END_CONVERSATION_TOOL} tool with reason "objective_met". Do not prolong the conversation after that.`
       : "- If the other party says goodbye, say a short goodbye back.",
+    isProfessional
+      ? `- Keep the conversation focused: cover your goal in roughly ${Math.max(4, Math.round(timeLimitMinutes * 0.6))} minutes of talk. Don't introduce new topics once your goal is met.`
+      : "",
+    isProfessional
+      ? `- If the interpreter clearly can't continue (several turns of silence, "I don't know", or relays that make no sense), close politely and call ${END_CONVERSATION_TOOL} with reason "learner_stuck".`
+      : "",
     "",
     `LANGUAGE RULE (overrides everything above): speak only ${language}. Every word you say must be in ${language}, even if the interpreter or any text above uses another language.`,
   ]
@@ -176,8 +184,9 @@ export function buildRoleplayInstructions(args: { scenario: Scenario; agent: Voi
       ? `- You speak first. ${agent.openingLine ? `Open with: ${agent.openingLine}` : "Open the conversation as your role would."}`
       : `- The learner speaks first. ${agent.openingLine ? `Your first reply should carry this meaning: ${agent.openingLine}` : ""}`,
     endCondition
-      ? `- When ${endCondition}, give a brief natural closing line, then call the ${END_CONVERSATION_TOOL} tool.`
-      : "- If the learner closes the conversation, say a brief goodbye.",
+      ? `- When ${endCondition}, give a brief natural closing line, then call the ${END_CONVERSATION_TOOL} tool with reason "objective_met".`
+      : `- When the learner closes the conversation, say a brief goodbye, then call the ${END_CONVERSATION_TOOL} tool with reason "objective_met".`,
+    `- If the learner clearly can't continue (long silences, repeated "I don't know", or they keep going in circles), close the conversation naturally and call ${END_CONVERSATION_TOOL} with reason "learner_stuck".`,
     "",
     "LANGUAGE RULE (overrides everything above): speak only English, at a natural pace with everyday vocabulary that suits your character.",
   ]

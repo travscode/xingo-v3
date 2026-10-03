@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAction, useQuery } from "convex/react";
-import { ArrowRight, Check, RotateCcw, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowRight, Check, Flag, RotateCcw, TrendingDown, TrendingUp } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { track } from "@/lib/analytics";
-import { isPassingScore } from "@/lib/scoring";
+import { endReasons, isPassingScore, type EndReason } from "@/lib/scoring";
 import { rubricForModule } from "@/lib/rubrics";
 import { Badge, Card, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 export function LiveResults({ attemptId }: { attemptId: string }) {
   const result = useQuery(api.sessions.resultForCurrentUser, { attemptId });
   const searchParams = useSearchParams();
-  const endedByTime = searchParams.get("ended") === "time";
+  const endedParam = searchParams.get("ended");
   const retryGrading = useAction(api.practiceActions.retryGrading);
   const [retrying, setRetrying] = useState(false);
   const trackedRef = useRef(false);
@@ -53,14 +53,21 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
   const practiceAgainHref = `/practice/${session.scenarioId}`;
   const reason = session.ungradedReason;
   const transcript = session.transcriptEntries ?? [];
+  // The server-validated reason wins; the query param only covers the moment before it lands.
+  const endReason: EndReason | null =
+    session.endReason ??
+    (endedParam === "time" ? "time_up" : endReasons.find((value) => value === endedParam) ?? null);
+  const endNote: Partial<Record<EndReason, string>> = {
+    time_up: "The session ended because the time limit ran out.",
+    stalled: "The session ended because nobody spoke for a while.",
+    out_of_minutes: "The session ended because your practice minutes ran out.",
+  };
 
   const header = (
     <div>
       <p className="eyebrow">{moduleTitle}</p>
       <h1 className="mt-1 text-3xl font-bold tracking-[-0.035em] sm:text-4xl">{scenarioTitle}</h1>
-      {endedByTime ? (
-        <p className="mt-2 text-sm text-gray-500">The session ended because your practice time ran out.</p>
-      ) : null}
+      {endReason && endNote[endReason] ? <p className="mt-2 text-sm text-gray-500">{endNote[endReason]}</p> : null}
     </div>
   );
 
@@ -135,7 +142,10 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
 
   const assessment = session.assessment;
   const rubric = rubricForModule(session.moduleId);
-  const passed = isPassingScore(session.moduleId, session.score);
+  const completion = assessment.completion;
+  const unfinished = completion !== undefined && !completion.reachedEnd;
+  // An unfinished session can't be "at target", whatever the number says.
+  const passed = isPassingScore(session.moduleId, session.score) && !unfinished;
   const display = rubric.display(session.score);
   const delta = previousScore !== null ? session.score - previousScore : null;
 
@@ -154,7 +164,7 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Badge tone={passed ? "accent" : "neutral"}>
                 {passed ? <Check className="h-3 w-3" /> : null}
-                {passed ? "At target" : rubric.passLabel}
+                {passed ? "At target" : unfinished ? "Not finished" : rubric.passLabel}
               </Badge>
               {delta !== null && delta !== 0 ? (
                 <span className="inline-flex items-center gap-1 text-sm text-paper/70">
@@ -183,6 +193,22 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
           </Button>
         </div>
       </Card>
+
+      {unfinished && completion ? (
+        <Card className="flex gap-4 p-6">
+          <Flag className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" aria-hidden />
+          <div>
+            <p className="font-bold">You didn&apos;t get through the whole conversation</p>
+            <p className="mt-1 text-sm leading-6 text-gray-700">
+              You covered about {completion.coveragePercent}% of the task
+              {completion.unfinished ? ` — still to do: ${completion.unfinished.replace(/\.$/, "")}` : ""}. Like the
+              real test, unfinished parts earn nothing, so your score was scaled down from{" "}
+              {rubric.display(completion.rawScore).value} and can&apos;t reach the target. Finish the conversation next time to
+              get your full score.
+            </p>
+          </div>
+        </Card>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6">

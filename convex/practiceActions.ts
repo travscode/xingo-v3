@@ -5,6 +5,7 @@ import { getClerkIdFromIdentity } from "./model/auth";
 import { assessmentJsonSchema, buildGradingPrompt } from "./model/grading";
 import { MIN_INTERPRETER_TURNS_TO_GRADE } from "../lib/plans";
 import { rubricForModule } from "../lib/rubrics";
+import { applyCompletion, type EndReason } from "../lib/scoring";
 
 const OPENAI_API = "https://api.openai.com/v1";
 
@@ -168,8 +169,8 @@ type GradingInput = {
     title: string;
     description: string;
     moduleId: string;
-    aiAgentA: { name?: string; role: string; goal: string };
-    aiAgentB?: { name?: string; role: string; goal: string };
+    aiAgentA: { name?: string; role: string; goal: string; endCondition?: string };
+    aiAgentB?: { name?: string; role: string; goal: string; endCondition?: string };
     practiceRuntime?: {
       interpreterRole: string;
       sourceLanguage: string;
@@ -186,6 +187,9 @@ type GradingInput = {
   targetLanguage?: string;
   moduleId: string;
   mode: "assessed" | "practice";
+  endReason?: EndReason;
+  elapsedMs?: number;
+  timeLimitMs?: number;
 };
 
 type GradeOutcome =
@@ -193,6 +197,24 @@ type GradeOutcome =
   | { status: "practice_mode" }
   | { status: "too_short" }
   | { status: "grading_failed" };
+
+/** Zero-score result for a session that timed out or stalled before it really began. */
+function unfinishedAssessment(timeUp: boolean) {
+  const reason = timeUp ? "Time ran out" : "The session stalled";
+  return {
+    overallScore: 0,
+    summary: `${reason} before you got far enough into the conversation to be assessed, so this attempt scores 0.`,
+    strengths: [],
+    improvementAreas: [
+      "Keep the conversation moving: respond as soon as each speaker finishes.",
+      "If you're unsure of a word, paraphrase or ask for clarification rather than stopping.",
+    ],
+    recommendedNextStep: "Try the scenario again in Practice mode with the transcript on, then retake it assessed.",
+    completionDecision: "needs_review" as const,
+    breakdown: { accuracy: 0, terminology: 0, fluency: 0, turnManagement: 0, professionalism: 0 },
+    completion: { reachedEnd: false, coveragePercent: 0, rawScore: 0, unfinished: "Most of the conversation." },
+  };
+}
 
 async function grade(
   ctx: ActionCtx,
@@ -203,6 +225,17 @@ async function grade(
   if (input.mode === "practice") {
     await ctx.runMutation(internal.practice.markUngraded, { attemptId, reason: "practice_mode" });
     return { status: "practice_mode" };
+  }
+
+  // Ran out of time or stalled without really starting: that's a fail, not "too short".
+  const forcedEnd = input.endReason === "time_up" || input.endReason === "stalled";
+
+  if (input.scenario && forcedEnd && input.interpreterTurns < MIN_INTERPRETER_TURNS_TO_GRADE) {
+    await ctx.runMutation(internal.practice.saveAssessment, {
+      attemptId,
+      assessment: unfinishedAssessment(input.endReason === "time_up"),
+    });
+    return { status: "graded", score: 0, completionDecision: "needs_review" };
   }
 
   if (!input.scenario || input.interpreterTurns < MIN_INTERPRETER_TURNS_TO_GRADE) {
@@ -224,6 +257,7 @@ async function grade(
             input.targetLanguage ?? scenario.practiceRuntime?.targetLanguage ?? "the other language",
         },
         input.transcriptEntries,
+        { endReason: input.endReason, elapsedMs: input.elapsedMs, timeLimitMs: input.timeLimitMs },
       ),
       text: { format: { type: "json_schema", ...assessmentJsonSchema } },
     });
@@ -240,10 +274,19 @@ async function grade(
     const parsed = JSON.parse(extractOutputText(result));
     const clamp = (value: unknown) =>
       Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
-    const overallScore = clamp(parsed.overallScore);
-    // The pass decision is derived from the score here, not trusted from the model.
+    const rawScore = clamp(parsed.overallScore);
+    const completion = {
+      reachedEnd: parsed.completion?.reachedEnd === true,
+      coveragePercent: clamp(parsed.completion?.coveragePercent),
+      rawScore,
+      unfinished: String(parsed.completion?.unfinished ?? "").slice(0, 300),
+    };
+    const overallScore = applyCompletion(rawScore, completion);
+    // The pass decision is derived here, not trusted from the model: an unfinished session can't pass.
     const completionDecision =
-      overallScore >= rubricForModule(input.moduleId).passScore ? "completed" : "needs_review";
+      completion.reachedEnd && overallScore >= rubricForModule(input.moduleId).passScore
+        ? "completed"
+        : "needs_review";
     const list = (value: unknown) =>
       Array.isArray(value) ? value.map(String).slice(0, 6) : [];
 
@@ -263,6 +306,7 @@ async function grade(
           turnManagement: clamp(parsed.breakdown?.turnManagement),
           professionalism: clamp(parsed.breakdown?.professionalism),
         },
+        completion,
       },
     });
 
@@ -282,6 +326,15 @@ export const finishAttempt = action({
   args: {
     attemptId: v.string(),
     transcriptEntries: v.array(transcriptEntry),
+    endReason: v.optional(
+      v.union(
+        v.literal("objective_met"),
+        v.literal("learner_finished"),
+        v.literal("time_up"),
+        v.literal("stalled"),
+        v.literal("out_of_minutes"),
+      ),
+    ),
   },
   handler: async (ctx, args): Promise<GradeOutcome> => {
     const clerkId = await requireActionClerkId(ctx);
@@ -289,6 +342,7 @@ export const finishAttempt = action({
       attemptId: args.attemptId,
       clerkId,
       transcriptEntries: args.transcriptEntries,
+      endReason: args.endReason,
     });
 
     return grade(ctx, clerkId, args.attemptId, input);

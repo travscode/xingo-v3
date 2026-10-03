@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Lottie } from "lottie-react";
-import { Headphones, Mic, MicOff, Video, VideoOff } from "lucide-react";
+import { Headphones, Loader2, Mic, MicOff, Video, VideoOff } from "lucide-react";
 import soundWavesAnimation from "@/public/animations/sound-waves.json";
 import { flagEmoji } from "@/lib/languages";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,7 @@ export function formatClock(ms: number) {
   return `${minutes}:${`${seconds}`.padStart(2, "0")}`;
 }
 
-type TileState = "idle" | "selected" | "speaking" | "listening";
+type TileState = "connecting" | "idle" | "selected" | "speaking" | "listening";
 
 /**
  * One AI participant. The state label always says, in words, what is happening,
@@ -47,7 +47,9 @@ export function ParticipantTile({
   onSelect?: () => void;
 }) {
   const label =
-    state === "speaking"
+    state === "connecting"
+      ? "Connecting…"
+      : state === "speaking"
       ? "Speaking"
       : state === "listening"
         ? "Listening to you"
@@ -63,7 +65,9 @@ export function ParticipantTile({
       aria-pressed={state !== "idle"}
       className={cn(
         "group flex w-full flex-col items-center rounded-2xl border-2 p-5 text-center transition-colors sm:p-6",
-        state === "idle" ? "border-transparent bg-gray-50 hover:bg-gray-100" : "border-live bg-paper",
+        state === "idle" || state === "connecting"
+          ? "border-transparent bg-gray-50 hover:bg-gray-100"
+          : "border-live bg-paper",
         disabled && "cursor-default hover:bg-gray-50",
       )}
     >
@@ -73,7 +77,7 @@ export function ParticipantTile({
         <div
           className={cn(
             "relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-3xl font-bold sm:h-36 sm:w-36",
-            state !== "idle" && "ring-4 ring-live",
+            state !== "idle" && state !== "connecting" && "ring-4 ring-live",
           )}
         >
           {imageUrl ? (
@@ -83,6 +87,11 @@ export function ParticipantTile({
           ) : (
             <span>{initials(name)}</span>
           )}
+          {state === "connecting" ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-paper/60">
+              <Loader2 className="h-8 w-8 animate-spin text-ink" aria-hidden />
+            </div>
+          ) : null}
           {state === "speaking" ? (
             <div className="absolute inset-0 flex items-center justify-center bg-ink/40">
               <div className="h-20 w-20">
@@ -99,7 +108,7 @@ export function ParticipantTile({
       <div
         className={cn(
           "mt-3 rounded-md px-2 py-1 text-xs font-semibold",
-          state === "idle" && "text-gray-500",
+          (state === "idle" || state === "connecting") && "text-gray-500",
           state === "selected" && "bg-live text-paper",
           state === "speaking" && "bg-live text-paper",
           state === "listening" && "bg-record text-paper",
@@ -118,8 +127,10 @@ export function MicButton({
   onStart,
   onEnd,
   targetName,
+  connecting = false,
 }: {
   recording: boolean;
+  connecting?: boolean;
   disabled: boolean;
   onStart: () => void;
   onEnd: () => void;
@@ -136,17 +147,21 @@ export function MicButton({
         onPointerUp={onEnd}
         onPointerCancel={onEnd}
         disabled={disabled}
-        aria-label={recording ? "Release to send" : "Hold to talk"}
+        aria-label={connecting ? "Connecting" : recording ? "Release to send" : "Hold to talk"}
         className={cn(
           "relative flex h-24 w-24 touch-none select-none items-center justify-center rounded-full text-paper transition-colors disabled:opacity-30",
           recording ? "bg-record" : "bg-ink hover:bg-gray-700",
         )}
       >
         {recording ? <span className="record-ring" aria-hidden /> : null}
-        <Mic className="h-9 w-9" />
+        {connecting ? <Loader2 className="h-9 w-9 animate-spin" /> : <Mic className="h-9 w-9" />}
       </button>
       <p className="mt-3 text-sm font-semibold">
-        {recording ? `Talking to ${targetName ?? "them"}… release to send` : "Hold to talk"}
+        {connecting
+          ? "Connecting… please wait"
+          : recording
+            ? `Talking to ${targetName ?? "them"}… release to send`
+            : "Hold to talk"}
       </p>
       <p className="mt-0.5 hidden text-xs text-gray-500 sm:block">
         or hold <Kbd>Space</Kbd> · tap <Kbd>Space</Kbd> to switch person
