@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { useAuth } from "@clerk/nextjs";
+import { useSignedInHint } from "@/components/auth/signed-in-hint";
 import { Button } from "@/components/ui/button";
 import { marketingNavItems } from "@/components/marketing/nav-items";
 
 /** Hamburger disclosure for the marketing header below the md breakpoint. */
 export function MarketingMobileNav() {
   const [open, setOpen] = useState(false);
-  const { userId } = useAuth();
+  const signedIn = useSignedInHint();
   const close = () => setOpen(false);
 
   return (
@@ -43,7 +43,7 @@ export function MarketingMobileNav() {
               </Link>
             ))}
           </nav>
-          {!userId ? (
+          {signedIn === false ? (
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button asChild variant="secondary" onClick={close}>
                 <Link href="/sign-in">Log in</Link>
@@ -53,7 +53,7 @@ export function MarketingMobileNav() {
               </Button>
             </div>
           ) : null}
-          {userId ? (
+          {signedIn ? (
             <Button asChild block className="mt-4" onClick={close}>
               <Link href="/dashboard" prefetch={false}>
                 Go to dashboard

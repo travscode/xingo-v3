@@ -1,26 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { UserButton, useAuth } from "@clerk/nextjs";
+import { useSignedInHint } from "@/components/auth/signed-in-hint";
 import { Button } from "@/components/ui/button";
 
+/** Header actions on public pages. Doesn't load Clerk; see signed-in-hint.ts. */
 export function HeaderAuth() {
-  const { isLoaded, userId } = useAuth();
+  const signedIn = useSignedInHint();
 
-  if (!isLoaded) {
+  if (signedIn === null) {
     return <div className="h-9 w-24 rounded-lg bg-gray-100" />;
   }
 
-  if (userId) {
+  if (signedIn) {
     return (
-      <div className="flex items-center gap-3">
-        <Button asChild size="sm" className="hidden sm:inline-flex">
-          <Link href="/dashboard" prefetch={false}>
-            Dashboard
-          </Link>
-        </Button>
-        <UserButton />
-      </div>
+      <Button asChild size="sm" className="hidden sm:inline-flex">
+        <Link href="/dashboard" prefetch={false}>
+          Dashboard
+        </Link>
+      </Button>
     );
   }
 

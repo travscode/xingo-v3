@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Suspense } from "react";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Inter } from "next/font/google";
-import { AppBootstrap } from "@/components/auth/app-bootstrap";
-import { ConvexClientProvider } from "@/components/providers/convex-client-provider";
 import { GA4Analytics } from "@/components/providers/ga4-analytics";
 import { GA4_MEASUREMENT_ID } from "@/lib/analytics";
 import "./globals.css";
@@ -55,17 +52,12 @@ export default function RootLayout({
           </>
         ) : null}
       </head>
-      <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up">
-        <body className={`${sans.variable} antialiased`}>
-          <Suspense fallback={null}>
-            <GA4Analytics />
-          </Suspense>
-          <ConvexClientProvider>
-            <AppBootstrap />
-            {children}
-          </ConvexClientProvider>
-        </body>
-      </ClerkProvider>
+      <body className={`${sans.variable} antialiased`}>
+        <Suspense fallback={null}>
+          <GA4Analytics />
+        </Suspense>
+        {children}
+      </body>
     </html>
   );
 }
