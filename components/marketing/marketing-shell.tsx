@@ -4,6 +4,7 @@ import { HeaderAuth } from "@/components/auth/header-auth";
 import { MarketingMobileNav } from "@/components/marketing/mobile-nav";
 import { Logo } from "@/components/ui/logo";
 import { marketingNavItems } from "@/components/marketing/nav-items";
+import { ExamsMenu } from "@/components/marketing/exams-menu";
 
 const footerLinks = [
   { href: "/naati/ccl", label: "NAATI CCL practice" },
@@ -36,15 +37,19 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-8">
             <Logo />
             <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
-              {marketingNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-gray-100"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {marketingNavItems.map((item) =>
+                item.href === "/exams" ? (
+                  <ExamsMenu key={item.href} />
+                ) : (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-gray-100"
+                  >
+                    {item.label}
+                  </Link>
+                ),
+              )}
             </nav>
           </div>
           <div className="flex items-center gap-2">

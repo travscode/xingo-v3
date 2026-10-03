@@ -101,34 +101,6 @@ export default function HomePage() {
         <HeroStory className="mk-rise mk-delay-2 mx-auto max-w-md" />
       </section>
 
-      {/* Exams */}
-      <section aria-labelledby="exams-heading">
-        <h2 id="exams-heading" className="text-sm font-semibold text-gray-500">
-          Practice built around the test in front of you
-        </h2>
-        <ul className="mt-4 flex flex-wrap gap-2">
-          {examLinks.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3.5 py-2 text-sm font-semibold transition-colors hover:border-ink hover:bg-gray-50"
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-          <li>
-            <Link
-              href="/exams"
-              className="group inline-flex items-center gap-1 rounded-lg px-3.5 py-2 text-sm font-semibold text-gray-500 hover:text-ink"
-            >
-              All exams
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </li>
-        </ul>
-      </section>
-
       {/* Where it leads: 2M's clients (under contract with 2M) */}
       <section aria-labelledby="partners-heading">
         <h2 id="partners-heading" className="text-center text-2xl font-bold tracking-[-0.03em] sm:text-3xl">
@@ -227,6 +199,35 @@ export default function HomePage() {
           <p className="mt-6 text-xs text-gray-500">XINGO is independent and not affiliated with NAATI.</p>
         </div>
         <ScoreMock scale="ccl" className="mx-auto w-full max-w-sm" />
+      </section>
+
+      {/* Exams */}
+      <section aria-labelledby="exams-heading">
+        <h2 id="exams-heading" className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">
+          Practising for a different test?
+        </h2>
+        <p className="mt-2 text-[15px] text-gray-500">These are the tests you can practise for on XINGO today.</p>
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {examLinks.map((link) => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3.5 py-2 text-sm font-semibold transition-colors hover:border-ink hover:bg-gray-50"
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+          <li>
+            <Link
+              href="/exams"
+              className="group inline-flex items-center gap-1 rounded-lg px-3.5 py-2 text-sm font-semibold text-gray-500 hover:text-ink"
+            >
+              All exams
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </li>
+        </ul>
       </section>
 
       {/* Courses */}

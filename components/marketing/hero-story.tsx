@@ -143,7 +143,7 @@ export function HeroStory({ className }: { className?: string }) {
       </div>
 
       {/* 1 · Listen */}
-      <div className={cn("absolute inset-0 flex flex-col items-center justify-center px-8 transition-opacity duration-700", is("listen") ? "opacity-100" : "pointer-events-none opacity-0")}>
+      <div className={cn("absolute inset-0 flex flex-col items-center justify-center px-8 transition-opacity", is("listen") ? "opacity-100 delay-200 duration-500" : "pointer-events-none opacity-0 duration-200")}>
         <div className="relative">
           {[0, 1, 2].map((ring) => (
             <span
@@ -160,7 +160,7 @@ export function HeroStory({ className }: { className?: string }) {
       </div>
 
       {/* 2 · Interpret */}
-      <div className={cn("absolute inset-0 flex flex-col justify-center px-8 transition-opacity duration-700", is("interpret") ? "opacity-100" : "pointer-events-none opacity-0")}>
+      <div className={cn("absolute inset-0 flex flex-col justify-center px-8 transition-opacity", is("interpret") ? "opacity-100 delay-200 duration-500" : "pointer-events-none opacity-0 duration-200")}>
         <div className="flex items-center gap-3">
           <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-record">
             <span aria-hidden className="absolute inset-0 rounded-full bg-record/60 motion-safe:animate-ping" />
@@ -183,7 +183,7 @@ export function HeroStory({ className }: { className?: string }) {
       </div>
 
       {/* 3 · Get scored */}
-      <div className={cn("absolute inset-0 flex flex-col items-center justify-center px-8 transition-opacity duration-700", is("score") ? "opacity-100" : "pointer-events-none opacity-0")}>
+      <div className={cn("absolute inset-0 flex flex-col items-center justify-center px-8 transition-opacity", is("score") ? "opacity-100 delay-200 duration-500" : "pointer-events-none opacity-0 duration-200")}>
         <div className="relative h-44 w-44 sm:h-48 sm:w-48">
           <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" aria-hidden>
             <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="8" />
@@ -228,7 +228,7 @@ export function HeroStory({ className }: { className?: string }) {
       </div>
 
       {/* 4 · Get to work */}
-      <div className={cn("absolute inset-0 flex flex-col justify-center px-8 transition-opacity duration-700", is("work") ? "opacity-100" : "pointer-events-none opacity-0")}>
+      <div className={cn("absolute inset-0 flex flex-col justify-center px-8 transition-opacity", is("work") ? "opacity-100 delay-200 duration-500" : "pointer-events-none opacity-0 duration-200")}>
         <span
           className={cn(
             "flex h-16 w-16 items-center justify-center rounded-full bg-accent text-accent-ink transition-transform duration-500 ease-[cubic-bezier(.34,1.56,.64,1)]",
