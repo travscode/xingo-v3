@@ -184,7 +184,31 @@ export type CourseActivity = {
   passCount?: number;
   ratingSum?: number;
   ratingCount?: number;
+  /** Courses with a banner or logo are listed before those without. */
+  bannerStorageId?: unknown;
+  logoStorageId?: unknown;
+  /** Used to rank fully filled-out course pages higher (see `isCourseComplete`). */
+  tagline?: string;
+  description?: string;
+  whatYouGet?: string[];
+  audience?: string;
+  scenarioCount?: number;
 };
+
+export const COMPLETE_COURSE_MIN_SCENARIOS = 3;
+
+/** A course page with every part filled in: banner, logo, summary, description, outcomes, audience, 3+ scenarios. */
+export function isCourseComplete(course: CourseActivity) {
+  return Boolean(
+    course.bannerStorageId &&
+      course.logoStorageId &&
+      course.tagline?.trim() &&
+      (course.description?.trim().length ?? 0) >= 80 &&
+      (course.whatYouGet?.length ?? 0) >= 2 &&
+      course.audience?.trim() &&
+      (course.scenarioCount === undefined || course.scenarioCount >= COMPLETE_COURSE_MIN_SCENARIOS),
+  );
+}
 
 export const NEW_COURSE_DAYS = 21;
 export const TOP_RATED_MIN_RATINGS = 5;
@@ -214,7 +238,13 @@ export function courseBadges(course: CourseActivity, now = Date.now()): CourseBa
 export type MarketplaceSort = "popular" | "top" | "new";
 
 export function compareCourses(sort: MarketplaceSort) {
+  const hasImage = (c: CourseActivity) => (c.bannerStorageId || c.logoStorageId ? 1 : 0);
   return (a: CourseActivity, b: CourseActivity) => {
+    // Courses with images first, then fully filled-out ones, then the chosen sort.
+    const imageFirst = hasImage(b) - hasImage(a);
+    if (imageFirst) return imageFirst;
+    const completeFirst = Number(isCourseComplete(b)) - Number(isCourseComplete(a));
+    if (completeFirst) return completeFirst;
     const newer = (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
     if (sort === "new") return newer;
     if (sort === "top") {

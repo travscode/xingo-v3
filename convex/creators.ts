@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getClerkIdFromIdentity, getUserByClerkId, requireUser } from "./model/auth";
-import { averageRating, courseBadges, slugify } from "../lib/marketplace";
+import { averageRating, compareCourses, courseBadges, slugify } from "../lib/marketplace";
 
 /**
  * Creator profiles (/marketplace/creators/<handle>). Real creators get one the
@@ -82,7 +82,7 @@ export const profile = query({
 
     const courses = await Promise.all(
       listings
-        .sort((a, b) => (b.addCount * 2 + (b.practiceCount ?? 0)) - (a.addCount * 2 + (a.practiceCount ?? 0)))
+        .sort(compareCourses("popular"))
         .map(async (listing) => {
           const scenarios = await ctx.db
             .query("scenarios")
@@ -157,7 +157,8 @@ export const featured = query({
     const cards = await Promise.all(
       profiles.filter((p): p is Doc<"creatorProfiles"> => p !== null).map(async (p) => ({ ...(await profileCard(ctx, p)), courses: counts.get(p.handle) ?? 0 })),
     );
-    return cards.sort((a, b) => b.courses - a.courses).slice(0, 24);
+    // Creators with a profile photo first, then by number of courses.
+    return cards.sort((a, b) => Number(Boolean(b.avatarUrl)) - Number(Boolean(a.avatarUrl)) || b.courses - a.courses).slice(0, 24);
   },
 });
 

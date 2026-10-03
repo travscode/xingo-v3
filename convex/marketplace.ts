@@ -265,6 +265,7 @@ export const browse = query({
     const matching = listings
       .filter((listing) => !args.kind || listing.kind === args.kind)
       .filter((listing) => listingMatches(listing, args.search ?? ""))
+      .map((listing) => ({ ...listing, scenarioCount: counts.get(listing.moduleId) ?? 0 }))
       .sort(compareCourses(args.sort ?? "popular"));
 
     return Promise.all(
