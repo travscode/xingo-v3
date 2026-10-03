@@ -17,6 +17,7 @@ import { MAX_ATTEMPT_MINUTES, plans } from "@/lib/plans";
 import { CCL_MAX_SCORE } from "@/lib/scoring";
 import { pageMetadata } from "@/lib/seo-metadata";
 import { webPageJsonLd } from "@/lib/structured-data";
+import { TWO_M_URL, TwoMLink, withTwoMLinks } from "@/components/marketing/two-m-link";
 
 /*
  * Landing page for people migrating (or planning to migrate) to Australia
@@ -34,7 +35,6 @@ const DESCRIPTION =
 
 export const metadata: Metadata = pageMetadata({ title: TITLE, description: DESCRIPTION, path: PATH });
 
-const TWO_M_URL = "https://www.2m.com.au/";
 const HOME_AFFAIRS = "https://immi.homeaffairs.gov.au/";
 const OMARA_REGISTER = "https://portal.mara.gov.au/search-the-register-of-migration-agents/";
 
@@ -568,7 +568,7 @@ export default function MigrateToAustraliaPage() {
                     {index + 1}
                   </span>
                   <p className="text-[15px] leading-6">
-                    <strong>{title}</strong> <span className="text-gray-500">{body}</span>
+                    <strong>{title}</strong> <span className="text-gray-500">{withTwoMLinks(body)}</span>
                   </p>
                 </li>
               ))}
@@ -602,7 +602,7 @@ export default function MigrateToAustraliaPage() {
         <div className="mt-16">
           <h3 className="text-center text-xl font-bold tracking-[-0.02em] sm:text-2xl">2M interprets for organisations including</h3>
           <p className="mx-auto mt-2 max-w-2xl text-center text-sm leading-6 text-gray-500">
-            2M Language Services decides who it engages. Applying doesn&apos;t guarantee work, and practising on XINGO
+            <TwoMLink /> decides who it engages. Applying doesn&apos;t guarantee work, and practising on XINGO
             doesn&apos;t give you a credential by itself.
           </p>
           <LogoCarousel className="mt-6" />

@@ -7,6 +7,7 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { people } from "@/components/marketing/people";
 import { Flag } from "@/components/marketing/flag";
+import { TWO_M_NAME, TwoMLink } from "@/components/marketing/two-m-link";
 
 /**
  * Hero visual for /migrate-to-australia: a migrant's journey as five stops on a
@@ -206,11 +207,18 @@ export function MigrationPathway({ className }: { className?: string }) {
             <p className="mt-1.5 text-xl font-bold tracking-[-0.02em]">{active.title}</p>
             <p className="mt-1 text-sm leading-6 text-paper/65">{active.detail}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {active.chips.map((chip) => (
-                <span key={chip} className="rounded-full border border-paper/20 px-2.5 py-0.5 text-xs font-semibold">
-                  {chip}
-                </span>
-              ))}
+              {active.chips.map((chip) =>
+                chip === TWO_M_NAME ? (
+                  <TwoMLink
+                    key={chip}
+                    className="rounded-full border border-paper/20 px-2.5 py-0.5 text-xs text-paper no-underline hover:border-paper/60"
+                  />
+                ) : (
+                  <span key={chip} className="rounded-full border border-paper/20 px-2.5 py-0.5 text-xs font-semibold">
+                    {chip}
+                  </span>
+                ),
+              )}
             </div>
           </div>
         </div>

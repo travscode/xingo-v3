@@ -18,6 +18,7 @@ import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "@/lib/scoring";
 import { packList, plans } from "@/lib/plans";
 import { pageMetadata } from "@/lib/seo-metadata";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/structured-data";
+import { TwoMLink } from "@/components/marketing/two-m-link";
 
 export const metadata: Metadata = pageMetadata({
   title: "XINGO — Practise NAATI CCL, OET and IELTS Speaking Out Loud",
@@ -107,7 +108,7 @@ export default function HomePage() {
           Practise here. Interpret for organisations like these.
         </h2>
         <p className="mx-auto mt-2 max-w-2xl text-center text-[15px] leading-7 text-gray-500">
-          XINGO is partnered with 2M Language Services, who interpret for organisations across Australia. Get qualified on XINGO and you
+          XINGO is partnered with <TwoMLink />, who interpret for organisations across Australia. Get qualified on XINGO and you
           could work with them through 2M.
         </p>
         <LogoCarousel className="mt-8" />

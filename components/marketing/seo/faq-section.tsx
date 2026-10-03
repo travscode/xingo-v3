@@ -1,5 +1,6 @@
 import { faqJsonLd } from "@/lib/structured-data";
 import { JsonLd } from "./json-ld";
+import { withTwoMLinks } from "@/components/marketing/two-m-link";
 
 /** FAQ list plus schema.org FAQPage structured data for search results. */
 export function FaqSection({ faqs, title = "Questions" }: { faqs: Array<{ q: string; a: string }>; title?: string }) {
@@ -13,7 +14,7 @@ export function FaqSection({ faqs, title = "Questions" }: { faqs: Array<{ q: str
               {faq.q}
               <span className="text-xl leading-none text-gray-500 transition-transform group-open:rotate-45">+</span>
             </summary>
-            <p className="mt-3 max-w-3xl text-[15px] leading-7 text-gray-700">{faq.a}</p>
+            <p className="mt-3 max-w-3xl text-[15px] leading-7 text-gray-700">{withTwoMLinks(faq.a)}</p>
           </details>
         ))}
       </div>
