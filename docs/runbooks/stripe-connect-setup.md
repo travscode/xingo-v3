@@ -61,7 +61,9 @@ Developers → Webhooks → **+ Add endpoint**:
 - **Listen to:** choose **Events on Connected accounts** (this is a different endpoint from the
   payments webhook).
 - **Endpoint URL:** `https://<your-convex-deployment>.convex.site/stripe/connect-webhook`
-- **Events:** `account.updated`
+- **Events:** `account.updated`, `payout.created`, `payout.updated`, `payout.paid`, `payout.failed`,
+  `payout.canceled` (bank payouts from creators' Express balances, shown on their Payouts page).
+  Live endpoint `we_1UMOVJ8VZhRrFpFvxsQsx0HG` was updated with these on 2026-10-03.
 - Save, then **Reveal** the signing secret (`whsec_…`).
 
 ## 5. Convex environment

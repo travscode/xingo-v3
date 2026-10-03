@@ -144,3 +144,47 @@ export const completePayout = internalMutation({
     }
   },
 });
+
+/** Saves one Stripe bank payout for a creator's connected account (webhook or sync). */
+export const recordBankPayout = internalMutation({
+  args: {
+    stripeAccountId: v.string(),
+    stripePayoutId: v.string(),
+    amountCents: v.number(),
+    currency: v.string(),
+    status: v.string(),
+    arrivalDate: v.optional(v.string()),
+    failureMessage: v.optional(v.string()),
+    createdAt: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const account = await ctx.db
+      .query("creatorAccounts")
+      .withIndex("by_stripeAccountId", (q) => q.eq("stripeAccountId", args.stripeAccountId))
+      .unique();
+    if (!account) return;
+
+    const existing = await ctx.db
+      .query("creatorBankPayouts")
+      .withIndex("by_stripePayoutId", (q) => q.eq("stripePayoutId", args.stripePayoutId))
+      .unique();
+    const fields = {
+      amountCents: args.amountCents,
+      currency: args.currency,
+      status: args.status,
+      arrivalDate: args.arrivalDate,
+      failureMessage: args.failureMessage,
+      updatedAt: new Date().toISOString(),
+    };
+    if (existing) await ctx.db.patch(existing._id, fields);
+    else {
+      await ctx.db.insert("creatorBankPayouts", {
+        clerkId: account.clerkId,
+        stripeAccountId: args.stripeAccountId,
+        stripePayoutId: args.stripePayoutId,
+        createdAt: args.createdAt,
+        ...fields,
+      });
+    }
+  },
+});

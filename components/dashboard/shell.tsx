@@ -162,10 +162,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   );
 }
 
-/** Under Marketplace while it's open: Browse, then the user's organisations (or a way to start one). */
+/** Under Marketplace while it's open: Browse, Payouts, then the user's organisations (or a way to start one). */
 function MarketplaceSubmenu({ pathname, orgs }: { pathname: string; orgs: Array<{ handle: string; displayName: string }> }) {
   const items = [
-    { href: "/marketplace", label: "Browse", active: !pathname.startsWith("/marketplace/org/") },
+    { href: "/marketplace", label: "Browse", active: !pathname.startsWith("/marketplace/org/") && pathname !== "/marketplace/earnings" },
+    { href: "/marketplace/earnings", label: "Payouts", active: pathname === "/marketplace/earnings" },
     ...(orgs.length > 0
       ? orgs.map((org) => ({
           href: `/marketplace/org/${org.handle}`,
@@ -179,7 +180,7 @@ function MarketplaceSubmenu({ pathname, orgs }: { pathname: string; orgs: Array<
     <div className="ml-[21px] mt-1 flex flex-col gap-0.5 border-l border-gray-200 pl-3">
       {items.map((item, index) => (
         <div key={item.href}>
-          {index === 1 && orgs.length > 0 ? (
+          {index === 2 && orgs.length > 0 ? (
             <p className="px-3 pb-0.5 pt-2 text-xs font-semibold text-gray-500">Organisations</p>
           ) : null}
           <Link

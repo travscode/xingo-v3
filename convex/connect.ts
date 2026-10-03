@@ -33,6 +33,19 @@ async function requireUser(ctx: ActionCtx): Promise<Doc<"users">> {
   return user;
 }
 
+function bankPayoutFields(stripeAccountId: string, payout: Stripe.Payout) {
+  return {
+    stripeAccountId,
+    stripePayoutId: payout.id,
+    amountCents: payout.amount,
+    currency: payout.currency,
+    status: payout.status,
+    arrivalDate: payout.arrival_date ? new Date(payout.arrival_date * 1000).toISOString() : undefined,
+    failureMessage: payout.failure_message ?? undefined,
+    createdAt: new Date(payout.created * 1000).toISOString(),
+  };
+}
+
 function accountFlags(account: Stripe.Account) {
   return {
     stripeAccountId: account.id,
@@ -103,6 +116,32 @@ export const openPayoutDashboard = action({
 });
 
 /**
+ * Pulls the creator's recent bank payouts and current Stripe balance. Called when
+ * they open Payouts, so history is complete even if a webhook was missed.
+ */
+export const syncMyPayouts = action({
+  args: {},
+  handler: async (ctx): Promise<{ availableCents: number; pendingCents: number } | null> => {
+    const stripe = getStripe();
+    const user = await requireUser(ctx);
+    const existing = await ctx.runQuery(internal.connectData.getAccount, { clerkId: user.clerkId });
+    const accountId = existing?.stripeAccountId;
+    if (!accountId) return null;
+
+    const [payouts, balance] = await Promise.all([
+      stripe.payouts.list({ limit: 50 }, { stripeAccount: accountId }),
+      stripe.balance.retrieve({}, { stripeAccount: accountId }),
+    ]);
+    for (const payout of payouts.data) {
+      await ctx.runMutation(internal.connectData.recordBankPayout, bankPayoutFields(accountId, payout));
+    }
+    const sum = (rows: Stripe.Balance.Available[] | Stripe.Balance.Pending[]) =>
+      rows.filter((row) => row.currency === "aud").reduce((total, row) => total + row.amount, 0);
+    return { availableCents: sum(balance.available), pendingCents: sum(balance.pending) };
+  },
+});
+
+/**
  * Pays every creator whose available balance is over the threshold. Run by an
  * admin from Admin → Marketplace (or a monthly cron once you're comfortable).
  */
@@ -148,7 +187,10 @@ export const runPayouts = action({
   },
 });
 
-/** Connect webhook: keeps creator account status in sync (account.updated). */
+/**
+ * Connect webhook: keeps creator accounts in sync (account.updated) and records
+ * Stripe's bank payouts from their Express balance (payout.created/updated/paid/failed/canceled).
+ */
 export const handleConnectWebhook = internalAction({
   args: { payload: v.string(), signature: v.string() },
   handler: async (ctx, args): Promise<{ status: number; message: string }> => {
@@ -166,6 +208,11 @@ export const handleConnectWebhook = internalAction({
     if (event.type === "account.updated") {
       const account = event.data.object as Stripe.Account;
       await ctx.runMutation(internal.connectData.saveAccount, accountFlags(account));
+    }
+
+    if (event.type.startsWith("payout.") && event.account) {
+      const payout = event.data.object as Stripe.Payout;
+      await ctx.runMutation(internal.connectData.recordBankPayout, bankPayoutFields(event.account, payout));
     }
 
     return { status: 200, message: "ok" };

@@ -59,6 +59,7 @@ import type * as onboarding from "../onboarding.js";
 import type * as organizations from "../organizations.js";
 import type * as orgs from "../orgs.js";
 import type * as originals from "../originals.js";
+import type * as payouts from "../payouts.js";
 import type * as practice from "../practice.js";
 import type * as practiceActions from "../practiceActions.js";
 import type * as ratings from "../ratings.js";
@@ -128,6 +129,7 @@ declare const fullApi: ApiFromModules<{
   organizations: typeof organizations;
   orgs: typeof orgs;
   originals: typeof originals;
+  payouts: typeof payouts;
   practice: typeof practice;
   practiceActions: typeof practiceActions;
   ratings: typeof ratings;

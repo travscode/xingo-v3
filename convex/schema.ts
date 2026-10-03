@@ -384,6 +384,25 @@ export default defineSchema({
     .index("by_owner", ["ownerClerkId"])
     .index("by_status", ["status"]),
 
+  /**
+   * Stripe's payouts from a creator's Express balance to their bank, synced from
+   * Connect webhooks (payout.*) and `connect:syncMyPayouts`. Amounts in cents.
+   */
+  creatorBankPayouts: defineTable({
+    clerkId: v.string(),
+    stripeAccountId: v.string(),
+    stripePayoutId: v.string(),
+    amountCents: v.number(),
+    currency: v.string(),
+    status: v.string(),
+    arrivalDate: v.optional(v.string()),
+    failureMessage: v.optional(v.string()),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_stripePayoutId", ["stripePayoutId"]),
+
   /** Public creator page (/marketplace/creators/<handle>). House creators are XINGO Originals. */
   creatorProfiles: defineTable({
     handle: v.string(),
