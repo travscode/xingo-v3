@@ -165,3 +165,42 @@ export const uploadUrl = internalMutation({
   args: {},
   handler: async (ctx) => ctx.storage.generateUploadUrl(),
 });
+
+/** Everything the image script needs: brand briefs, course banner briefs and characters. */
+export const imageBriefs = internalQuery({
+  args: { handle: v.string() },
+  handler: async (ctx, args) => {
+    const creator = originals.find((item) => item.handle === args.handle);
+    if (!creator) return null;
+    const characters: Array<{ scenarioId: string; agent: "aiAgentA" | "aiAgentB"; name: string; role: string; voice: string; demeanor: string; setting: string }> = [];
+    for (const course of creator.courses) {
+      const moduleId = `${communityCourseIdPrefix(course.kind)}${course.slug}`.slice(0, 64);
+      course.scenarios.forEach((scenario, index) => {
+        const scenarioId = `${moduleId}-s${index + 1}`;
+        characters.push({ scenarioId, agent: "aiAgentA", name: scenario.character.name, role: scenario.character.role, voice: scenario.character.voice, demeanor: scenario.character.demeanor, setting: scenario.title });
+        if (course.kind === "interpreting" && scenario.client) {
+          characters.push({ scenarioId, agent: "aiAgentB", name: scenario.client.name, role: scenario.client.role, voice: scenario.client.voice, demeanor: scenario.client.demeanor, setting: scenario.title });
+        }
+      });
+    }
+    // Skip anything that already has an image (re-runs only fill gaps).
+    const profile = await ctx.db.query("creatorProfiles").withIndex("by_handle", (q) => q.eq("handle", creator.handle)).unique();
+    const listings = await ctx.db.query("courseListings").withIndex("by_creatorHandle", (q) => q.eq("creatorHandle", creator.handle)).collect();
+    const bannered = new Set(listings.filter((l) => l.bannerStorageId).map((l) => l.slug));
+    const pending = [];
+    for (const character of characters) {
+      const scenario = await ctx.db.query("scenarios").withIndex("by_public_id", (q) => q.eq("id", character.scenarioId)).unique();
+      if (scenario && !scenario[character.agent]?.avatarStorageId) pending.push(character);
+    }
+    return {
+      handle: creator.handle,
+      displayName: creator.displayName,
+      visualStyle: creator.visualStyle,
+      logoBrief: creator.logoBrief,
+      avatarBrief: creator.avatarBrief,
+      needs: { logo: !profile?.logoStorageId, avatar: !profile?.avatarStorageId, banner: !profile?.bannerStorageId },
+      courses: creator.courses.filter((c) => !bannered.has(c.slug)).map((c) => ({ slug: c.slug, title: c.title, bannerBrief: c.bannerBrief })),
+      characters: pending,
+    };
+  },
+});
