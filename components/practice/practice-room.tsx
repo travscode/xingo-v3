@@ -1494,14 +1494,14 @@ function SetupPanel({
         ) : (
           <>
             <div className="mt-2">
-              <LanguagePairPicker />
+              <LanguagePairPicker variant={hasSecondAgent ? "pair" : "single"} />
             </div>
             <p className="mt-2 text-xs text-gray-500">
               {hasSecondAgent
                 ? `${client.name} speaks ${client.language}; ${professional.name} speaks ${professional.language}. Scores are saved for this language pair.`
                 : isEnglishOnly(activePair)
-                  ? `${professional.name} speaks English. Pick a language above to practise in it instead.`
-                  : `${professional.name} speaks ${professional.language}, so you practise your ${professional.language}. Scores are saved for this language pair.`}
+                  ? `${professional.name} will speak English. Pick another language to practise in it.`
+                  : `${professional.name} will speak ${professional.language}. Your scores are saved for ${professional.language}.`}
             </p>
           </>
         )}

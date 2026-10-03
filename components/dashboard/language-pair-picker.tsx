@@ -11,14 +11,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { createLanguagePair, ENGLISH_ONLY_PAIR, flagEmoji, pairLabel, practiceLanguages, type LanguagePair } from "@/lib/languages";
+import { createLanguagePair, ENGLISH_ONLY_PAIR, flagEmoji, isEnglishOnly, pairLabel, practiceLanguages, type LanguagePair } from "@/lib/languages";
 
 /**
  * "English ⇄ <your language>". The English-speaking participant always speaks
  * English, so there is no direction to flip (decision D-010). Choosing a pair
  * saves it to the account so it applies on every device.
  */
-export function LanguagePairPicker() {
+export function LanguagePairPicker({ variant = "pair" }: { variant?: "pair" | "single" } = {}) {
+  // "single": one-on-one sessions, where only one language is spoken. Choosing Spanish
+  // still selects English ⇄ Spanish, so scores stay with that pair.
+  const single = variant === "single";
   const { activePair, setActivePair, savedPairs } = useActiveLanguagePair();
   const updatePreferences = useMutation(api.users.updateLanguagePreferences);
   const [custom, setCustom] = useState("");
@@ -42,10 +45,14 @@ export function LanguagePairPicker() {
         <button
           type="button"
           className="inline-flex h-10 items-center gap-2 rounded-lg bg-gray-100 px-3 text-sm font-semibold hover:bg-gray-200"
-          aria-label="Change practice language"
+          aria-label={single ? "Change conversation language" : "Change practice language"}
         >
-          <span className="text-gray-500">Practising</span>
-          <span>{pairLabel(activePair)}</span>
+          <span className="text-gray-500">{single ? "Language" : "Practising"}</span>
+          <span>
+            {single
+              ? `${flagEmoji(spokenLanguage(activePair))} ${spokenLanguage(activePair)}`.trim()
+              : pairLabel(activePair)}
+          </span>
           <ChevronDown className="h-4 w-4 text-gray-500" />
         </button>
       </DropdownMenuTrigger>
@@ -55,12 +62,14 @@ export function LanguagePairPicker() {
           className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-sm font-medium outline-none focus:bg-gray-100"
         >
           <span>
-            {flagEmoji("English")} English only
-            <span className="block text-xs font-normal text-gray-500">Everyone speaks English</span>
+            {flagEmoji("English")} {single ? "English" : "English only"}
+            {single ? null : <span className="block text-xs font-normal text-gray-500">Everyone speaks English</span>}
           </span>
           {activePair.key === ENGLISH_ONLY_PAIR.key ? <Check className="h-4 w-4" /> : null}
         </DropdownMenuItem>
-        <p className="px-2 pb-1 pt-2 text-xs font-semibold text-gray-500">English ⇄ your other language</p>
+        <p className="px-2 pb-1 pt-2 text-xs font-semibold text-gray-500">
+          {single ? "Other languages" : "English ⇄ your other language"}
+        </p>
         {options.map((option) => (
           <DropdownMenuItem
             key={option.key}
@@ -97,4 +106,9 @@ export function LanguagePairPicker() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+/** The one language spoken in a one-on-one session for this pair. */
+function spokenLanguage(pair: LanguagePair) {
+  return isEnglishOnly(pair) ? "English" : pair.targetLanguage;
 }
