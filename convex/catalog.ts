@@ -139,6 +139,12 @@ export const forCurrentUser = query({
           accreditationProvider: learningModule.accreditationProvider,
           scenarios: moduleScenarios,
           passedCount: moduleScenarios.filter((s) => s.stats.passed).length,
+          attemptCount: moduleScenarios.reduce((sum, s) => sum + s.stats.attempts, 0),
+          practiceType: scenarios.some(
+            (scenario) => scenario.moduleId === learningModule.id && scenario.practiceRuntime?.practiceType === "roleplay",
+          )
+            ? ("roleplay" as const)
+            : ("interpreting" as const),
         };
       }),
     );
@@ -150,6 +156,7 @@ export const forCurrentUser = query({
       null;
 
     return {
+      practiceGoal: user?.practiceGoal ?? null,
       modules: catalogModules,
       nextUp: nextUp
         ? {
