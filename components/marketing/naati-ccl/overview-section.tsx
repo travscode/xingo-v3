@@ -1,6 +1,6 @@
 import { practiceColumns, scenarioCards } from "./content";
 
-/** What the CCL module covers. */
+/** What the CCL course covers. */
 export function NaatiCclOverviewSection() {
   return (
     <section id="practice" className="scroll-mt-24">
@@ -22,7 +22,7 @@ export function NaatiCclOverviewSection() {
           ))}
         </div>
         <div className="rounded-xl border border-gray-200">
-          <h3 className="border-b border-gray-200 px-6 py-4 text-base font-bold">Dialogues in the CCL module</h3>
+          <h3 className="border-b border-gray-200 px-6 py-4 text-base font-bold">Dialogues in the CCL course</h3>
           <ul className="divide-y divide-gray-200">
             {scenarioCards.map((scenario) => (
               <li key={scenario.title} className="px-6 py-4">

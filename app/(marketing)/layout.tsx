@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { HeaderAuth } from "@/components/auth/header-auth";
 import { MarketingMobileNav } from "@/components/marketing/mobile-nav";
 import { Logo } from "@/components/ui/logo";
-import { marketingNavigation } from "@/lib/navigation";
+import { marketingNavItems } from "@/components/marketing/nav-items";
 
 const footerLinks = [
   { href: "/naati/ccl", label: "NAATI CCL practice" },
@@ -20,6 +20,7 @@ const footerLinks = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/for-interpreters", label: "For interpreters" },
   { href: "/for-organizations", label: "For teams" },
+  { href: "/marketplace", label: "Marketplace" },
   { href: "/pricing", label: "Pricing" },
 ] as const;
 
@@ -30,8 +31,8 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
         <div className="relative mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex items-center gap-8">
             <Logo />
-            <nav className="hidden items-center gap-1 md:flex">
-              {marketingNavigation.map((item) => (
+            <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
+              {marketingNavItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -56,10 +57,10 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
           <div className="max-w-sm">
             <Logo />
             <p className="mt-4 text-sm leading-6 text-gray-300">
-              Spoken role-play practice for interpreters, with instant scoring.
+              Practise for your interpreting test or speaking exam out loud, get scored, and walk in ready.
             </p>
             <p className="mt-2 text-xs leading-5 text-gray-500">
-              XINGO is independent and not affiliated with NAATI.
+              XINGO is independent and not affiliated with NAATI or any exam body.
             </p>
           </div>
           <nav className="grid grid-cols-2 gap-x-10 gap-y-3 text-sm">

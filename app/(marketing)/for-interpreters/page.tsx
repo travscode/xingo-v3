@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { practiceModules } from "@/components/marketing/catalogue";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/primitives";
+import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
 
 export const metadata: Metadata = {
   title: "For interpreters",
@@ -30,11 +30,11 @@ export default function ForInterpretersPage() {
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-4 sm:px-6">
       <MarketingIntro
         eyebrow="For interpreters"
-        title="Keep your skills sharp between real assignments."
+        title="Stay sharp between assignments. Get ready for the next credential."
         description="Whether you're preparing for a test or keeping in practice, XINGO gives you realistic conversations to interpret out loud."
       >
         <Button asChild size="lg">
-          <Link href="/sign-up">Start free</Link>
+          <Link href="/sign-up">Start practising free</Link>
         </Button>
         <Button asChild size="lg" variant="secondary">
           <Link href="/naati/ccl">NAATI CCL practice</Link>
@@ -43,7 +43,7 @@ export default function ForInterpretersPage() {
 
       <section className="grid gap-4 md:grid-cols-3">
         {reasons.map((reason) => (
-          <article key={reason.title} className="rounded-xl border border-gray-200 p-6">
+          <article key={reason.title} className="mk-lift rounded-xl border border-gray-200 p-6 hover:border-ink">
             <h2 className="text-lg font-bold tracking-[-0.02em]">{reason.title}</h2>
             <p className="mt-2 text-[15px] leading-6 text-gray-500">{reason.description}</p>
           </article>
@@ -51,22 +51,26 @@ export default function ForInterpretersPage() {
       </section>
 
       <section>
-        <p className="eyebrow">Modules</p>
+        <p className="eyebrow">Courses</p>
         <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em]">What you can practise</h2>
         <ul className="mt-8 divide-y divide-gray-200 border-y border-gray-200">
-          {practiceModules.map((module) => (
-            <li key={module.title} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+          {practiceModules.map((course) => (
+            <li key={course.title} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="font-semibold">{module.title}</div>
-                <div className="text-sm text-gray-500">{module.description}</div>
+                <div className="font-semibold">{course.title}</div>
+                <div className="text-sm text-gray-500">{course.description}</div>
               </div>
-              {module.access === "free" ? <Badge tone="success">Free</Badge> : <Badge>Pro or pack</Badge>}
+              {course.access === "free" ? <FreeBadge /> : <PremiumBadge label="Pro or pack" />}
             </li>
           ))}
         </ul>
       </section>
 
-      <CtaBand title="Start with a free module." description="Free practice minutes every month. Upgrade only if you need more." />
+      <CtaBand
+        title="Start with a free course."
+        description="Free practice minutes every month. Upgrade only if you need more."
+        label="Start practising free"
+      />
     </main>
   );
 }

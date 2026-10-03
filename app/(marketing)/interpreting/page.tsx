@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
+import { CCL_MAX_SCORE } from "@/lib/scoring";
 import { cclLanguagePages, topicPages } from "@/lib/seo-pages";
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function InterpretingHubPage() {
   const cards = [
-    { href: "/naati/ccl", title: "NAATI CCL", body: "Two-way community dialogues, scored out of 90." },
+    { href: "/naati/ccl", title: "NAATI CCL", body: `Two-way community dialogues, scored out of ${CCL_MAX_SCORE}.` },
     { href: "/naati/cpi", title: "NAATI CPI", body: "Live role-play preparation, including a phone task." },
     ...topicPages.map((page) => ({ href: `/interpreting/${page.slug}`, title: page.eyebrow, body: page.intro })),
   ];
@@ -27,7 +28,7 @@ export default function InterpretingHubPage() {
       />
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => (
-          <Link key={card.href} href={card.href} className="group flex flex-col rounded-xl border border-gray-200 p-5 hover:border-ink">
+          <Link key={card.href} href={card.href} className="mk-lift group flex flex-col rounded-xl border border-gray-200 p-5 hover:border-ink">
             <p className="font-bold">{card.title}</p>
             <p className="mt-1 line-clamp-3 flex-1 text-sm leading-6 text-gray-500">{card.body}</p>
             <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold">

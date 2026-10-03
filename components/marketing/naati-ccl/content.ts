@@ -1,7 +1,8 @@
-import { CCL_MODULE_ID } from "@/lib/scoring";
+import { CCL_MAX_SCORE, CCL_MODULE_ID, CCL_PASS_SCORE } from "@/lib/scoring";
 
 export const cclModuleId = CCL_MODULE_ID;
-export const cclModuleHref = `/modules/${cclModuleId}`;
+/** In-app course page for CCL practice (the library lives under /courses). */
+export const cclModuleHref = `/courses/${cclModuleId}`;
 export const cclSignUpHref = `/sign-up?redirect=${encodeURIComponent(cclModuleHref)}`;
 
 /** On-page sections, used by the hero's jump links. */
@@ -16,7 +17,7 @@ export const pageSections = [
 export const heroPoints = [
   "Dialogues modelled on the CCL format",
   "Spoken practice with two AI voices",
-  "Scored out of 90, pass mark 63",
+  `Scored out of ${CCL_MAX_SCORE}, pass mark ${CCL_PASS_SCORE}`,
 ] as const;
 
 export const formatFacts = [
@@ -31,9 +32,9 @@ export const formatFacts = [
       "Dialogues are split into short segments. After each segment, you interpret it into the other language.",
   },
   {
-    title: "Marked out of 90",
+    title: `Marked out of ${CCL_MAX_SCORE}`,
     description:
-      "Each dialogue is marked out of 45. You need 63 out of 90 overall to pass, with a minimum score on each dialogue.",
+      `Each dialogue is marked out of ${CCL_MAX_SCORE / 2}. You need ${CCL_PASS_SCORE} out of ${CCL_MAX_SCORE} overall to pass, with a minimum score on each dialogue.`,
   },
 ] as const;
 
@@ -87,6 +88,6 @@ export const prepTips = [
   },
   {
     title: "Watch your score trend",
-    description: "Each attempt is scored out of 90. Keep practising until you're clearing 63 consistently, not just once.",
+    description: `Each attempt is scored out of ${CCL_MAX_SCORE}. Keep practising until you're clearing ${CCL_PASS_SCORE} consistently, not just once.`,
   },
 ] as const;

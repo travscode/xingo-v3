@@ -227,3 +227,115 @@ body {
     animation: none;
   }
 }
+
+/* ---- Marketing motion ------------------------------------------------------
+ * CSS-only, decorative. Everything settles to a readable static state under
+ * prefers-reduced-motion.
+ */
+
+@keyframes mkRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mk-rise {
+  animation: mkRise 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.mk-delay-1 { animation-delay: 80ms; }
+.mk-delay-2 { animation-delay: 160ms; }
+.mk-delay-3 { animation-delay: 240ms; }
+.mk-delay-4 { animation-delay: 320ms; }
+
+/* Three-phase loop for the practice room mock (9s cycle). */
+@keyframes mkPhase1 {
+  0%, 30% { opacity: 1; }
+  34%, 96% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes mkPhase2 {
+  0%, 30% { opacity: 0; }
+  34%, 63% { opacity: 1; }
+  67%, 100% { opacity: 0; }
+}
+
+@keyframes mkPhase3 {
+  0%, 63% { opacity: 0; }
+  67%, 96% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.mk-p1 { animation: mkPhase1 9s ease-in-out infinite; }
+.mk-p2 { animation: mkPhase2 9s ease-in-out infinite; opacity: 0; }
+.mk-p3 { animation: mkPhase3 9s ease-in-out infinite; opacity: 0; }
+
+/* Voice bars inside a speaking avatar. */
+@keyframes mkBar {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+.mk-bars > span {
+  display: block;
+  width: 3px;
+  height: 100%;
+  border-radius: 9999px;
+  background: currentColor;
+  transform-origin: center;
+  animation: mkBar 900ms ease-in-out infinite;
+}
+
+.mk-bars > span:nth-child(2) { animation-delay: -150ms; }
+.mk-bars > span:nth-child(3) { animation-delay: -450ms; }
+.mk-bars > span:nth-child(4) { animation-delay: -300ms; }
+.mk-bars > span:nth-child(5) { animation-delay: -600ms; }
+
+/* Score bars that fill when the card appears. */
+@keyframes mkFill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.mk-fill {
+  transform-origin: left center;
+  animation: mkFill 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) 300ms both;
+}
+
+/* Gentle hover lift for marketing cards (no shadows). */
+.mk-lift {
+  transition: transform 200ms ease, border-color 200ms ease, background-color 200ms ease;
+}
+
+.mk-lift:hover {
+  transform: translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-rise,
+  .mk-fill,
+  .mk-bars > span {
+    animation: none;
+  }
+
+  .mk-p1,
+  .mk-p3 {
+    animation: none;
+    opacity: 0;
+  }
+
+  .mk-p2 {
+    animation: none;
+    opacity: 1;
+  }
+
+  .mk-lift:hover {
+    transform: none;
+  }
+}

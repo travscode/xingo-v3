@@ -318,7 +318,7 @@ export const topicPages: TopicPage[] = [
     skills: ["Medication names and doses", "Symptom chronology", "Warning signs and instructions", "Calm, reassuring register"],
     faqs: [
       {
-        q: "Is the medical module free?",
+        q: "Is the medical course free?",
         a: "Yes. The emergency and hospital dialogues are part of the free plan, which includes practice minutes every month.",
       },
       {
@@ -356,7 +356,7 @@ export const topicPages: TopicPage[] = [
       },
       {
         q: "Can I try an NDIS scenario for free?",
-        a: "Yes — the planning meeting is a free preview dialogue. The full module is included with Pro or any minute pack.",
+        a: "Yes — the planning meeting is a free preview dialogue. The full course is included with Pro or any minute pack.",
       },
       {
         q: "Do I need to know NDIS terms first?",
@@ -419,7 +419,7 @@ export const topicPages: TopicPage[] = [
     skills: ["First-person rendition", "Formal register", "Legal terminology", "Preserving hesitation and exact answers"],
     faqs: [
       { q: "Are these real court transcripts?", a: "No — they're realistic role-plays written for practice. Nothing is taken from real proceedings." },
-      { q: "Which module is free?", a: "Legal modules are premium. Every premium module includes a free preview dialogue so you can try the format first." },
+      { q: "Which course is free?", a: "Legal courses are premium. Every premium course includes a free preview dialogue so you can try the format first." },
       { q: "Is this legal advice?", a: "No. The content is for interpreting practice only." },
     ],
     goal: "legal",

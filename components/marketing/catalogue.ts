@@ -1,7 +1,9 @@
 /**
  * Static marketing copy describing what XINGO offers today.
- * Keep this in step with the seeded modules in convex/seedData.ts.
+ * Keep this in step with the seeded courses in convex/seedData.ts.
  */
+
+import { CCL_MAX_SCORE } from "@/lib/scoring";
 
 export const practiceModules = [
   {
@@ -26,7 +28,7 @@ export const practiceModules = [
   },
   {
     title: "NAATI CCL practice",
-    description: "Short two-way community dialogues, scored out of 90.",
+    description: `Short two-way community dialogues, scored out of ${CCL_MAX_SCORE}.`,
     access: "premium",
   },
   {

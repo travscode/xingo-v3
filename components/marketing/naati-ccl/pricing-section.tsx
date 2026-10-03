@@ -10,7 +10,7 @@ export function NaatiCclPricingSection() {
       <p className="eyebrow">Pricing</p>
       <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Minute packs for test prep</h2>
       <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
-        Pay once. Pack minutes never expire, and they unlock every module while you have them. Scoring and feedback
+        Pay once. Pack minutes never expire, and they unlock every course while you have them. Scoring and feedback
         are included. Prices in {CURRENCY_LABEL}.
       </p>
       <div className="mt-8 grid gap-4 md:grid-cols-3">

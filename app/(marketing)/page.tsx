@@ -1,37 +1,49 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { CtaBand } from "@/components/marketing/cta-band";
-import {
-  howItWorksSteps,
-  practiceModules,
-} from "@/components/marketing/catalogue";
+import { practiceModules } from "@/components/marketing/catalogue";
+import { IllustratedSteps } from "@/components/marketing/illustrated-steps";
+import { Journey } from "@/components/marketing/journey";
+import { RoomMock, ScoreMock } from "@/components/marketing/practice-mock";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
+import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
+import { examPages } from "@/lib/exam-pages";
 import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "@/lib/scoring";
 import { packList, plans } from "@/lib/plans";
-import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
 
 const cheapestPack = packList[0];
+
+const examLinks = [
+  { href: "/naati/ccl", label: "NAATI CCL" },
+  { href: "/naati/cpi", label: "NAATI CPI" },
+  ...examPages.map((page) => ({ href: `/exams/${page.slug}`, label: page.shortName })),
+  { href: "/interpreting/medical-interpreting-practice", label: "Medical interpreting" },
+  { href: "/interpreting/ndis-interpreting", label: "NDIS interpreting" },
+];
 
 export default function HomePage() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-4 sm:gap-28 sm:px-6">
       {/* Hero */}
-      <section className="grid items-center gap-10 pt-8 sm:pt-14 lg:grid-cols-[1.2fr_0.8fr]">
+      <section className="grid items-center gap-10 pt-8 sm:pt-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
         <div>
-          <p className="eyebrow">Interpreter practice</p>
-          <h1 className="mt-4 text-5xl font-bold tracking-[-0.04em] text-balance sm:text-7xl">
-            Practise interpreting out loud. Get scored in minutes.
+          <p className="eyebrow mk-rise">Interpreting tests and speaking exams</p>
+          <h1 className="mk-rise mk-delay-1 mt-4 text-[2.75rem] leading-[1.04] font-bold tracking-[-0.04em] text-balance sm:text-7xl">
+            Practise out loud. Pass your test.{" "}
+            <span className="relative whitespace-nowrap">
+              <span className="absolute inset-x-0 bottom-[0.08em] h-[0.32em] bg-accent" aria-hidden />
+              <span className="relative">Get to work.</span>
+            </span>
           </h1>
-          <p className="mt-6 max-w-xl text-lg leading-7 text-gray-500">
-            XINGO puts you between two AI speakers in a realistic conversation.
-            You interpret by voice. Then you get a score and clear feedback.
+          <p className="mk-rise mk-delay-2 mt-6 max-w-xl text-lg leading-7 text-gray-500">
+            Realistic spoken role-plays with AI voices for NAATI, OET, IELTS and more. You talk, XINGO scores you
+            against the test&apos;s criteria, and you know exactly what to fix before the day that counts.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mk-rise mk-delay-3 mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg">
               <Link href="/sign-up">
-                Start free
+                Start practising free
                 <ArrowRight size={18} />
               </Link>
             </Button>
@@ -39,61 +51,71 @@ export default function HomePage() {
               <Link href="/how-it-works">See how it works</Link>
             </Button>
           </div>
-          <p className="mt-4 text-sm text-gray-500">
-            {plans.free.monthlyMinutes} free practice minutes every month. No
-            card needed.
+          <p className="mk-rise mk-delay-4 mt-4 text-sm text-gray-500">
+            {plans.free.monthlyMinutes} free practice minutes every month. No card needed.
           </p>
         </div>
-        <div className="relative mx-auto aspect-[2/3] w-full max-w-sm overflow-hidden rounded-xl bg-gray-100">
-          <Image
-            src="/images/hero-interpreter-training.jpg"
-            alt="An interpreter practising with a headset"
-            fill
-            priority
-            sizes="(min-width: 1024px) 384px, 90vw"
-            className="object-cover"
-          />
-        </div>
+        <RoomMock className="mk-rise mk-delay-2 mx-auto w-full max-w-md" />
+      </section>
+
+      {/* Exams */}
+      <section aria-labelledby="exams-heading">
+        <h2 id="exams-heading" className="text-sm font-semibold text-gray-500">
+          Practice built around the test in front of you
+        </h2>
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {examLinks.map((link) => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3.5 py-2 text-sm font-semibold transition-colors hover:border-ink hover:bg-gray-50"
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+          <li>
+            <Link
+              href="/exams"
+              className="group inline-flex items-center gap-1 rounded-lg px-3.5 py-2 text-sm font-semibold text-gray-500 hover:text-ink"
+            >
+              All exams
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </li>
+        </ul>
       </section>
 
       {/* How it works */}
       <section>
         <p className="eyebrow">How it works</p>
-        <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
-          A real interpreting session, on demand.
-        </h2>
-        <ol className="mt-10 grid gap-4 md:grid-cols-3">
-          {howItWorksSteps.map((step, index) => (
-            <li
-              key={step.title}
-              className="rounded-xl border border-gray-200 p-6"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink text-sm font-bold text-paper">
-                {index + 1}
-              </span>
-              <h3 className="mt-5 text-lg font-bold tracking-[-0.02em]">
-                {step.title}
-              </h3>
-              <p className="mt-2 text-[15px] leading-6 text-gray-500">
-                {step.description}
-              </p>
-            </li>
-          ))}
-        </ol>
+        <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <h2 className="max-w-2xl text-3xl font-bold tracking-[-0.03em] text-balance sm:text-4xl">
+            A real interpreting session, whenever you want one.
+          </h2>
+          <Link
+            href="/how-it-works"
+            className="group inline-flex shrink-0 items-center gap-1 text-sm font-semibold"
+          >
+            More about a session
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+        <IllustratedSteps className="mt-10" />
       </section>
 
+      <Journey />
+
       {/* NAATI CCL callout */}
-      <section className="grid overflow-hidden rounded-xl bg-gray-50 lg:grid-cols-2">
-        <div className="p-6 sm:p-10">
+      <section className="grid items-center gap-8 rounded-2xl bg-gray-50 p-6 sm:p-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
+        <div>
           <Badge tone="accent">NAATI CCL</Badge>
-          <h2 className="mt-4 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
-            Preparing for the CCL test?
+          <h2 className="mt-4 text-3xl font-bold tracking-[-0.03em] text-balance sm:text-4xl">
+            Sitting the CCL? Know your score before test day.
           </h2>
           <p className="mt-4 max-w-md text-[15px] leading-6 text-gray-500">
-            Practise short community dialogues in the CCL format, in your
-            language pair. Every attempt is scored out of {CCL_MAX_SCORE}, with{" "}
-            {CCL_PASS_SCORE} as the pass mark, so you can see where you stand
-            before test day.
+            Practise short community dialogues in the CCL format, in your language pair. Every attempt is scored out
+            of {CCL_MAX_SCORE}, with {CCL_PASS_SCORE} as the pass mark, so you can see where you stand.
           </p>
           <Button asChild className="mt-8">
             <Link href="/naati/ccl">
@@ -101,43 +123,33 @@ export default function HomePage() {
               <ArrowRight size={16} />
             </Link>
           </Button>
-          <p className="mt-6 text-xs text-gray-500">
-            XINGO is independent and not affiliated with NAATI.
-          </p>
+          <p className="mt-6 text-xs text-gray-500">XINGO is independent and not affiliated with NAATI.</p>
         </div>
-        <div className="relative min-h-64">
-          <Image
-            src="/images/doctor3.webp"
-            alt="A practice session in progress"
-            fill
-            sizes="(min-width: 1024px) 50vw, 100vw"
-            className="object-cover"
-          />
-        </div>
+        <ScoreMock scale="ccl" className="mx-auto w-full max-w-sm" />
       </section>
 
-      {/* Modules */}
+      {/* Courses */}
       <section>
-        <p className="eyebrow">Modules</p>
+        <p className="eyebrow">Courses</p>
         <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="max-w-2xl text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
-            Practise for the settings you work in.
+          <h2 className="max-w-2xl text-3xl font-bold tracking-[-0.03em] text-balance sm:text-4xl">
+            Practise for the settings you&apos;ll work in.
           </h2>
           <p className="max-w-sm text-sm text-gray-500">
-            Free modules are open to everyone. Every premium module includes one
-            free preview dialogue.
+            Free courses are open to everyone. Every premium course includes one free preview dialogue.
           </p>
         </div>
-        <ul className="mt-10 grid gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-2 lg:grid-cols-3">
-          {practiceModules.map((module) => (
-            <li key={module.title} className="bg-paper p-6">
+        <ul className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {practiceModules.map((course) => (
+            <li
+              key={course.title}
+              className="mk-lift rounded-xl border border-gray-200 bg-paper p-6 hover:border-ink"
+            >
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-base font-bold">{module.title}</h3>
-                {module.access === "free" ? <FreeBadge /> : <PremiumBadge />}
+                <h3 className="text-base font-bold">{course.title}</h3>
+                {course.access === "free" ? <FreeBadge /> : <PremiumBadge />}
               </div>
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                {module.description}
-              </p>
+              <p className="mt-2 text-sm leading-6 text-gray-500">{course.description}</p>
             </li>
           ))}
         </ul>
@@ -151,8 +163,7 @@ export default function HomePage() {
             Pay for practice time. Nothing else.
           </h2>
           <p className="mt-4 max-w-md text-[15px] leading-6 text-gray-500">
-            You pay for minutes spent in a live session. Scoring and feedback
-            are included.
+            You pay for minutes spent in a live session. Scoring and feedback are included.
           </p>
           <Button asChild variant="outline" className="mt-8">
             <Link href="/pricing">See full pricing</Link>
@@ -170,22 +181,18 @@ export default function HomePage() {
             note={`${plans.professional.monthlyMinutes} min / month`}
             highlight
           />
-          <PriceTile
-            label="Minute packs"
-            price={`from ${cheapestPack.priceLabel}`}
-            note="One-off. Never expire."
-          />
+          <PriceTile label="Minute packs" price={`from ${cheapestPack.priceLabel}`} note="One-off. Never expire." />
         </div>
       </section>
 
       <CtaBand
-        title="Start with a free session."
-        description="Create an account, pick a module and start talking."
+        title="Your next practice session starts here."
+        description="Create an account, pick a course and start talking."
+        label="Start practising free"
         secondary={
           <ul className="flex flex-col gap-1 text-sm text-gray-300 sm:ml-4">
             <li className="flex items-center gap-2">
-              <Check size={14} /> {plans.free.monthlyMinutes} free minutes every
-              month
+              <Check size={14} /> {plans.free.monthlyMinutes} free minutes every month
             </li>
             <li className="flex items-center gap-2">
               <Check size={14} /> No card needed
@@ -209,30 +216,10 @@ function PriceTile({
   highlight?: boolean;
 }) {
   return (
-    <div
-      className={
-        highlight
-          ? "rounded-xl bg-ink p-5 text-paper"
-          : "rounded-xl border border-gray-200 p-5"
-      }
-    >
-      <div
-        className={
-          highlight ? "text-sm text-gray-300" : "text-sm text-gray-500"
-        }
-      >
-        {label}
-      </div>
+    <div className={highlight ? "rounded-xl bg-ink p-5 text-paper" : "rounded-xl border border-gray-200 p-5"}>
+      <div className={highlight ? "text-sm text-gray-300" : "text-sm text-gray-500"}>{label}</div>
       <div className="mt-2 text-2xl font-bold tracking-[-0.03em]">{price}</div>
-      <div
-        className={
-          highlight
-            ? "mt-1 text-xs text-gray-300"
-            : "mt-1 text-xs text-gray-500"
-        }
-      >
-        {note}
-      </div>
+      <div className={highlight ? "mt-1 text-xs text-gray-300" : "mt-1 text-xs text-gray-500"}>{note}</div>
     </div>
   );
 }

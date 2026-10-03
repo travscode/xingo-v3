@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { MarketingIntro } from "@/components/marketing/cta-band";
 import { SALES_EMAIL } from "@/components/marketing/catalogue";
 import { Button } from "@/components/ui/button";
+import { CCL_MAX_SCORE } from "@/lib/scoring";
 
 export const metadata: Metadata = {
   title: "For teams",
@@ -15,7 +16,7 @@ const useCases = [
   },
   {
     title: "NAATI test prep courses",
-    description: "Add CCL-style dialogue practice, scored out of 90, alongside your own teaching.",
+    description: `Add CCL-style dialogue practice, scored out of ${CCL_MAX_SCORE}, alongside your own teaching.`,
   },
   {
     title: "Language service providers",
@@ -30,7 +31,7 @@ export default function ForOrganizationsPage() {
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-4 sm:px-6">
       <MarketingIntro
         eyebrow="For teams"
-        title="Practice access for your whole cohort."
+        title="More speaking practice for your whole cohort."
         description="We work directly with training providers and interpreting teams to set up access. Tell us about your group and we'll work out what fits."
       >
         <Button asChild size="lg">
@@ -40,7 +41,7 @@ export default function ForOrganizationsPage() {
 
       <section className="grid gap-4 md:grid-cols-3">
         {useCases.map((item) => (
-          <article key={item.title} className="rounded-xl border border-gray-200 p-6">
+          <article key={item.title} className="mk-lift rounded-xl border border-gray-200 p-6 hover:border-ink">
             <h2 className="text-lg font-bold tracking-[-0.02em]">{item.title}</h2>
             <p className="mt-2 text-[15px] leading-6 text-gray-500">{item.description}</p>
           </article>

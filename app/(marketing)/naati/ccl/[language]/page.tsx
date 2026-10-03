@@ -8,7 +8,7 @@ import { HowSteps } from "@/components/marketing/seo/how-steps";
 import { ScenarioList } from "@/components/marketing/seo/scenario-list";
 import { Button } from "@/components/ui/button";
 import { packList, plans } from "@/lib/plans";
-import { CCL_PASS_SCORE } from "@/lib/scoring";
+import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "@/lib/scoring";
 import { cclLanguagePages, flagFor, getCclLanguagePage, signUpHref } from "@/lib/seo-pages";
 
 export function generateStaticParams() {
@@ -23,11 +23,11 @@ export async function generateMetadata({ params }: { params: Promise<{ language:
 
   return {
     title: `NAATI CCL ${page.name} Practice — Spoken Mock Dialogues`,
-    description: `Practise NAATI CCL ${page.name} dialogues out loud with AI speakers. English ⇄ ${page.name}, scored out of 90 with feedback on accuracy, language quality and delivery. Try a dialogue free.`,
+    description: `Practise NAATI CCL ${page.name} dialogues out loud with AI speakers. English ⇄ ${page.name}, scored out of ${CCL_MAX_SCORE} with feedback on accuracy, language quality and delivery. Try a dialogue free.`,
     alternates: { canonical: `/naati/ccl/${page.slug}` },
     openGraph: {
       title: `NAATI CCL ${page.name} practice`,
-      description: `Spoken English ⇄ ${page.name} CCL-style dialogues, scored out of 90.`,
+      description: `Spoken English ⇄ ${page.name} CCL-style dialogues, scored out of ${CCL_MAX_SCORE}.`,
       url: `/naati/ccl/${page.slug}`,
     },
   };
@@ -60,7 +60,7 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
             NAATI CCL {page.name} practice, <span className="whitespace-nowrap">out loud.</span>
           </>
         }
-        description={`Interpret realistic English ⇄ ${page.name} (${page.nativeName}) dialogues between two AI speakers, then get a score out of 90 and specific feedback — the way you'll be marked on test day.`}
+        description={`Interpret realistic English ⇄ ${page.name} (${page.nativeName}) dialogues between two AI speakers, then get a score out of ${CCL_MAX_SCORE} and specific feedback — the way you'll be marked on test day.`}
       >
         <Button asChild size="lg">
           <Link href={href}>
@@ -75,7 +75,7 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
       <section className="grid gap-4 sm:grid-cols-3">
         {[
           ["Two dialogues", "Each test has two dialogues between an English speaker and a speaker of your language, in community settings."],
-          ["Marked out of 90", `Each dialogue is marked out of 45. The overall pass mark is ${CCL_PASS_SCORE}, with a minimum on each dialogue.`],
+          [`Marked out of ${CCL_MAX_SCORE}`, `Each dialogue is marked out of ${CCL_MAX_SCORE / 2}. The overall pass mark is ${CCL_PASS_SCORE}, with a minimum on each dialogue.`],
           ["Short segments", "You interpret each short segment as soon as it ends, in both directions."],
         ].map(([title, body]) => (
           <div key={title} className="rounded-xl border border-gray-200 p-5">
@@ -111,7 +111,7 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
       <section>
         <h2 className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">Pricing</h2>
         <p className="mt-2 text-gray-500">
-          Start with {plans.free.monthlyMinutes} free minutes. Packs never expire and unlock every module.
+          Start with {plans.free.monthlyMinutes} free minutes. Packs never expire and unlock every course.
         </p>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           {packList.map((pack) => (
@@ -136,7 +136,7 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
           },
           {
             q: "How is my practice scored?",
-            a: `Each assessed session is scored out of 90 with a pass mark of ${CCL_PASS_SCORE}, plus feedback on accuracy, terminology, fluency, turn management and professionalism.`,
+            a: `Each assessed session is scored out of ${CCL_MAX_SCORE} with a pass mark of ${CCL_PASS_SCORE}, plus feedback on accuracy, terminology, fluency, turn management and professionalism.`,
           },
           {
             q: "Do I need a microphone?",

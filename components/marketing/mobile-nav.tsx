@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { marketingNavigation } from "@/lib/navigation";
+import { marketingNavItems } from "@/components/marketing/nav-items";
 
 /** Hamburger disclosure for the marketing header below the md breakpoint. */
 export function MarketingMobileNav() {
@@ -14,7 +14,7 @@ export function MarketingMobileNav() {
   const close = () => setOpen(false);
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <button
         type="button"
         aria-expanded={open}
@@ -31,8 +31,8 @@ export function MarketingMobileNav() {
           id="marketing-mobile-menu"
           className="absolute inset-x-0 top-full border-b border-gray-200 bg-paper px-4 pb-6 pt-2"
         >
-          <nav className="flex flex-col">
-            {marketingNavigation.map((item) => (
+          <nav aria-label="Main" className="flex flex-col">
+            {marketingNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
