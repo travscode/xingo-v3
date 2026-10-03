@@ -3,6 +3,7 @@ import { internalMutation, internalQuery } from "./_generated/server";
 import { buildScenario } from "./marketplace";
 import { houseOwnerId } from "./model/courses";
 import { originals } from "./content/originals/data";
+import { droppedSlugs, ugcCreators } from "./content/originals/ugc";
 import { communityCourseIdPrefix } from "../lib/marketplace";
 import { scenarioTimeLimitMinutes } from "../lib/plans";
 
@@ -201,6 +202,125 @@ export const imageBriefs = internalQuery({
       needs: { logo: !profile?.logoStorageId, avatar: !profile?.avatarStorageId, banner: !profile?.bannerStorageId },
       courses: creator.courses.filter((c) => !bannered.has(c.slug)).map((c) => ({ slug: c.slug, title: c.title, bannerBrief: c.bannerBrief })),
       characters: pending,
+    };
+  },
+});
+
+// ---- Reshape into natural, account-style creators (convex/content/originals/ugc.ts) ----
+
+export const ugcHandles = internalQuery({
+  args: {},
+  handler: async () => ugcCreators.map((creator) => creator.handle),
+});
+
+/** Creates/updates one account-style creator and moves its courses onto it (trimming scenarios). */
+export const applyUgcCreator = internalMutation({
+  args: { handle: v.string() },
+  handler: async (ctx, args) => {
+    const creator = ugcCreators.find((item) => item.handle === args.handle);
+    if (!creator) throw new Error(`Unknown creator ${args.handle}`);
+    const owner = houseOwnerId(creator.handle);
+    const now = new Date().toISOString();
+
+    const existing = await ctx.db.query("creatorProfiles").withIndex("by_handle", (q) => q.eq("handle", creator.handle)).unique();
+    const fields = {
+      displayName: creator.displayName,
+      tagline: creator.tagline,
+      bio: creator.bio,
+      location: creator.location,
+      accent: creator.accent,
+    };
+    if (existing) await ctx.db.patch(existing._id, fields);
+    else await ctx.db.insert("creatorProfiles", { handle: creator.handle, ...fields, isHouse: true, ownerClerkId: owner, createdAt: now });
+
+    let moved = 0;
+    let trimmed = 0;
+    for (const item of creator.courses) {
+      const listing = await ctx.db.query("courseListings").withIndex("by_slug", (q) => q.eq("slug", item.slug)).unique();
+      if (!listing) continue;
+      await ctx.db.patch(listing._id, {
+        creatorHandle: creator.handle,
+        creatorName: creator.displayName,
+        ownerClerkId: owner,
+        ...(item.title ? { title: item.title } : {}),
+        ...(item.tagline ? { tagline: item.tagline } : {}),
+        // Illustrated studio images are replaced by photo-style ones.
+        bannerStorageId: undefined,
+        logoStorageId: undefined,
+        updatedAt: now,
+      });
+      const course = await ctx.db.query("modules").withIndex("by_public_id", (q) => q.eq("id", listing.moduleId)).unique();
+      if (course) await ctx.db.patch(course._id, { ownerClerkId: owner, ...(item.title ? { title: item.title } : {}) });
+      const scenarios = await ctx.db.query("scenarios").withIndex("by_moduleId", (q) => q.eq("moduleId", listing.moduleId)).collect();
+      for (const scenario of scenarios.sort((a, b) => a.id.localeCompare(b.id)).slice(item.keepScenarios)) {
+        await ctx.db.delete(scenario._id);
+        trimmed += 1;
+      }
+      moved += 1;
+    }
+    return { handle: creator.handle, moved, trimmed };
+  },
+});
+
+/** Deletes dropped courses and the old studio profiles that no longer own anything. */
+export const applyUgcDrops = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    let deleted = 0;
+    for (const slug of droppedSlugs) {
+      const listing = await ctx.db.query("courseListings").withIndex("by_slug", (q) => q.eq("slug", slug)).unique();
+      if (!listing) continue;
+      for (const s of await ctx.db.query("scenarios").withIndex("by_moduleId", (q) => q.eq("moduleId", listing.moduleId)).collect()) await ctx.db.delete(s._id);
+      for (const i of await ctx.db.query("libraryItems").withIndex("by_moduleId", (q) => q.eq("moduleId", listing.moduleId)).collect()) await ctx.db.delete(i._id);
+      for (const r of await ctx.db.query("courseRatings").withIndex("by_moduleId", (q) => q.eq("moduleId", listing.moduleId)).collect()) await ctx.db.delete(r._id);
+      const course = await ctx.db.query("modules").withIndex("by_public_id", (q) => q.eq("id", listing.moduleId)).unique();
+      if (course) await ctx.db.delete(course._id);
+      await ctx.db.delete(listing._id);
+      deleted += 1;
+    }
+    const keep = new Set(ugcCreators.map((creator) => creator.handle));
+    let profilesRemoved = 0;
+    for (const profile of await ctx.db.query("creatorProfiles").collect()) {
+      if (!profile.isHouse || keep.has(profile.handle)) continue;
+      const owns = await ctx.db.query("courseListings").withIndex("by_creatorHandle", (q) => q.eq("creatorHandle", profile.handle)).first();
+      if (!owns) {
+        await ctx.db.delete(profile._id);
+        profilesRemoved += 1;
+      }
+    }
+    return { deleted, profilesRemoved };
+  },
+});
+
+/** Briefs for the photo-style images still missing for an account-style creator. */
+export const ugcImageBriefs = internalQuery({
+  args: { handle: v.string() },
+  handler: async (ctx, args) => {
+    const creator = ugcCreators.find((item) => item.handle === args.handle);
+    if (!creator) return null;
+    const profile = await ctx.db.query("creatorProfiles").withIndex("by_handle", (q) => q.eq("handle", creator.handle)).unique();
+    const courses = [];
+    const characters = [];
+    for (const item of creator.courses) {
+      const listing = await ctx.db.query("courseListings").withIndex("by_slug", (q) => q.eq("slug", item.slug)).unique();
+      if (!listing) continue;
+      if (!listing.bannerStorageId) courses.push({ slug: item.slug, bannerBrief: item.bannerBrief });
+      const scenarios = await ctx.db.query("scenarios").withIndex("by_moduleId", (q) => q.eq("moduleId", listing.moduleId)).collect();
+      for (const scenario of scenarios) {
+        for (const agent of ["aiAgentA", "aiAgentB"] as const) {
+          const person = scenario[agent];
+          if (person && !person.avatarStorageId) {
+            characters.push({ scenarioId: scenario.id, agent, name: person.name ?? person.role, role: person.role, voice: person.voice, demeanor: person.demeanor ?? "", setting: scenario.title });
+          }
+        }
+      }
+    }
+    return {
+      handle: creator.handle,
+      avatarBrief: profile?.avatarStorageId ? null : creator.avatarBrief,
+      bannerBrief: profile?.bannerStorageId || !creator.bannerBrief ? null : creator.bannerBrief,
+      courses,
+      characters,
     };
   },
 });
