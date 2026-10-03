@@ -138,3 +138,54 @@ describe("marketplace", () => {
     await expect(learner.query(api.marketplace.adminReports, {})).rejects.toThrow();
   });
 });
+
+describe("ratings and originals", () => {
+  test("only learners who practised can rate, once each; editing adjusts the average", async () => {
+    const t = setup();
+    const { moduleId } = await createPublished(t);
+    const scenarioId = await scenarioIdFor(t, moduleId);
+    const learner = await seedUser(t, "rater");
+
+    await expect(learner.mutation(api.ratings.rateCourse, { moduleId, stars: 5 })).rejects.toThrow("RATING_NEEDS_PRACTICE");
+
+    const { attemptId } = await learner.mutation(api.practice.startAttempt, { scenarioId, ...pair });
+    await t.mutation(internal.practice.closeForGrading, { attemptId, clerkId: "rater", transcriptEntries: [] });
+
+    await learner.mutation(api.ratings.rateCourse, { moduleId, stars: 5, comment: "Great practice" });
+    await learner.mutation(api.ratings.rateCourse, { moduleId, stars: 3 });
+
+    const summary = await learner.query(api.ratings.forCourse, { moduleId });
+    expect(summary).toMatchObject({ average: 3, count: 1 });
+  });
+
+  test("XINGO Originals courses never record creator earnings", async () => {
+    const t = setup();
+    const moduleId = "rp-house-course";
+    await t.run(async (ctx) => {
+      await ctx.db.insert("modules", {
+        id: moduleId, title: "House", description: "", industryCategory: "community", durationMinutes: 10,
+        difficultyLevel: "beginner", learningObjectives: [], isFree: true, isAccredited: false, badgeIcon: "",
+        createdAt: "2026-10-01T00:00:00.000Z", source: "community", ownerClerkId: "house:studio",
+      });
+      await ctx.db.insert("courseListings", {
+        moduleId, ownerClerkId: "house:studio", status: "published", slug: "house-course", kind: "roleplay",
+        title: "House", tagline: "t", description: "", keywords: [], whatYouGet: [], creatorName: "Studio",
+        certifications: [], createdAt: "2026-10-01T00:00:00.000Z", updatedAt: "2026-10-01T00:00:00.000Z", viewCount: 0, addCount: 0,
+      });
+      await ctx.db.insert("scenarios", {
+        id: "house-s1", moduleId, title: "S", description: "", agentCount: 1,
+        aiAgentA: { name: "A", role: "Barista", voice: "marin", goal: "g", language: "English" },
+        practiceRuntime: { interpreterRole: "Learner", sourceLanguage: "English", targetLanguage: "English", openingSpeaker: "agent_a", briefing: "", assessmentFocus: [], practiceType: "roleplay" },
+        expectedSkills: [], difficultyLevel: "beginner",
+      });
+    });
+    const learner = await seedUser(t, "paying_learner");
+    await t.mutation(internal.billingData.grantPack, { clerkId: "paying_learner", packId: "starter", stripeCheckoutSessionId: "cs_house" });
+    const { attemptId } = await learner.mutation(api.practice.startAttempt, { scenarioId: "house-s1", ...pair });
+    await t.mutation(internal.practice.reserveRealtimeKey, { attemptId, clerkId: "paying_learner" });
+    vi.advanceTimersByTime(14 * 60_000);
+    await t.mutation(internal.practice.closeForGrading, { attemptId, clerkId: "paying_learner", transcriptEntries: [] });
+
+    expect(await t.run((ctx) => ctx.db.query("creatorEarnings").collect())).toHaveLength(0);
+  });
+});

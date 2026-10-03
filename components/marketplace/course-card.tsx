@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BadgeCheck, Check, Languages, MessagesSquare, Plus } from "lucide-react";
+import { BadgeCheck, Check, Flame, Languages, MessagesSquare, Plus, Sparkles, Star, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +20,28 @@ export type CourseCardData = {
   inLibrary?: boolean;
   isOwner?: boolean;
   status?: "draft" | "published" | "removed";
+  creatorHandle?: string | null;
+  isOriginal?: boolean;
+  rating?: number | null;
+  ratingCount?: number;
+  practiceCount?: number;
+  passCount?: number;
+  badges?: Array<"new" | "popular" | "top_rated">;
 };
+
+const badgeLabel = { new: "New", popular: "Popular", top_rated: "Top rated" } as const;
+
+/** Compact star rating: "4.7 ★ (23)". Hidden until a course has ratings. */
+export function RatingInline({ rating, count, className }: { rating?: number | null; count?: number; className?: string }) {
+  if (!rating || !count) return null;
+  return (
+    <span className={cn("inline-flex items-center gap-1 text-xs font-semibold", className)} aria-label={`Rated ${rating} out of 5 from ${count} ratings`}>
+      <Star className="h-3.5 w-3.5 fill-current text-amber-500" aria-hidden />
+      {rating.toFixed(1)}
+      <span className="font-normal text-gray-500">({count})</span>
+    </span>
+  );
+}
 
 /** Banner image, or a quiet pattern so cards without one still look intentional. */
 export function CourseBanner({ url, title, className }: { url: string | null; title: string; className?: string }) {
@@ -68,6 +89,17 @@ export function CourseCard({
             {course.kind === "roleplay" ? <MessagesSquare className="h-3 w-3" aria-hidden /> : <Languages className="h-3 w-3" aria-hidden />}
             {course.kind === "roleplay" ? "One-on-one" : "Interpreting"}
           </Badge>
+          {course.isOriginal ? (
+            <Badge tone="dark">
+              <Sparkles className="h-3 w-3" aria-hidden /> XINGO Original
+            </Badge>
+          ) : null}
+          {(course.badges ?? []).map((badge) => (
+            <Badge key={badge} tone={badge === "top_rated" ? "accent" : "neutral"}>
+              {badge === "popular" ? <Flame className="h-3 w-3" aria-hidden /> : badge === "top_rated" ? <Trophy className="h-3 w-3" aria-hidden /> : null}
+              {badgeLabel[badge]}
+            </Badge>
+          ))}
           {course.certifications[0] ? (
             <Badge tone="accent">
               <BadgeCheck className="h-3 w-3" aria-hidden /> {course.certifications[0].name}
@@ -83,9 +115,23 @@ export function CourseCard({
           {course.title}
         </Link>
         <p className="mt-1 line-clamp-2 text-sm text-gray-500">{course.tagline}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <RatingInline rating={course.rating} count={course.ratingCount} />
+          {course.practiceCount ? (
+            <span className="text-xs text-gray-500">{course.practiceCount.toLocaleString("en-AU")} sessions</span>
+          ) : null}
+        </div>
         <div className="mt-auto flex items-center justify-between gap-2 pt-4">
           <p className="min-w-0 truncate text-xs text-gray-500">
-            By <span className="font-semibold text-ink">{course.creatorName}</span> · {course.scenarioCount}{" "}
+            By{" "}
+            {course.creatorHandle ? (
+              <Link href={`/marketplace/creators/${course.creatorHandle}`} className="font-semibold text-ink hover:underline">
+                {course.creatorName}
+              </Link>
+            ) : (
+              <span className="font-semibold text-ink">{course.creatorName}</span>
+            )}{" "}
+            · {course.scenarioCount}{" "}
             {course.scenarioCount === 1 ? "scenario" : "scenarios"}
           </p>
           {onAdd && !course.isOwner ? (

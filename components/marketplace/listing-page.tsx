@@ -15,6 +15,7 @@ import {
   Pencil,
   Play,
   Plus,
+  Sparkles,
   Users,
 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
@@ -22,7 +23,8 @@ import { friendlyError } from "@/lib/errors";
 import { reportReasons, type ReportReason } from "@/lib/marketplace";
 import { Badge, Card, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
-import { CourseBanner } from "@/components/marketplace/course-card";
+import { CourseBanner, RatingInline } from "@/components/marketplace/course-card";
+import { CourseRatings } from "@/components/marketplace/course-ratings";
 
 const difficultyLabel = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" } as const;
 
@@ -212,8 +214,23 @@ export function CourseListingPage({ slug }: { slug: string }) {
             </div>
             <h1 className="mt-3 text-3xl font-bold tracking-[-0.035em] sm:text-4xl">{listing.title}</h1>
             {listing.tagline ? <p className="mt-2 max-w-2xl text-lg text-gray-500">{listing.tagline}</p> : null}
-            <p className="mt-3 text-sm text-gray-500">
-              By <span className="font-semibold text-ink">{listing.creatorName}</span>
+            <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
+              <span>
+                By{" "}
+                {listing.creatorHandle ? (
+                  <Link href={`/marketplace/creators/${listing.creatorHandle}`} className="font-semibold text-ink hover:underline">
+                    {listing.creatorName}
+                  </Link>
+                ) : (
+                  <span className="font-semibold text-ink">{listing.creatorName}</span>
+                )}
+              </span>
+              {listing.isOriginal ? (
+                <Badge tone="dark">
+                  <Sparkles className="h-3 w-3" aria-hidden /> XINGO Original
+                </Badge>
+              ) : null}
+              <RatingInline rating={listing.rating} count={listing.ratingCount} className="text-ink" />
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {primary}
@@ -297,6 +314,8 @@ export function CourseListingPage({ slug }: { slug: string }) {
               ))}
             </ol>
           </section>
+
+          <CourseRatings moduleId={listing.moduleId} />
         </div>
 
         <aside className="space-y-4">

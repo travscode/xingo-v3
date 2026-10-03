@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { Badge, EmptyState, PageHeader, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/marketplace/course-card";
+import { CreatorProfileEditor } from "@/components/marketplace/creator-profile-editor";
 
 type Tab = "discover" | "added" | "yours";
 type KindFilter = "all" | "roleplay" | "interpreting";
@@ -46,10 +47,52 @@ function CreatorBanner() {
   );
 }
 
+/** Row of creator studios (avatars), linking to their pages. */
+function FeaturedCreators() {
+  const creators = useQuery(api.creators.featured, {});
+  if (!creators || creators.length === 0) return null;
+
+  return (
+    <section aria-labelledby="creators-heading">
+      <h2 id="creators-heading" className="text-sm font-semibold text-gray-500">
+        Creators
+      </h2>
+      <ul className="-mx-1 mt-3 flex gap-3 overflow-x-auto px-1 pb-2">
+        {creators.map((creator) => (
+          <li key={creator.handle} className="shrink-0">
+            <Link
+              href={`/marketplace/creators/${creator.handle}`}
+              className="group flex w-28 flex-col items-center gap-2 rounded-2xl p-2 text-center hover:bg-gray-50"
+            >
+              <span
+                className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full ring-2 ring-offset-2 transition-transform group-hover:scale-105"
+                style={{ backgroundColor: creator.accent, ["--tw-ring-color" as string]: creator.accent }}
+              >
+                {creator.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={creator.avatarUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-lg font-bold text-paper">{creator.displayName.slice(0, 1)}</span>
+                )}
+              </span>
+              <span className="line-clamp-2 text-xs font-semibold leading-tight">{creator.displayName}</span>
+              <span className="text-[11px] text-gray-500">
+                {creator.courses} {creator.courses === 1 ? "course" : "courses"}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function Discover({ signedIn }: { signedIn: boolean }) {
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState<KindFilter>("all");
-  const courses = useQuery(api.marketplace.browse, { search: search.trim() || undefined, kind: kind === "all" ? undefined : kind });
+  const [sort, setSort] = useState<"popular" | "top" | "new">("popular");
+  const [visible, setVisible] = useState(12);
+  const courses = useQuery(api.marketplace.browse, { search: search.trim() || undefined, kind: kind === "all" ? undefined : kind, sort });
   const add = useMutation(api.marketplace.addToLibrary);
   const router = useRouter();
   const [adding, setAdding] = useState<string | null>(null);
@@ -74,6 +117,7 @@ function Discover({ signedIn }: { signedIn: boolean }) {
   return (
     <div className="space-y-6">
       <CreatorBanner />
+      <FeaturedCreators />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <label className="relative flex-1">
           <span className="sr-only">Search the marketplace</span>
@@ -108,6 +152,29 @@ function Discover({ signedIn }: { signedIn: boolean }) {
           ))}
         </div>
       </div>
+      <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Sort courses">
+        <span className="mr-1 text-sm text-gray-500">Sort:</span>
+        {(
+          [
+            ["popular", "Popular"],
+            ["top", "Top rated"],
+            ["new", "New"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={sort === value}
+            onClick={() => {
+              setSort(value);
+              setVisible(12);
+            }}
+            className={cn("rounded-full px-3 py-1 text-sm font-semibold", sort === value ? "bg-ink text-paper" : "text-gray-500 hover:bg-gray-100 hover:text-ink")}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       {error ? <p className="text-sm text-record">{error}</p> : null}
       {courses === undefined ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -130,16 +197,25 @@ function Discover({ signedIn }: { signedIn: boolean }) {
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {courses.map((course) => (
-            <CourseCard
-              key={course.moduleId}
-              course={course}
-              adding={adding === course.moduleId}
-              onAdd={() => void addCourse(course.moduleId, course.slug)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {courses.slice(0, visible).map((course) => (
+              <CourseCard
+                key={course.moduleId}
+                course={course}
+                adding={adding === course.moduleId}
+                onAdd={() => void addCourse(course.moduleId, course.slug)}
+              />
+            ))}
+          </div>
+          {courses.length > visible ? (
+            <div className="flex justify-center">
+              <Button variant="secondary" onClick={() => setVisible((value) => value + 12)}>
+                Show more ({courses.length - visible} more)
+              </Button>
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   );
@@ -217,6 +293,7 @@ function Yours() {
           </div>
         ))}
       </div>
+      <CreatorProfileEditor />
       <div className="flex flex-wrap gap-2">
         <Button asChild variant="outline" size="sm">
           <Link href="/marketplace/earnings">
