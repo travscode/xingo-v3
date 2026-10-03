@@ -18,6 +18,15 @@ export const people = {
   candidate: "/images/people/candidate.webp",
   sofia: "/images/people/sofia.webp",
   linh: "/images/people/linh.webp",
+  // Fictional staff for the /staff-training readiness example.
+  priya: "/images/people/priya.webp",
+  tom: "/images/people/tom.webp",
+  aisha: "/images/people/aisha.webp",
+  daniel: "/images/people/daniel.webp",
+  mai: "/images/people/mai.webp",
+  lucas: "/images/people/lucas.webp",
+  hana: "/images/people/hana.webp",
+  mateo: "/images/people/mateo.webp",
 } as const;
 
 export type PersonKey = keyof typeof people;
@@ -42,6 +51,30 @@ export const scenes = {
   legal: {
     src: "/images/scenes/legal-meeting.webp",
     alt: "An interpreter speaks with a client in a meeting with a lawyer.",
+  },
+  retail: {
+    src: "/images/scenes/retail-service.webp",
+    alt: "A retail team member in an apron helps a customer choose a bowl in a homewares store.",
+  },
+  eventVolunteer: {
+    src: "/images/scenes/event-volunteer.webp",
+    alt: "A volunteer in a high-visibility vest points the way for visitors with backpacks in a stadium concourse.",
+  },
+  contactCentre: {
+    src: "/images/scenes/contact-centre.webp",
+    alt: "A contact-centre agent wearing a headset talks with a caller at his desk.",
+  },
+  healthReception: {
+    src: "/images/scenes/health-reception.webp",
+    alt: "A hospital receptionist checks in an older patient and his daughter at the front desk.",
+  },
+  managerReview: {
+    src: "/images/scenes/manager-review.webp",
+    alt: "A manager and a colleague review a team progress list on a laptop.",
+  },
+  hotel: {
+    src: "/images/scenes/hotel-front-desk.webp",
+    alt: "A hotel front-desk staff member welcomes two guests with suitcases.",
   },
 } as const;
 

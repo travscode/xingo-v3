@@ -5,7 +5,7 @@ export const marketingNavigation = [
   { href: "/naati/ccl", label: "NAATI CCL" },
   { href: "/exams", label: "Exams" },
   { href: "/how-it-works", label: "How it works" },
-  { href: "/for-organizations", label: "For teams" },
+  { href: "/staff-training", label: "For employers" },
   { href: "/pricing", label: "Pricing" },
 ] as const;
 

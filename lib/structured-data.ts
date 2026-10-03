@@ -161,3 +161,40 @@ export function courseJsonLd(course: {
     },
   };
 }
+
+/**
+ * A marketing page that describes a service we offer (e.g. staff training for
+ * organisations): WebPage whose main entity is a Service provided by XINGO.
+ * No offers or prices — pages using this sell through a conversation.
+ */
+export function servicePageJsonLd(page: {
+  path: string;
+  name: string;
+  description: string;
+  /** e.g. "Staff communication training". */
+  serviceType: string;
+  /** Who it's for, e.g. "Employers and organisations". */
+  audience: string;
+}): JsonLdObject {
+  const url = absoluteUrl(page.path);
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${url}#webpage`,
+    url,
+    name: page.name,
+    description: page.description,
+    inLanguage: "en-AU",
+    isPartOf: { "@id": WEBSITE_ID },
+    mainEntity: {
+      "@type": "Service",
+      name: page.name,
+      description: page.description,
+      serviceType: page.serviceType,
+      url,
+      provider: { "@type": "Organization", "@id": ORGANIZATION_ID, name: ORGANIZATION_NAME, url: SITE_URL },
+      audience: { "@type": "BusinessAudience", name: page.audience },
+      areaServed: "AU",
+    },
+  };
+}

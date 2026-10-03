@@ -21,6 +21,7 @@ const knownPaths = new Set<string>([
   "/how-it-works",
   "/for-interpreters",
   "/for-organizations",
+  "/staff-training",
   ...cclLanguagePages.map((page) => `/naati/ccl/${page.slug}`),
   ...topicPages.map((page) => `/interpreting/${page.slug}`),
   ...examPages.map((page) => `/exams/${page.slug}`),

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { MarketingIntro } from "@/components/marketing/cta-band";
 import { SALES_EMAIL } from "@/components/marketing/catalogue";
 import { Portrait, ScenePhoto, type PersonKey } from "@/components/marketing/people";
@@ -63,6 +64,14 @@ export default function ForOrganizationsPage() {
           </article>
         ))}
       </section>
+
+      <p className="-mt-12 text-sm text-gray-500">
+        Training your own staff or volunteers for customer, patient or visitor conversations?{" "}
+        <Link href="/staff-training" className="font-semibold text-ink underline underline-offset-4">
+          See AI role-play training for staff
+        </Link>
+        .
+      </p>
 
       <section className="rounded-xl bg-ink px-6 py-10 text-paper sm:px-10 sm:py-12">
         <h2 className="max-w-2xl text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Talk to us about cohort access</h2>

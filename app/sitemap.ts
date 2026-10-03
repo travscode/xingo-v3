@@ -48,6 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page("/pricing", 0.7),
     page("/how-it-works", 0.6),
     page("/for-interpreters", 0.5),
+    page("/staff-training", 0.7),
     page("/for-organizations", 0.5),
     ...cclLanguagePages.map((language) => page(`/naati/ccl/${language.slug}`, 0.8)),
     ...topicPages.map((topic) => page(`/interpreting/${topic.slug}`, 0.7)),

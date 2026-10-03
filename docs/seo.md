@@ -18,6 +18,7 @@ Traffic rose after the NAATI CCL page went up. Competitors already rank for gene
 | `/interpreting/diploma-of-interpreting-practice` | Diploma of Interpreting students | CPI + community + phone |
 | `/interpreting` | hub for internal linking | — |
 | `/exams` + `/exams/[slug]` | OET Speaking, IELTS Speaking, AMC Clinical, NMBA OSCE, CMI oral, CCHI CHI oral | Exam pack (`convex/content/examsPack.ts`) |
+| `/staff-training` | AI role-play training for staff, customer service training simulation, multilingual staff and volunteer training | Scenario builder, scoring, practice/assessed modes; team view, invites and private courses shown as **pilot** (D-021), demo labelled illustrative |
 
 Every page: one `h1`, unique title/description, canonical URL, FAQ with `FAQPage` JSON-LD, links to sibling pages, and a sign-up CTA that lands in the welcome flow with **goal and language preselected** (`signUpHref`).
 

@@ -21,7 +21,8 @@ const footerLinks = [
   { href: "/blog", label: "Guides" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/for-interpreters", label: "For interpreters" },
-  { href: "/for-organizations", label: "For teams" },
+  { href: "/staff-training", label: "Staff training" },
+  { href: "/for-organizations", label: "For training providers" },
   { href: "/marketplace", label: "Marketplace" },
   { href: "/pricing", label: "Pricing" },
 ] as const;
