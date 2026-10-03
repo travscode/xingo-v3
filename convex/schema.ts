@@ -144,6 +144,9 @@ export default defineSchema({
     languagePreferences: v.optional(v.array(languagePreference)),
     practiceGoal: v.optional(v.string()),
     onboardedAt: v.optional(v.string()),
+    /** Terms of Service + Privacy Policy acceptance (lib/legal.ts LEGAL_VERSION). */
+    termsVersion: v.optional(v.string()),
+    termsAcceptedAt: v.optional(v.string()),
     /** Unsubscribed from admin/marketing emails (Spam Act). */
     emailOptOut: v.optional(v.boolean()),
     emailOptOutAt: v.optional(v.string()),

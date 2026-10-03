@@ -13,6 +13,7 @@ import { LanguagePairProvider } from "@/components/providers/language-pair-conte
 import { LanguagePairPicker } from "@/components/dashboard/language-pair-picker";
 import { MinutesMeter } from "@/components/dashboard/minutes-meter";
 import { XingoMark } from "@/components/ui/logo";
+import { TermsGate } from "@/components/auth/terms-gate";
 
 /** Routes that render full-screen, without app chrome. */
 function isFocusRoute(pathname: string) {
@@ -40,7 +41,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   }, [me, pathname, router]);
 
   if (isFocusRoute(pathname)) {
-    return <LanguagePairProvider>{children}</LanguagePairProvider>;
+    return (
+      <LanguagePairProvider>
+        {children}
+        <TermsGate />
+      </LanguagePairProvider>
+    );
   }
 
   const isAdmin = me?.user.role === "platform_admin";
@@ -142,6 +148,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
         </div>
       </div>
+      <TermsGate />
     </LanguagePairProvider>
   );
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SignUp } from "@clerk/nextjs";
 import type { Metadata } from "next";
 
@@ -34,6 +35,17 @@ export default async function SignUpPage({
           fallbackRedirectUrl={redirectTarget}
         />
       </div>
+      <p className="mt-6 max-w-sm text-center text-xs leading-5 text-gray-500">
+        By creating an account you agree to our{" "}
+        <Link href="/terms" className="font-semibold text-ink underline">
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="font-semibold text-ink underline">
+          Privacy Policy
+        </Link>
+        . You&apos;ll confirm this in the next step.
+      </p>
     </main>
   );
 }

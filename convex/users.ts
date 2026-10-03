@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { LEGAL_VERSION } from "../lib/legal";
 import {
   internalMutation,
   internalQuery,
@@ -225,6 +226,23 @@ export const completeOnboarding = mutation({
       updatedAt: now,
     });
 
+    return { ok: true };
+  },
+});
+
+/** Records that the user read and accepted the current Terms and Privacy Policy. */
+export const acceptTerms = mutation({
+  args: { version: v.string() },
+  handler: async (ctx, args) => {
+    const user = await requireUser(ctx);
+
+    // Only the current version can be accepted; an old tab can't record a stale one.
+    if (args.version !== LEGAL_VERSION) {
+      throw new Error("These terms have been updated. Reload the page to see the latest version.");
+    }
+
+    const now = new Date().toISOString();
+    await ctx.db.patch(user._id, { termsVersion: LEGAL_VERSION, termsAcceptedAt: now, updatedAt: now });
     return { ok: true };
   },
 });

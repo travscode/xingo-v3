@@ -15,13 +15,15 @@ export type AppErrorCode =
   | "COURSE_INCOMPLETE"
   | "GUIDELINES_REQUIRED"
   | "PAYOUTS_NOT_CONFIGURED"
-  | "ALREADY_REPORTED";
+  | "ALREADY_REPORTED"
+  | "TERMS_REQUIRED";
 
 const messages: Record<AppErrorCode, string> = {
   COURSE_UNAVAILABLE: "This course isn't available right now. It may have been unpublished by its creator.",
   COURSE_INCOMPLETE: "Add a title, a one-line summary and at least one scenario before publishing.",
   GUIDELINES_REQUIRED: "Please confirm the creator guidelines before publishing.",
   PAYOUTS_NOT_CONFIGURED: "Payouts aren't switched on yet. Your earnings are safe and will be paid once they are.",
+  TERMS_REQUIRED: "Please accept the Terms of Service and Privacy Policy to continue.",
   ALREADY_REPORTED: "Thanks, you've already reported this course. We'll review it.",
   PREMIUM_REQUIRED: "This dialogue is part of a premium course. Upgrade or buy a minute pack to unlock it.",
   OUT_OF_MINUTES: "You've used all your practice minutes. Top up to keep going.",

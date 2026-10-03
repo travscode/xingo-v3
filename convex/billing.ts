@@ -6,6 +6,7 @@ import { internal } from "./_generated/api";
 import { action, internalAction, type ActionCtx } from "./_generated/server";
 import { getClerkIdFromIdentity } from "./model/auth";
 import { isPackId, type PackId } from "../lib/plans";
+import { LEGAL_VERSION } from "../lib/legal";
 
 /**
  * Stripe configuration lives in Convex environment variables:
@@ -94,6 +95,9 @@ export const createCheckout = action({
   },
   handler: async (ctx, args): Promise<{ url: string }> => {
     const user = await requireUser(ctx);
+    if (user.termsVersion !== LEGAL_VERSION) {
+      throw new ConvexError("TERMS_REQUIRED");
+    }
     const stripe = getStripe();
     const customer = await ensureCustomer(ctx, stripe, user);
     const base = siteUrl();

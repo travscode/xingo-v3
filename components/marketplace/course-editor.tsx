@@ -34,7 +34,13 @@ function PublishPanel({ moduleId, onClose }: { moduleId: string; onClose: () => 
       </ul>
       <label className="flex items-start gap-2 text-sm font-semibold">
         <input type="checkbox" className="mt-1" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
-        My course follows these guidelines.
+        <span>
+          I agree to the{" "}
+          <a href="/creator-terms" target="_blank" rel="noopener noreferrer" className="underline">
+            Creator Terms
+          </a>{" "}
+          and my course follows these guidelines.
+        </span>
       </label>
       {error ? <p className="text-sm text-record">{error}</p> : null}
       <div className="flex gap-2">

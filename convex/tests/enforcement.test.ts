@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "../_generated/api";
 import { seedCatalog, seedUser, setup } from "./setup.helpers";
+import { LEGAL_VERSION } from "../../lib/legal";
 import * as billingData from "../billingData";
 import * as practice from "../practice";
 import * as seed from "../seed";
@@ -562,5 +563,21 @@ describe("transcript reveal", () => {
     await expect(
       asUser.action(api.practiceActions.coachTurn, { attemptId, kind: "intro", rendition: "Hi, I'm the interpreter" }),
     ).rejects.toThrow("only available in practice mode");
+  });
+});
+
+describe("terms acceptance", () => {
+  test("practice is refused until the current terms are accepted, then allowed", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    const asUser = await seedUser(t, "user_terms", { termsVersion: undefined, termsAcceptedAt: undefined });
+
+    await expect(asUser.mutation(api.practice.startAttempt, { scenarioId: "free-scn", ...pair })).rejects.toThrow("TERMS_REQUIRED");
+    await expect(asUser.mutation(api.users.acceptTerms, { version: "2000-01-01" })).rejects.toThrow();
+
+    await asUser.mutation(api.users.acceptTerms, { version: LEGAL_VERSION });
+    const me = await asUser.query(api.users.me, {});
+    expect(me?.user.termsVersion).toBe(LEGAL_VERSION);
+    await expect(asUser.mutation(api.practice.startAttempt, { scenarioId: "free-scn", ...pair })).resolves.toBeTruthy();
   });
 });

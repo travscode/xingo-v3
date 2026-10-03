@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import schema from "../schema";
+import { LEGAL_VERSION } from "../../lib/legal";
 
 export const modules = import.meta.glob(["../**/*.ts", "../**/*.js", "!../**/*.test.ts", "!../tests/**"]);
 
@@ -23,6 +24,8 @@ export async function seedUser(
       languagePreferences: [],
       createdAt: "2026-10-01T00:00:00.000Z",
       updatedAt: "2026-10-01T00:00:00.000Z",
+      termsVersion: LEGAL_VERSION,
+      termsAcceptedAt: "2026-10-01T00:00:00.000Z",
       ...overrides,
     });
   });

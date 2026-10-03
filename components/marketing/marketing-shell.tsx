@@ -85,8 +85,13 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             </a>
           </nav>
         </div>
-        <div className="mx-auto w-full max-w-6xl border-t border-gray-700 px-4 py-6 text-xs text-gray-500 sm:px-6">
-          © {new Date().getFullYear()} XINGO
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 border-t border-gray-700 px-4 py-6 text-xs text-gray-500 sm:px-6">
+          <span>© {new Date().getFullYear()} XINGO</span>
+          <span className="flex gap-4">
+            <Link href="/terms" className="hover:text-paper">Terms</Link>
+            <Link href="/privacy" className="hover:text-paper">Privacy</Link>
+            <Link href="/creator-terms" className="hover:text-paper">Creator terms</Link>
+          </span>
         </div>
       </footer>
     </div>

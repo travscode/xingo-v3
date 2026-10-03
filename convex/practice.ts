@@ -23,6 +23,7 @@ import {
   TIME_LIMIT_GRACE_MS,
 } from "../lib/plans";
 import { resolveEndReason } from "../lib/scoring";
+import { LEGAL_VERSION } from "../lib/legal";
 import { canPractiseCourse, getListing, recordCreatorEarning } from "./model/courses";
 
 const transcriptEntry = v.object({
@@ -199,6 +200,10 @@ export const startAttempt = mutation({
 
     if (!learningModule) {
       throw new Error("Course not found");
+    }
+
+    if (user.termsVersion !== LEGAL_VERSION) {
+      throw new ConvexError("TERMS_REQUIRED");
     }
 
     // Community courses: practisable while published (owner and admins always).
