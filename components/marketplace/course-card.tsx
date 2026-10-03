@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BadgeCheck, Check, Flame, Languages, MessagesSquare, Plus, Sparkles, Star, Trophy } from "lucide-react";
+import { BadgeCheck, Check, Flame, Languages, MessagesSquare, Plus, Star, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 
@@ -89,12 +89,7 @@ export function CourseCard({
             {course.kind === "roleplay" ? <MessagesSquare className="h-3 w-3" aria-hidden /> : <Languages className="h-3 w-3" aria-hidden />}
             {course.kind === "roleplay" ? "One-on-one" : "Interpreting"}
           </Badge>
-          {course.isOriginal ? (
-            <Badge tone="dark">
-              <Sparkles className="h-3 w-3" aria-hidden /> XINGO Original
-            </Badge>
-          ) : null}
-          {(course.badges ?? []).map((badge) => (
+          {(course.badges ?? []).filter((badge) => !(course.isOriginal && badge === "new")).map((badge) => (
             <Badge key={badge} tone={badge === "top_rated" ? "accent" : "neutral"}>
               {badge === "popular" ? <Flame className="h-3 w-3" aria-hidden /> : badge === "top_rated" ? <Trophy className="h-3 w-3" aria-hidden /> : null}
               {badgeLabel[badge]}

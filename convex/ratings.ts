@@ -101,6 +101,7 @@ export const forCourse = query({
       mine: mine ? { stars: mine.stars, comment: mine.comment ?? "" } : null,
       canRate: Boolean(viewer && listing.ownerClerkId !== viewer.clerkId && (await hasPractised(ctx, viewer.clerkId, args.moduleId))),
       signedIn: Boolean(viewer),
+      isAdmin: viewer?.role === "platform_admin",
       progress,
       practiceCount: listing.practiceCount ?? 0,
       passCount: listing.passCount ?? 0,

@@ -40,6 +40,7 @@ import type * as jobs from "../jobs.js";
 import type * as labActions from "../labActions.js";
 import type * as marketplace from "../marketplace.js";
 import type * as marketplaceActions from "../marketplaceActions.js";
+import type * as marketplaceAdmin from "../marketplaceAdmin.js";
 import type * as migrations from "../migrations.js";
 import type * as model_auth from "../model/auth.js";
 import type * as model_courses from "../model/courses.js";
@@ -101,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   labActions: typeof labActions;
   marketplace: typeof marketplace;
   marketplaceActions: typeof marketplaceActions;
+  marketplaceAdmin: typeof marketplaceAdmin;
   migrations: typeof migrations;
   "model/auth": typeof model_auth;
   "model/courses": typeof model_courses;

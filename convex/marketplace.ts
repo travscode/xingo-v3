@@ -965,6 +965,7 @@ export const adminListings = query({
         slug: listing.slug,
         title: listing.title,
         creatorName: listing.creatorName,
+        creatorHandle: listing.creatorHandle ?? null,
         status: listing.status,
         removedReason: listing.removedReason ?? null,
         addCount: listing.addCount,

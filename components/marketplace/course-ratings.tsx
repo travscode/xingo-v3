@@ -85,6 +85,7 @@ function RateForm({ moduleId, initial }: { moduleId: string; initial: { stars: n
 /** Ratings, reviews and the viewer's own progress for a marketplace course. */
 export function CourseRatings({ moduleId }: { moduleId: string }) {
   const data = useQuery(api.ratings.forCourse, { moduleId });
+  const removeRating = useMutation(api.marketplaceAdmin.deleteRating);
   if (!data) return null;
 
   const { progress } = data;
@@ -165,8 +166,17 @@ export function CourseRatings({ moduleId }: { moduleId: string }) {
                 <span className="flex items-center gap-2 text-sm font-semibold">
                   <Stars value={review.stars} size="h-3.5 w-3.5" /> {review.author}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="flex items-center gap-2 text-xs text-gray-500">
                   {new Date(review.date).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}
+                  {data.isAdmin ? (
+                    <button
+                      type="button"
+                      className="font-semibold text-record hover:underline"
+                      onClick={() => window.confirm("Remove this review?") && void removeRating({ ratingId: review.id })}
+                    >
+                      Remove
+                    </button>
+                  ) : null}
                 </span>
               </div>
               <p className="mt-2 whitespace-pre-line text-sm text-gray-700">{review.comment}</p>

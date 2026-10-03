@@ -4,10 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, MapPin, Sparkles, Star } from "lucide-react";
+import { ArrowLeft, MapPin, Star } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { friendlyError } from "@/lib/errors";
-import { Badge, Skeleton } from "@/components/ui/primitives";
+import { Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/marketplace/course-card";
 
@@ -64,11 +64,8 @@ export function CreatorPage({ handle }: { handle: string }) {
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <h1 className="text-3xl font-bold tracking-[-0.035em]">{creator.displayName}</h1>
-            {creator.isOriginal ? (
-              <Badge tone="dark">
-                <Sparkles className="h-3 w-3" aria-hidden /> XINGO Original
-              </Badge>
-            ) : null}
+            <span className="text-sm text-gray-500">@{creator.handle}</span>
+
           </div>
           {creator.tagline ? <p className="mt-1 text-lg text-gray-500">{creator.tagline}</p> : null}
           <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-gray-500">
@@ -91,10 +88,7 @@ export function CreatorPage({ handle }: { handle: string }) {
           </div>
           {creator.bio ? <p className="mt-5 max-w-3xl whitespace-pre-line leading-7 text-gray-700">{creator.bio}</p> : null}
           {creator.isOriginal ? (
-            <p className="mt-4 max-w-3xl text-sm text-gray-500">
-              XINGO Originals are made by the XINGO team to show the kinds of courses anyone can create. They&apos;re free to add;
-              practice uses your normal minutes.
-            </p>
+            <p className="mt-4 text-xs text-gray-500">Made by the XINGO team. Free to add; practice uses your normal minutes.</p>
           ) : null}
         </div>
       </section>

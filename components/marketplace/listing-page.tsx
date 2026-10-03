@@ -15,7 +15,6 @@ import {
   Pencil,
   Play,
   Plus,
-  Sparkles,
   Users,
 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
@@ -225,11 +224,7 @@ export function CourseListingPage({ slug }: { slug: string }) {
                   <span className="font-semibold text-ink">{listing.creatorName}</span>
                 )}
               </span>
-              {listing.isOriginal ? (
-                <Badge tone="dark">
-                  <Sparkles className="h-3 w-3" aria-hidden /> XINGO Original
-                </Badge>
-              ) : null}
+              {listing.isOriginal ? <span className="text-xs">Made by the XINGO team</span> : null}
               <RatingInline rating={listing.rating} count={listing.ratingCount} className="text-ink" />
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
