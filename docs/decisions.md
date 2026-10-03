@@ -110,3 +110,6 @@ Format: **ID — title** · date · status. Context → Decision → Consequence
 
 ### D-026 — Exam selection · 2026-10-02 · accepted
 **Decision.** Build OET (Nursing, Medicine), IELTS Speaking, AMC Clinical, NMBA OSCE and one US medical interpreter oral module serving both CMI and CHI landing pages. **Do not** market NAATI CI practice: the CI test has no dialogue task. Court interpreting and UK DPSI are next candidates. See [research/exams-2026-10.md](research/exams-2026-10.md).
+
+### D-027 — Admin email campaigns via Resend with first-party tracking · 2026-10-03 · accepted
+**Decision.** Campaigns live in Convex (`emailCampaigns`, `emailRecipients`, `emailClicks`); Resend's batch API delivers. Opens, clicks and unsubscribes are tracked by Convex HTTP routes proxied under `www.xingo.ai/e/*`, so links show the XINGO domain and work regardless of Resend plan. Batches are claimed atomically (no duplicate sends). Unsubscribes set `users.emailOptOut` and are always excluded. One-click `List-Unsubscribe` headers for Gmail/Yahoo bulk-sender rules. See [runbooks/email-setup.md](runbooks/email-setup.md).

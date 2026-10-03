@@ -135,6 +135,9 @@ export default defineSchema({
     languagePreferences: v.optional(v.array(languagePreference)),
     practiceGoal: v.optional(v.string()),
     onboardedAt: v.optional(v.string()),
+    /** Unsubscribed from admin/marketing emails (Spam Act). */
+    emailOptOut: v.optional(v.boolean()),
+    emailOptOutAt: v.optional(v.string()),
     createdAt: v.string(),
     updatedAt: v.string(),
   })
@@ -288,6 +291,78 @@ export default defineSchema({
   })
     .index("by_email", ["email"])
     .index("by_status", ["status"]),
+
+  /** Admin email campaigns (docs/runbooks/email-setup.md). */
+  emailCampaigns: defineTable({
+    name: v.string(),
+    subject: v.string(),
+    preheader: v.string(),
+    fromName: v.string(),
+    templateId: v.union(v.literal("announcement"), v.literal("spotlight"), v.literal("newsletter"), v.literal("letter")),
+    content: v.object({
+      kicker: v.optional(v.string()),
+      headline: v.optional(v.string()),
+      body: v.string(),
+      heroImageUrl: v.optional(v.string()),
+      ctaLabel: v.optional(v.string()),
+      ctaUrl: v.optional(v.string()),
+      sections: v.optional(
+        v.array(
+          v.object({
+            title: v.string(),
+            body: v.string(),
+            imageUrl: v.optional(v.string()),
+            linkLabel: v.optional(v.string()),
+            linkUrl: v.optional(v.string()),
+          }),
+        ),
+      ),
+      signature: v.optional(v.string()),
+    }),
+    audience: v.object({
+      mode: v.union(v.literal("all"), v.literal("selected")),
+      clerkIds: v.array(v.string()),
+    }),
+    batchSize: v.number(),
+    batchIntervalMinutes: v.number(),
+    status: v.union(v.literal("draft"), v.literal("sending"), v.literal("sent"), v.literal("cancelled")),
+    /** Trackable URLs, frozen at send time; click tokens refer to their index. */
+    links: v.optional(v.array(v.string())),
+    createdByClerkId: v.string(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+    sendStartedAt: v.optional(v.string()),
+    sentAt: v.optional(v.string()),
+  }).index("by_status", ["status"]),
+
+  emailRecipients: defineTable({
+    campaignId: v.id("emailCampaigns"),
+    clerkId: v.optional(v.string()),
+    email: v.string(),
+    name: v.string(),
+    /** Random token used in open/click/unsubscribe URLs. */
+    token: v.string(),
+    status: v.union(v.literal("queued"), v.literal("sending"), v.literal("sent"), v.literal("failed"), v.literal("bounced")),
+    providerMessageId: v.optional(v.string()),
+    error: v.optional(v.string()),
+    sentAt: v.optional(v.string()),
+    openCount: v.number(),
+    firstOpenedAt: v.optional(v.string()),
+    clickCount: v.number(),
+    firstClickedAt: v.optional(v.string()),
+    unsubscribedAt: v.optional(v.string()),
+  })
+    .index("by_campaign", ["campaignId"])
+    .index("by_campaign_status", ["campaignId", "status"])
+    .index("by_token", ["token"])
+    .index("by_providerMessageId", ["providerMessageId"]),
+
+  emailClicks: defineTable({
+    campaignId: v.id("emailCampaigns"),
+    recipientId: v.id("emailRecipients"),
+    linkIndex: v.number(),
+    createdAt: v.string(),
+  }).index("by_campaign", ["campaignId"]),
 
   /** Processed Stripe webhook events, for idempotency. */
   stripeEvents: defineTable({

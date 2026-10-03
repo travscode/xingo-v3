@@ -9,7 +9,8 @@ export type AppErrorCode =
   | "VOICE_NOT_CONFIGURED"
   | "VOICE_UNAVAILABLE"
   | "MIC_BLOCKED"
-  | "MIC_NOT_FOUND";
+  | "MIC_NOT_FOUND"
+  | "EMAIL_NOT_CONFIGURED";
 
 const messages: Record<AppErrorCode, string> = {
   PREMIUM_REQUIRED: "This dialogue is part of a premium module. Upgrade or buy a minute pack to unlock it.",
@@ -23,6 +24,8 @@ const messages: Record<AppErrorCode, string> = {
     "We couldn't reach the voice service. You haven't been charged. Check your connection and try again in a moment.",
   MIC_BLOCKED:
     "Your browser is blocking the microphone. Click the camera/mic icon in the address bar, allow the microphone, then start again.",
+  EMAIL_NOT_CONFIGURED:
+    "Email sending isn't set up yet: add RESEND_API_KEY and EMAIL_FROM_ADDRESS to Convex (see docs/runbooks/email-setup.md).",
   MIC_NOT_FOUND: "We couldn't find a microphone. Plug in a headset or check your sound settings, then start again.",
 };
 

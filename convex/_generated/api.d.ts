@@ -18,6 +18,8 @@ import type * as content from "../content.js";
 import type * as content_australiaPack from "../content/australiaPack.js";
 import type * as content_examsPack from "../content/examsPack.js";
 import type * as crons from "../crons.js";
+import type * as emailActions from "../emailActions.js";
+import type * as emails from "../emails.js";
 import type * as http from "../http.js";
 import type * as jobs from "../jobs.js";
 import type * as migrations from "../migrations.js";
@@ -53,6 +55,8 @@ declare const fullApi: ApiFromModules<{
   "content/australiaPack": typeof content_australiaPack;
   "content/examsPack": typeof content_examsPack;
   crons: typeof crons;
+  emailActions: typeof emailActions;
+  emails: typeof emails;
   http: typeof http;
   jobs: typeof jobs;
   migrations: typeof migrations;

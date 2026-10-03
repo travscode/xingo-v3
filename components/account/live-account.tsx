@@ -16,6 +16,7 @@ export function LiveAccount() {
   const me = useQuery(api.users.me, {});
   const completeOnboarding = useMutation(api.users.completeOnboarding);
   const updatePreferences = useMutation(api.users.updateLanguagePreferences);
+  const setEmailPreference = useMutation(api.emails.setMyEmailPreference);
   const { activePair, setActivePair } = useActiveLanguagePair();
   const clerk = useClerk();
   const [adding, setAdding] = useState("");
@@ -152,6 +153,19 @@ export function LiveAccount() {
               Add
             </Button>
           </form>
+        </Card>
+      </section>
+
+      <section>
+        <SectionTitle>Emails</SectionTitle>
+        <Card className="flex items-center justify-between gap-4 p-5">
+          <div>
+            <p className="font-semibold">News and practice tips</p>
+            <p className="text-sm text-gray-500">Occasional emails about new exams, features and offers. Receipts are always sent.</p>
+          </div>
+          <Button variant={user.emailOptOut ? "primary" : "outline"} onClick={() => void setEmailPreference({ subscribed: Boolean(user.emailOptOut) })}>
+            {user.emailOptOut ? "Turn on" : "Turn off"}
+          </Button>
         </Card>
       </section>
 

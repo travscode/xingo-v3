@@ -36,11 +36,11 @@ export function Field({
   );
 }
 
-export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+export function TextInput(props: React.ComponentProps<"input">) {
   return <input {...props} className={cn(inputBase, "h-11", props.className)} />;
 }
 
-export function TextArea({ rows = 3, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function TextArea({ rows = 3, ...props }: React.ComponentProps<"textarea">) {
   return <textarea rows={rows} {...props} className={cn(inputBase, "py-2.5 leading-6", props.className)} />;
 }
 
