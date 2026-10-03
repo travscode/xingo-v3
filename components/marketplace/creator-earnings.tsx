@@ -91,7 +91,7 @@ export function CreatorEarnings() {
   return (
     <div className="space-y-10">
       <PageHeader
-        title="Payouts"
+        title="Earnings & payouts"
         description={`Your course earnings and payments. You earn ${share}% of XINGO's net revenue from paid minutes practised in your courses, paid through Stripe.`}
         actions={
           account.payoutsEnabled ? (

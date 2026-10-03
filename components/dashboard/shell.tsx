@@ -162,11 +162,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   );
 }
 
-/** Under Marketplace while it's open: Browse, Payouts, then the user's organisations (or a way to start one). */
+/** Under Marketplace while it's open: Browse, Earnings, then the user's organisations (or a way to start one). */
 function MarketplaceSubmenu({ pathname, orgs }: { pathname: string; orgs: Array<{ handle: string; displayName: string }> }) {
   const items = [
     { href: "/marketplace", label: "Browse", active: !pathname.startsWith("/marketplace/org/") && pathname !== "/marketplace/earnings" },
-    { href: "/marketplace/earnings", label: "Payouts", active: pathname === "/marketplace/earnings" },
+    { href: "/marketplace/earnings", label: "Earnings", active: pathname === "/marketplace/earnings" },
     ...(orgs.length > 0
       ? orgs.map((org) => ({
           href: `/marketplace/org/${org.handle}`,
