@@ -38,7 +38,6 @@ import type { Scenario, VoiceAgent } from "@/types/scenario";
 import type { TranscriptEntry } from "@/types/session";
 
 type AgentKey = "agent_a" | "agent_b";
-type SpeakingKey = AgentKey | "interpreter" | null;
 type Phase = "setup" | "countdown" | "connecting" | "live" | "finishing";
 type Mode = "assessed" | "practice";
 
@@ -75,7 +74,8 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
   const [allowedMs, setAllowedMs] = useState<number | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [activeAgent, setActiveAgent] = useState<AgentKey | null>(null);
-  const [speakingKey, setSpeakingKey] = useState<SpeakingKey>(null);
+  /** Which participants are audibly speaking right now (measured from their audio). */
+  const [audible, setAudible] = useState<Record<AgentKey, boolean>>({ agent_a: false, agent_b: false });
   const [isRecording, setIsRecording] = useState(false);
   const [turns, setTurns] = useState<Record<AgentKey, number>>({ agent_a: 0, agent_b: 0 });
   const [conversationEnded, setConversationEnded] = useState(false);
@@ -90,8 +90,11 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
   const agentAAudioRef = useRef<HTMLAudioElement | null>(null);
   const agentBAudioRef = useRef<HTMLAudioElement | null>(null);
   const connectedAgentsRef = useRef<Set<AgentKey>>(new Set());
-  const listenersAttachedRef = useRef<Set<AgentKey>>(new Set());
-  const speakingTimeoutRef = useRef<number | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const metersRef = useRef<Map<AgentKey, { analyser: AnalyserNode; data: Uint8Array<ArrayBuffer>; audio: HTMLAudioElement }>>(new Map());
+  const lastHeardRef = useRef<Record<AgentKey, number>>({ agent_a: 0, agent_b: 0 });
+  const audibleRef = useRef<Record<AgentKey, boolean>>({ agent_a: false, agent_b: false });
+  const meterFrameRef = useRef<number | null>(null);
   const spaceDownAtRef = useRef<number | null>(null);
   const spaceHoldTimeoutRef = useRef<number | null>(null);
   const spaceHoldActiveRef = useRef(false);
@@ -134,46 +137,94 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
   // ---- Speaking state ----------------------------------------------------------
 
-  const markSpeaking = useCallback((key: SpeakingKey) => {
-    if (speakingTimeoutRef.current) {
-      window.clearTimeout(speakingTimeoutRef.current);
+  /**
+   * One animation-frame loop measures every connected participant's output level.
+   * A participant counts as speaking only while their stream carries sound AND
+   * their audio element is actually playing (not paused, muted or autoplay-blocked).
+   */
+  const runMeters = useCallback(() => {
+    const now = performance.now();
+    let changed = false;
+    const next = { ...audibleRef.current };
+
+    for (const [key, meter] of metersRef.current) {
+      meter.analyser.getByteTimeDomainData(meter.data);
+      let sum = 0;
+      for (const sample of meter.data) {
+        const value = (sample - 128) / 128;
+        sum += value * value;
+      }
+      const rms = Math.sqrt(sum / meter.data.length);
+      const playing = !meter.audio.paused && !meter.audio.muted && meter.audio.volume > 0;
+
+      if (playing && rms > 0.015) {
+        lastHeardRef.current[key] = now;
+      }
+
+      const isAudible = playing && now - lastHeardRef.current[key] < 250;
+      if (next[key] !== isAudible) {
+        next[key] = isAudible;
+        changed = true;
+      }
     }
 
-    setSpeakingKey(key);
-
-    if (key) {
-      // Safety net if audio events never fire.
-      speakingTimeoutRef.current = window.setTimeout(() => setSpeakingKey(null), 30_000);
+    if (changed) {
+      audibleRef.current = next;
+      setAudible(next);
     }
+
+    meterFrameRef.current = window.requestAnimationFrame(runMeters);
   }, []);
 
-  const clearSpeaking = useCallback((key: AgentKey) => {
-    setSpeakingKey((current) => (current === key ? null : current));
-  }, []);
-
-  const attachAudioListeners = useCallback(
+  /** Starts metering a participant once their WebRTC audio stream is attached. */
+  const attachLevelMeter = useCallback(
     (key: AgentKey, audio: HTMLAudioElement) => {
-      if (listenersAttachedRef.current.has(key)) {
+      if (metersRef.current.has(key)) {
         return;
       }
 
-      const onPlay = () => markSpeaking(key);
-      const onEnded = () => clearSpeaking(key);
-      const onPause = () => {
-        if (!Number.isFinite(audio.duration) || audio.currentTime >= audio.duration - 0.05) {
-          clearSpeaking(key);
+      let tries = 0;
+      const tryAttach = () => {
+        const stream = audio.srcObject;
+
+        if (!(stream instanceof MediaStream) || stream.getAudioTracks().length === 0) {
+          if (tries++ < 50) window.setTimeout(tryAttach, 200);
+          return;
+        }
+
+        const context = audioContextRef.current ?? new AudioContext();
+        audioContextRef.current = context;
+        void context.resume().catch(() => undefined);
+        const analyser = context.createAnalyser();
+        analyser.fftSize = 512;
+        // Analyse only; playback stays on the <audio> element (no double audio).
+        context.createMediaStreamSource(stream).connect(analyser);
+        metersRef.current.set(key, { analyser, data: new Uint8Array(new ArrayBuffer(analyser.fftSize)), audio });
+
+        if (meterFrameRef.current === null) {
+          meterFrameRef.current = window.requestAnimationFrame(runMeters);
         }
       };
 
-      audio.addEventListener("play", onPlay);
-      audio.addEventListener("waiting", onPlay);
-      audio.addEventListener("canplaythrough", onPlay);
-      audio.addEventListener("ended", onEnded);
-      audio.addEventListener("pause", onPause);
-      listenersAttachedRef.current.add(key);
+      tryAttach();
     },
-    [clearSpeaking, markSpeaking],
+    [runMeters],
   );
+
+  const stopMeters = useCallback(() => {
+    if (meterFrameRef.current !== null) {
+      window.cancelAnimationFrame(meterFrameRef.current);
+      meterFrameRef.current = null;
+    }
+
+    metersRef.current.clear();
+    audibleRef.current = { agent_a: false, agent_b: false };
+    setAudible({ agent_a: false, agent_b: false });
+    void audioContextRef.current?.close().catch(() => undefined);
+    audioContextRef.current = null;
+  }, []);
+
+  useEffect(() => stopMeters, [stopMeters]);
 
   // ---- Transcript ---------------------------------------------------------------
 
@@ -191,11 +242,8 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
         return [...current, entry].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
       });
 
-      if (entry.role === "assistant") {
-        markSpeaking(entry.speaker === agentAConfig.name ? "agent_a" : "agent_b");
-      }
     },
-    [agentAConfig.name, markSpeaking],
+    [],
   );
 
   const updateTranscriptEntry = useCallback((entryId: string, text: string, append: boolean) => {
@@ -349,7 +397,6 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
         throw new Error("Audio output is not ready yet.");
       }
 
-      attachAudioListeners(key, bundle.audio);
       connectedAgentsRef.current.add(key);
 
       try {
@@ -368,8 +415,9 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
       // Learner controls turns with push-to-talk; no automatic voice detection.
       bundle.session.setTurnDetectionEnabled(false);
       await ensureAudioPlayback(bundle.audio);
+      attachLevelMeter(key, bundle.audio);
     },
-    [attachAudioListeners, bundleFor, createRealtimeSecret, ensureAudioPlayback],
+    [attachLevelMeter, bundleFor, createRealtimeSecret, ensureAudioPlayback],
   );
 
   const selectAgent = useCallback(
@@ -409,8 +457,8 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     connectedAgentsRef.current.clear();
     setActiveAgent(null);
     setIsRecording(false);
-    setSpeakingKey(null);
-  }, [agentASession, agentBSession]);
+    stopMeters();
+  }, [agentASession, agentBSession, stopMeters]);
 
   // ---- Start / finish / leave ----------------------------------------------------
 
@@ -628,8 +676,6 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
         }
       }
     }
-
-    setSpeakingKey(null);
   }, []);
 
   const startTalking = useCallback(() => {
@@ -645,8 +691,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     stopAllAgentPlayback();
     bundleFor(activeAgent).session.startPushToTalk();
     setIsRecording(true);
-    markSpeaking("interpreter");
-  }, [activeAgent, bundleFor, configFor, markSpeaking, phase, stopAllAgentPlayback]);
+  }, [activeAgent, bundleFor, configFor, phase, stopAllAgentPlayback]);
 
   const stopTalking = useCallback(() => {
     if (!activeAgent || !isRecording) {
@@ -656,7 +701,6 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     const bundle = bundleFor(activeAgent);
     bundle.session.stopPushToTalk();
     setIsRecording(false);
-    setSpeakingKey(null);
     setTurns((current) => ({ ...current, [activeAgent]: current[activeAgent] + 1 }));
     void ensureAudioPlayback(bundle.audio);
   }, [activeAgent, bundleFor, ensureAudioPlayback, isRecording]);
@@ -836,7 +880,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
   }, [client, clientKey, conversationEnded, hasSecondAgent, isRoleplay, mode, professional, professionalKey, remainingMs, runtime.learnerOpens, timeLimitMs, totalTurns, turns]);
 
   const tileState = (key: AgentKey) => {
-    if (speakingKey === key) return "speaking" as const;
+    if (audible[key]) return "speaking" as const;
     if (activeAgent === key && isRecording) return "listening" as const;
     if (activeAgent === key) return "selected" as const;
     return "idle" as const;
