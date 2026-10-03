@@ -18,7 +18,8 @@ export type AppErrorCode =
   | "ALREADY_REPORTED"
   | "TERMS_REQUIRED"
   | "RATING_NEEDS_PRACTICE"
-  | "RATING_NOT_ALLOWED";
+  | "RATING_NOT_ALLOWED"
+  | "ACCOUNT_PAUSED";
 
 const messages: Record<AppErrorCode, string> = {
   COURSE_UNAVAILABLE: "This course isn't available right now. It may have been unpublished by its creator.",
@@ -27,6 +28,7 @@ const messages: Record<AppErrorCode, string> = {
   PAYOUTS_NOT_CONFIGURED: "Payouts aren't switched on yet. Your earnings are safe and will be paid once they are.",
   RATING_NEEDS_PRACTICE: "Finish a session in this course first, then you can rate it.",
   RATING_NOT_ALLOWED: "You can't rate your own course.",
+  ACCOUNT_PAUSED: "Practice is paused on your account. Email hello@xingo.ai and we'll sort it out.",
   TERMS_REQUIRED: "Please accept the Terms of Service and Privacy Policy to continue.",
   ALREADY_REPORTED: "Thanks, you've already reported this course. We'll review it.",
   PREMIUM_REQUIRED: "This dialogue is part of a premium course. Upgrade or buy a minute pack to unlock it.",

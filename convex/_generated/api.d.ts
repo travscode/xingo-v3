@@ -10,6 +10,7 @@
 
 import type * as admin from "../admin.js";
 import type * as adminActions from "../adminActions.js";
+import type * as adminUsage from "../adminUsage.js";
 import type * as avatars from "../avatars.js";
 import type * as billing from "../billing.js";
 import type * as billingData from "../billingData.js";
@@ -49,6 +50,7 @@ import type * as model_entitlements from "../model/entitlements.js";
 import type * as model_grading from "../model/grading.js";
 import type * as model_notify from "../model/notify.js";
 import type * as model_scenario from "../model/scenario.js";
+import type * as model_usageRollups from "../model/usageRollups.js";
 import type * as modules from "../modules.js";
 import type * as onboarding from "../onboarding.js";
 import type * as organizations from "../organizations.js";
@@ -73,6 +75,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   adminActions: typeof adminActions;
+  adminUsage: typeof adminUsage;
   avatars: typeof avatars;
   billing: typeof billing;
   billingData: typeof billingData;
@@ -112,6 +115,7 @@ declare const fullApi: ApiFromModules<{
   "model/grading": typeof model_grading;
   "model/notify": typeof model_notify;
   "model/scenario": typeof model_scenario;
+  "model/usageRollups": typeof model_usageRollups;
   modules: typeof modules;
   onboarding: typeof onboarding;
   organizations: typeof organizations;

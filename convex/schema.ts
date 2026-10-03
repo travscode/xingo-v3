@@ -154,6 +154,9 @@ export default defineSchema({
     emailOptOutAt: v.optional(v.string()),
     /** Secret for one-click unsubscribe links in the onboarding series (D-037). */
     emailToken: v.optional(v.string()),
+    /** Set by an admin to stop new practice on this account (ISO). */
+    practicePausedAt: v.optional(v.string()),
+    practicePausedReason: v.optional(v.string()),
     createdAt: v.string(),
     updatedAt: v.string(),
   })
@@ -452,6 +455,21 @@ export default defineSchema({
     .index("by_clerkId", ["clerkId"])
     .index("by_clerkId_billingMonth", ["clerkId", "billingMonth"])
     .index("by_attemptId", ["attemptId"]),
+
+  /** Per-user, per-month usage totals for the admin Usage tab (convex/model/usageRollups.ts). */
+  usageRollups: defineTable({
+    clerkId: v.string(),
+    month: v.string(),
+    attempts: v.number(),
+    minutes: v.number(),
+    realtimeTokens: v.number(),
+    otherTokens: v.number(),
+    /** Estimated OpenAI cost (lib/costs.ts), USD. */
+    costUsd: v.number(),
+    lastActiveAt: v.string(),
+  })
+    .index("by_clerkId_month", ["clerkId", "month"])
+    .index("by_month", ["month"]),
 
   /** One row per attempt that consumed practice minutes. */
   usageCharges: defineTable({

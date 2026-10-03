@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { getClerkIdFromIdentity, getUserByClerkId, requireClerkId } from "./model/auth";
 import { getEntitlement } from "./model/entitlements";
+import { bumpUsage } from "./model/usageRollups";
 import { getBillingMonthKey, getBillingMonthRange } from "../lib/plans";
 
 /** Upper bound for one client-reported realtime response; anything larger is dropped. */
@@ -93,6 +94,9 @@ export const recordAiUsage = internalMutation({
       billingMonth: getBillingMonthKey(new Date(createdAt)),
       createdAt,
     });
+    await bumpUsage(ctx, args.clerkId, createdAt, {
+      tokens: { source: args.source, input: args.promptTokens, output: args.completionTokens },
+    });
   },
 });
 
@@ -155,6 +159,9 @@ export const reportRealtimeUsage = mutation({
       totalTokens: args.totalTokens,
       billingMonth: getBillingMonthKey(new Date(createdAt)),
       createdAt,
+    });
+    await bumpUsage(ctx, clerkId, createdAt, {
+      tokens: { source: "realtime", input: args.promptTokens, output: args.completionTokens },
     });
   },
 });

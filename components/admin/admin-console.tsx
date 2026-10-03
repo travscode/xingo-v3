@@ -12,12 +12,14 @@ import { cn } from "@/lib/utils";
 import { ContentIndex } from "@/components/admin/content/content-index";
 import { EmailList } from "@/components/admin/email/email-list";
 import { MarketplaceAdmin, ReportsAdmin } from "@/components/admin/marketplace-admin";
+import { UsageAdmin } from "@/components/admin/usage-admin";
 import { Badge, Card, EmptyState, PageHeader, SectionTitle, Skeleton, Stat } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { formatMinuteCount } from "@/lib/plans";
 
 const tabs = [
   { id: "overview", label: "Overview" },
+  { id: "usage", label: "Usage" },
   { id: "users", label: "Users" },
   { id: "invites", label: "Invites" },
   { id: "email", label: "Email" },
@@ -103,6 +105,7 @@ export function AdminConsole() {
         ))}
       </div>
       {tab === "overview" ? <OverviewTab /> : null}
+      {tab === "usage" ? <UsageAdmin /> : null}
       {tab === "users" ? <UsersTab myClerkId={me.user.clerkId} /> : null}
       {tab === "invites" ? <InvitesTab /> : null}
       {tab === "content" ? <ContentIndex /> : null}

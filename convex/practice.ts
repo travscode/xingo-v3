@@ -26,6 +26,7 @@ import { resolveEndReason } from "../lib/scoring";
 import { LEGAL_VERSION } from "../lib/legal";
 import { bumpCourseCounters, canPractiseCourse, getListing, recordCreatorEarning } from "./model/courses";
 import { queueEmail } from "./model/notify";
+import { bumpUsage } from "./model/usageRollups";
 
 const transcriptEntry = v.object({
   id: v.string(),
@@ -151,6 +152,7 @@ async function closeAndCharge(
         billingMonth: getBillingMonthKey(new Date(endMs)),
         createdAt: new Date(endMs).toISOString(),
       });
+      await bumpUsage(ctx, attempt.clerkId, new Date(endMs).toISOString(), { minutes: split.charged });
       await recordCreatorEarning(ctx, attempt, user, entitlement, split, new Date(endMs).toISOString());
 
       // This session used the last of their minutes: tell them once per month.
@@ -218,6 +220,10 @@ export const startAttempt = mutation({
       throw new ConvexError("TERMS_REQUIRED");
     }
 
+    if (user.practicePausedAt) {
+      throw new ConvexError("ACCOUNT_PAUSED");
+    }
+
     // Community courses: practisable while published (owner and admins always).
     if (!canPractiseCourse(user, learningModule, await getListing(ctx, learningModule.id))) {
       throw new ConvexError("COURSE_UNAVAILABLE");
@@ -271,6 +277,7 @@ export const startAttempt = mutation({
       mode: args.mode ?? "assessed",
       timestamp: startedAt,
     });
+    await bumpUsage(ctx, user.clerkId, startedAt, { attempts: 1 });
 
     return {
       attemptId,
@@ -352,6 +359,11 @@ export const reserveRealtimeKey = internalMutation({
     }
 
     const user = await getUserByClerkId(ctx, args.clerkId);
+
+    if (user?.practicePausedAt) {
+      throw new ConvexError("ACCOUNT_PAUSED");
+    }
+
     const now = Date.now();
     const entitlement = user ? await getEntitlement(ctx, user, new Date(now)) : null;
     const elapsedMs = now - (attempt.startedAtMs ?? now);
