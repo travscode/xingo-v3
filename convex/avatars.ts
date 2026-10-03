@@ -100,7 +100,16 @@ export const generateMissing = internalAction({
     // gpt-image-1 needs a verified OpenAI organisation; set OPENAI_IMAGE_MODEL=dall-e-3 if it's refused.
     const body = model.startsWith("dall-e")
       ? { model, prompt: portraitPrompt(target, look), size: "1024x1024", quality: "standard", response_format: "b64_json", n: 1 }
-      : { model, prompt: portraitPrompt(target, look), size: "1024x1024", quality: "medium", n: 1 };
+      : {
+          model,
+          prompt: portraitPrompt(target, look),
+          size: "1024x1024",
+          quality: "medium",
+          // Compressed WebP keeps avatars ~50–80 KB instead of ~1.5 MB PNG.
+          output_format: "webp",
+          output_compression: 70,
+          n: 1,
+        };
     const response = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -119,7 +128,9 @@ export const generateMissing = internalAction({
     }
 
     const bytes = Uint8Array.from(atob(b64), (char) => char.charCodeAt(0));
-    const storageId = await ctx.storage.store(new Blob([bytes], { type: "image/png" }));
+    const storageId = await ctx.storage.store(
+      new Blob([bytes], { type: model.startsWith("dall-e") ? "image/png" : "image/webp" }),
+    );
     await ctx.runMutation(internal.avatars.attachAvatar, {
       scenarioId: target.scenarioId,
       agent: target.agent,
