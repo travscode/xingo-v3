@@ -428,3 +428,31 @@ body {
     transform: scaleY(1);
   }
 }
+
+/* ---- Marketplace landing hero (components/marketing/marketplace-hero.tsx) -----
+ * Three example course cards take turns at the front of the stack (12s loop). Under
+ * reduced motion they hold their resting positions.
+ */
+@keyframes mktStack {
+  0%, 27% { transform: translateY(0) scale(1); opacity: 1; z-index: 3; }
+  32% { transform: translateY(36px) scale(0.98) rotate(-3deg); opacity: 0; z-index: 3; }
+  33% { transform: translateY(-44px) scale(0.86); opacity: 0; z-index: 1; }
+  38%, 60% { transform: translateY(-44px) scale(0.86); opacity: 0.45; z-index: 1; }
+  66%, 94% { transform: translateY(-22px) scale(0.93); opacity: 0.75; z-index: 2; }
+  100% { transform: translateY(0) scale(1); opacity: 1; z-index: 3; }
+}
+
+.mkt-card {
+  transform-origin: center top;
+  animation: mktStack 12s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.mkt-card-0 { z-index: 3; }
+.mkt-card-1 { z-index: 2; transform: translateY(-22px) scale(0.93); opacity: 0.75; animation-delay: -8s; }
+.mkt-card-2 { z-index: 1; transform: translateY(-44px) scale(0.86); opacity: 0.45; animation-delay: -4s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mkt-card {
+    animation: none;
+  }
+}

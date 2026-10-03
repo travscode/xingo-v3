@@ -10,6 +10,8 @@ earn a share of the revenue from paid minutes practised in their courses. Decisi
 "From the marketplace" → practise like any course. Signed-out visitors are sent to sign-up and
 returned to the course page.
 
+**Public landing:** the marketing header's "Marketplace" link goes to `/sell-practice-courses` (what the marketplace is, for creators, employers and learners; CTAs to `/marketplace/new` and `/marketplace`). The app nav still links to `/marketplace`.
+
 **Creator:** Banner on the marketplace → **Learn more** (`/marketplace/create`: how it works, how
 earnings work, guidelines) → **Create your first course** (`/marketplace/new`, 5 short steps: kind,
 name, who the AI plays, the learner's part or the person needing an interpreter, when it's finished) → draft

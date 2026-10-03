@@ -76,6 +76,23 @@ export const scenes = {
     src: "/images/scenes/hotel-front-desk.webp",
     alt: "A hotel front-desk staff member welcomes two guests with suitcases.",
   },
+  // Marketplace landing (/sell-practice-courses).
+  creatorStudio: {
+    src: "/images/scenes/creator-studio.webp",
+    alt: "An exam coach with headphones around her neck writes notes for a practice conversation at her desk.",
+  },
+  trainerWhiteboard: {
+    src: "/images/scenes/trainer-whiteboard.webp",
+    alt: "A workplace trainer plans customer conversation scenarios with sticky notes on a whiteboard while a colleague watches.",
+  },
+  learnerHeadphones: {
+    src: "/images/scenes/learner-headphones.webp",
+    alt: "A young man wearing headphones speaks out loud in a practice conversation on his laptop at home.",
+  },
+  tutorSession: {
+    src: "/images/scenes/tutor-session.webp",
+    alt: "A tutor and her student look at a tablet together at a café table, smiling.",
+  },
 } as const;
 
 export type SceneKey = keyof typeof scenes;

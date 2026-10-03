@@ -54,6 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...topicPages.map((topic) => page(`/interpreting/${topic.slug}`, 0.7)),
     page(BLOG_PATH, 0.6, new Date(`${latestPost}T00:00:00Z`)),
     ...posts.map((post) => page(blogPostPath(post.slug), 0.6, new Date(`${post.updated}T00:00:00Z`))),
+    page("/sell-practice-courses", 0.7),
     page("/marketplace", 0.7),
     page("/marketplace/create", 0.5),
     ...courses.map((course) => page(`/marketplace/${course.slug}`, 0.6, toDate(course.updatedAt, now))),

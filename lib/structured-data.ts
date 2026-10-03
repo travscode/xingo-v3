@@ -198,3 +198,45 @@ export function servicePageJsonLd(page: {
     },
   };
 }
+
+/**
+ * A plain marketing page (e.g. the marketplace landing): WebPage, optionally with
+ * an ordered list of steps as its main entity. No offers, prices or ratings.
+ */
+export function webPageJsonLd(page: {
+  path: string;
+  name: string;
+  description: string;
+  /** What the page is about, e.g. "Creating and selling practice courses". */
+  about?: string;
+  /** Ordered steps shown on the page (rendered as an ItemList). */
+  steps?: Array<{ name: string; description: string }>;
+}): JsonLdObject {
+  const url = absoluteUrl(page.path);
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${url}#webpage`,
+    url,
+    name: page.name,
+    description: page.description,
+    inLanguage: "en-AU",
+    isPartOf: { "@id": WEBSITE_ID },
+    publisher: { "@id": ORGANIZATION_ID },
+    ...(page.about ? { about: { "@type": "Thing", name: page.about } } : {}),
+    ...(page.steps?.length
+      ? {
+          mainEntity: {
+            "@type": "ItemList",
+            itemListOrder: "https://schema.org/ItemListOrderAscending",
+            itemListElement: page.steps.map((step, index) => ({
+              "@type": "ListItem",
+              position: index + 1,
+              name: step.name,
+              description: step.description,
+            })),
+          },
+        }
+      : {}),
+  };
+}
