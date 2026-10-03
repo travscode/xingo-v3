@@ -469,3 +469,14 @@ body {
   color: var(--color-ink);
   text-decoration: underline;
 }
+
+/* ---- Sign-in / sign-up loading (app/(auth)) ------------------------------------
+ * Clerk reports "loaded" slightly before its form has rendered; keep our loader in
+ * the same grid cell until the form (or the failure message) is actually there. */
+.auth-slot > * {
+  grid-area: 1 / 1;
+}
+.auth-slot:has(.cl-rootBox) .auth-loading,
+.auth-slot:has([role="alert"]) .auth-loading {
+  display: none;
+}

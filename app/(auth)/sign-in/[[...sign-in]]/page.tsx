@@ -1,4 +1,4 @@
-import { ClerkFailed, ClerkLoaded, ClerkLoading, SignIn } from "@clerk/nextjs";
+import { ClerkFailed, ClerkLoaded, SignIn } from "@clerk/nextjs";
 import { AuthFormFailed, AuthFormLoading } from "@/components/auth/auth-form-states";
 import type { Metadata } from "next";
 
@@ -27,10 +27,11 @@ export default async function SignInPage({
     <main className="mx-auto flex w-full max-w-md flex-col items-center px-4 py-12 sm:py-16">
       <h1 className="text-center text-3xl font-bold tracking-[-0.03em]">Log in to XINGO</h1>
       <p className="mt-2 text-center text-[15px] text-gray-500">Pick up where you left off.</p>
-      <div className="mt-8 flex w-full justify-center">
-        <ClerkLoading>
+      {/* The loader stays until Clerk's form has actually rendered (see .auth-slot in globals.css). */}
+      <div className="auth-slot mt-8 grid w-full justify-items-center">
+        <div className="auth-loading [grid-area:1/1]">
           <AuthFormLoading label="Loading secure log-in…" />
-        </ClerkLoading>
+        </div>
         <ClerkLoaded>
           <SignIn
             path="/sign-in"

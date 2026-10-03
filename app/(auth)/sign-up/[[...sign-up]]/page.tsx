@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClerkFailed, ClerkLoaded, ClerkLoading, SignUp } from "@clerk/nextjs";
+import { ClerkFailed, ClerkLoaded, SignUp } from "@clerk/nextjs";
 import { AuthFormFailed, AuthFormLoading } from "@/components/auth/auth-form-states";
 import type { Metadata } from "next";
 
@@ -28,10 +28,11 @@ export default async function SignUpPage({
     <main className="mx-auto flex w-full max-w-md flex-col items-center px-4 py-12 sm:py-16">
       <h1 className="text-center text-3xl font-bold tracking-[-0.03em]">Create your XINGO account</h1>
       <p className="mt-2 text-center text-[15px] text-gray-500">Free practice minutes every month. No card needed.</p>
-      <div className="mt-8 flex w-full justify-center">
-        <ClerkLoading>
+      {/* The loader stays until Clerk's form has actually rendered (see .auth-slot in globals.css). */}
+      <div className="auth-slot mt-8 grid w-full justify-items-center">
+        <div className="auth-loading [grid-area:1/1]">
           <AuthFormLoading label="Loading secure sign-up…" />
-        </ClerkLoading>
+        </div>
         <ClerkLoaded>
           <SignUp
             path="/sign-up"
