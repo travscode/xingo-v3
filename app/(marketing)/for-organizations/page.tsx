@@ -3,11 +3,14 @@ import { MarketingIntro } from "@/components/marketing/cta-band";
 import { SALES_EMAIL } from "@/components/marketing/catalogue";
 import { Button } from "@/components/ui/button";
 import { CCL_MAX_SCORE } from "@/lib/scoring";
+import { pageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
-  title: "For teams",
-  description: "Cohort access to XINGO for interpreter training providers and language service teams.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "For Training Providers and Interpreting Teams",
+  description:
+    "Cohort access to XINGO for interpreter training providers, NAATI test prep courses and language service providers. Spoken practice with scored feedback.",
+  path: "/for-organizations",
+});
 
 const useCases = [
   {

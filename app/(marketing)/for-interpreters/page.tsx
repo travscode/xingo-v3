@@ -4,11 +4,14 @@ import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { practiceModules } from "@/components/marketing/catalogue";
 import { Button } from "@/components/ui/button";
 import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
+import { pageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
-  title: "For interpreters",
-  description: "Practise medical, legal, immigration and community interpreting out loud, and track your scores.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "For Interpreters — Stay Sharp Between Assignments",
+  description:
+    "Keep your interpreting sharp between assignments: practise medical, legal, immigration and community dialogues out loud with AI speakers and track your scores.",
+  path: "/for-interpreters",
+});
 
 const reasons = [
   {

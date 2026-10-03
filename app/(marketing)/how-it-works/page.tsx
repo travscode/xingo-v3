@@ -7,12 +7,14 @@ import { RoomMock, ScoreMock } from "@/components/marketing/practice-mock";
 import { Button } from "@/components/ui/button";
 import { CCL_MAX_SCORE, assessmentDimensions } from "@/lib/scoring";
 import { MAX_ATTEMPT_MINUTES } from "@/lib/plans";
+import { pageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
-  title: "How it works",
+export const metadata: Metadata = pageMetadata({
+  title: "How It Works — AI Role-Play Practice, Scored",
   description:
-    "Pick a scenario, interpret between two AI speakers out loud, and get a score with feedback.",
-};
+    "Choose your test and language, interpret or role-play out loud with AI speakers, then get a score against the test's criteria and specific feedback.",
+  path: "/how-it-works",
+});
 
 const details = [
   {

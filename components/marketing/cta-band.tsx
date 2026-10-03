@@ -42,14 +42,18 @@ export function MarketingIntro({
   title,
   description,
   children,
+  breadcrumbs,
 }: {
   eyebrow: string;
   title: ReactNode;
   description?: ReactNode;
   children?: ReactNode;
+  /** Optional <Breadcrumbs className="mb-6 sm:mb-8" /> shown above the eyebrow. */
+  breadcrumbs?: ReactNode;
 }) {
   return (
-    <section className="pt-8 sm:pt-14">
+    <section className={breadcrumbs ? "pt-6 sm:pt-8" : "pt-8 sm:pt-14"}>
+      {breadcrumbs}
       <p className="eyebrow">{eyebrow}</p>
       <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-[-0.035em] text-balance sm:text-6xl">
         {title}

@@ -3,12 +3,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Check, Minus } from "lucide-react";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
+import { Breadcrumbs } from "@/components/marketing/seo/breadcrumbs";
 import { FaqSection } from "@/components/marketing/seo/faq-section";
+import { GuideLinks } from "@/components/marketing/seo/guide-links";
 import { HowSteps } from "@/components/marketing/seo/how-steps";
 import { ScenarioList } from "@/components/marketing/seo/scenario-list";
 import { Button } from "@/components/ui/button";
 import { examPages, getExamPage } from "@/lib/exam-pages";
 import { isSpeakingGoal } from "@/lib/goals";
+import { pageMetadata } from "@/lib/seo-metadata";
 import { signUpHref } from "@/lib/seo-pages";
 
 export function generateStaticParams() {
@@ -21,12 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!page) return {};
 
-  return {
-    title: page.title,
-    description: page.metaDescription,
-    alternates: { canonical: `/exams/${page.slug}` },
-    openGraph: { title: page.title, description: page.metaDescription, url: `/exams/${page.slug}` },
-  };
+  return pageMetadata({ title: page.title, description: page.metaDescription, path: `/exams/${page.slug}` });
 }
 
 export default async function ExamPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -40,7 +38,21 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 pb-8 sm:gap-20 sm:px-6">
-      <MarketingIntro eyebrow={`${page.shortName} · ${page.region}`} title={page.headline} description={page.intro}>
+      <MarketingIntro
+        breadcrumbs={
+          <Breadcrumbs
+            className="mb-6 sm:mb-8"
+            crumbs={[
+              { name: "Home", path: "/" },
+              { name: "Exams", path: "/exams" },
+              { name: page.shortName, path: `/exams/${page.slug}` },
+            ]}
+          />
+        }
+        eyebrow={`${page.shortName} · ${page.region}`}
+        title={page.headline}
+        description={page.intro}
+      >
         <Button asChild size="lg">
           <Link href={href}>
             Try one free <ArrowRight className="h-4 w-4" />
@@ -111,6 +123,7 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
 
       <HowSteps variant={isSpeakingGoal(page.goal) ? "roleplay" : "interpreting"} />
       <FaqSection faqs={page.faqs} />
+      <GuideLinks pagePath={`/exams/${page.slug}`} />
 
       <CtaBand
         title={`Practise for the ${page.shortName} today.`}

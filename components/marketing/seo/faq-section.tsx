@@ -1,15 +1,8 @@
+import { faqJsonLd } from "@/lib/structured-data";
+import { JsonLd } from "./json-ld";
+
 /** FAQ list plus schema.org FAQPage structured data for search results. */
 export function FaqSection({ faqs, title = "Questions" }: { faqs: Array<{ q: string; a: string }>; title?: string }) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.q,
-      acceptedAnswer: { "@type": "Answer", text: faq.a },
-    })),
-  };
-
   return (
     <section>
       <h2 className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">{title}</h2>
@@ -24,7 +17,7 @@ export function FaqSection({ faqs, title = "Questions" }: { faqs: Array<{ q: str
           </details>
         ))}
       </div>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={faqJsonLd(faqs)} />
     </section>
   );
 }

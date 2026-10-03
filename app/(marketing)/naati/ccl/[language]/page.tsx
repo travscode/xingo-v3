@@ -3,12 +3,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
+import { Breadcrumbs } from "@/components/marketing/seo/breadcrumbs";
 import { FaqSection } from "@/components/marketing/seo/faq-section";
+import { GuideLinks } from "@/components/marketing/seo/guide-links";
 import { HowSteps } from "@/components/marketing/seo/how-steps";
 import { ScenarioList } from "@/components/marketing/seo/scenario-list";
 import { Button } from "@/components/ui/button";
 import { packList, plans } from "@/lib/plans";
 import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "@/lib/scoring";
+import { pageMetadata } from "@/lib/seo-metadata";
 import { cclLanguagePages, flagFor, getCclLanguagePage, signUpHref } from "@/lib/seo-pages";
 
 export function generateStaticParams() {
@@ -21,16 +24,11 @@ export async function generateMetadata({ params }: { params: Promise<{ language:
 
   if (!page) return {};
 
-  return {
-    title: `NAATI CCL ${page.name} Practice — Spoken Mock Dialogues`,
-    description: `Practise NAATI CCL ${page.name} dialogues out loud with AI speakers. English ⇄ ${page.name}, scored out of ${CCL_MAX_SCORE} with feedback on accuracy, language quality and delivery. Try a dialogue free.`,
-    alternates: { canonical: `/naati/ccl/${page.slug}` },
-    openGraph: {
-      title: `NAATI CCL ${page.name} practice`,
-      description: `Spoken English ⇄ ${page.name} CCL-style dialogues, scored out of ${CCL_MAX_SCORE}.`,
-      url: `/naati/ccl/${page.slug}`,
-    },
-  };
+  return pageMetadata({
+    title: `NAATI CCL ${page.name} Practice — Mock Dialogues`,
+    description: `Practise NAATI CCL ${page.name} dialogues out loud with two AI speakers, English ⇄ ${page.name}. Scored out of ${CCL_MAX_SCORE} with specific feedback. Try one free.`,
+    path: `/naati/ccl/${page.slug}`,
+  });
 }
 
 const cclScenarios = [
@@ -54,6 +52,16 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 pb-8 sm:gap-20 sm:px-6">
       <MarketingIntro
+        breadcrumbs={
+          <Breadcrumbs
+            className="mb-6 sm:mb-8"
+            crumbs={[
+              { name: "Home", path: "/" },
+              { name: "NAATI CCL", path: "/naati/ccl" },
+              { name: page.name, path: `/naati/ccl/${page.slug}` },
+            ]}
+          />
+        }
         eyebrow={`NAATI CCL · English ⇄ ${page.name}`}
         title={
           <>
@@ -143,6 +151,18 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
             a: "Yes — any laptop or headset mic works. Headphones are strongly recommended so the AI doesn't hear itself.",
           },
         ]}
+      />
+
+      <GuideLinks
+        title="CCL guides"
+        extra={[
+          {
+            href: "/naati/ccl/vocabulary",
+            title: "CCL vocabulary by domain",
+            description: `English terms for all 12 CCL domains — add the ${page.name} equivalents as you practise.`,
+          },
+        ]}
+        slugs={["naati-ccl-test-format-and-marking", "naati-ccl-repeats-and-self-correction", "naati-ccl-note-taking"]}
       />
 
       <CtaBand

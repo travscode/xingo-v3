@@ -4,13 +4,14 @@ import { ArrowRight } from "lucide-react";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { CCL_MAX_SCORE } from "@/lib/scoring";
 import { cclLanguagePages, topicPages } from "@/lib/seo-pages";
+import { pageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
-  title: "Interpreting Practice for Australia — Medical, Legal, NDIS, Phone & NAATI",
+export const metadata: Metadata = pageMetadata({
+  title: "Interpreting Practice — NAATI, Medical, Legal & NDIS",
   description:
     "AI role-play practice for interpreters in Australia: NAATI CCL and CPI preparation, medical, legal, NDIS and telephone interpreting. Speak out loud, get scored.",
-  alternates: { canonical: "/interpreting" },
-};
+  path: "/interpreting",
+});
 
 export default function InterpretingHubPage() {
   const cards = [

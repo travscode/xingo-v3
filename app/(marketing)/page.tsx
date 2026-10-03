@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { CtaBand } from "@/components/marketing/cta-band";
@@ -8,9 +9,20 @@ import { RoomMock, ScoreMock } from "@/components/marketing/practice-mock";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
 import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
+import { JsonLd } from "@/components/marketing/seo/json-ld";
 import { examPages } from "@/lib/exam-pages";
 import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "@/lib/scoring";
 import { packList, plans } from "@/lib/plans";
+import { pageMetadata } from "@/lib/seo-metadata";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/structured-data";
+
+export const metadata: Metadata = pageMetadata({
+  title: "XINGO — Practise NAATI CCL, OET and IELTS Speaking Out Loud",
+  description:
+    "Spoken AI role-play practice for NAATI CCL and CPI, OET, IELTS, AMC and OSCE. Talk out loud, get scored against the test's criteria. Free minutes monthly.",
+  path: "/",
+  absoluteTitle: true,
+});
 
 const cheapestPack = packList[0];
 
@@ -117,12 +129,20 @@ export default function HomePage() {
             Practise short community dialogues in the CCL format, in your language pair. Every attempt is scored out
             of {CCL_MAX_SCORE}, with {CCL_PASS_SCORE} as the pass mark, so you can see where you stand.
           </p>
-          <Button asChild className="mt-8">
-            <Link href="/naati/ccl">
-              Explore CCL practice
-              <ArrowRight size={16} />
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+            <Button asChild>
+              <Link href="/naati/ccl">
+                Explore CCL practice
+                <ArrowRight size={16} />
+              </Link>
+            </Button>
+            <Link
+              href="/blog/naati-ccl-test-format-and-marking"
+              className="text-sm font-semibold underline underline-offset-2 hover:text-gray-500"
+            >
+              How the CCL is marked
             </Link>
-          </Button>
+          </div>
           <p className="mt-6 text-xs text-gray-500">XINGO is independent and not affiliated with NAATI.</p>
         </div>
         <ScoreMock scale="ccl" className="mx-auto w-full max-w-sm" />
@@ -200,6 +220,7 @@ export default function HomePage() {
           </ul>
         }
       />
+      <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
     </main>
   );
 }

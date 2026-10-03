@@ -7,11 +7,14 @@ import { SALES_EMAIL, SUPPORT_EMAIL } from "@/components/marketing/catalogue";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
 import { CURRENCY_LABEL, MAX_ATTEMPT_MINUTES, packList, plans } from "@/lib/plans";
+import { pageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
-  title: "Pricing",
-  description: "Free practice every month, a Pro plan, or one-off minute packs. Prices in AUD.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Pricing — Free Minutes, Pro Plan and Minute Packs",
+  description:
+    "Free practice minutes every month, a Pro plan with every course, or one-off minute packs that never expire. Scoring and feedback included. Prices in AUD.",
+  path: "/pricing",
+});
 
 const freeFeatures = [
   `${plans.free.monthlyMinutes} practice minutes every month`,

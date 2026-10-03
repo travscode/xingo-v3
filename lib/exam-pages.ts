@@ -40,9 +40,9 @@ export const examPages: ExamPage[] = [
     region: "Australia",
     moduleId: "oet-speaking-nursing",
     goal: "oet",
-    title: "OET Speaking Practice — Nursing & Medicine Role-Plays with AI",
+    title: "OET Speaking Practice — Nursing & Medicine Role-Plays",
     metaDescription:
-      "Practise OET Speaking role-plays out loud with an AI patient. Nursing and medicine task cards, 5-minute timer, feedback on OET's clinical communication and language criteria. AHPRA needs 360.",
+      "Practise OET Speaking role-plays out loud with an AI patient. Nursing and medicine cards, a 5-minute timer and feedback on the clinical communication criteria.",
     headline: "Practise OET Speaking role-plays with a patient who talks back.",
     intro:
       "Read your task card, then run a timed five-minute role-play with an AI patient or relative who is anxious, reluctant or confused — just like the interlocutor. Get feedback on the criteria assessors actually use.",
@@ -97,9 +97,9 @@ export const examPages: ExamPage[] = [
     region: "Australia",
     moduleId: "ielts-speaking",
     goal: "ielts",
-    title: "IELTS Speaking Mock Test Online — AI Examiner with Estimated Band",
+    title: "IELTS Speaking Mock Test Online with an AI Examiner",
     metaDescription:
-      "Take a full IELTS Speaking mock test out loud with an AI examiner: Part 1 interview, Part 2 cue card, Part 3 discussion. Timed like the real test, with an estimated band and feedback.",
+      "A full IELTS Speaking mock test with an AI examiner: Part 1, the Part 2 cue card and Part 3, on real timings. Get an estimated band and specific feedback.",
     headline: "A full IELTS Speaking mock test, any time you need one.",
     intro:
       "An AI examiner runs all three parts on the real timings and never helps you out — then you get an estimated band and specific feedback on fluency, vocabulary and grammar.",
@@ -148,9 +148,9 @@ export const examPages: ExamPage[] = [
     region: "Australia",
     moduleId: "amc-clinical-exam",
     goal: "amc",
-    title: "AMC Clinical Exam Practice — 8-Minute Stations with an AI Patient",
+    title: "AMC Clinical Exam Practice — 8-Minute AI Stations",
     metaDescription:
-      "Practise AMC clinical exam stations out loud: focused histories, counselling, breaking bad news and explaining management with an AI simulated patient. 8-minute timer, examiner-style feedback.",
+      "Practise AMC clinical stations out loud with an AI patient: histories, counselling and breaking bad news on an 8-minute timer, with examiner-style feedback.",
     headline: "Rehearse AMC stations with a patient who only tells you what you ask.",
     intro:
       "Read the stem, then run an eight-minute station with an AI simulated patient or relative who reveals key history only when asked, questions your jargon and reacts like a real person.",
@@ -198,9 +198,9 @@ export const examPages: ExamPage[] = [
     region: "Australia",
     moduleId: "nmba-osce-nursing",
     goal: "nmba_osce",
-    title: "NMBA OSCE Practice for Overseas Nurses — ISBAR & Communication Stations",
+    title: "NMBA OSCE Practice — ISBAR & Communication Stations",
     metaDescription:
-      "Practise the communication side of the NMBA RN OSCE: ISBAR calls to a doctor, bedside handover, medication education, consent and angry relatives. 8-minute stations with an AI patient or colleague.",
+      "Practise the communication side of the NMBA OSCE for overseas nurses: ISBAR calls, handover, medication education, consent and upset relatives.",
     headline: "Practise the talking parts of the OSCE until they're second nature.",
     intro:
       "Escalate a deteriorating patient to a rushed doctor, hand over to a colleague, educate a nervous patient and calm an angry relative — in timed eight-minute stations with feedback.",
@@ -248,9 +248,9 @@ export const examPages: ExamPage[] = [
     region: "United States",
     moduleId: "us-medical-interpreter-oral",
     goal: "us_medical_oral",
-    title: "CMI Oral Exam Practice — Consecutive Medical Role-Plays with AI",
+    title: "CMI Oral Exam Practice — Consecutive Role-Plays",
     metaDescription:
-      "Practise for the NBCMI CMI oral exam: short, fast consecutive medical role-plays in both directions across specialties, with feedback on accuracy, terminology and completeness.",
+      "Practise for the NBCMI CMI oral exam: short consecutive medical role-plays in both directions across specialties, with feedback on accuracy and terminology.",
     headline: "Drill the CMI role-play section with short, fast medical exchanges.",
     intro:
       "The CMI oral exam's role-plays are brief clinician–patient exchanges across specialties, interpreted consecutively both ways. Practise that rhythm with an AI doctor and patient, then see exactly what you dropped.",
@@ -294,9 +294,9 @@ export const examPages: ExamPage[] = [
     region: "United States",
     moduleId: "us-medical-interpreter-oral",
     goal: "us_medical_oral",
-    title: "CCHI CHI Oral Exam Practice — Consecutive Healthcare Interpreting with AI",
+    title: "CCHI CHI Oral Exam Practice — Consecutive Role-Plays",
     metaDescription:
-      "Practise the consecutive dialogue section of the CCHI CHI oral exam with AI provider–patient role-plays: short turns both ways, terminology, register and accuracy feedback.",
+      "Practise the consecutive section of the CCHI CHI oral exam with AI provider–patient role-plays: short turns both ways, with feedback on accuracy and register.",
     headline: "Practise the biggest section of the CHI exam: consecutive dialogues.",
     intro:
       "Consecutive dialogue vignettes make up most of the CHI performance exam. Practise short provider–patient turns in both directions and get feedback on lexical accuracy, grammar and quality of speech.",

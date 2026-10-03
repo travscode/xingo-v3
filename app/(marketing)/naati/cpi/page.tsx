@@ -2,18 +2,21 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
+import { Breadcrumbs } from "@/components/marketing/seo/breadcrumbs";
 import { FaqSection } from "@/components/marketing/seo/faq-section";
+import { GuideLinks } from "@/components/marketing/seo/guide-links";
 import { HowSteps } from "@/components/marketing/seo/how-steps";
 import { CheckList, ScenarioList } from "@/components/marketing/seo/scenario-list";
 import { Button } from "@/components/ui/button";
+import { pageMetadata } from "@/lib/seo-metadata";
 import { signUpHref } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "NAATI CPI Test Practice — Live Role-Play Interpreting with AI",
+export const metadata: Metadata = pageMetadata({
+  title: "NAATI CPI Test Practice — Live Role-Plays with AI",
   description:
-    "Prepare for the NAATI Certified Provisional Interpreter (CPI) test with spoken role-plays: face-to-face style and telephone dialogues in community, health and legal settings. Instant feedback.",
-  alternates: { canonical: "/naati/cpi" },
-};
+    "Prepare for the NAATI CPI test with spoken role-plays: face-to-face and phone dialogues in community, health and legal settings, with scored feedback.",
+  path: "/naati/cpi",
+});
 
 const href = signUpHref("naati_cpi");
 
@@ -21,6 +24,16 @@ export default function NaatiCpiPage() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 pb-8 sm:gap-20 sm:px-6">
       <MarketingIntro
+        breadcrumbs={
+          <Breadcrumbs
+            className="mb-6 sm:mb-8"
+            crumbs={[
+              { name: "Home", path: "/" },
+              { name: "Interpreting", path: "/interpreting" },
+              { name: "NAATI CPI", path: "/naati/cpi" },
+            ]}
+          />
+        }
         eyebrow="NAATI CPI preparation"
         title="Rehearse the CPI role-plays until they feel routine."
         description="The Certified Provisional Interpreter test is a set of live role-plays: an English speaker, a speaker of your language, and you in the middle. XINGO gives you that format on demand — two AI speakers, consecutive interpreting, scored feedback."
@@ -75,6 +88,7 @@ export default function NaatiCpiPage() {
           { q: "How long is a session?", a: "Most dialogues take 5–12 minutes. You're only charged practice minutes while a session is live." },
         ]}
       />
+      <GuideLinks slugs={["naati-cpi-test-preparation", "telephone-interpreting-tips", "naati-ccl-note-taking"]} />
       <CtaBand title="Try a CPI-style dialogue free." description="Free practice minutes every month. No card needed." href={href} label="Start free" />
     </main>
   );

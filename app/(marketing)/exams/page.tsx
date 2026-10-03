@@ -4,13 +4,14 @@ import { ArrowRight } from "lucide-react";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { CCL_MAX_SCORE } from "@/lib/scoring";
 import { examPages } from "@/lib/exam-pages";
+import { pageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
-  title: "Speaking & Interpreting Exam Practice — NAATI, OET, IELTS, AMC, OSCE, CMI",
+export const metadata: Metadata = pageMetadata({
+  title: "Exam Practice — NAATI, OET, IELTS, AMC & OSCE",
   description:
-    "Spoken role-play practice for NAATI CCL and CPI, OET Speaking, IELTS Speaking, the AMC clinical exam, the NMBA OSCE and US medical interpreter oral exams (CMI, CHI).",
-  alternates: { canonical: "/exams" },
-};
+    "Spoken role-play practice for NAATI CCL and CPI, OET and IELTS Speaking, the AMC clinical exam, the NMBA OSCE and US medical interpreter oral exams.",
+  path: "/exams",
+});
 
 export default function ExamsHubPage() {
   const cards = [

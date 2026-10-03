@@ -302,7 +302,7 @@ export const topicPages: TopicPage[] = [
     keyword: "medical interpreting practice",
     title: "Medical Interpreting Practice — Role-Play with AI",
     metaDescription:
-      "Practise medical and healthcare interpreting out loud: emergency triage, discharge planning, pharmacy and GP calls with AI doctors, nurses and patients. Instant feedback.",
+      "Practise medical interpreting out loud: emergency triage, discharge planning, pharmacy and GP calls with AI clinicians and patients, then get scored feedback.",
     eyebrow: "Medical interpreting",
     headline: "Practise healthcare interpreting before the real appointment.",
     intro:
@@ -335,9 +335,9 @@ export const topicPages: TopicPage[] = [
   {
     slug: "ndis-interpreting",
     keyword: "NDIS interpreter practice",
-    title: "NDIS Interpreting Practice — Planning Meetings & Reviews",
+    title: "NDIS Interpreting Practice — Planning Meetings",
     metaDescription:
-      "Practise interpreting NDIS planning meetings, plan reassessments and support coordinator visits with AI role-plays. Learn NDIS terminology and get instant feedback.",
+      "Practise interpreting NDIS planning meetings, plan reassessments and support coordinator visits with AI role-plays. Build NDIS terminology, get scored.",
     eyebrow: "NDIS interpreting",
     headline: "Get confident interpreting NDIS meetings.",
     intro:
@@ -368,9 +368,9 @@ export const topicPages: TopicPage[] = [
   {
     slug: "telephone-interpreting-practice",
     keyword: "telephone interpreting practice",
-    title: "Telephone Interpreting Practice — Audio-Only Role-Plays",
+    title: "Telephone Interpreting Practice — Audio-Only Calls",
     metaDescription:
-      "Practise telephone and remote interpreting: Centrelink payment enquiries, GP calls and energy hardship calls with AI callers. No body language — just like the real thing.",
+      "Practise telephone interpreting with AI callers: Centrelink payment enquiries, GP results calls and energy hardship calls. Audio only, like real phone work.",
     eyebrow: "Telephone interpreting",
     headline: "Practise interpreting when all you have is the voice.",
     intro:
@@ -401,9 +401,9 @@ export const topicPages: TopicPage[] = [
   {
     slug: "legal-interpreting-practice",
     keyword: "legal interpreting practice",
-    title: "Legal & Court Interpreting Practice — Tribunal and Court Role-Plays",
+    title: "Legal & Court Interpreting Practice — AI Role-Plays",
     metaDescription:
-      "Practise legal interpreting: bail hearings, Local Court mentions, tribunal visa reviews and police statements with AI role-plays. Formal register, first-person, scored feedback.",
+      "Practise legal interpreting with AI role-plays: bail hearings, Local Court mentions, tribunal visa reviews and police statements. First person, scored feedback.",
     eyebrow: "Legal interpreting",
     headline: "Rehearse court and tribunal interpreting before it counts.",
     intro:
@@ -427,9 +427,9 @@ export const topicPages: TopicPage[] = [
   {
     slug: "diploma-of-interpreting-practice",
     keyword: "Diploma of Interpreting practice",
-    title: "Diploma of Interpreting Practice — Extra Role-Plays Between Classes",
+    title: "Diploma of Interpreting Practice — Extra Role-Plays",
     metaDescription:
-      "Studying the Diploma of Interpreting? Get extra role-play practice between classes: health, legal, community and phone dialogues with instant, examiner-style feedback.",
+      "Studying the Diploma of Interpreting? Get extra role-play practice between classes — health, legal, community and phone dialogues — with scored feedback.",
     eyebrow: "For interpreting students",
     headline: "More role-play practice than class time allows.",
     intro:

@@ -21,7 +21,13 @@ Traffic rose after the NAATI CCL page went up. Competitors already rank for gene
 
 Every page: one `h1`, unique title/description, canonical URL, FAQ with `FAQPage` JSON-LD, links to sibling pages, and a sign-up CTA that lands in the welcome flow with **goal and language preselected** (`signUpHref`).
 
-Technical: `app/sitemap.ts`, `app/robots.ts` (app routes disallowed), `metadataBase` + Open Graph in `app/layout.tsx`.
+| `/naati/ccl/vocabulary` | "NAATI CCL vocabulary", "CCL health vocabulary" | English word lists for the 12 CCL domains (`lib/ccl-vocabulary.ts`), linked to CCL course dialogues |
+| `/blog` + `/blog/[slug]` | long-tail informational queries (CCL format/marking, 5 points, repeats, note-taking, topics; CPI; OET; IELTS Part 2; AMC; OSCE/ISBAR; CMI vs CHI; phone interpreting) | 14 typed articles in `lib/blog/posts/*.ts`; each ends in a CTA to the matching course page |
+
+Technical: `app/sitemap.ts` (incl. blog dates and published marketplace courses), `app/robots.ts` (app routes, auth and creator tools disallowed), `metadataBase` + default OG image (`app/opengraph-image.tsx`). Every public page builds its metadata with `pageMetadata()` (`lib/seo-metadata.ts`) and its JSON-LD with `lib/structured-data.ts`. Keyword research: [research/seo-keywords-2026-10.md](research/seo-keywords-2026-10.md). Audit: [seo-audit-2026-10.md](seo-audit-2026-10.md).
+
+### Adding a blog post
+Create `lib/blog/posts/<slug>.ts` exporting `post: BlogPost`, register it in `lib/blog/index.ts`. `lib/blog/blog.test.ts` checks length (800–1500 words), meta lengths, internal links, related slugs and the "course, not module" rule. Cite the official source for every exam fact and hedge anything that changes.
 
 ## After deploying
 1. Google Search Console → add `xingo.ai` (DNS verification) → submit `https://www.xingo.ai/sitemap.xml`.
@@ -37,4 +43,4 @@ Technical: `app/sitemap.ts`, `app/robots.ts` (app routes disallowed), `metadataB
 ## Next ideas (not built)
 - More OET professions (pharmacy, physiotherapy, dentistry…), court consecutive, UK DPSI.
 - Per-language CCL dialogue variants (names, places) and per-language sample vocab lists.
-- Blog-style guides: "CCL marking criteria explained", "How to prepare for the CCL in 4 weeks".
+- More guides from the research backlog: CCL online test-day checklist, CCL results/review/validity.
