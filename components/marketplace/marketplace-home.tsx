@@ -16,13 +16,14 @@ import { CourseCard } from "@/components/marketplace/course-card";
 import { CreatorProfileEditor } from "@/components/marketplace/creator-profile-editor";
 import { creatorHref, VerifiedBadge } from "@/components/marketplace/verified-badge";
 
-type Tab = "discover" | "added" | "yours";
+type Tab = "discover" | "added" | "yours" | "orgs";
 type KindFilter = "all" | "roleplay" | "interpreting";
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: "discover", label: "Discover" },
   { id: "added", label: "Added by you" },
   { id: "yours", label: "Created by you" },
+  { id: "orgs", label: "Organisations" },
 ];
 
 /** The one invitation to create, shown above the community courses. */
@@ -340,7 +341,7 @@ function Added() {
   );
 }
 
-/** Organisations you're on the team of, plus the way to start one. Lives in "Created by you". */
+/** Organisations you're on the team of, plus the way to start one (the "Organisations" tab). */
 function YourOrganisations() {
   const orgs = useQuery(api.orgs.mine, {});
   if (orgs === undefined) return <Skeleton className="h-24" />;
@@ -412,7 +413,6 @@ function Yours() {
             </Button>
           }
         />
-        <YourOrganisations />
       </div>
     );
   }
@@ -474,7 +474,6 @@ function Yours() {
           </Link>
         ))}
       </div>
-      <YourOrganisations />
     </div>
   );
 }
@@ -501,7 +500,7 @@ export function MarketplaceHome() {
         }
       />
       {isAuthenticated ? (
-        <div className="flex gap-1 border-b border-gray-200" role="tablist" aria-label="Marketplace">
+        <div className="flex gap-1 overflow-x-auto border-b border-gray-200" role="tablist" aria-label="Marketplace">
           {tabs.map((item) => (
             <button
               key={item.id}
@@ -510,7 +509,8 @@ export function MarketplaceHome() {
               aria-selected={tab === item.id}
               onClick={() => router.replace(item.id === "discover" ? pathname : `${pathname}?tab=${item.id}`, { scroll: false })}
               className={cn(
-                "-mb-px border-b-2 px-3 py-2.5 text-sm font-semibold",
+                "-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-semibold",
+                item.id === "orgs" && "ml-auto",
                 tab === item.id ? "border-ink text-ink" : "border-transparent text-gray-500 hover:text-ink",
               )}
             >
@@ -519,7 +519,15 @@ export function MarketplaceHome() {
           ))}
         </div>
       ) : null}
-      {tab === "discover" ? <Discover signedIn={isAuthenticated} /> : tab === "added" ? <Added /> : <Yours />}
+      {tab === "discover" ? (
+        <Discover signedIn={isAuthenticated} />
+      ) : tab === "added" ? (
+        <Added />
+      ) : tab === "orgs" ? (
+        <YourOrganisations />
+      ) : (
+        <Yours />
+      )}
     </div>
   );
 }

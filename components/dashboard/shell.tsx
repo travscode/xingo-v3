@@ -24,6 +24,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const me = useQuery(api.users.me, {});
+  const orgs = useQuery(api.orgs.mine, {});
   const [mobileOpen, setMobileOpen] = useState(false);
   const [drawerPath, setDrawerPath] = useState(pathname);
 
@@ -56,8 +57,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       {dashboardNavigation.map((item) => {
         const active = isNavItemActive(item, pathname);
         const Icon = item.icon;
-
-        return (
+        const link = (
           <Link
             key={item.href}
             href={item.href}
@@ -70,6 +70,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <Icon className="h-[18px] w-[18px]" />
             {item.label}
           </Link>
+        );
+
+        return item.href === "/marketplace" && active ? (
+          <div key={item.href}>
+            {link}
+            <MarketplaceSubmenu pathname={pathname} orgs={orgs ?? []} />
+          </div>
+        ) : (
+          link
         );
       })}
       {isAdmin ? (
@@ -150,6 +159,42 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       </div>
       <TermsGate />
     </LanguagePairProvider>
+  );
+}
+
+/** Under Marketplace while it's open: Browse, then the user's organisations (or a way to start one). */
+function MarketplaceSubmenu({ pathname, orgs }: { pathname: string; orgs: Array<{ handle: string; displayName: string }> }) {
+  const items = [
+    { href: "/marketplace", label: "Browse", active: !pathname.startsWith("/marketplace/org/") },
+    ...(orgs.length > 0
+      ? orgs.map((org) => ({
+          href: `/marketplace/org/${org.handle}`,
+          label: org.displayName,
+          active: pathname === `/marketplace/org/${org.handle}` || pathname.startsWith(`/marketplace/org/${org.handle}/`),
+        }))
+      : [{ href: "/marketplace/org/new", label: "Start an organisation", active: pathname === "/marketplace/org/new" }]),
+  ];
+
+  return (
+    <div className="ml-[21px] mt-1 flex flex-col gap-0.5 border-l border-gray-200 pl-3">
+      {items.map((item, index) => (
+        <div key={item.href}>
+          {index === 1 && orgs.length > 0 ? (
+            <p className="px-3 pb-0.5 pt-2 text-xs font-semibold text-gray-500">Organisations</p>
+          ) : null}
+          <Link
+            href={item.href}
+            aria-current={item.active ? "page" : undefined}
+            className={cn(
+              "block truncate rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
+              item.active ? "bg-gray-100 text-ink" : "text-gray-500 hover:bg-gray-100 hover:text-ink",
+            )}
+          >
+            {item.label}
+          </Link>
+        </div>
+      ))}
+    </div>
   );
 }
 
