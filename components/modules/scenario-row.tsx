@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Check, ChevronRight, Lock } from "lucide-react";
 import { displayMaxScore, toDisplayScore } from "@/lib/scoring";
-import { Badge } from "@/components/ui/primitives";
+import { FreeBadge } from "@/components/ui/badges";
 
 export type ScenarioRowData = {
   id: string;
@@ -49,7 +49,7 @@ export function ScenarioRow({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-bold">{scenario.title}</p>
-          {showFreeBadge && scenario.isFreePreview ? <Badge tone="accent">Free</Badge> : null}
+          {showFreeBadge && scenario.isFreePreview ? <FreeBadge /> : null}
         </div>
         <p className="mt-0.5 line-clamp-1 text-sm text-gray-500">
           {scenario.participants.map((p) => p.role).join(" & ")} · <span className="capitalize">{scenario.difficultyLevel}</span>

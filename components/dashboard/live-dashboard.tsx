@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useQuery } from "convex/react";
-import { ArrowRight, Check, Play } from "lucide-react";
+import { ArrowRight, CalendarDays, Check, Clock, Mic, Play, Target, Trophy } from "lucide-react";
+import { StatusIcon } from "@/components/ui/status-icon";
 import { api } from "@/convex/_generated/api";
 import { displayMaxScore, isPassingScore, toDisplayScore } from "@/lib/scoring";
 import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
@@ -67,7 +68,9 @@ export function LiveDashboard() {
                   {nextUp.attempts > 0 ? "Try again" : "Start dialogue"}
                 </Link>
               </Button>
-              <span className="text-sm text-paper/60">About 5–10 minutes · briefing and mic check first</span>
+              <span className="flex items-center gap-1.5 text-sm text-paper/60">
+                <Clock className="h-3.5 w-3.5" aria-hidden /> About 5–10 minutes · briefing and mic check first
+              </span>
             </div>
           </div>
         </Card>
@@ -114,10 +117,10 @@ export function LiveDashboard() {
             Your progress
           </SectionTitle>
           <Card className="grid gap-6 p-6 sm:grid-cols-4">
-            <Stat label="Average score" value={metrics.averageScore} hint="out of 100" />
-            <Stat label="Dialogues passed" value={catalog.modules.reduce((sum, m) => sum + m.passedCount, 0)} />
-            <Stat label="Sessions scored" value={graded.length} />
-            <Stat label="Hours practised" value={metrics.practiceHours} />
+            <Stat icon={<Target />} label="Average score" value={metrics.averageScore} hint="out of 100" />
+            <Stat icon={<Trophy />} label="Dialogues passed" value={catalog.modules.reduce((sum, m) => sum + m.passedCount, 0)} />
+            <Stat icon={<Mic />} label="Sessions scored" value={graded.length} />
+            <Stat icon={<Clock />} label="Hours practised" value={metrics.practiceHours} />
           </Card>
         </section>
       )}
@@ -132,11 +135,15 @@ export function LiveDashboard() {
                 href={`/results/${session.id}`}
                 className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-gray-50"
               >
-                <div className="min-w-0">
-                  <p className="truncate font-semibold">{scenarioTitles.get(session.scenarioId) ?? session.scenarioId}</p>
-                  <p className="text-sm text-gray-500">
-                    {new Date(session.timestamp).toLocaleDateString(undefined, { day: "numeric", month: "short" })}
-                  </p>
+                <div className="flex min-w-0 items-center gap-3">
+                  <StatusIcon passed={isPassingScore(session.moduleId, session.score)} />
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">{scenarioTitles.get(session.scenarioId) ?? session.scenarioId}</p>
+                    <p className="flex items-center gap-1 text-sm text-gray-500">
+                      <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                      {new Date(session.timestamp).toLocaleDateString(undefined, { day: "numeric", month: "short" })}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   {isPassingScore(session.moduleId, session.score) ? (

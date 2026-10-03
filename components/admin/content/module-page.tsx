@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/admin/content/fields";
 import { ModuleDetailsForm } from "@/components/admin/content/module-form";
 import { emptyModuleForm, moduleFormFromRecord, scenarioWarnings } from "@/components/admin/content/model";
+import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
 
 const tabs = [
   { id: "dialogues", label: "Dialogues" },
@@ -51,7 +52,7 @@ export function ModulePage({ moduleId }: { moduleId: string }) {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            {learningModule.isFree ? <Badge tone="accent">Free</Badge> : <Badge>Premium</Badge>}
+            {learningModule.isFree ? <FreeBadge /> : <PremiumBadge />}
             <Badge className="capitalize">{learningModule.difficultyLevel}</Badge>
           </div>
           <h1 className="mt-2 text-3xl font-bold tracking-[-0.035em]">{learningModule.title}</h1>
@@ -133,7 +134,7 @@ export function ModulePage({ moduleId }: { moduleId: string }) {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-bold">{scenario.title}</p>
-                    {scenario.isFreePreview ? <Badge tone="accent">Free preview</Badge> : null}
+                    {scenario.isFreePreview ? <FreeBadge label="Free preview" /> : null}
                   </div>
                   <p className="mt-0.5 truncate text-sm text-gray-500">
                     {people.map((person) => person.role).join(" & ")} ·{" "}

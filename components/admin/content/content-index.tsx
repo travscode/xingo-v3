@@ -6,9 +6,10 @@ import { useQuery } from "convex/react";
 import { AlertCircle, ChevronRight, Plus, Search } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Scenario } from "@/types/scenario";
-import { Badge, EmptyState, Skeleton } from "@/components/ui/primitives";
+import { EmptyState, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { industryOptions, scenarioWarnings } from "@/components/admin/content/model";
+import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
 
 /** Content home: every module, its status and anything that needs attention. */
 export function ContentIndex() {
@@ -74,7 +75,7 @@ export function ContentIndex() {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-bold">{learningModule.title}</p>
-                  {learningModule.isFree ? <Badge tone="accent">Free</Badge> : <Badge>Premium</Badge>}
+                  {learningModule.isFree ? <FreeBadge /> : <PremiumBadge />}
                 </div>
                 <p className="mt-0.5 text-sm text-gray-500">
                   {industryOptions.find((option) => option.value === learningModule.industryCategory)?.label} ·{" "}

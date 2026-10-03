@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useQuery } from "convex/react";
 import { ArrowRight } from "lucide-react";
 import { api } from "@/convex/_generated/api";
-import { Badge, Card, PageHeader, ProgressBar, Skeleton } from "@/components/ui/primitives";
+import { Card, PageHeader, ProgressBar, Skeleton } from "@/components/ui/primitives";
 import { ScenarioRow } from "@/components/modules/scenario-row";
+import { FreeBadge, IndustryIcon, PremiumBadge } from "@/components/ui/badges";
 
 /**
  * The practice library: modules in the order that matches the learner's goal,
@@ -44,8 +45,11 @@ export function LiveModulesGrid() {
             <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100">
+                    <IndustryIcon category={learningModule.industryCategory} />
+                  </span>
                   <h2 className="text-xl font-bold tracking-[-0.02em]">{learningModule.title}</h2>
-                  {learningModule.isFree ? <Badge tone="accent">Free</Badge> : locked ? <Badge>Premium</Badge> : null}
+                  {learningModule.isFree ? <FreeBadge /> : locked ? <PremiumBadge /> : null}
                 </div>
                 <p className="mt-1 text-sm text-gray-500">
                   {total} dialogue{total === 1 ? "" : "s"} · {learningModule.passedCount} passed ·{" "}

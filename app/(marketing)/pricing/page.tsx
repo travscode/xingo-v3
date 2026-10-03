@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Crown } from "lucide-react";
 import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { SALES_EMAIL, SUPPORT_EMAIL } from "@/components/marketing/catalogue";
 import { Button } from "@/components/ui/button";
@@ -185,7 +185,10 @@ function PlanCard({
       }
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">{name}</h2>
+        <h2 className="flex items-center gap-1.5 text-lg font-bold">
+          {highlight ? <Crown className="h-4 w-4" aria-hidden /> : null}
+          {name}
+        </h2>
         {highlight ? <Badge tone="accent">Every module</Badge> : null}
       </div>
       <div className="mt-4 flex items-baseline gap-2">

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
 import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "@/lib/scoring";
 import { packList, plans } from "@/lib/plans";
+import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
 
 const cheapestPack = packList[0];
 
@@ -132,11 +133,7 @@ export default function HomePage() {
             <li key={module.title} className="bg-paper p-6">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-base font-bold">{module.title}</h3>
-                {module.access === "free" ? (
-                  <Badge tone="success">Free</Badge>
-                ) : (
-                  <Badge>Pro or pack</Badge>
-                )}
+                {module.access === "free" ? <FreeBadge /> : <PremiumBadge />}
               </div>
               <p className="mt-2 text-sm leading-6 text-gray-500">
                 {module.description}

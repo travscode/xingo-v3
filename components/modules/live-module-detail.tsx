@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useQuery } from "convex/react";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, Clock } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { displayPassMark, displayMaxScore, isCclModule } from "@/lib/scoring";
 import { Badge, Card, EmptyState, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { ScenarioRow } from "@/components/modules/scenario-row";
+import { FreeBadge, IndustryIcon, PremiumBadge } from "@/components/ui/badges";
 
 export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
   const catalog = useQuery(api.catalog.forCurrentUser, {});
@@ -50,12 +51,21 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
 
       <header>
         <div className="flex flex-wrap items-center gap-2">
-          {learningModule.isFree ? <Badge tone="accent">Free</Badge> : <Badge>Premium</Badge>}
+          {learningModule.isFree ? <FreeBadge /> : <PremiumBadge />}
           <Badge className="capitalize">{learningModule.difficultyLevel}</Badge>
           {isCclModule(learningModule.id) ? <Badge tone="dark">Scored out of 90 · pass {displayPassMark(learningModule.id)}</Badge> : null}
         </div>
         <h1 className="mt-3 text-3xl font-bold tracking-[-0.035em] sm:text-4xl">{learningModule.title}</h1>
         <p className="mt-3 max-w-3xl text-[15px] leading-7 text-gray-500">{learningModule.description}</p>
+        <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+          <span className="flex items-center gap-1.5">
+            <IndustryIcon category={learningModule.industryCategory} className="h-3.5 w-3.5" />
+            {total} dialogue{total === 1 ? "" : "s"}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5" aria-hidden /> About {learningModule.durationMinutes} min each
+          </span>
+        </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {firstPlayable ? (
             <Button asChild size="lg">

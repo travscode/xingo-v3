@@ -2,14 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { BookOpen, CalendarDays, Clock, Download, History, Mic, Target, Timer, Trophy } from "lucide-react";
+import { StatusIcon } from "@/components/ui/status-icon";
 import { useQuery } from "convex/react";
 import { Card, PageHeader, Skeleton } from "@/components/ui/primitives";
 import { AchievementBadges } from "@/components/dashboard/achievement-badges";
-import { displayMaxScore, toDisplayScore } from "@/lib/scoring";
 import { ProgressHistoryChart } from "@/components/dashboard/progress-history-chart";
 import { Button } from "@/components/ui/button";
-import { isCclModule } from "@/lib/scoring";
+import { displayMaxScore, isCclModule, isPassingScore, toDisplayScore } from "@/lib/scoring";
 import { api } from "@/convex/_generated/api";
 
 type PeriodId = "all" | "7d" | "30d" | "90d" | "year" | "custom";
@@ -682,7 +682,9 @@ export function LiveProgress() {
 
       <section className="surface-card rounded-xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="eyebrow">Attempt history</p>
+          <p className="flex items-center gap-2 text-lg font-bold">
+            <History className="h-4 w-4" aria-hidden /> Attempt history
+          </p>
           {completedSessions.length > 0 ? (
             <div className="text-sm text-muted">
               Page {currentHistoryPage} of {totalHistoryPages}
@@ -711,16 +713,26 @@ export function LiveProgress() {
               className="rounded-xl border border-line bg-white p-4"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="font-semibold">
-                    {scenarioTitleById.get(session.scenarioId) ??
-                      session.scenarioId}
-                  </div>
-                  <div className="mt-1 text-sm text-muted">
-                    {moduleTitleById.get(session.moduleId) ?? session.moduleId}{" "}
-                    · {new Date(session.timestamp).toLocaleDateString()}{" "}
-                    · {session.durationMinutes} min ·{" "}
-                    {session.completionStatus.replace("_", " ")}
+                <div className="flex min-w-0 items-center gap-3">
+                  <StatusIcon passed={isPassingScore(session.moduleId, session.score)} />
+                  <div className="min-w-0">
+                    <div className="font-semibold">
+                      {scenarioTitleById.get(session.scenarioId) ?? session.scenarioId}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <BookOpen className="h-3.5 w-3.5" aria-hidden />
+                        {moduleTitleById.get(session.moduleId) ?? session.moduleId}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                        {new Date(session.timestamp).toLocaleDateString()}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" aria-hidden />
+                        {session.durationMinutes} min
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="score-pill rounded-md px-3 py-1.5 text-sm font-semibold tabular-nums">
@@ -763,10 +775,21 @@ export function LiveProgress() {
   );
 }
 
+const statIcons: Record<string, React.ReactNode> = {
+  "Average score": <Target className="h-3.5 w-3.5" aria-hidden />,
+  "Best score": <Trophy className="h-3.5 w-3.5" aria-hidden />,
+  "Pass rate": <Trophy className="h-3.5 w-3.5" aria-hidden />,
+  "Practice time": <Timer className="h-3.5 w-3.5" aria-hidden />,
+  "Scored sessions": <Mic className="h-3.5 w-3.5" aria-hidden />,
+};
+
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <Card className="p-5">
-      <p className="text-sm text-gray-500">{label}</p>
+      <p className="flex items-center gap-1.5 text-sm text-gray-500">
+        {statIcons[label]}
+        {label}
+      </p>
       <p className="mt-1 text-3xl font-bold tracking-[-0.03em] tabular-nums">{value}</p>
     </Card>
   );

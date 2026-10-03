@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAction, useQuery } from "convex/react";
-import { Check } from "lucide-react";
+import { Check, Clock, Crown, Package } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
@@ -88,7 +88,9 @@ export function LiveBilling() {
       <Card tone="inverse" className="p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
-            <p className="text-sm font-semibold text-paper/60">Minutes left</p>
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-paper/60">
+              <Clock className="h-3.5 w-3.5" aria-hidden /> Minutes left
+            </p>
             <p className="mt-1 text-6xl font-bold tracking-[-0.05em] tabular-nums">
               {Math.floor(summary.remainingMinutes)}
             </p>
@@ -131,7 +133,10 @@ export function LiveBilling() {
             return (
               <Card key={plan.id} className={cn("flex flex-col p-6", current && "border-2 border-ink")}>
                 <div className="flex items-center justify-between">
-                  <p className="text-lg font-bold">{plan.label}</p>
+                  <p className="flex items-center gap-1.5 text-lg font-bold">
+                    {plan.premiumAccess ? <Crown className="h-4 w-4" aria-hidden /> : null}
+                    {plan.label}
+                  </p>
                   {current ? <Badge tone="dark">Current</Badge> : null}
                 </div>
                 <p className="mt-2 text-3xl font-bold tracking-[-0.03em]">{plan.priceLabel}</p>
@@ -173,9 +178,14 @@ export function LiveBilling() {
         <div className="grid gap-4 md:grid-cols-3">
           {packList.map((pack) => (
             <Card key={pack.id} className="flex flex-col p-6">
-              <p className="font-bold">{pack.label}</p>
+              <p className="flex items-center gap-1.5 font-bold">
+                <Package className="h-4 w-4" aria-hidden />
+                {pack.label}
+              </p>
               <p className="mt-2 text-3xl font-bold tracking-[-0.03em]">{pack.priceLabel}</p>
-              <p className="mt-1 text-sm font-semibold">{pack.minutes} minutes</p>
+              <p className="mt-1 flex items-center gap-1 text-sm font-semibold">
+                <Clock className="h-3.5 w-3.5" aria-hidden /> {pack.minutes} minutes
+              </p>
               <p className="mt-2 flex-1 text-sm text-gray-500">{pack.description}</p>
               <Button className="mt-5" variant="secondary" disabled={pending === pack.id} onClick={() => buyPack(pack.id)}>
                 {pending === pack.id ? "Opening checkout…" : "Buy"}
@@ -199,7 +209,9 @@ export function LiveBilling() {
                     minute: "2-digit",
                   })}
                 </span>
-                <span className="font-semibold tabular-nums">{charge.minutes} min</span>
+                <span className="flex items-center gap-1 font-semibold tabular-nums">
+                  <Clock className="h-3.5 w-3.5 text-gray-500" aria-hidden /> {charge.minutes} min
+                </span>
               </div>
             ))}
           </Card>

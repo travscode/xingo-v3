@@ -113,10 +113,23 @@ export function ProgressBar({
   );
 }
 
-export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) {
+export function Stat({
+  label,
+  value,
+  hint,
+  icon,
+}: {
+  label: string;
+  value: ReactNode;
+  hint?: ReactNode;
+  icon?: ReactNode;
+}) {
   return (
     <div>
-      <div className="text-sm text-gray-500">{label}</div>
+      <div className="flex items-center gap-1.5 text-sm text-gray-500">
+        {icon ? <span className="[&>svg]:h-3.5 [&>svg]:w-3.5" aria-hidden>{icon}</span> : null}
+        {label}
+      </div>
       <div className="mt-1 text-3xl font-bold tracking-[-0.03em]">{value}</div>
       {hint ? <div className="mt-1 text-xs text-gray-500">{hint}</div> : null}
     </div>
