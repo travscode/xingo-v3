@@ -89,7 +89,7 @@ function Discover({ signedIn }: { signedIn: boolean }) {
           {(
             [
               ["all", "All"],
-              ["roleplay", "Role-plays"],
+              ["roleplay", "One-on-one"],
               ["interpreting", "Interpreting"],
             ] as const
           ).map(([value, label]) => (

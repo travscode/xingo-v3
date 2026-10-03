@@ -48,7 +48,7 @@ const empty: Draft = {
 type Step = { id: string; title: string; hint: string; valid: (draft: Draft) => boolean };
 
 const steps: Step[] = [
-  { id: "kind", title: "What will people practise?", hint: "You can add more scenarios later.", valid: (d) => d.kind !== null },
+  { id: "kind", title: "Who's in the conversation?", hint: "Pick the format for this course. You can add more scenarios later.", valid: (d) => d.kind !== null },
   {
     id: "name",
     title: "Name your course",

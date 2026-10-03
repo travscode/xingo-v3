@@ -58,14 +58,14 @@ export type CourseKind = "roleplay" | "interpreting";
 export const courseKinds: Array<{ id: CourseKind; label: string; description: string; example: string }> = [
   {
     id: "roleplay",
-    label: "Role-play in English",
-    description: "Learners play themselves and talk with an AI character.",
+    label: "One-on-one",
+    description: "The learner talks directly with one AI person, as themselves, in English.",
     example: "Job interviews, sales calls, patient consultations, customer complaints",
   },
   {
     id: "interpreting",
-    label: "Interpreting",
-    description: "Learners interpret between an English speaker and someone who speaks their other language.",
+    label: "Interpreter in the middle",
+    description: "The learner interprets between two AI people: one speaks English, the other speaks the learner's other language.",
     example: "Medical appointments, legal advice, community services",
   },
 ];

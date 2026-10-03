@@ -73,7 +73,15 @@ export function AdminConsole() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Admin" description="Revenue, users and content. Visible to platform admins only." />
+      <PageHeader
+        title="Admin"
+        description="Revenue, users and content. Visible to platform admins only."
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/admin/lab">Lab</Link>
+          </Button>
+        }
+      />
       <div className="flex gap-1 overflow-x-auto border-b border-gray-200" role="tablist">
         {tabs.map((item) => (
           <button

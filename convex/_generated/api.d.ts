@@ -24,6 +24,7 @@ import type * as emailActions from "../emailActions.js";
 import type * as emails from "../emails.js";
 import type * as http from "../http.js";
 import type * as jobs from "../jobs.js";
+import type * as labActions from "../labActions.js";
 import type * as marketplace from "../marketplace.js";
 import type * as marketplaceActions from "../marketplaceActions.js";
 import type * as migrations from "../migrations.js";
@@ -66,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   emails: typeof emails;
   http: typeof http;
   jobs: typeof jobs;
+  labActions: typeof labActions;
   marketplace: typeof marketplace;
   marketplaceActions: typeof marketplaceActions;
   migrations: typeof migrations;

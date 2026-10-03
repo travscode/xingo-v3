@@ -202,7 +202,7 @@ export function CourseListingPage({ slug }: { slug: string }) {
             <div className="flex flex-wrap gap-1.5">
               <Badge>
                 {listing.kind === "roleplay" ? <MessagesSquare className="h-3 w-3" aria-hidden /> : <Languages className="h-3 w-3" aria-hidden />}
-                {listing.kind === "roleplay" ? "Role-play in English" : "Interpreting, any language"}
+                {listing.kind === "roleplay" ? "One-on-one with an AI person" : "Interpret between two AI people"}
               </Badge>
               {listing.certifications.map((cert) => (
                 <Badge key={cert.name} tone="accent">
@@ -274,7 +274,7 @@ export function CourseListingPage({ slug }: { slug: string }) {
           <section>
             <h2 className="text-xl font-bold tracking-[-0.02em]">Practice scenarios</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Each one is a spoken conversation with an AI voice partner, scored with feedback when you finish.
+              {listing.kind === "roleplay" ? "Each one is a spoken conversation with one AI person, scored with feedback when you finish." : "In each one you interpret between two AI people, then get scored with feedback."}
             </p>
             <ol className="mt-4 divide-y divide-gray-200 rounded-xl border border-gray-200">
               {listing.scenarios.map((scenario, index) => (

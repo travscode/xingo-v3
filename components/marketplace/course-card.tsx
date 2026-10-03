@@ -66,7 +66,7 @@ export function CourseCard({
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge>
             {course.kind === "roleplay" ? <MessagesSquare className="h-3 w-3" aria-hidden /> : <Languages className="h-3 w-3" aria-hidden />}
-            {course.kind === "roleplay" ? "Role-play" : "Interpreting"}
+            {course.kind === "roleplay" ? "One-on-one" : "Interpreting"}
           </Badge>
           {course.certifications[0] ? (
             <Badge tone="accent">

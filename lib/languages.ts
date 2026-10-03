@@ -91,3 +91,23 @@ export function pairLabel(pair: Pick<LanguagePair, "sourceLanguage" | "targetLan
 }
 
 export const DEFAULT_LANGUAGE_PAIR = createLanguagePair("English", "Spanish");
+
+/** Names Whisper may report for a practice language (it reports e.g. "chinese" for Mandarin). */
+const detectedAliases: Record<string, string[]> = {
+  mandarin: ["chinese", "mandarin"],
+  cantonese: ["chinese", "cantonese", "yue"],
+  filipino: ["tagalog", "filipino"],
+  tagalog: ["tagalog", "filipino"],
+  dari: ["persian", "farsi", "dari"],
+  persian: ["persian", "farsi"],
+  farsi: ["persian", "farsi"],
+  bangla: ["bengali", "bangla"],
+  bengali: ["bengali", "bangla"],
+};
+
+/** True when a detected language name matches a practice language name. */
+export function languageMatches(detected: string, practiceLanguage: string) {
+  const target = practiceLanguage.trim().toLowerCase();
+  const heard = detected.trim().toLowerCase();
+  return heard === target || (detectedAliases[target] ?? []).includes(heard);
+}
