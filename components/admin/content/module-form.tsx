@@ -59,7 +59,7 @@ export function ModuleDetailsForm({ moduleId, initial }: { moduleId?: string; in
       setMessage("Saved");
       window.setTimeout(() => setMessage(null), 2000);
     } catch (error) {
-      setMessage(friendlyError(error, "Couldn't save the module."));
+      setMessage(friendlyError(error, "Couldn't save the course."));
     } finally {
       setSaving(false);
     }
@@ -67,7 +67,7 @@ export function ModuleDetailsForm({ moduleId, initial }: { moduleId?: string; in
 
   return (
     <div className="flex max-w-3xl flex-col gap-5">
-      <FormSection title="Basics" description="How the module appears in the learner's library.">
+      <FormSection title="Basics" description="How the course appears in the learner's library.">
         <Field label="Title" required htmlFor="module-title">
           <TextInput id="module-title" value={form.title} onChange={(event) => set("title", event.target.value)} placeholder="e.g. NDIS & Disability Services" />
         </Field>
@@ -103,7 +103,7 @@ export function ModuleDetailsForm({ moduleId, initial }: { moduleId?: string; in
         </div>
       </FormSection>
 
-      <FormSection title="Learning objectives" description="Shown on the module page under “You'll practise”.">
+      <FormSection title="Learning objectives" description="Shown on the course page under “You'll practise”.">
         <ListEditor items={form.learningObjectives} onChange={(items) => set("learningObjectives", items)} placeholder="Add an objective and press Enter" />
       </FormSection>
 
@@ -111,14 +111,14 @@ export function ModuleDetailsForm({ moduleId, initial }: { moduleId?: string; in
         <Switch
           checked={form.isFree}
           onChange={(checked) => set("isFree", checked)}
-          label="Free module"
-          description="Every dialogue is playable on the Free plan. Premium modules can still mark individual dialogues as free previews."
+          label="Free course"
+          description="Every dialogue is playable on the Free plan. Premium courses can still mark individual dialogues as free previews."
         />
         <Switch
           checked={form.isAccredited}
           onChange={(checked) => set("isAccredited", checked)}
           label="Accredited"
-          description="Only switch on if a real institution accredits this module."
+          description="Only switch on if a real institution accredits this course."
         />
         {form.isAccredited ? (
           <Field label="Accrediting body" htmlFor="module-provider">
@@ -133,7 +133,7 @@ export function ModuleDetailsForm({ moduleId, initial }: { moduleId?: string; in
         message={message}
         onSave={() => void save()}
         onDiscard={isNew ? undefined : () => setForm(saved)}
-        saveLabel={isNew ? "Create module" : "Save changes"}
+        saveLabel={isNew ? "Create course" : "Save changes"}
       />
     </div>
   );

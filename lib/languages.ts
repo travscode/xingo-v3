@@ -76,4 +76,18 @@ export function createLanguagePair(sourceLanguage: string, targetLanguage: strin
   };
 }
 
+/** English ⇄ English: everyone speaks English (role-plays, English-only practice). */
+export const ENGLISH_ONLY_PAIR = createLanguagePair("English", "English");
+
+export function isEnglishOnly(pair: Pick<LanguagePair, "sourceLanguage" | "targetLanguage">) {
+  return pair.sourceLanguage.trim().toLowerCase() === "english" && pair.targetLanguage.trim().toLowerCase() === "english";
+}
+
+/** "English only" or "English ⇄ 🇪🇸 Spanish". */
+export function pairLabel(pair: Pick<LanguagePair, "sourceLanguage" | "targetLanguage">) {
+  if (isEnglishOnly(pair)) return "English only";
+  const flag = flagEmoji(pair.targetLanguage);
+  return `${pair.sourceLanguage} ⇄ ${flag ? `${flag} ` : ""}${pair.targetLanguage}`;
+}
+
 export const DEFAULT_LANGUAGE_PAIR = createLanguagePair("English", "Spanish");

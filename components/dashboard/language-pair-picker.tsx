@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { createLanguagePair, flagEmoji, practiceLanguages, type LanguagePair } from "@/lib/languages";
+import { createLanguagePair, ENGLISH_ONLY_PAIR, flagEmoji, pairLabel, practiceLanguages, type LanguagePair } from "@/lib/languages";
 
 /**
  * "English ⇄ <your language>". The English-speaking participant always speaks
@@ -45,14 +45,22 @@ export function LanguagePairPicker() {
           aria-label="Change practice language"
         >
           <span className="text-gray-500">Practising</span>
-          <span>
-            {activePair.sourceLanguage} ⇄ {flagEmoji(activePair.targetLanguage)} {activePair.targetLanguage}
-          </span>
+          <span>{pairLabel(activePair)}</span>
           <ChevronDown className="h-4 w-4 text-gray-500" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="max-h-[70vh] w-72 overflow-y-auto rounded-xl p-1.5">
-        <p className="px-2 pb-1 pt-2 text-xs font-semibold text-gray-500">Your other language</p>
+        <DropdownMenuItem
+          onSelect={() => choose(ENGLISH_ONLY_PAIR)}
+          className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-sm font-medium outline-none focus:bg-gray-100"
+        >
+          <span>
+            {flagEmoji("English")} English only
+            <span className="block text-xs font-normal text-gray-500">Everyone speaks English</span>
+          </span>
+          {activePair.key === ENGLISH_ONLY_PAIR.key ? <Check className="h-4 w-4" /> : null}
+        </DropdownMenuItem>
+        <p className="px-2 pb-1 pt-2 text-xs font-semibold text-gray-500">English ⇄ your other language</p>
         {options.map((option) => (
           <DropdownMenuItem
             key={option.key}

@@ -33,7 +33,7 @@ export function ModulePage({ moduleId }: { moduleId: string }) {
   if (!learningModule) {
     return (
       <EmptyState
-        title="Module not found"
+        title="Course not found"
         action={
           <Button asChild>
             <Link href="/admin?tab=content">Back to content</Link>
@@ -59,7 +59,7 @@ export function ModulePage({ moduleId }: { moduleId: string }) {
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline">
-            <Link href={`/modules/${moduleId}`} target="_blank">
+            <Link href={`/courses/${moduleId}`} target="_blank">
               View as learner
             </Link>
           </Button>
@@ -95,7 +95,7 @@ export function ModulePage({ moduleId }: { moduleId: string }) {
       ) : dialogues.length === 0 ? (
         <EmptyState
           title="No dialogues yet"
-          description="Add the first dialogue learners will practise in this module."
+          description="Add the first dialogue learners will practise in this course."
           action={
             <Button asChild>
               <Link href={`/admin/content/${moduleId}/new`}>
@@ -160,8 +160,8 @@ export function ModulePage({ moduleId }: { moduleId: string }) {
 export function NewModulePage() {
   return (
     <div className="space-y-6">
-      <Breadcrumbs items={[{ label: "Content", href: "/admin?tab=content" }, { label: "New module" }]} />
-      <h1 className="text-3xl font-bold tracking-[-0.035em]">New module</h1>
+      <Breadcrumbs items={[{ label: "Content", href: "/admin?tab=content" }, { label: "New course" }]} />
+      <h1 className="text-3xl font-bold tracking-[-0.035em]">New course</h1>
       <ModuleDetailsForm initial={emptyModuleForm} />
     </div>
   );

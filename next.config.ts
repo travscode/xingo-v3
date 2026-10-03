@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return convexSiteUrl ? [{ source: "/e/:path*", destination: `${convexSiteUrl}/e/:path*` }] : [];
   },
+  // "Module" was renamed "course" (D-030); keep old links working.
+  async redirects() {
+    return [
+      { source: "/modules", destination: "/courses", permanent: true },
+      { source: "/modules/:id", destination: "/courses/:id", permanent: true },
+    ];
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "*.convex.cloud" },

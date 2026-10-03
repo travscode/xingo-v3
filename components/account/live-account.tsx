@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Check, Pencil, X } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { practiceGoals } from "@/lib/goals";
-import { createLanguagePair, flagEmoji, practiceLanguages } from "@/lib/languages";
+import { createLanguagePair, ENGLISH_ONLY_PAIR, pairLabel, practiceLanguages } from "@/lib/languages";
 import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
 import { Badge, Card, PageHeader, SectionTitle, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
@@ -79,13 +79,13 @@ export function LiveAccount() {
       <section>
         <SectionTitle>Your languages</SectionTitle>
         <p className="-mt-1 mb-3 text-sm text-gray-500">
-          The English-speaking professional always speaks English; the client speaks the language you choose.
+          The English-speaking professional always speaks English; the client speaks the language you choose, or English too with English only.
         </p>
         <Card className="divide-y divide-gray-200">
           {pairs.map((pair, index) => (
             <div key={pair.key} className="flex items-center justify-between gap-3 px-5 py-3">
               <span className="font-semibold">
-                {pair.sourceLanguage} ⇄ {flagEmoji(pair.targetLanguage)} {pair.targetLanguage}
+                {pairLabel(pair)}
               </span>
               <div className="flex items-center gap-2">
                 {pair.key === activePair.key ? (
@@ -108,6 +108,14 @@ export function LiveAccount() {
               </div>
             </div>
           ))}
+          {pairs.some((pair) => pair.key === ENGLISH_ONLY_PAIR.key) ? null : (
+            <div className="flex items-center justify-between gap-3 px-5 py-3">
+              <span className="text-sm text-gray-500">English only: everyone in the conversation speaks English.</span>
+              <Button size="sm" variant="ghost" onClick={() => void savePairs([...pairs, ENGLISH_ONLY_PAIR])}>
+                Add
+              </Button>
+            </div>
+          )}
           <form
             className="flex gap-2 px-5 py-3"
             onSubmit={(event) => {

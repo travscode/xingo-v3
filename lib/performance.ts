@@ -92,7 +92,7 @@ export function getPerformanceBadges(modules: ModuleLike[], sessions: SessionLik
     badges.push({
       id: "credential-track",
       label: "Credential Track",
-      description: "Passed work across multiple modules.",
+      description: "Passed work across multiple courses.",
     });
   }
 

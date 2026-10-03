@@ -47,7 +47,7 @@ export function ContentIndex() {
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search modules and dialogues"
+            placeholder="Search courses and dialogues"
             className="h-10 w-full rounded-lg bg-gray-100 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-live"
           />
         </div>

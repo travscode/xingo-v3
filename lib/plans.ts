@@ -44,7 +44,7 @@ export const plans: Record<PlanId, PlanConfig> = {
     monthlyMinutes: 10,
     premiumAccess: false,
     priceLabel: "A$0",
-    tagline: "Free modules plus one preview dialogue in every premium module.",
+    tagline: "Free courses plus one preview dialogue in every premium course.",
   },
   professional: {
     id: "professional",
@@ -52,7 +52,7 @@ export const plans: Record<PlanId, PlanConfig> = {
     monthlyMinutes: 150,
     premiumAccess: true,
     priceLabel: "A$29 / month",
-    tagline: "Every module, 150 practice minutes each month.",
+    tagline: "Every course, 150 practice minutes each month.",
   },
   organization: {
     id: "organization",
@@ -70,14 +70,14 @@ export const packs: Record<PackId, PackConfig> = {
     label: "CCL Starter",
     minutes: 30,
     priceLabel: "A$19",
-    description: "Try the full CCL module. About 6 timed dialogues.",
+    description: "Try the full CCL course. About 6 timed dialogues.",
   },
   plus: {
     id: "plus",
     label: "Practice Plus",
     minutes: 80,
     priceLabel: "A$39",
-    description: "Steady weekly practice across every module.",
+    description: "Steady weekly practice across every course.",
   },
   sprint: {
     id: "sprint",

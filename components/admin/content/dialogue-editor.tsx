@@ -225,7 +225,7 @@ function DialogueEditor({
                   checked={form.isFreePreview}
                   onChange={(checked) => update({ isFreePreview: checked })}
                   label="Free preview"
-                  description="Free-plan learners can play this dialogue even if the module is premium. Aim for one per premium module."
+                  description="Free-plan learners can play this dialogue even if the course is premium. Aim for one per premium course."
                 />
                 <Switch
                   checked={form.hasClient}

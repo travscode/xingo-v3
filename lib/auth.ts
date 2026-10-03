@@ -3,7 +3,7 @@ import type { PlatformRole } from "@/types/user";
 export const protectedRoutes = [
   "/dashboard",
   "/admin",
-  "/modules",
+  "/courses",
   "/practice",
   "/progress",
   "/credentials",
@@ -24,7 +24,7 @@ export function canManageOrganizations(role: PlatformRole) {
 export const protectedRoutePatterns = [
   "/dashboard(.*)",
   "/admin(.*)",
-  "/modules(.*)",
+  "/courses(.*)",
   "/practice(.*)",
   "/progress(.*)",
   "/credentials(.*)",

@@ -23,7 +23,7 @@ export function MinutesMeter() {
         <span className="flex items-center gap-1.5 text-sm font-bold">
           <Crown className="h-3.5 w-3.5" aria-hidden /> Admin
         </span>
-        <p className="mt-2 text-sm text-gray-500">Every module unlocked. Minutes aren&apos;t limited.</p>
+        <p className="mt-2 text-sm text-gray-500">Every course unlocked. Minutes aren&apos;t limited.</p>
       </Link>
     );
   }
@@ -50,7 +50,7 @@ export function MinutesMeter() {
         tone={low ? "record" : "accent"}
       />
       {entitlement.plan === "free" ? (
-        <p className="mt-3 text-xs font-semibold">{low ? "Get more minutes →" : "Upgrade for every module →"}</p>
+        <p className="mt-3 text-xs font-semibold">{low ? "Get more minutes →" : "Upgrade for every course →"}</p>
       ) : null}
     </Link>
   );

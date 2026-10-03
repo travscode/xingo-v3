@@ -25,7 +25,7 @@ export function LivePractice({ scenarioId }: { scenarioId: string }) {
         <h1 className="text-2xl font-bold">We couldn&apos;t find that dialogue</h1>
         <p className="mt-2 text-gray-500">It may have been renamed or removed.</p>
         <Button asChild className="mt-6">
-          <Link href="/modules">Back to practice</Link>
+          <Link href="/courses">Back to practice</Link>
         </Button>
       </div>
     );

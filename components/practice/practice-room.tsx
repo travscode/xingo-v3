@@ -659,7 +659,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     }
 
     disconnectAll();
-    router.push(`/modules/${scenario.moduleId}`);
+    router.push(`/courses/${scenario.moduleId}`);
   }, [cancelAttempt, disconnectAll, phase, router, scenario.moduleId]);
 
   // Cancel a live attempt if the learner navigates away inside the app.
@@ -1041,7 +1041,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
   if (!data.access.allowed) {
     return (
-      <RoomFrame title={scenario.title} onExit={() => router.push(`/modules/${scenario.moduleId}`)}>
+      <RoomFrame title={scenario.title} onExit={() => router.push(`/courses/${scenario.moduleId}`)}>
         <div className="mx-auto max-w-lg py-16 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
             <Lock className="h-6 w-6" />
@@ -1057,7 +1057,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
               </Link>
             </Button>
             <Button asChild size="lg" variant="secondary">
-              <Link href={`/modules/${scenario.moduleId}`}>Try the free dialogue</Link>
+              <Link href={`/courses/${scenario.moduleId}`}>Try the free dialogue</Link>
             </Button>
           </div>
         </div>

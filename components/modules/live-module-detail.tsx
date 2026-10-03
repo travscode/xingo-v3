@@ -28,10 +28,10 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
   if (!learningModule) {
     return (
       <EmptyState
-        title="Module not found"
+        title="Course not found"
         action={
           <Button asChild>
-            <Link href="/modules">Back to practice</Link>
+            <Link href="/courses">Back to practice</Link>
           </Button>
         }
       />
@@ -45,7 +45,7 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
 
   return (
     <div className="space-y-8">
-      <Link href="/modules" className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-ink">
+      <Link href="/courses" className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-ink">
         <ArrowLeft className="h-4 w-4" /> Practice
       </Link>
 

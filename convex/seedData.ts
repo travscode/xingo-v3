@@ -144,7 +144,7 @@ export const seedModules = [
     id: "naati-certification-practice-cpi",
     title: "NAATI Certification Practice CPI",
     description:
-      "This module introduces the NAATI Certified Provisional Interpreter (CPI) credential as an entry-level generalist pathway. It focuses on the foundational competencies expected of early-career interpreters in everyday community settings, including accuracy, role boundaries, clarification, and professional conduct.",
+      "This course introduces the NAATI Certified Provisional Interpreter (CPI) credential as an entry-level generalist pathway. It focuses on the foundational competencies expected of early-career interpreters in everyday community settings, including accuracy, role boundaries, clarification, and professional conduct.",
     industryCategory: "community",
     durationMinutes: 32,
     difficultyLevel: "beginner",
@@ -162,7 +162,7 @@ export const seedModules = [
     id: "naati-certification-practice-ccl",
     title: "NAATI Certification Practice CCL",
     description:
-      "This module is built around the NAATI Credentialed Community Language (CCL) test. It helps learners practice short bilingual community dialogues between an English speaker and a Language Other Than English speaker in settings such as health, education, housing, legal services, and public services.",
+      "This course is built around the NAATI Credentialed Community Language (CCL) test. It helps learners practice short bilingual community dialogues between an English speaker and a Language Other Than English speaker in settings such as health, education, housing, legal services, and public services.",
     industryCategory: "community",
     durationMinutes: 30,
     difficultyLevel: "intermediate",

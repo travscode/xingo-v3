@@ -79,7 +79,7 @@ export function LiveModulesGrid() {
     return [
       ...(forYou.length > 0 ? [{ id: "for-you" as LibraryGroupId, label: "For you", modules: forYou }] : []),
       ...byGroup,
-      { id: "all" as LibraryGroupId, label: "All modules", modules: catalog.modules },
+      { id: "all" as LibraryGroupId, label: "All courses", modules: catalog.modules },
     ];
   }, [catalog]);
 
@@ -116,7 +116,7 @@ export function LiveModulesGrid() {
     <div className="space-y-8">
       <PageHeader
         title="Practice"
-        description="Choose a category, then a module. Each dialogue starts with a short briefing and a mic check."
+        description="Choose a category, then a course. Each dialogue starts with a short briefing and a mic check."
         actions={
           <div className="relative w-full sm:w-72">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
@@ -126,8 +126,8 @@ export function LiveModulesGrid() {
                 setSearch(event.target.value);
                 setVisible(PAGE_SIZE);
               }}
-              placeholder="Search modules and dialogues"
-              aria-label="Search modules and dialogues"
+              placeholder="Search courses and dialogues"
+              aria-label="Search courses and dialogues"
               className="h-11 w-full rounded-lg bg-gray-100 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-live"
             />
           </div>
@@ -145,7 +145,7 @@ export function LiveModulesGrid() {
         />
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter modules">
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter courses">
         {libraryFilters.map((filter) => {
           const on = filters.includes(filter.id);
           return (
@@ -186,7 +186,7 @@ export function LiveModulesGrid() {
 
         {modules.length === 0 ? (
           <EmptyState
-            title={filters.length > 0 ? "No modules match these filters" : "Nothing matches that search"}
+            title={filters.length > 0 ? "No courses match these filters" : "Nothing matches that search"}
             description={filters.length > 0 ? "Remove a filter or choose another category." : "Try a different word, or browse a category."}
             action={
               filters.length > 0 ? (
@@ -323,7 +323,7 @@ export function ModuleCard({ learningModule, premiumAccess }: { learningModule: 
         </span>
         {learningModule.isFree ? <FreeBadge /> : locked ? <PremiumBadge /> : null}
       </div>
-      <Link href={`/modules/${learningModule.id}`} className="mt-3 font-bold hover:underline">
+      <Link href={`/courses/${learningModule.id}`} className="mt-3 font-bold hover:underline">
         {learningModule.title}
       </Link>
       <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{learningModule.description}</p>
@@ -349,7 +349,7 @@ export function ModuleCard({ learningModule, premiumAccess }: { learningModule: 
           </Button>
         ) : null}
         <Button asChild size="sm" variant="ghost">
-          <Link href={`/modules/${learningModule.id}`}>
+          <Link href={`/courses/${learningModule.id}`}>
             View module <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </Button>

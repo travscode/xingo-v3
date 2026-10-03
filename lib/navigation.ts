@@ -19,7 +19,7 @@ export type AppNavItem = {
 
 export const dashboardNavigation: AppNavItem[] = [
   { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/modules", label: "Practice", icon: Mic, matches: ["/practice", "/results"] },
+  { href: "/courses", label: "Practice", icon: Mic, matches: ["/practice", "/results"] },
   { href: "/progress", label: "Progress", icon: TrendingUp },
   { href: "/billing", label: "Plan & minutes", icon: CreditCard },
   { href: "/account", label: "Account", icon: UserRound },

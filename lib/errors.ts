@@ -13,7 +13,7 @@ export type AppErrorCode =
   | "EMAIL_NOT_CONFIGURED";
 
 const messages: Record<AppErrorCode, string> = {
-  PREMIUM_REQUIRED: "This dialogue is part of a premium module. Upgrade or buy a minute pack to unlock it.",
+  PREMIUM_REQUIRED: "This dialogue is part of a premium course. Upgrade or buy a minute pack to unlock it.",
   OUT_OF_MINUTES: "You've used all your practice minutes. Top up to keep going.",
   BILLING_NOT_CONFIGURED: "Payments aren't switched on yet. Please try again soon.",
   ALREADY_SUBSCRIBED: "You already have Pro. Manage it from Plan & billing.",

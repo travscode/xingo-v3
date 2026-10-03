@@ -131,7 +131,7 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
               </Button>
             )}
             <Button asChild variant="secondary">
-              <Link href={`/modules/${session.moduleId}`}>Back to module</Link>
+              <Link href={`/courses/${session.moduleId}`}>Back to course</Link>
             </Button>
           </div>
         </Card>
@@ -187,7 +187,7 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
             </Link>
           </Button>
           <Button asChild variant="inverse">
-            <Link href={`/modules/${session.moduleId}`}>
+            <Link href={`/courses/${session.moduleId}`}>
               Next dialogue <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>

@@ -10,6 +10,7 @@ import { useActiveLanguagePair } from "@/components/providers/language-pair-cont
 import { Badge, Card, EmptyState, SectionTitle, Skeleton, Stat } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { formatMinuteCount } from "@/lib/plans";
+import { isEnglishOnly } from "@/lib/languages";
 
 /**
  * Home. One obvious next action, then light context. Designed for the learner
@@ -50,9 +51,9 @@ export function LiveDashboard() {
           {isNew ? `Let's get you speaking, ${firstName}.` : `Welcome back, ${firstName}.`}
         </h1>
         <p className="mt-2 text-gray-500">
-          {activePair.targetLanguage.toLowerCase() !== "english" ? `Practising English ⇄ ${activePair.targetLanguage} · ` : ""}
+          {!isEnglishOnly(activePair) ? `Practising English ⇄ ${activePair.targetLanguage} · ` : ""}
           {me.entitlement.planLabel === "Admin"
-            ? "Admin access — every module unlocked"
+            ? "Admin access — every course unlocked"
             : `${formatMinuteCount(me.entitlement.remainingMinutes)} minutes left this month`}
         </p>
       </div>
@@ -80,7 +81,7 @@ export function LiveDashboard() {
       ) : (
         <EmptyState
           title="You've passed every dialogue you can open"
-          description="Unlock premium modules to keep going."
+          description="Unlock premium courses to keep going."
           action={
             <Button asChild>
               <Link href="/billing">See plans</Link>

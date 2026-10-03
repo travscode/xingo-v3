@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
       // Signed-in app pages aren't useful in search results.
-      disallow: ["/dashboard", "/modules", "/practice", "/results", "/progress", "/billing", "/account", "/help", "/admin", "/welcome", "/jobs", "/credentials"],
+      disallow: ["/dashboard", "/courses", "/practice", "/results", "/progress", "/billing", "/account", "/help", "/admin", "/welcome", "/jobs", "/credentials"],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
   };
