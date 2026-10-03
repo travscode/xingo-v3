@@ -23,6 +23,7 @@ const footerLinks = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/for-interpreters", label: "For interpreters" },
   { href: "/staff-training", label: "Staff training" },
+  { href: "/migrate-to-australia", label: "Migrating to Australia" },
   { href: "/for-organizations", label: "For training providers" },
   { href: "/sell-practice-courses", label: "Sell practice courses" },
   { href: "/marketplace", label: "Marketplace" },
