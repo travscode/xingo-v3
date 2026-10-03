@@ -3,6 +3,7 @@ import type { Doc } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getClerkIdFromIdentity, getUserByClerkId, requireUser } from "./model/auth";
 import { averageRating, compareCourses, courseBadges, slugify } from "../lib/marketplace";
+import { handleProblem } from "../lib/orgs";
 
 /**
  * Creator profiles (/marketplace/creators/<handle>). Real creators get one the
@@ -22,6 +23,8 @@ export async function profileCard(ctx: Ctx, profile: Doc<"creatorProfiles">) {
     tagline: profile.tagline,
     accent: profile.accent,
     isOriginal: profile.isHouse,
+    isOrganization: profile.kind === "organization",
+    verified: Boolean(profile.verifiedAt),
     avatarUrl: await url(ctx, profile.avatarStorageId),
     logoUrl: await url(ctx, profile.logoStorageId),
   };
@@ -35,7 +38,9 @@ export async function ensureCreatorProfile(ctx: MutationCtx, user: Doc<"users">,
     .first();
   if (existing) return existing.handle;
 
-  const base = slugify(displayName || user.name, 32) || "creator";
+  const slug = slugify(displayName || user.name, 32);
+  // Handles become xingo.ai/<handle>, so avoid site paths and invalid shapes.
+  const base = slug && !handleProblem(slug) ? slug : `${slug || "creator"}-creator`.slice(0, 30);
   let handle = base;
   for (let index = 2; await ctx.db.query("creatorProfiles").withIndex("by_handle", (q) => q.eq("handle", handle)).first(); index += 1) {
     handle = `${base}-${index}`;
@@ -71,7 +76,7 @@ export const profile = query({
         .query("courseListings")
         .withIndex("by_creatorHandle", (q) => q.eq("creatorHandle", profile.handle))
         .collect()
-    ).filter((listing) => listing.status === "published");
+    ).filter((listing) => listing.status === "published" && !listing.restricted);
     const added = viewer
       ? new Set(
           (await ctx.db.query("libraryItems").withIndex("by_clerkId", (q) => q.eq("clerkId", viewer.clerkId)).collect()).map(
@@ -144,7 +149,7 @@ export const featured = query({
       .collect();
     const counts = new Map<string, number>();
     for (const listing of published) {
-      if (listing.creatorHandle) counts.set(listing.creatorHandle, (counts.get(listing.creatorHandle) ?? 0) + 1);
+      if (listing.creatorHandle && !listing.restricted) counts.set(listing.creatorHandle, (counts.get(listing.creatorHandle) ?? 0) + 1);
     }
     const profiles = await Promise.all(
       [...counts.keys()].map((handle) =>
@@ -157,8 +162,15 @@ export const featured = query({
     const cards = await Promise.all(
       profiles.filter((p): p is Doc<"creatorProfiles"> => p !== null).map(async (p) => ({ ...(await profileCard(ctx, p)), courses: counts.get(p.handle) ?? 0 })),
     );
-    // Creators with a profile photo first, then by number of courses.
-    return cards.sort((a, b) => Number(Boolean(b.avatarUrl)) - Number(Boolean(a.avatarUrl)) || b.courses - a.courses).slice(0, 24);
+    // Creators with a profile photo first, then verified, then by number of courses.
+    return cards
+      .sort(
+        (a, b) =>
+          Number(Boolean(b.avatarUrl)) - Number(Boolean(a.avatarUrl)) ||
+          Number(b.verified) - Number(a.verified) ||
+          b.courses - a.courses,
+      )
+      .slice(0, 24);
   },
 });
 

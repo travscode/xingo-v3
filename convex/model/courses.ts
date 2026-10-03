@@ -95,6 +95,8 @@ export async function recordCreatorEarning(
   if (!course || !isCommunityCourse(course) || !course.ownerClerkId || course.ownerClerkId === attempt.clerkId) return;
   // XINGO Originals (house studios) are owned by "house:<handle>" and never earn (D-038).
   if (isHouseOwner(course.ownerClerkId)) return;
+  // Organisation courses don't earn creator revenue (D-039).
+  if ((await getListing(ctx, course.id))?.orgHandle) return;
 
   const existing = await ctx.db
     .query("creatorEarnings")

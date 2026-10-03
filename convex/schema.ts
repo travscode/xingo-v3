@@ -243,6 +243,10 @@ export default defineSchema({
     targetLanguage: v.optional(v.string()),
     /** "assessed" is scored with the transcript hidden; "practice" shows it and is never scored. */
     mode: v.optional(v.union(v.literal("assessed"), v.literal("practice"))),
+    /** One-on-one sessions: the language the conversation was held in (the pair is still recorded). */
+    spokenLanguage: v.optional(v.string()),
+    /** Minutes come from this organisation's pool instead of the learner's own (D-039). */
+    fundedByOrg: v.optional(v.string()),
     ungradedReason: v.optional(v.string()),
     /** Why the live session ended (lib/scoring.ts endReasons). */
     endReason: v.optional(
@@ -286,6 +290,10 @@ export default defineSchema({
     whatYouGet: v.array(v.string()),
     audience: v.optional(v.string()),
     creatorName: v.string(),
+    /** Organisation that owns the course (D-039). */
+    orgHandle: v.optional(v.string()),
+    /** Hidden from the public marketplace; only org members and invited learners can open it. */
+    restricted: v.optional(v.boolean()),
     bannerStorageId: v.optional(v.id("_storage")),
     logoStorageId: v.optional(v.id("_storage")),
     certifications: v.array(
@@ -391,6 +399,12 @@ export default defineSchema({
     /** XINGO-made studio: labelled "XINGO Original", never earns or gets paid. */
     isHouse: v.boolean(),
     ownerClerkId: v.optional(v.string()),
+    /** "organization" profiles have a team, collections and invites (D-039). Absent = person. */
+    kind: v.optional(v.union(v.literal("person"), v.literal("organization"))),
+    /** Set by a XINGO admin: shows the verified tick. */
+    verifiedAt: v.optional(v.string()),
+    /** Organisation minute pool per month, set by a XINGO admin (D-039). */
+    orgMonthlyMinutes: v.optional(v.number()),
     createdAt: v.string(),
   })
     .index("by_handle", ["handle"])
@@ -470,6 +484,85 @@ export default defineSchema({
   })
     .index("by_clerkId_month", ["clerkId", "month"])
     .index("by_month", ["month"]),
+
+  /** Organisation team: who can manage the org and create its courses (D-039). */
+  orgMembers: defineTable({
+    orgHandle: v.string(),
+    clerkId: v.string(),
+    role: v.union(v.literal("owner"), v.literal("admin"), v.literal("creator")),
+    createdAt: v.string(),
+  })
+    .index("by_org", ["orgHandle"])
+    .index("by_clerkId", ["clerkId"])
+    .index("by_org_clerk", ["orgHandle", "clerkId"]),
+
+  /** A group of an organisation's courses, public or invite only (D-039). */
+  orgCollections: defineTable({
+    orgHandle: v.string(),
+    slug: v.string(),
+    title: v.string(),
+    description: v.string(),
+    visibility: v.union(v.literal("public"), v.literal("invite")),
+    moduleIds: v.array(v.string()),
+    bannerStorageId: v.optional(v.id("_storage")),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_org", ["orgHandle"])
+    .index("by_org_slug", ["orgHandle", "slug"]),
+
+  /**
+   * Team invites and collection access in one place (D-039). A row with `collectionId`
+   * is access to that collection (invited, requested, active…); one with `memberRole`
+   * is an invitation to join the organisation's team.
+   */
+  orgInvites: defineTable({
+    orgHandle: v.string(),
+    collectionId: v.optional(v.id("orgCollections")),
+    memberRole: v.optional(v.union(v.literal("admin"), v.literal("creator"))),
+    email: v.string(),
+    clerkId: v.optional(v.string()),
+    status: v.union(
+      v.literal("invited"),
+      v.literal("requested"),
+      v.literal("active"),
+      v.literal("declined"),
+      v.literal("revoked"),
+    ),
+    token: v.string(),
+    invitedByClerkId: v.optional(v.string()),
+    note: v.optional(v.string()),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_org", ["orgHandle"])
+    .index("by_collection", ["collectionId"])
+    .index("by_email", ["email"])
+    .index("by_clerkId", ["clerkId"])
+    .index("by_token", ["token"]),
+
+  /** Minutes taken from an organisation's pool, one row per attempt (D-039). */
+  orgUsageCharges: defineTable({
+    orgHandle: v.string(),
+    clerkId: v.string(),
+    attemptId: v.string(),
+    minutes: v.number(),
+    billingMonth: v.string(),
+    createdAt: v.string(),
+  })
+    .index("by_org_month", ["orgHandle", "billingMonth"])
+    .index("by_attemptId", ["attemptId"]),
+
+  /** Up to three admin-picked banners at the top of the marketplace (D-039). */
+  featuredSlots: defineTable({
+    position: v.number(),
+    title: v.string(),
+    subtitle: v.optional(v.string()),
+    imageStorageId: v.optional(v.id("_storage")),
+    linkUrl: v.string(),
+    active: v.boolean(),
+    updatedAt: v.string(),
+  }).index("by_position", ["position"]),
 
   /** One row per attempt that consumed practice minutes. */
   usageCharges: defineTable({

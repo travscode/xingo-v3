@@ -9,7 +9,11 @@ import { AppProviders } from "@/components/providers/app-providers";
  * the app so it feels like part of their library.
  */
 export default async function MarketplaceLayout({ children }: { children: ReactNode }) {
-  const { userId } = await auth();
+  // Paths the proxy skips (e.g. "/something.png" falling through to /[handle]) have no Clerk
+  // context; render them signed out so the 404 shows instead of an error.
+  const userId = await auth()
+    .then((session) => session.userId)
+    .catch(() => null);
 
   return (
     <AppProviders>

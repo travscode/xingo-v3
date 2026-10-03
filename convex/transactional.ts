@@ -25,13 +25,38 @@ const email = v.union(
   v.object({ kind: v.literal("payout_account_ready") }),
   v.object({ kind: v.literal("course_removed"), courseTitle: v.string(), reason: v.string() }),
   v.object({ kind: v.literal("minutes_used_up"), resetsOn: v.string() }),
+  v.object({
+    kind: v.literal("org_collection_invite"),
+    orgName: v.string(),
+    collectionTitle: v.string(),
+    inviterName: v.string(),
+    url: v.string(),
+  }),
+  v.object({ kind: v.literal("org_team_invite"), orgName: v.string(), role: v.string(), inviterName: v.string(), url: v.string() }),
+  v.object({ kind: v.literal("org_access_approved"), orgName: v.string(), collectionTitle: v.string(), url: v.string() }),
+  v.object({
+    kind: v.literal("org_access_requested"),
+    requesterName: v.string(),
+    requesterEmail: v.string(),
+    collectionTitle: v.string(),
+    url: v.string(),
+  }),
 );
 
 export const recipient = internalQuery({
-  args: { clerkId: v.string() },
+  args: { clerkId: v.optional(v.string()), toEmail: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkId);
-    return user ? { email: user.email, name: user.name } : null;
+    if (args.clerkId) {
+      const user = await getUserByClerkId(ctx, args.clerkId);
+      return user ? { email: user.email, name: user.name } : null;
+    }
+    if (!args.toEmail) return null;
+    // Invitations can go to people without an account yet.
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.toEmail!))
+      .first();
+    return { email: args.toEmail, name: user?.name ?? "" };
   },
 });
 
@@ -40,7 +65,7 @@ function firstName(name: string) {
 }
 
 export const send = internalAction({
-  args: { clerkId: v.string(), email, dedupeKey: v.string() },
+  args: { clerkId: v.optional(v.string()), toEmail: v.optional(v.string()), email, dedupeKey: v.string() },
   handler: async (ctx, args): Promise<{ sent: boolean; reason?: string }> => {
     const apiKey = process.env.RESEND_API_KEY;
     const fromAddress = process.env.EMAIL_FROM_ADDRESS;
@@ -49,7 +74,7 @@ export const send = internalAction({
       return { sent: false, reason: "not_configured" };
     }
 
-    const to = await ctx.runQuery(internal.transactional.recipient, { clerkId: args.clerkId });
+    const to = await ctx.runQuery(internal.transactional.recipient, { clerkId: args.clerkId, toEmail: args.toEmail });
     if (!to?.email) return { sent: false, reason: "no_recipient" };
 
     const site = siteUrlFromEnv();

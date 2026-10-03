@@ -6,11 +6,11 @@ import { ArrowRight, CalendarDays, Check, Clock, Mic, Play, Target, Trophy } fro
 import { StatusIcon } from "@/components/ui/status-icon";
 import { api } from "@/convex/_generated/api";
 import { displayMaxScore, isPassingScore, toDisplayScore } from "@/lib/scoring";
-import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
+import { useActiveLanguagePair, useProgressPair } from "@/components/providers/language-pair-context";
 import { Badge, Card, EmptyState, SectionTitle, Skeleton, Stat } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { formatMinuteCount } from "@/lib/plans";
-import { isEnglishOnly } from "@/lib/languages";
+import { createLanguagePair, isEnglishOnly, pairLabel } from "@/lib/languages";
 
 /**
  * Home. One obvious next action, then light context. Designed for the learner
@@ -18,12 +18,14 @@ import { isEnglishOnly } from "@/lib/languages";
  */
 export function LiveDashboard() {
   const me = useQuery(api.users.me, {});
-  const catalog = useQuery(api.catalog.forCurrentUser, {});
-  const sessions = useQuery(api.sessions.listForCurrentUser, {});
-  const metrics = useQuery(api.sessions.metricsForCurrentUser, {});
-  const { activePair } = useActiveLanguagePair();
+  const { activePair, setActivePair } = useActiveLanguagePair();
+  const pair = useProgressPair();
+  const catalog = useQuery(api.catalog.forCurrentUser, { pair });
+  const sessions = useQuery(api.sessions.listForCurrentUser, { pair });
+  const metrics = useQuery(api.sessions.metricsForCurrentUser, { pair });
+  const languages = useQuery(api.sessions.languageSummaryForCurrentUser, {});
 
-  if (!me || !catalog || !sessions || !metrics) {
+  if (!me || !catalog || !sessions || !metrics || !languages) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-12 w-1/2" />
@@ -38,6 +40,7 @@ export function LiveDashboard() {
     (session) => session.completionStatus === "completed" || session.completionStatus === "needs_review",
   );
   const isNew = graded.length === 0;
+  const otherLanguages = languages.filter((row) => row.key !== activePair.key);
   const nextUp = catalog.nextUp;
   const recent = graded.slice(0, 4);
   const scenarioTitles = new Map(
@@ -118,7 +121,7 @@ export function LiveDashboard() {
               </Link>
             }
           >
-            Your progress
+            Your progress · {pairLabel(activePair)}
           </SectionTitle>
           <Card className="grid gap-6 p-6 sm:grid-cols-4">
             <Stat icon={<Target />} label="Average score" value={metrics.averageScore} hint="out of 100" />
@@ -128,6 +131,44 @@ export function LiveDashboard() {
           </Card>
         </section>
       )}
+
+      {isNew && otherLanguages.length > 0 ? (
+        <p className="rounded-xl bg-gray-50 px-5 py-4 text-sm text-gray-600">
+          You haven&apos;t practised {pairLabel(activePair)} yet, so there are no scores for it. Your other languages are below.
+        </p>
+      ) : null}
+
+      {languages.length > 0 && (languages.length > 1 || otherLanguages.length > 0) ? (
+        <section>
+          <SectionTitle>Your languages</SectionTitle>
+          <Card className="divide-y divide-gray-200">
+            {languages.map((row) => {
+              const current = row.key === activePair.key;
+              return (
+                <button
+                  key={row.key}
+                  type="button"
+                  onClick={() => setActivePair(createLanguagePair(row.sourceLanguage, row.targetLanguage))}
+                  aria-pressed={current}
+                  className="flex w-full flex-wrap items-center justify-between gap-x-6 gap-y-1 px-5 py-4 text-left transition-colors hover:bg-gray-50"
+                >
+                  <span className="flex items-center gap-2 font-semibold">
+                    {pairLabel(row)}
+                    {current ? <Badge tone="dark">Selected</Badge> : null}
+                  </span>
+                  <span className="flex flex-wrap gap-x-5 text-sm tabular-nums text-gray-500">
+                    <span>{row.sessions} {row.sessions === 1 ? "session" : "sessions"}</span>
+                    <span>{row.averageScore !== null ? `Average ${row.averageScore}` : "Not scored yet"}</span>
+                    <span>{row.passed} passed</span>
+                    <span>{formatMinuteCount(row.practiceMinutes)} min</span>
+                  </span>
+                </button>
+              );
+            })}
+          </Card>
+          <p className="mt-2 text-xs text-gray-500">Scores, results and progress are kept separately for each language. Tap one to switch.</p>
+        </section>
+      ) : null}
 
       {recent.length > 0 ? (
         <section>

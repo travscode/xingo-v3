@@ -20,6 +20,7 @@ import {
 } from "../lib/marketplace";
 import { scenarioTimeLimitMinutes } from "../lib/plans";
 import { queueEmail } from "./model/notify";
+import { getMembership, hasCourseAccess, requireOrgRole } from "./model/orgs";
 
 /**
  * Community marketplace (D-031). Creators publish courses; learners add them to
@@ -77,13 +78,14 @@ async function storageUrl(ctx: Ctx, id: Id<"_storage"> | undefined) {
   return id ? ctx.storage.getUrl(id) : null;
 }
 
-/** Owner (or admin) of a community course, or throws. */
+/** Owner, org team member (org courses) or platform admin of a community course, or throws. */
 async function requireCourseEditor(ctx: MutationCtx | QueryCtx, moduleId: string) {
   const user = await requireUser(ctx);
   const course = await getCourse(ctx, moduleId);
   const listing = await getListing(ctx, moduleId);
 
-  if (!course || !listing || (!isCourseOwner(user, course) && user.role !== "platform_admin")) {
+  const orgEditor = Boolean(listing?.orgHandle && (await getMembership(ctx, listing.orgHandle, user.clerkId)));
+  if (!course || !listing || (!isCourseOwner(user, course) && !orgEditor && user.role !== "platform_admin")) {
     throw new Error("Course not found");
   }
 
@@ -91,7 +93,7 @@ async function requireCourseEditor(ctx: MutationCtx | QueryCtx, moduleId: string
 }
 
 /** Paths under /marketplace that are pages, not courses. */
-const RESERVED_SLUGS = new Set(["new", "manage", "earnings", "create", "creators"]);
+const RESERVED_SLUGS = new Set(["new", "manage", "earnings", "create", "creators", "org"]);
 
 async function uniqueSlug(ctx: MutationCtx, title: string) {
   const slug = slugify(title);
@@ -211,7 +213,13 @@ export function buildScenario(courseKind: "roleplay" | "interpreting", input: ty
 }
 
 /** Public card data for a listing. */
-async function listingCard(ctx: Ctx, listing: Doc<"courseListings">, scenarioCount: number) {
+export async function listingCard(ctx: Ctx, listing: Doc<"courseListings">, scenarioCount: number) {
+  const creator = listing.creatorHandle
+    ? await ctx.db
+        .query("creatorProfiles")
+        .withIndex("by_handle", (q) => q.eq("handle", listing.creatorHandle!))
+        .unique()
+    : null;
   return {
     moduleId: listing.moduleId,
     slug: listing.slug,
@@ -227,6 +235,9 @@ async function listingCard(ctx: Ctx, listing: Doc<"courseListings">, scenarioCou
     addCount: listing.addCount,
     publishedAt: listing.publishedAt ?? null,
     creatorHandle: listing.creatorHandle ?? null,
+    creatorVerified: Boolean(creator?.verifiedAt),
+    orgHandle: listing.orgHandle ?? null,
+    restricted: Boolean(listing.restricted),
     isOriginal: isHouseOwner(listing.ownerClerkId),
     rating: averageRating(listing),
     ratingCount: listing.ratingCount ?? 0,
@@ -263,6 +274,7 @@ export const browse = query({
     ]);
     const added = user ? await libraryModuleIds(ctx, user.clerkId) : new Set<string>();
     const matching = listings
+      .filter((listing) => !listing.restricted)
       .filter((listing) => !args.kind || listing.kind === args.kind)
       .filter((listing) => listingMatches(listing, args.search ?? ""))
       .map((listing) => ({ ...listing, scenarioCount: counts.get(listing.moduleId) ?? 0 }))
@@ -286,7 +298,7 @@ export const publishedSlugs = query({
       .query("courseListings")
       .withIndex("by_status", (q) => q.eq("status", "published"))
       .collect();
-    return listings.map((listing) => ({ slug: listing.slug, updatedAt: listing.updatedAt }));
+    return listings.filter((listing) => !listing.restricted).map((listing) => ({ slug: listing.slug, updatedAt: listing.updatedAt }));
   },
 });
 
@@ -302,10 +314,13 @@ export const listing = query({
     if (!listing) return null;
 
     const user = await optionalUser(ctx);
-    const isOwner = user?.clerkId === listing.ownerClerkId;
+    const isOrgEditor = Boolean(user && listing.orgHandle && (await getMembership(ctx, listing.orgHandle, user.clerkId)));
+    const isOwner = user?.clerkId === listing.ownerClerkId || isOrgEditor;
     const isAdmin = user?.role === "platform_admin";
 
     if (listing.status !== "published" && !isOwner && !isAdmin) return null;
+    // Invite-only org courses: only the team and learners with access (D-039).
+    if (!(await hasCourseAccess(ctx, user, listing))) return null;
 
     const scenarios = await ctx.db
       .query("scenarios")
@@ -386,7 +401,9 @@ export const addToLibrary = mutation({
     const user = await requireUser(ctx);
     const listing = await getListing(ctx, args.moduleId);
 
-    if (!listing || listing.status !== "published") throw new ConvexError("COURSE_UNAVAILABLE");
+    if (!listing || listing.status !== "published" || !(await hasCourseAccess(ctx, user, listing))) {
+      throw new ConvexError("COURSE_UNAVAILABLE");
+    }
 
     const existing = await ctx.db
       .query("libraryItems")
@@ -464,10 +481,13 @@ export const createCourse = mutation({
     title: v.string(),
     tagline: v.string(),
     creatorName: v.optional(v.string()),
+    /** Create the course for an organisation the user is on the team of (D-039). */
+    orgHandle: v.optional(v.string()),
     scenario: scenarioInput,
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
+    const org = args.orgHandle ? (await requireOrgRole(ctx, args.orgHandle)).org : null;
     const title = clip(args.title, LISTING_LIMITS.title);
 
     if (!title) throw new ConvexError("COURSE_INCOMPLETE");
@@ -494,8 +514,8 @@ export const createCourse = mutation({
       source: "community",
       ownerClerkId: user.clerkId,
     });
-    const creatorName = clip(args.creatorName, 80) || user.name;
-    const creatorHandle = await ensureCreatorProfile(ctx, user, creatorName);
+    const creatorName = org ? org.displayName : clip(args.creatorName, 80) || user.name;
+    const creatorHandle = org ? org.handle : await ensureCreatorProfile(ctx, user, creatorName);
     await ctx.db.insert("courseListings", {
       moduleId,
       ownerClerkId: user.clerkId,
@@ -509,6 +529,8 @@ export const createCourse = mutation({
       whatYouGet: [],
       creatorName,
       creatorHandle,
+      // Org courses stay private to the team and invited learners until put in a public collection.
+      ...(org ? { orgHandle: org.handle, restricted: true } : {}),
       certifications: [],
       createdAt: now,
       updatedAt: now,

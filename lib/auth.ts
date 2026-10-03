@@ -33,7 +33,14 @@ export const protectedRoutePatterns = [
   "/account(.*)",
   "/help(.*)",
   // The marketplace is public; creating and managing courses needs an account.
-  "/marketplace/new(.*)",
-  "/marketplace/manage(.*)",
-  "/marketplace/earnings(.*)",
+  // Exact paths plus sub-paths, so course slugs like /marketplace/new-starter-training stay public.
+  "/marketplace/new",
+  "/marketplace/new/(.*)",
+  "/marketplace/manage",
+  "/marketplace/manage/(.*)",
+  "/marketplace/earnings",
+  "/marketplace/earnings/(.*)",
+  // Organisation dashboards (D-039). /join/<token> stays public so invitees can read it first.
+  // Trailing slash so course slugs like /marketplace/organising-events stay public.
+  "/marketplace/org/(.*)",
 ] as const;

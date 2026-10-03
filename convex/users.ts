@@ -13,6 +13,7 @@ import {
   requireUser,
 } from "./model/auth";
 import { getEntitlement } from "./model/entitlements";
+import { activateInvitesForUser } from "./model/orgs";
 import { queueEmail } from "./model/notify";
 
 const languagePreference = v.object({
@@ -157,6 +158,7 @@ export const syncCurrentUser = mutation({
 
       if (verifiedEmail) {
         await applyPendingInvite(ctx, clerkId, verifiedEmail);
+        await activateInvitesForUser(ctx, clerkId, verifiedEmail);
       }
 
       return { created: false };
@@ -177,6 +179,7 @@ export const syncCurrentUser = mutation({
 
     if (verifiedEmail) {
       await applyPendingInvite(ctx, clerkId, verifiedEmail);
+      await activateInvitesForUser(ctx, clerkId, verifiedEmail);
     }
 
     await queueEmail(ctx, { clerkId, email: { kind: "welcome" }, dedupeKey: `welcome-${clerkId}` });

@@ -10,6 +10,8 @@ import { AchievementBadges } from "@/components/dashboard/achievement-badges";
 import { ProgressHistoryChart } from "@/components/dashboard/progress-history-chart";
 import { Button } from "@/components/ui/button";
 import { displayMaxScore, isCclModule, isPassingScore, toDisplayScore } from "@/lib/scoring";
+import { useActiveLanguagePair, useProgressPair } from "@/components/providers/language-pair-context";
+import { pairLabel } from "@/lib/languages";
 import { api } from "@/convex/_generated/api";
 
 type PeriodId = "all" | "7d" | "30d" | "90d" | "year" | "custom";
@@ -406,7 +408,9 @@ export function LiveProgress() {
   const [historyPageSize, setHistoryPageSize] = useState(
     ATTEMPT_HISTORY_PAGE_SIZE,
   );
-  const sessions = useQuery(api.sessions.listForCurrentUser, {});
+  const pair = useProgressPair();
+  const { activePair } = useActiveLanguagePair();
+  const sessions = useQuery(api.sessions.listForCurrentUser, { pair });
   const modules = useQuery(api.modules.list, {});
   const scenarios = useQuery(api.scenarios.list, {});
 
@@ -439,6 +443,7 @@ export function LiveProgress() {
     endDate: endDate || undefined,
     moduleId: selectedModuleId !== "all" ? selectedModuleId : undefined,
     scenarioId: selectedScenarioId !== "all" ? selectedScenarioId : undefined,
+    pair,
   });
   const scenarioTitleById = useMemo(
     () =>
@@ -520,7 +525,10 @@ export function LiveProgress() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Progress" description="Scores from assessed sessions. Practice sessions aren't included." />
+      <PageHeader
+        title="Progress"
+        description={`Scores from assessed sessions in ${pairLabel(activePair)}. Practice sessions aren't included. Switch language at the top to see another pair.`}
+      />
       <AchievementBadges sessions={sessions} modules={modules} />
       <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard

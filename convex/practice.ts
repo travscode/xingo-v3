@@ -27,6 +27,13 @@ import { LEGAL_VERSION } from "../lib/legal";
 import { bumpCourseCounters, canPractiseCourse, getListing, recordCreatorEarning } from "./model/courses";
 import { queueEmail } from "./model/notify";
 import { bumpUsage } from "./model/usageRollups";
+import { fundingOrgFor, hasCourseAccess, orgMinutesRemaining } from "./model/orgs";
+
+/** Minutes left for an attempt: the organisation's pool when it pays (D-039), otherwise the learner's own. */
+async function attemptRemainingMinutes(ctx: MutationCtx, attempt: Pick<Doc<"sessions">, "fundedByOrg">, user: Doc<"users"> | null, now: number) {
+  if (attempt.fundedByOrg) return orgMinutesRemaining(ctx, attempt.fundedByOrg, new Date(now));
+  return user ? (await getEntitlement(ctx, user, new Date(now))).remainingMinutes : 0;
+}
 
 const transcriptEntry = v.object({
   id: v.string(),
@@ -138,7 +145,30 @@ async function closeAndCharge(
   // or network failures before the conversation started).
   const voiceStarted = (attempt.realtimeKeysIssued ?? 0) > 0;
 
-  if (user && !existingCharge && attempt.startedAtMs !== undefined && voiceStarted) {
+  const existingOrgCharge = attempt.fundedByOrg
+    ? await ctx.db
+        .query("orgUsageCharges")
+        .withIndex("by_attemptId", (q) => q.eq("attemptId", attempt.id))
+        .first()
+    : null;
+
+  if (attempt.fundedByOrg && user && !existingOrgCharge && attempt.startedAtMs !== undefined && voiceStarted) {
+    // Paid from the organisation's pool: no personal minutes, no creator earnings.
+    const remaining = await orgMinutesRemaining(ctx, attempt.fundedByOrg, new Date(endMs));
+    const minutes = Math.min(billableMinutesFromMs(durationMs), remaining);
+    if (minutes > 0) {
+      await ctx.db.insert("orgUsageCharges", {
+        orgHandle: attempt.fundedByOrg,
+        clerkId: attempt.clerkId,
+        attemptId: attempt.id,
+        minutes,
+        billingMonth: getBillingMonthKey(new Date(endMs)),
+        createdAt: new Date(endMs).toISOString(),
+      });
+      await bumpUsage(ctx, attempt.clerkId, new Date(endMs).toISOString(), { minutes });
+    }
+    chargedMinutes = minutes;
+  } else if (!attempt.fundedByOrg && user && !existingCharge && attempt.startedAtMs !== undefined && voiceStarted) {
     const entitlement = await getEntitlement(ctx, user, new Date(endMs));
     const split = splitCharge(entitlement, billableMinutesFromMs(durationMs));
 
@@ -194,6 +224,8 @@ export const startAttempt = mutation({
     scenarioId: v.string(),
     sourceLanguage: v.string(),
     targetLanguage: v.string(),
+    /** One-on-one sessions: the language the character speaks. */
+    spokenLanguage: v.optional(v.string()),
     mode: v.optional(v.union(v.literal("assessed"), v.literal("practice"))),
   },
   handler: async (ctx, args) => {
@@ -225,7 +257,8 @@ export const startAttempt = mutation({
     }
 
     // Community courses: practisable while published (owner and admins always).
-    if (!canPractiseCourse(user, learningModule, await getListing(ctx, learningModule.id))) {
+    const listing = await getListing(ctx, learningModule.id);
+    if (!canPractiseCourse(user, learningModule, listing) || !(await hasCourseAccess(ctx, user, listing))) {
       throw new ConvexError("COURSE_UNAVAILABLE");
     }
 
@@ -250,7 +283,13 @@ export const startAttempt = mutation({
       throw new ConvexError("PREMIUM_REQUIRED");
     }
 
-    if (entitlement.remainingMinutes < MIN_MINUTES_TO_START) {
+    // Org courses practised by the org's team or invited learners use the org's pool while it lasts.
+    const fundedByOrg = (await fundingOrgFor(ctx, user, listing, new Date(now))) ?? undefined;
+    const remainingMinutes = fundedByOrg
+      ? await orgMinutesRemaining(ctx, fundedByOrg, new Date(now))
+      : entitlement.remainingMinutes;
+
+    if (remainingMinutes < MIN_MINUTES_TO_START) {
       throw new ConvexError("OUT_OF_MINUTES");
     }
 
@@ -274,15 +313,18 @@ export const startAttempt = mutation({
       transcriptEntries: [],
       sourceLanguage: args.sourceLanguage.trim().slice(0, 40),
       targetLanguage: args.targetLanguage.trim().slice(0, 40),
+      spokenLanguage: args.spokenLanguage?.trim().slice(0, 40) || undefined,
       mode: args.mode ?? "assessed",
+      fundedByOrg,
       timestamp: startedAt,
     });
     await bumpUsage(ctx, user.clerkId, startedAt, { attempts: 1 });
 
     return {
       attemptId,
-      allowedMs: allowedDurationMs(entitlement.remainingMinutes),
-      remainingMinutes: entitlement.remainingMinutes,
+      allowedMs: allowedDurationMs(remainingMinutes),
+      remainingMinutes,
+      fundedByOrg: fundedByOrg ?? null,
     };
   },
 });
@@ -304,8 +346,7 @@ export const heartbeat = mutation({
     const user = await getUserByClerkId(ctx, clerkId);
     const now = Date.now();
     const startedAtMs = attempt.startedAtMs ?? now;
-    const entitlement = user ? await getEntitlement(ctx, user, new Date(now)) : null;
-    const allowedMs = allowedDurationMs(entitlement?.remainingMinutes ?? 0);
+    const allowedMs = allowedDurationMs(await attemptRemainingMinutes(ctx, attempt, user, now));
     const timeLimitMs = timeLimitMsFor(await getAttemptScenario(ctx, attempt));
     const elapsedMs = now - startedAtMs;
 
@@ -365,10 +406,9 @@ export const reserveRealtimeKey = internalMutation({
     }
 
     const now = Date.now();
-    const entitlement = user ? await getEntitlement(ctx, user, new Date(now)) : null;
     const elapsedMs = now - (attempt.startedAtMs ?? now);
 
-    if (elapsedMs >= allowedDurationMs(entitlement?.remainingMinutes ?? 0)) {
+    if (elapsedMs >= allowedDurationMs(await attemptRemainingMinutes(ctx, attempt, user, now))) {
       throw new ConvexError("OUT_OF_MINUTES");
     }
 
@@ -416,11 +456,10 @@ export const closeForGrading = internalMutation({
     const elapsedMs = now - (attempt.startedAtMs ?? now);
     const timeLimitMs = timeLimitMsFor(scenario);
     const user = await getUserByClerkId(ctx, args.clerkId);
-    const entitlement = user ? await getEntitlement(ctx, user, new Date(now)) : null;
     const resolvedEndReason = resolveEndReason(args.endReason, {
       elapsedMs,
       timeLimitMs,
-      allowedMs: allowedDurationMs(entitlement?.remainingMinutes ?? 0),
+      allowedMs: allowedDurationMs(await attemptRemainingMinutes(ctx, attempt, user, now)),
     });
 
     const transcriptEntries = args.transcriptEntries
@@ -449,6 +488,7 @@ export const closeForGrading = internalMutation({
       scenario,
       sourceLanguage: attempt.sourceLanguage,
       targetLanguage: attempt.targetLanguage,
+      spokenLanguage: attempt.spokenLanguage,
       moduleId: attempt.moduleId,
       mode: attempt.mode ?? "assessed",
       endReason: resolvedEndReason,
@@ -485,6 +525,7 @@ export const prepareRegrade = internalMutation({
       scenario,
       sourceLanguage: attempt.sourceLanguage,
       targetLanguage: attempt.targetLanguage,
+      spokenLanguage: attempt.spokenLanguage,
       moduleId: attempt.moduleId,
       mode: attempt.mode ?? "assessed",
       endReason: attempt.endReason,

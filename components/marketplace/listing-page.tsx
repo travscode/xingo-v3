@@ -24,6 +24,7 @@ import { Badge, Card, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { CourseBanner, RatingInline } from "@/components/marketplace/course-card";
 import { CourseRatings } from "@/components/marketplace/course-ratings";
+import { creatorHref, VerifiedBadge } from "@/components/marketplace/verified-badge";
 
 const difficultyLabel = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" } as const;
 
@@ -37,7 +38,7 @@ function ReportForm({ moduleId, signedIn, slug }: { moduleId: string; signedIn: 
 
   if (!signedIn) {
     return (
-      <Link href={`/sign-in?redirect_url=${encodeURIComponent(`/marketplace/${slug}`)}`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-ink">
+      <Link href={`/sign-in?redirect=${encodeURIComponent(`/marketplace/${slug}`)}`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-ink">
         <Flag className="h-3.5 w-3.5" aria-hidden /> Sign in to report this course
       </Link>
     );
@@ -148,7 +149,7 @@ export function CourseListingPage({ slug }: { slug: string }) {
     }
   };
 
-  const signUpHref = `/sign-up?redirect_url=${encodeURIComponent(`/marketplace/${slug}`)}`;
+  const signUpHref = `/sign-up?redirect=${encodeURIComponent(`/marketplace/${slug}`)}`;
 
   const primary = listing.isOwner ? (
     <Button asChild size="lg">
@@ -217,12 +218,16 @@ export function CourseListingPage({ slug }: { slug: string }) {
               <span>
                 By{" "}
                 {listing.creatorHandle ? (
-                  <Link href={`/marketplace/creators/${listing.creatorHandle}`} className="font-semibold text-ink hover:underline">
+                  <Link
+                    href={creatorHref(listing.creatorHandle, listing.orgHandle === listing.creatorHandle)}
+                    className="font-semibold text-ink hover:underline"
+                  >
                     {listing.creatorName}
                   </Link>
                 ) : (
                   <span className="font-semibold text-ink">{listing.creatorName}</span>
                 )}
+                {listing.creatorVerified ? <VerifiedBadge size="md" className="ml-1 align-[-3px]" /> : null}
               </span>
               {listing.isOriginal ? <span className="text-xs">Made by the XINGO team</span> : null}
               <RatingInline rating={listing.rating} count={listing.ratingCount} className="text-ink" />

@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { query, type QueryCtx } from "./_generated/server";
 import { getClerkIdFromIdentity, getUserByClerkId } from "./model/auth";
+import { hasCourseAccess } from "./model/orgs";
+import { filterSessionsForPair, pairArg } from "./model/languagePairs";
 import {
   getEntitlement,
   getScenarioAccess,
@@ -69,8 +71,8 @@ function statsByScenario(sessions: Doc<"sessions">[]) {
  * scenario's lock state and the user's results, plus one recommended next step.
  */
 export const forCurrentUser = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { pair: pairArg },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     const user = identity
       ? await getUserByClerkId(ctx, getClerkIdFromIdentity(identity))
@@ -94,7 +96,8 @@ export const forCurrentUser = query({
     // Marketplace courses appear only once the learner adds them (or owns them).
     const modules = allModules.filter((course) => inLibrary(course, user, added, publishedIds));
     const listingByModule = new Map(listings.map((listing) => [listing.moduleId, listing]));
-    const stats = statsByScenario(sessions);
+    // Scores and "passed" follow the language pair the learner has selected.
+    const stats = statsByScenario(user ? await filterSessionsForPair(ctx, user.clerkId, sessions, args.pair) : sessions);
 
     const catalogModules = await Promise.all(
       orderModulesForGoal(modules, user?.practiceGoal).map(async (learningModule) => {
@@ -219,7 +222,8 @@ export const scenarioForPractice = query({
       ? await getUserByClerkId(ctx, getClerkIdFromIdentity(identity))
       : null;
 
-    if (!canPractiseCourse(user, learningModule, await getListing(ctx, learningModule.id))) {
+    const listing = await getListing(ctx, learningModule.id);
+    if (!canPractiseCourse(user, learningModule, listing) || !(await hasCourseAccess(ctx, user, listing))) {
       return null;
     }
     const entitlement = user ? await getEntitlement(ctx, user) : null;

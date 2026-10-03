@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft, MapPin, Star } from "lucide-react";
 import { api } from "@/convex/_generated/api";
@@ -10,12 +10,14 @@ import { friendlyError } from "@/lib/errors";
 import { Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/marketplace/course-card";
+import { VerifiedBadge } from "@/components/marketplace/verified-badge";
 
 /** A creator's public page: branded header, bio, real totals and their courses. */
 export function CreatorPage({ handle }: { handle: string }) {
   const creator = useQuery(api.creators.profile, { handle });
   const add = useMutation(api.marketplace.addToLibrary);
   const router = useRouter();
+  const pathname = usePathname();
   const [adding, setAdding] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,8 +66,8 @@ export function CreatorPage({ handle }: { handle: string }) {
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <h1 className="text-3xl font-bold tracking-[-0.035em]">{creator.displayName}</h1>
+            {creator.verified ? <VerifiedBadge size="lg" /> : null}
             <span className="text-sm text-gray-500">@{creator.handle}</span>
-
           </div>
           {creator.tagline ? <p className="mt-1 text-lg text-gray-500">{creator.tagline}</p> : null}
           <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-gray-500">
@@ -100,14 +102,14 @@ export function CreatorPage({ handle }: { handle: string }) {
           {creator.courses.map((course) => (
             <CourseCard
               key={course.moduleId}
-              course={course}
+              course={{ ...course, creatorVerified: creator.verified }}
               adding={adding === course.moduleId}
               onAdd={() => {
                 setAdding(course.moduleId);
                 setError(null);
                 add({ moduleId: course.moduleId })
                   .catch((addError) => {
-                    if (/Not authenticated|not found/i.test(String(addError))) router.push(`/sign-up?redirect_url=${encodeURIComponent(`/marketplace/creators/${handle}`)}`);
+                    if (/Not authenticated|not found/i.test(String(addError))) router.push(`/sign-up?redirect=${encodeURIComponent(pathname)}`);
                     else setError(friendlyError(addError));
                   })
                   .finally(() => setAdding(null));

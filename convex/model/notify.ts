@@ -9,10 +9,14 @@ import type { TransactionalEmail } from "../../lib/email/transactional";
  */
 export async function queueEmail(
   ctx: MutationCtx,
-  args: { clerkId: string; email: TransactionalEmail; dedupeKey: string },
+  args: ({ clerkId: string; toEmail?: undefined } | { clerkId?: undefined; toEmail: string }) & {
+    email: TransactionalEmail;
+    dedupeKey: string;
+  },
 ) {
   await ctx.scheduler.runAfter(0, internal.transactional.send, {
     clerkId: args.clerkId,
+    toEmail: args.toEmail,
     email: args.email,
     dedupeKey: args.dedupeKey,
   });

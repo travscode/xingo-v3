@@ -4,15 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { ArrowRight, BarChart3, Plus, Search, Sparkles, Wallet } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BarChart3, Building2, ChevronRight, Plus, Search, Sparkles, Wallet } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { friendlyError } from "@/lib/errors";
 import { formatAud } from "@/lib/marketplace";
+import { ORG_ROLE_LABELS } from "@/lib/orgs";
 import { cn } from "@/lib/utils";
 import { Badge, EmptyState, PageHeader, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/marketplace/course-card";
 import { CreatorProfileEditor } from "@/components/marketplace/creator-profile-editor";
+import { creatorHref, VerifiedBadge } from "@/components/marketplace/verified-badge";
 
 type Tab = "discover" | "added" | "yours";
 type KindFilter = "all" | "roleplay" | "interpreting";
@@ -47,6 +49,92 @@ function CreatorBanner() {
   );
 }
 
+type FeaturedSlot = NonNullable<ReturnType<typeof useQuery<typeof api.featured.list>>>[number];
+
+/** One admin-picked banner: the whole card is the link. Site paths stay in the tab; https opens a new one. */
+function FeaturedBanner({ slot, size = "small" }: { slot: FeaturedSlot; size?: "wide" | "large" | "small" }) {
+  const large = size !== "small";
+  const external = !slot.linkUrl.startsWith("/");
+  const body = (
+    <>
+      {slot.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={slot.imageUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02] motion-reduce:transition-none"
+        />
+      ) : null}
+      {/* Legibility scrim so the title reads on any photo. */}
+      <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/25 to-transparent" />
+      <span className="relative flex w-full items-end justify-between gap-3 p-4 sm:p-5">
+        <span className="min-w-0">
+          <span className={cn("line-clamp-2 block font-bold leading-tight tracking-[-0.02em] text-paper", large ? "text-xl sm:text-3xl" : "text-lg")}>
+            {slot.title}
+          </span>
+          {slot.subtitle ? (
+            <span className={cn("mt-1 line-clamp-2 block text-paper/80", large ? "text-sm sm:text-[15px] sm:leading-6" : "text-sm")}>{slot.subtitle}</span>
+          ) : null}
+        </span>
+        {external ? (
+          <>
+            <ArrowUpRight className="h-5 w-5 shrink-0 text-paper" aria-hidden />
+            <span className="sr-only">(opens in a new tab)</span>
+          </>
+        ) : (
+          <ArrowRight className="h-5 w-5 shrink-0 text-paper" aria-hidden />
+        )}
+      </span>
+    </>
+  );
+  const className = cn(
+    "group relative flex overflow-hidden rounded-2xl bg-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-live focus-visible:ring-offset-2",
+    size === "wide" && "aspect-[16/9] sm:aspect-[3/1]",
+    size === "large" && "aspect-[16/9] md:aspect-auto md:h-full md:min-h-80",
+    size === "small" && "aspect-[16/9]",
+  );
+
+  return external ? (
+    <a href={slot.linkUrl} target="_blank" rel="noopener noreferrer" className={className}>
+      {body}
+    </a>
+  ) : (
+    <Link href={slot.linkUrl} className={className}>
+      {body}
+    </Link>
+  );
+}
+
+/** Up to three featured banners picked in Admin → Marketplace. Hidden when none are active. */
+function FeaturedBanners() {
+  const slots = useQuery(api.featured.list, {});
+  if (!slots || slots.length === 0) return null;
+  const shown = slots.slice(0, 3);
+
+  return (
+    <section aria-label="Featured">
+      {shown.length === 1 ? (
+        <FeaturedBanner slot={shown[0]} size="wide" />
+      ) : shown.length === 2 ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {shown.map((slot) => (
+            <FeaturedBanner key={slot.position} slot={slot} />
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-3 md:grid-rows-2">
+          <div className="md:col-span-2 md:row-span-2">
+            <FeaturedBanner slot={shown[0]} size="large" />
+          </div>
+          {shown.slice(1).map((slot) => (
+            <FeaturedBanner key={slot.position} slot={slot} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /** Row of creator studios (avatars), linking to their pages. */
 function FeaturedCreators() {
   const creators = useQuery(api.creators.featured, {});
@@ -61,7 +149,7 @@ function FeaturedCreators() {
         {creators.map((creator) => (
           <li key={creator.handle} className="shrink-0">
             <Link
-              href={`/marketplace/creators/${creator.handle}`}
+              href={creatorHref(creator.handle, creator.isOrganization)}
               className="group flex w-28 flex-col items-center gap-2 rounded-2xl p-2 text-center hover:bg-gray-50"
             >
               <span
@@ -75,7 +163,10 @@ function FeaturedCreators() {
                   <span className="text-lg font-bold text-paper">{creator.displayName.slice(0, 1)}</span>
                 )}
               </span>
-              <span className="line-clamp-2 text-xs font-semibold leading-tight">{creator.displayName}</span>
+              <span className="line-clamp-2 text-xs font-semibold leading-tight">
+                {creator.displayName}
+                {creator.verified ? <VerifiedBadge className="ml-0.5 align-[-2px]" /> : null}
+              </span>
               <span className="text-[11px] text-gray-500">
                 {creator.courses} {creator.courses === 1 ? "course" : "courses"}
               </span>
@@ -100,7 +191,7 @@ function Discover({ signedIn }: { signedIn: boolean }) {
 
   const addCourse = async (moduleId: string, slug: string) => {
     if (!signedIn) {
-      router.push(`/sign-up?redirect_url=${encodeURIComponent(`/marketplace/${slug}`)}`);
+      router.push(`/sign-up?redirect=${encodeURIComponent(`/marketplace/${slug}`)}`);
       return;
     }
     setAdding(moduleId);
@@ -116,6 +207,7 @@ function Discover({ signedIn }: { signedIn: boolean }) {
 
   return (
     <div className="space-y-6">
+      <FeaturedBanners />
       <CreatorBanner />
       <FeaturedCreators />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -248,6 +340,59 @@ function Added() {
   );
 }
 
+/** Organisations you're on the team of, plus the way to start one. Lives in "Created by you". */
+function YourOrganisations() {
+  const orgs = useQuery(api.orgs.mine, {});
+  if (orgs === undefined) return <Skeleton className="h-24" />;
+
+  return (
+    <section aria-labelledby="your-orgs-heading" className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="your-orgs-heading" className="text-lg font-bold tracking-[-0.02em]">
+          Your organisations
+        </h2>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/marketplace/org/new">
+            <Plus className="h-4 w-4" aria-hidden /> Create an organisation
+          </Link>
+        </Button>
+      </div>
+      {orgs.length === 0 ? (
+        <p className="text-sm text-gray-500">
+          Publish courses as a team, with your own page and invite-only collections for your learners.
+        </p>
+      ) : (
+        <ul className="divide-y divide-gray-200 rounded-xl border border-gray-200">
+          {orgs.map((org) => (
+            <li key={org.handle}>
+              <Link href={`/marketplace/org/${org.handle}`} className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100">
+                  {org.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={org.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <Building2 className="h-4 w-4 text-gray-500" aria-hidden />
+                  )}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1">
+                    <span className="truncate font-semibold">{org.displayName}</span>
+                    {org.verified ? <VerifiedBadge size="md" /> : null}
+                  </span>
+                  <span className="block truncate text-sm text-gray-500">
+                    @{org.handle} · {ORG_ROLE_LABELS[org.role]}
+                  </span>
+                </span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-gray-500" aria-hidden />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function Yours() {
   const courses = useQuery(api.marketplace.myCourses, {});
   const summary = useQuery(api.marketplace.creatorSummary, {});
@@ -255,17 +400,20 @@ function Yours() {
   if (courses === undefined) return <Skeleton className="h-64" />;
   if (courses.length === 0) {
     return (
-      <EmptyState
-        title="You haven't created a course yet"
-        description="Describe a conversation, publish it, and earn when people practise it."
-        action={
-          <Button asChild>
-            <Link href="/marketplace/new">
-              <Plus className="h-4 w-4" aria-hidden /> Create a course
-            </Link>
-          </Button>
-        }
-      />
+      <div className="space-y-10">
+        <EmptyState
+          title="You haven't created a course yet"
+          description="Describe a conversation, publish it, and earn when people practise it."
+          action={
+            <Button asChild>
+              <Link href="/marketplace/new">
+                <Plus className="h-4 w-4" aria-hidden /> Create a course
+              </Link>
+            </Button>
+          }
+        />
+        <YourOrganisations />
+      </div>
     );
   }
 
@@ -326,6 +474,7 @@ function Yours() {
           </Link>
         ))}
       </div>
+      <YourOrganisations />
     </div>
   );
 }

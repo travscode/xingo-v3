@@ -106,9 +106,12 @@ function KindChoice({ value, onChange }: { value: CourseKind | null; onChange: (
   );
 }
 
-export function CourseWizard() {
+export function CourseWizard({ orgHandle }: { orgHandle?: string } = {}) {
   const router = useRouter();
   const me = useQuery(api.users.me, {});
+  const myOrgs = useQuery(api.orgs.mine, orgHandle ? {} : "skip");
+  // Only create for the organisation if the user is on its team; otherwise it's a personal course.
+  const org = orgHandle ? myOrgs?.find((item) => item.handle === orgHandle.toLowerCase()) : undefined;
   const createCourse = useMutation(api.marketplace.createCourse);
   const [draft, setDraft] = useState<Draft>(empty);
   const [index, setIndex] = useState(0);
@@ -136,7 +139,7 @@ export function CourseWizard() {
         kind: draft.kind,
         title: draft.title,
         tagline: draft.tagline,
-        creatorName: creatorName || undefined,
+        ...(org ? { orgHandle: org.handle } : { creatorName: creatorName || undefined }),
         scenario: {
           title: draft.scenarioTitle,
           description: draft.tagline,
@@ -161,7 +164,7 @@ export function CourseWizard() {
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div className="flex items-center justify-between gap-4">
-        <Link href="/marketplace?tab=yours" className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-ink">
+        <Link href={org ? `/marketplace/org/${org.handle}?tab=courses` : "/marketplace?tab=yours"} className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-ink">
           <ArrowLeft className="h-4 w-4" aria-hidden /> Cancel
         </Link>
         <span className="text-sm tabular-nums text-gray-500">
@@ -169,6 +172,12 @@ export function CourseWizard() {
         </span>
       </div>
       <ProgressBar value={(index + 1) / steps.length} tone="accent" />
+      {org ? (
+        <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm">
+          Creating for <span className="font-semibold">{org.displayName}</span>. It stays private to your team and invited learners until
+          it&apos;s in a public collection.
+        </p>
+      ) : null}
 
       <div>
         <h1 className="text-3xl font-bold tracking-[-0.035em]">{title}</h1>
@@ -194,9 +203,11 @@ export function CourseWizard() {
             <Field label="One-line summary" htmlFor="wiz-tagline" hint="What will someone be able to do after practising?">
               <TextInput id="wiz-tagline" maxLength={140} value={draft.tagline} onChange={(e) => set({ tagline: e.target.value })} />
             </Field>
-            <Field label="Shown as" htmlFor="wiz-creator" hint="Your name or your organisation's.">
-              <TextInput id="wiz-creator" maxLength={80} value={creatorName} onChange={(e) => set({ creatorName: e.target.value })} />
-            </Field>
+            {org ? null : (
+              <Field label="Shown as" htmlFor="wiz-creator" hint="Your name or your organisation's.">
+                <TextInput id="wiz-creator" maxLength={80} value={creatorName} onChange={(e) => set({ creatorName: e.target.value })} />
+              </Field>
+            )}
           </>
         ) : null}
 
@@ -257,7 +268,7 @@ export function CourseWizard() {
           <Button type="button" variant="ghost" onClick={() => setIndex(index - 1)} disabled={index === 0 || saving}>
             <ArrowLeft className="h-4 w-4" aria-hidden /> Back
           </Button>
-          <Button type="submit" disabled={!step.valid(draft) || saving}>
+          <Button type="submit" disabled={!step.valid(draft) || saving || (Boolean(orgHandle) && myOrgs === undefined)}>
             {last ? (saving ? "Creating…" : "Create course") : "Continue"}
             {last ? null : <ArrowRight className="h-4 w-4" aria-hidden />}
           </Button>

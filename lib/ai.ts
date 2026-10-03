@@ -196,7 +196,7 @@ export function buildRoleplayInstructions(args: { scenario: Scenario; agent: Voi
       : `- When the learner closes the conversation, say a brief goodbye, then call the ${END_CONVERSATION_TOOL} tool with reason "objective_met".`,
     `- If the learner clearly can't continue (long silences, repeated "I don't know", or they keep going in circles), close the conversation naturally and call ${END_CONVERSATION_TOOL} with reason "learner_stuck".`,
     "",
-    "LANGUAGE RULE (overrides everything above): speak only English, at a natural pace with everyday vocabulary that suits your character.",
+    `LANGUAGE RULE (overrides everything above): speak only ${agent.language || "English"}, at a natural pace with everyday vocabulary that suits your character. If the learner switches to another language, stay in ${agent.language || "English"}.`,
   ]
     .filter((line) => line !== "")
     .join("\n");

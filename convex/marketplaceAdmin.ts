@@ -1,4 +1,6 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
+import { getBillingMonthKey } from "../lib/plans";
+import { ORG_MAX_MONTHLY_MINUTES } from "../lib/orgs";
 import { mutation, query } from "./_generated/server";
 import { requirePlatformAdmin } from "./model/auth";
 import { getListing, houseOwnerId } from "./model/courses";
@@ -28,6 +30,18 @@ export const creators = query({
           location: p.location ?? "",
           accent: p.accent,
           isHouse: p.isHouse,
+          isOrganization: p.kind === "organization",
+          verified: Boolean(p.verifiedAt),
+          orgMonthlyMinutes: p.orgMonthlyMinutes ?? 0,
+          orgMinutesUsed:
+            p.kind === "organization"
+              ? (
+                  await ctx.db
+                    .query("orgUsageCharges")
+                    .withIndex("by_org_month", (q) => q.eq("orgHandle", p.handle).eq("billingMonth", getBillingMonthKey(new Date())))
+                    .collect()
+                ).reduce((sum, charge) => sum + charge.minutes, 0)
+              : 0,
           avatarStorageId: p.avatarStorageId,
           bannerStorageId: p.bannerStorageId,
           avatarUrl: p.avatarStorageId ? await ctx.storage.getUrl(p.avatarStorageId) : null,
@@ -135,5 +149,36 @@ export const uploadUrl = mutation({
   handler: async (ctx) => {
     await requirePlatformAdmin(ctx);
     return ctx.storage.generateUploadUrl();
+  },
+});
+
+/** Shows or removes the verified tick on any creator or organisation (D-039). */
+export const setVerified = mutation({
+  args: { handle: v.string(), verified: v.boolean() },
+  handler: async (ctx, args) => {
+    await requirePlatformAdmin(ctx);
+    const profile = await ctx.db
+      .query("creatorProfiles")
+      .withIndex("by_handle", (q) => q.eq("handle", args.handle))
+      .unique();
+    if (!profile) throw new ConvexError("ORG_NOT_FOUND");
+    await ctx.db.patch(profile._id, { verifiedAt: args.verified ? new Date().toISOString() : undefined });
+  },
+});
+
+/** Sets an organisation's monthly minute pool (invoiced outside XINGO for now, D-039). */
+export const setOrgMinutes = mutation({
+  args: { handle: v.string(), monthlyMinutes: v.number() },
+  handler: async (ctx, args) => {
+    await requirePlatformAdmin(ctx);
+    const profile = await ctx.db
+      .query("creatorProfiles")
+      .withIndex("by_handle", (q) => q.eq("handle", args.handle))
+      .unique();
+    if (profile?.kind !== "organization") throw new ConvexError("ORG_NOT_FOUND");
+    if (!Number.isFinite(args.monthlyMinutes) || args.monthlyMinutes < 0 || args.monthlyMinutes > ORG_MAX_MONTHLY_MINUTES) {
+      throw new ConvexError("ORG_MINUTES_INVALID");
+    }
+    await ctx.db.patch(profile._id, { orgMonthlyMinutes: Math.round(args.monthlyMinutes) });
   },
 });

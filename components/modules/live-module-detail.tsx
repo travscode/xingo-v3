@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { ArrowLeft, Check, Clock } from "lucide-react";
+import { useProgressPair } from "@/components/providers/language-pair-context";
 import { api } from "@/convex/_generated/api";
 import { displayPassMark, displayMaxScore, isCclModule } from "@/lib/scoring";
 import { Badge, Card, EmptyState, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
@@ -11,7 +12,7 @@ import { ScenarioRow } from "@/components/modules/scenario-row";
 import { FreeBadge, IndustryIcon, PremiumBadge } from "@/components/ui/badges";
 
 export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
-  const catalog = useQuery(api.catalog.forCurrentUser, {});
+  const catalog = useQuery(api.catalog.forCurrentUser, { pair: useProgressPair() });
   const me = useQuery(api.users.me, {});
 
   if (!catalog) {

@@ -3,16 +3,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { ExternalLink, Flag, Pencil, Trash2 } from "lucide-react";
+import { BadgeCheck, Building2, ExternalLink, Flag, Pencil, Trash2 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { friendlyError } from "@/lib/errors";
 import { formatAud, reportReasons } from "@/lib/marketplace";
+import { isSafeFeatureLink, ORG_MAX_MONTHLY_MINUTES } from "@/lib/orgs";
 import { cn } from "@/lib/utils";
 import { Badge, Card, EmptyState, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { Field, TextArea, TextInput } from "@/components/admin/content/fields";
 import { ImageUpload } from "@/components/marketplace/image-upload";
+import { VerifiedBadge } from "@/components/marketplace/verified-badge";
 
 const reasonLabel = (id: string) => reportReasons.find((reason) => reason.id === id)?.label ?? id;
 
@@ -95,6 +97,112 @@ export function ReportsAdmin() {
   );
 }
 
+type FeaturedAdminSlot = NonNullable<ReturnType<typeof useQuery<typeof api.featured.adminList>>>[number];
+
+/** One featured banner slot: image, title, subtitle, link and whether it's live. */
+function FeaturedSlotEditor({ slot }: { slot: FeaturedAdminSlot }) {
+  const save = useMutation(api.featured.save);
+  const [form, setForm] = useState({
+    title: slot.title,
+    subtitle: slot.subtitle,
+    linkUrl: slot.linkUrl,
+    active: slot.active,
+    imageStorageId: slot.imageStorageId as Id<"_storage"> | null,
+    imageUrl: slot.imageUrl,
+  });
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  const set = (patch: Partial<typeof form>) => {
+    setForm((current) => ({ ...current, ...patch }));
+    setStatus(null);
+  };
+  const id = `featured-${slot.position}`;
+
+  const submit = () => {
+    if (form.active && (!form.title.trim() || !isSafeFeatureLink(form.linkUrl.trim()))) {
+      setStatus({ tone: "error", text: "Add a title and a link that starts with / or https:// before switching it on." });
+      return;
+    }
+    setSaving(true);
+    setStatus(null);
+    save({
+      position: slot.position,
+      title: form.title,
+      subtitle: form.subtitle || undefined,
+      linkUrl: form.linkUrl,
+      active: form.active,
+      imageStorageId: form.imageStorageId,
+    })
+      .then(() => setStatus({ tone: "ok", text: "Saved" }))
+      .catch((saveError) => setStatus({ tone: "error", text: friendlyError(saveError) }))
+      .finally(() => setSaving(false));
+  };
+
+  return (
+    <Card className="flex flex-col gap-4 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-semibold">Slot {slot.position}</p>
+        <Badge tone={slot.active ? "success" : "neutral"}>{slot.active ? "Live" : "Off"}</Badge>
+      </div>
+      <ImageUpload
+        label={`image for slot ${slot.position}`}
+        value={form.imageStorageId ?? undefined}
+        previewUrl={form.imageUrl}
+        onChange={(storageId, preview) => set({ imageStorageId: storageId ?? null, imageUrl: preview })}
+      />
+      <Field label="Title" htmlFor={`${id}-title`}>
+        <TextInput id={`${id}-title`} maxLength={80} value={form.title} onChange={(e) => set({ title: e.target.value })} />
+      </Field>
+      <Field label="Subtitle (optional)" htmlFor={`${id}-subtitle`}>
+        <TextInput id={`${id}-subtitle`} maxLength={140} value={form.subtitle} onChange={(e) => set({ subtitle: e.target.value })} />
+      </Field>
+      <Field label="Link" htmlFor={`${id}-link`}>
+        <TextInput
+          id={`${id}-link`}
+          value={form.linkUrl}
+          placeholder="/marketplace/course-name"
+          onChange={(e) => set({ linkUrl: e.target.value })}
+        />
+      </Field>
+      <label className="flex items-center gap-2 text-sm font-semibold">
+        <input type="checkbox" checked={form.active} onChange={(e) => set({ active: e.target.checked })} className="h-4 w-4 accent-black" />
+        Active (shown on the marketplace)
+      </label>
+      <div className="flex items-center gap-3">
+        <Button size="sm" disabled={saving} onClick={submit}>
+          {saving ? "Saving…" : "Save"}
+        </Button>
+        {status ? <p className={cn("text-sm", status.tone === "error" ? "text-record" : "text-gray-500")}>{status.text}</p> : null}
+      </div>
+    </Card>
+  );
+}
+
+/** Admin → Marketplace → Featured: the up-to-three banners at the top of the marketplace. */
+function FeaturedAdmin() {
+  const slots = useQuery(api.featured.adminList, {});
+
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-lg font-bold">Featured</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Link to a course (/marketplace/&lt;slug&gt;), a creator or organisation (/&lt;handle&gt;) or any https page.
+        </p>
+      </div>
+      {!slots ? (
+        <Skeleton className="h-64" />
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-3">
+          {slots.map((slot) => (
+            <FeaturedSlotEditor key={slot.position} slot={slot} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /** Admin → Marketplace: every course and creator, with full override controls. */
 export function MarketplaceAdmin() {
   const listings = useQuery(api.marketplace.adminListings, {});
@@ -118,6 +226,7 @@ export function MarketplaceAdmin() {
 
   return (
     <div className="space-y-10">
+      <FeaturedAdmin />
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[
           { label: "Owed to creators", value: overview ? formatAud(overview.owedCents) : "…" },
@@ -280,18 +389,26 @@ export function MarketplaceAdmin() {
                       ) : null}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate font-semibold">
-                        {creator.displayName} <span className="font-normal text-gray-500">@{creator.handle}</span>
+                      <p className="flex min-w-0 items-center gap-1 font-semibold">
+                        <span className="truncate">{creator.displayName}</span>
+                        {creator.verified ? <VerifiedBadge size="md" /> : null}
+                        <span className="truncate font-normal text-gray-500">@{creator.handle}</span>
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
+                        {creator.isOrganization ? (
+                          <Badge tone="dark">
+                            <Building2 className="h-3 w-3" aria-hidden /> Organisation
+                          </Badge>
+                        ) : null}
                         {creator.courses} {creator.courses === 1 ? "course" : "courses"}
                         {creator.isHouse ? " · made by XINGO" : ""}
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex flex-wrap gap-1">
+                    <VerifiedToggle handle={creator.handle} verified={creator.verified} />
                     <Button asChild size="sm" variant="ghost">
-                      <Link href={`/marketplace/creators/${creator.handle}`}>
+                      <Link href={creator.isOrganization ? `/${creator.handle}` : `/marketplace/creators/${creator.handle}`}>
                         <ExternalLink className="h-3.5 w-3.5" aria-hidden /> View
                       </Link>
                     </Button>
@@ -300,12 +417,103 @@ export function MarketplaceAdmin() {
                     </Button>
                   </div>
                 </div>
+                {creator.isOrganization ? (
+                  <OrgMinutesForm
+                    handle={creator.handle}
+                    monthlyMinutes={creator.orgMonthlyMinutes}
+                    used={creator.orgMinutesUsed}
+                  />
+                ) : null}
                 {editing === creator.handle ? <CreatorAdminForm creator={creator} onDone={() => setEditing(null)} /> : null}
               </li>
             ))}
           </ul>
         )}
       </section>
+    </div>
+  );
+}
+
+/** Shows or removes the verified tick on a creator or organisation. */
+function VerifiedToggle({ handle, verified }: { handle: string; verified: boolean }) {
+  const setVerified = useMutation(api.marketplaceAdmin.setVerified);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <span className="inline-flex items-center gap-2">
+      <Button
+        size="sm"
+        variant={verified ? "secondary" : "ghost"}
+        aria-pressed={verified}
+        disabled={busy}
+        onClick={() => {
+          setBusy(true);
+          setError(null);
+          setVerified({ handle, verified: !verified })
+            .catch((toggleError) => setError(friendlyError(toggleError)))
+            .finally(() => setBusy(false));
+        }}
+      >
+        <BadgeCheck className="h-3.5 w-3.5" aria-hidden /> {verified ? "Verified" : "Verify"}
+      </Button>
+      {error ? <span className="text-xs text-record">{error}</span> : null}
+    </span>
+  );
+}
+
+/** An organisation's monthly minute pool (invoiced outside XINGO for now) and what's been used. */
+function OrgMinutesForm({ handle, monthlyMinutes, used }: { handle: string; monthlyMinutes: number; used: number }) {
+  const setOrgMinutes = useMutation(api.marketplaceAdmin.setOrgMinutes);
+  const [value, setValue] = useState(String(monthlyMinutes));
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  const id = `org-${handle}-minutes`;
+  const parsed = Number(value);
+  const changed = value.trim() !== "" && parsed !== monthlyMinutes;
+
+  return (
+    <div className="mt-3 flex flex-wrap items-end gap-3 rounded-xl bg-gray-50 p-3">
+      <Field label="Monthly minute pool" htmlFor={id}>
+        <TextInput
+          id={id}
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={ORG_MAX_MONTHLY_MINUTES}
+          step={1}
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setStatus(null);
+          }}
+          className="h-9 w-36 tabular-nums"
+        />
+      </Field>
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled={saving || !changed}
+        onClick={() => {
+          if (!Number.isFinite(parsed) || parsed < 0 || parsed > ORG_MAX_MONTHLY_MINUTES) {
+            setStatus({ tone: "error", text: `Enter a number from 0 to ${ORG_MAX_MONTHLY_MINUTES.toLocaleString("en-AU")}.` });
+            return;
+          }
+          setSaving(true);
+          setStatus(null);
+          setOrgMinutes({ handle, monthlyMinutes: parsed })
+            .then(() => setStatus({ tone: "ok", text: "Saved" }))
+            .catch((saveError) => setStatus({ tone: "error", text: friendlyError(saveError) }))
+            .finally(() => setSaving(false));
+        }}
+      >
+        {saving ? "Saving…" : "Save pool"}
+      </Button>
+      <p className="pb-2 text-sm tabular-nums text-gray-500">
+        {used.toLocaleString("en-AU")} used this month
+        {monthlyMinutes > 0 ? ` of ${monthlyMinutes.toLocaleString("en-AU")}` : ""}
+      </p>
+      {status ? <p className={cn("pb-2 text-sm", status.tone === "error" ? "text-record" : "text-gray-500")}>{status.text}</p> : null}
     </div>
   );
 }

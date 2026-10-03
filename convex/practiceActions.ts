@@ -185,6 +185,7 @@ type GradingInput = {
   } | null;
   sourceLanguage?: string;
   targetLanguage?: string;
+  spokenLanguage?: string;
   moduleId: string;
   mode: "assessed" | "practice";
   endReason?: EndReason;
@@ -255,6 +256,7 @@ async function grade(
             input.sourceLanguage ?? scenario.practiceRuntime?.sourceLanguage ?? "English",
           targetLanguage:
             input.targetLanguage ?? scenario.practiceRuntime?.targetLanguage ?? "the other language",
+          spokenLanguage: input.spokenLanguage,
         },
         input.transcriptEntries,
         { endReason: input.endReason, elapsedMs: input.elapsedMs, timeLimitMs: input.timeLimitMs },

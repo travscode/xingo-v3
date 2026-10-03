@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { isPassingScore } from "../lib/scoring";
+import { createLanguagePair, sessionPairKey } from "../lib/languages";
+import { fallbackPair, filterSessionsForPair, pairArg } from "./model/languagePairs";
 
 const progressMetric = v.union(
   v.literal("averageScore"),
@@ -354,8 +356,8 @@ function calculateMetrics(
 }
 
 export const listForCurrentUser = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { pair: pairArg },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
@@ -363,17 +365,22 @@ export const listForCurrentUser = query({
     }
 
     const clerkId = getClerkId(identity);
-    const sessions = await ctx.db
-      .query("sessions")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
-      .collect();
+    const sessions = await filterSessionsForPair(
+      ctx,
+      clerkId,
+      await ctx.db
+        .query("sessions")
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
+        .collect(),
+      args.pair,
+    );
 
     return sessions.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
   },
 });
 
 export const listByModuleForCurrentUser = query({
-  args: { moduleId: v.string() },
+  args: { moduleId: v.string(), pair: pairArg },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
 
@@ -387,14 +394,14 @@ export const listByModuleForCurrentUser = query({
       .withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId))
       .collect();
 
-    return sessions
+    return (await filterSessionsForPair(ctx, clerkId, sessions, args.pair))
       .filter((session) => session.clerkId === clerkId)
       .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
   },
 });
 
 export const listByScenarioForCurrentUser = query({
-  args: { scenarioId: v.string() },
+  args: { scenarioId: v.string(), pair: pairArg },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
 
@@ -408,15 +415,15 @@ export const listByScenarioForCurrentUser = query({
       .withIndex("by_scenarioId", (q) => q.eq("scenarioId", args.scenarioId))
       .collect();
 
-    return sessions
+    return (await filterSessionsForPair(ctx, clerkId, sessions, args.pair))
       .filter((session) => session.clerkId === clerkId)
       .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
   },
 });
 
 export const metricsForCurrentUser = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { pair: pairArg },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
@@ -429,7 +436,7 @@ export const metricsForCurrentUser = query({
       .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
       .collect();
 
-    return calculateMetrics(sessions);
+    return calculateMetrics(await filterSessionsForPair(ctx, clerkId, sessions, args.pair));
   },
 });
 
@@ -440,6 +447,7 @@ export const progressHistoryForCurrentUser = query({
     endDate: v.optional(v.string()),
     moduleId: v.optional(v.string()),
     scenarioId: v.optional(v.string()),
+    pair: pairArg,
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -464,10 +472,15 @@ export const progressHistoryForCurrentUser = query({
     }
 
     const clerkId = getClerkId(identity);
-    const allSessions = await ctx.db
-      .query("sessions")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
-      .collect();
+    const allSessions = await filterSessionsForPair(
+      ctx,
+      clerkId,
+      await ctx.db
+        .query("sessions")
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
+        .collect(),
+      args.pair,
+    );
     const completedSessions = getCompletedSessions(allSessions);
     const startBoundary = args.startDate
       ? parseDateBoundary(args.startDate, "start")
@@ -563,7 +576,7 @@ export const getByAttemptIdForCurrentUser = query({
 });
 
 export const getLatestCompletedByScenarioForCurrentUser = query({
-  args: { scenarioId: v.string() },
+  args: { scenarioId: v.string(), pair: pairArg },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
 
@@ -578,7 +591,7 @@ export const getLatestCompletedByScenarioForCurrentUser = query({
       .collect();
 
     return (
-      sessions
+      (await filterSessionsForPair(ctx, clerkId, sessions, args.pair))
         .filter(
           (session) =>
             session.clerkId === clerkId &&
@@ -640,5 +653,54 @@ export const resultForCurrentUser = query({
       previousScore: earlier[0]?.score ?? null,
       bestPreviousScore: earlier.length ? Math.max(...earlier.map((s) => s.score)) : null,
     };
+  },
+});
+
+/**
+ * Progress per language pair, for "languages practised" on the home screen.
+ * Only pairs with at least one session are listed, most recently practised first.
+ */
+export const languageSummaryForCurrentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const clerkId = getClerkId(identity);
+    const [sessions, fallback] = await Promise.all([
+      ctx.db
+        .query("sessions")
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
+        .collect(),
+      fallbackPair(ctx, clerkId),
+    ]);
+    const byPair = new Map<string, typeof sessions>();
+    for (const session of sessions) {
+      if (session.id.startsWith("sess_")) continue;
+      const key = sessionPairKey(session, fallback);
+      byPair.set(key, [...(byPair.get(key) ?? []), session]);
+    }
+
+    return [...byPair.values()]
+      .map((group) => {
+        const first = group.find((session) => session.sourceLanguage && session.targetLanguage);
+        const pair = first
+          ? createLanguagePair(first.sourceLanguage!, first.targetLanguage!)
+          : createLanguagePair(fallback.sourceLanguage, fallback.targetLanguage);
+        const graded = getCompletedSessions(group);
+        const lastPractisedAt = group.reduce((latest, session) => (session.timestamp > latest ? session.timestamp : latest), "");
+        return {
+          key: pair.key,
+          sourceLanguage: pair.sourceLanguage,
+          targetLanguage: pair.targetLanguage,
+          sessions: group.length,
+          scored: graded.length,
+          averageScore: graded.length ? Math.round(graded.reduce((sum, session) => sum + session.score, 0) / graded.length) : null,
+          passed: new Set(graded.filter((session) => isPassingScore(session.moduleId, session.score)).map((session) => session.scenarioId)).size,
+          practiceMinutes: Math.round(group.reduce((sum, session) => sum + (session.durationSeconds ?? session.durationMinutes * 60), 0) / 60),
+          lastPractisedAt,
+        };
+      })
+      .sort((a, b) => b.lastPractisedAt.localeCompare(a.lastPractisedAt));
   },
 });

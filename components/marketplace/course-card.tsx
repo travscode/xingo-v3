@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { BadgeCheck, Check, Flame, Languages, MessagesSquare, Plus, Star, Trophy } from "lucide-react";
+import { BadgeCheck, Check, Flame, Languages, Lock, MessagesSquare, Plus, Star, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/primitives";
+import { creatorHref, VerifiedBadge } from "@/components/marketplace/verified-badge";
 import { cn } from "@/lib/utils";
 
 export type CourseCardData = {
@@ -21,6 +22,11 @@ export type CourseCardData = {
   isOwner?: boolean;
   status?: "draft" | "published" | "removed";
   creatorHandle?: string | null;
+  creatorVerified?: boolean;
+  /** Set when an organisation publishes the course (D-039). */
+  orgHandle?: string | null;
+  /** Invite-only organisation course. */
+  restricted?: boolean;
   isOriginal?: boolean;
   rating?: number | null;
   ratingCount?: number;
@@ -100,6 +106,11 @@ export function CourseCard({
               <BadgeCheck className="h-3 w-3" aria-hidden /> {course.certifications[0].name}
             </Badge>
           ) : null}
+          {course.restricted ? (
+            <Badge>
+              <Lock className="h-3 w-3" aria-hidden /> Invite only
+            </Badge>
+          ) : null}
           {course.status && course.status !== "published" ? (
             <Badge tone="warning" className="capitalize">
               {course.status}
@@ -117,17 +128,23 @@ export function CourseCard({
           ) : null}
         </div>
         <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-          <p className="min-w-0 truncate text-xs text-gray-500">
-            By{" "}
+          <p className="flex min-w-0 items-center gap-1 text-xs text-gray-500">
+            <span className="shrink-0">By</span>
             {course.creatorHandle ? (
-              <Link href={`/marketplace/creators/${course.creatorHandle}`} className="font-semibold text-ink hover:underline">
+              <Link
+                href={creatorHref(course.creatorHandle, course.orgHandle === course.creatorHandle)}
+                className="truncate font-semibold text-ink hover:underline"
+              >
                 {course.creatorName}
               </Link>
             ) : (
-              <span className="font-semibold text-ink">{course.creatorName}</span>
-            )}{" "}
-            · {course.scenarioCount}{" "}
-            {course.scenarioCount === 1 ? "scenario" : "scenarios"}
+              <span className="truncate font-semibold text-ink">{course.creatorName}</span>
+            )}
+            {course.creatorVerified ? <VerifiedBadge /> : null}
+            <span className="shrink-0">
+              · {course.scenarioCount}{" "}
+              {course.scenarioCount === 1 ? "scenario" : "scenarios"}
+            </span>
           </p>
           {onAdd && !course.isOwner ? (
             course.inLibrary ? (

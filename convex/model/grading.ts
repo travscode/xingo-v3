@@ -87,7 +87,7 @@ const endReasonContext: Record<EndReason, string> = {
 
 export function buildGradingPrompt(
   scenario: GradingScenario,
-  languages: { sourceLanguage: string; targetLanguage: string },
+  languages: { sourceLanguage: string; targetLanguage: string; spokenLanguage?: string },
   transcript: GradingTranscriptEntry[],
   session?: { endReason?: EndReason; elapsedMs?: number; timeLimitMs?: number },
 ) {
@@ -111,7 +111,11 @@ export function buildGradingPrompt(
   return [
     `You are ${rubric.graderRole} giving feedback on a spoken practice session.`,
     isRoleplay
-      ? `The learner plays the ${runtime?.learnerRole ?? "candidate"} and speaks English throughout with an AI role-player.`
+      ? `The learner plays the ${runtime?.learnerRole ?? "candidate"} and speaks ${languages.spokenLanguage ?? "English"} throughout with an AI role-player.${
+          languages.spokenLanguage && !/^english/i.test(languages.spokenLanguage)
+            ? ` They are practising ${languages.spokenLanguage}: judge their ${languages.spokenLanguage} (accuracy, vocabulary, fluency) as well as the task.`
+            : ""
+        }`
       : `The learner interprets between ${languages.sourceLanguage} and ${languages.targetLanguage}. The AI participants speak; the learner must render each turn into the other language.`,
     "Score each of these five fields from 0 to 100 (use the field names exactly):",
     ...dimensionLines,

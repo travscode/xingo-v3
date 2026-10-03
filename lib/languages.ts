@@ -111,3 +111,34 @@ export function languageMatches(detected: string, practiceLanguage: string) {
   const heard = detected.trim().toLowerCase();
   return heard === target || (detectedAliases[target] ?? []).includes(heard);
 }
+
+export type PairInput = Pick<LanguagePair, "sourceLanguage" | "targetLanguage">;
+
+/** Stable key for grouping progress by pair ("english::spanish"). */
+export function pairKey(pair: PairInput) {
+  return createLanguagePair(pair.sourceLanguage, pair.targetLanguage).key;
+}
+
+/**
+ * The pair a session counts towards. Sessions from before pairs were recorded
+ * count towards the learner's main (first saved) pair.
+ */
+export function sessionPairKey(
+  session: { sourceLanguage?: string; targetLanguage?: string },
+  fallback: PairInput,
+) {
+  return session.sourceLanguage && session.targetLanguage
+    ? pairKey({ sourceLanguage: session.sourceLanguage, targetLanguage: session.targetLanguage })
+    : pairKey(fallback);
+}
+
+/** Keeps only the sessions for one pair; with no pair given, keeps everything. */
+export function sessionsForPair<T extends { sourceLanguage?: string; targetLanguage?: string }>(
+  sessions: T[],
+  pair: PairInput | undefined,
+  fallback: PairInput,
+) {
+  if (!pair) return sessions;
+  const key = pairKey(pair);
+  return sessions.filter((session) => sessionPairKey(session, fallback) === key);
+}

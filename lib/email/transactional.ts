@@ -19,7 +19,11 @@ export type TransactionalEmail =
   | { kind: "payout_sent"; amountCents: number }
   | { kind: "payout_account_ready" }
   | { kind: "course_removed"; courseTitle: string; reason: string }
-  | { kind: "minutes_used_up"; resetsOn: string };
+  | { kind: "minutes_used_up"; resetsOn: string }
+  | { kind: "org_collection_invite"; orgName: string; collectionTitle: string; inviterName: string; url: string }
+  | { kind: "org_team_invite"; orgName: string; role: string; inviterName: string; url: string }
+  | { kind: "org_access_approved"; orgName: string; collectionTitle: string; url: string }
+  | { kind: "org_access_requested"; requesterName: string; requesterEmail: string; collectionTitle: string; url: string };
 
 export type BuiltEmail = { subject: string; preheader: string; templateId: EmailTemplateId; content: EmailContent };
 
@@ -212,6 +216,73 @@ export function buildTransactionalEmail(email: TransactionalEmail, siteUrl: stri
           ].join("\n\n"),
           ctaLabel: "Read the Creator Terms",
           ctaUrl: `${siteUrl}/creator-terms`,
+          signature,
+        },
+      };
+
+    case "org_collection_invite":
+      return {
+        subject: `${email.orgName} invited you to practise: ${email.collectionTitle}`,
+        preheader: `${email.inviterName} added you to ${email.collectionTitle} on XINGO.`,
+        templateId: "letter",
+        content: {
+          body: [
+            "Hi {{firstName}},",
+            `${email.inviterName} from **${email.orgName}** has invited you to **${email.collectionTitle}** on XINGO, where you practise real conversations out loud with AI role-players and get feedback.`,
+            "Open the link below and sign in or create a free account with this email address. The courses will be waiting in your library.",
+          ].join("\n\n"),
+          ctaLabel: "Open my invitation",
+          ctaUrl: email.url,
+          signature,
+        },
+      };
+
+    case "org_team_invite":
+      return {
+        subject: `Join ${email.orgName} on XINGO`,
+        preheader: `${email.inviterName} invited you to the ${email.orgName} team as ${email.role}.`,
+        templateId: "letter",
+        content: {
+          body: [
+            "Hi {{firstName}},",
+            `${email.inviterName} has invited you to join the **${email.orgName}** team on XINGO as **${email.role}**. Team members can create practice courses for ${email.orgName} and invite learners to them.`,
+            "Open the link below and sign in or create a free account with this email address to join.",
+          ].join("\n\n"),
+          ctaLabel: "Join the team",
+          ctaUrl: email.url,
+          signature,
+        },
+      };
+
+    case "org_access_approved":
+      return {
+        subject: `You're in: ${email.collectionTitle}`,
+        preheader: `${email.orgName} approved your request.`,
+        templateId: "letter",
+        content: {
+          body: [
+            "Hi {{firstName}},",
+            `**${email.orgName}** approved your request to join **${email.collectionTitle}**. The courses are now in your library, ready to practise.`,
+          ].join("\n\n"),
+          ctaLabel: "Start practising",
+          ctaUrl: email.url,
+          signature,
+        },
+      };
+
+    case "org_access_requested":
+      return {
+        subject: `${email.requesterName} asked to join ${email.collectionTitle}`,
+        preheader: "Approve or decline the request from your organisation dashboard.",
+        templateId: "letter",
+        content: {
+          body: [
+            "Hi {{firstName}},",
+            `**${email.requesterName}** (${email.requesterEmail}) has asked for access to **${email.collectionTitle}**.`,
+            "You can approve or decline the request from your organisation dashboard.",
+          ].join("\n\n"),
+          ctaLabel: "Review the request",
+          ctaUrl: email.url,
           signature,
         },
       };

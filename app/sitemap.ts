@@ -20,6 +20,14 @@ async function marketplaceCourses(): Promise<Array<{ slug: string; updatedAt: st
   }
 }
 
+async function organisationPages(): Promise<Array<{ path: string; updatedAt: string }>> {
+  try {
+    return await fetchQuery(api.orgs.publicPages, {});
+  } catch {
+    return [];
+  }
+}
+
 function toDate(value: string, fallback: Date) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? fallback : date;
@@ -36,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const posts = getAllPosts();
   const latestPost = posts.reduce((latest, post) => (post.updated > latest ? post.updated : latest), "1970-01-01");
-  const courses = await marketplaceCourses();
+  const [courses, orgPages] = await Promise.all([marketplaceCourses(), organisationPages()]);
 
   return [
     page("/", 1),
@@ -64,5 +72,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page("/marketplace", 0.7),
     page("/marketplace/create", 0.5),
     ...courses.map((course) => page(`/marketplace/${course.slug}`, 0.6, toDate(course.updatedAt, now))),
+    ...orgPages.map((org) => page(org.path, 0.6, toDate(org.updatedAt, now))),
   ];
 }

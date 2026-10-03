@@ -108,3 +108,12 @@ export function useActiveLanguagePair() {
 
   return context;
 }
+
+/** The selected pair as a query argument: scores, history and progress follow it. */
+export function useProgressPair() {
+  const { activePair } = useActiveLanguagePair();
+  return useMemo(
+    () => ({ sourceLanguage: activePair.sourceLanguage, targetLanguage: activePair.targetLanguage }),
+    [activePair.sourceLanguage, activePair.targetLanguage],
+  );
+}

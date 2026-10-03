@@ -23,6 +23,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { useProgressPair } from "@/components/providers/language-pair-context";
 import { api } from "@/convex/_generated/api";
 import {
   groupForModule,
@@ -60,7 +61,7 @@ const PAGE_SIZE = 6;
  * of module cards; "For you" (goal + already practised) is the default.
  */
 export function LiveModulesGrid() {
-  const catalog = useQuery(api.catalog.forCurrentUser, {});
+  const catalog = useQuery(api.catalog.forCurrentUser, { pair: useProgressPair() });
   const me = useQuery(api.users.me, {});
   const [selected, setSelected] = useState<LibraryGroupId | null>(null);
   const [search, setSearch] = useState("");

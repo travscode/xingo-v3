@@ -18,7 +18,9 @@ import {
 } from "@/lib/ai";
 import { track } from "@/lib/analytics";
 import { friendlyError, getErrorCode } from "@/lib/errors";
-import { flagEmoji } from "@/lib/languages";
+import { flagEmoji, isEnglishOnly } from "@/lib/languages";
+import { isCommunityRoleplayId } from "@/lib/marketplace";
+import { LanguagePairPicker } from "@/components/dashboard/language-pair-picker";
 import { HEARTBEAT_INTERVAL_MS, scenarioTimeLimitMinutes, STALL_END_MS, STALL_WARNING_MS, formatMinuteCount } from "@/lib/plans";
 import type { EndReason } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
@@ -141,9 +143,13 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     () => planAgentLanguages(scenario, activePair),
     [scenario, activePair],
   );
+  // One-on-one sessions are held in the language being practised (the pair's other
+  // language); XINGO's English test role-plays (OET, IELTS, OSCE) always stay in English.
+  const isEnglishTest = isRoleplay && !isCommunityRoleplayId(scenario.moduleId);
+  const soloLanguage = isEnglishTest ? "English" : activePair.targetLanguage;
   const agentAConfig = useMemo<VoiceAgent>(
-    () => ({ ...scenario.aiAgentA, language: isRoleplay ? "English" : languagePlan.agentALanguage }),
-    [isRoleplay, scenario.aiAgentA, languagePlan.agentALanguage],
+    () => ({ ...scenario.aiAgentA, language: hasSecondAgent ? languagePlan.agentALanguage : soloLanguage }),
+    [hasSecondAgent, scenario.aiAgentA, languagePlan.agentALanguage, soloLanguage],
   );
   const agentBConfig = useMemo<VoiceAgent | null>(
     () =>
@@ -564,6 +570,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
         scenarioId: scenario.id,
         sourceLanguage: activePair.sourceLanguage,
         targetLanguage: activePair.targetLanguage,
+        spokenLanguage: hasSecondAgent ? undefined : soloLanguage,
         mode,
       });
 
@@ -624,6 +631,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     runtime.learnerOpens,
     scenario.id,
     scenario.moduleId,
+    soloLanguage,
     startAttempt,
   ]);
 
@@ -1207,6 +1215,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
           client={client}
           professional={professional}
           hasSecondAgent={hasSecondAgent}
+          isEnglishTest={isEnglishTest}
           mode={mode}
           onModeChange={setMode}
           countdown={phase === "countdown" ? countdown : null}
@@ -1360,6 +1369,7 @@ function SetupPanel({
   client,
   professional,
   hasSecondAgent,
+  isEnglishTest,
   mode,
   onModeChange,
   countdown,
@@ -1371,6 +1381,7 @@ function SetupPanel({
   client: VoiceAgent;
   professional: VoiceAgent;
   hasSecondAgent: boolean;
+  isEnglishTest: boolean;
   mode: Mode;
   onModeChange: (mode: Mode) => void;
   countdown: number | null;
@@ -1378,6 +1389,7 @@ function SetupPanel({
   onStart: () => void;
 }) {
   const { scenario, access } = data;
+  const { activePair } = useActiveLanguagePair();
   const outOfMinutes = access.remainingMinutes < 1;
 
   return (
@@ -1475,6 +1487,24 @@ function SetupPanel({
             </button>
           ))}
         </div>
+
+        <p className="mt-7 text-sm font-bold">Language</p>
+        {isEnglishTest ? (
+          <p className="mt-2 text-sm text-gray-500">This is an English test, so the conversation is in English.</p>
+        ) : (
+          <>
+            <div className="mt-2">
+              <LanguagePairPicker />
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+              {hasSecondAgent
+                ? `${client.name} speaks ${client.language}; ${professional.name} speaks ${professional.language}. Scores are saved for this language pair.`
+                : isEnglishOnly(activePair)
+                  ? `${professional.name} speaks English. Pick a language above to practise in it instead.`
+                  : `${professional.name} speaks ${professional.language}, so you practise your ${professional.language}. Scores are saved for this language pair.`}
+            </p>
+          </>
+        )}
 
         {error ? <p className="mt-5 rounded-lg bg-record/10 px-3 py-2 text-sm text-record">{error}</p> : null}
 
