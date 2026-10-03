@@ -141,49 +141,67 @@ export const syncMyPayouts = action({
   },
 });
 
-/**
- * Pays every creator whose available balance is over the threshold. Run by an
- * admin from Admin → Marketplace (or a monthly cron once you're comfortable).
- */
+type PayoutRun = { paid: number; failed: number; totalCents: number };
+
+/** Transfers each creator's available balance (past the hold, at least the threshold) to their Stripe account. */
+async function payCreators(ctx: ActionCtx): Promise<PayoutRun> {
+  const stripe = getStripe();
+  const creators = await ctx.runQuery(internal.connectData.payableCreators, {});
+  let paid = 0;
+  let failed = 0;
+  let totalCents = 0;
+
+  for (const creator of creators) {
+    const reserved = await ctx.runMutation(internal.connectData.reservePayout, { clerkId: creator.clerkId });
+    if (!reserved) continue;
+
+    try {
+      const transfer = await stripe.transfers.create(
+        {
+          amount: reserved.amountCents,
+          currency: "aud",
+          destination: creator.stripeAccountId,
+          description: "XINGO course earnings",
+          metadata: { clerkId: creator.clerkId, payoutId: reserved.payoutId },
+        },
+        { idempotencyKey: `payout-${reserved.payoutId}` },
+      );
+      await ctx.runMutation(internal.connectData.completePayout, { payoutId: reserved.payoutId, stripeTransferId: transfer.id });
+      paid += 1;
+      totalCents += reserved.amountCents;
+    } catch (error) {
+      // Failed transfers release the earnings, so the next run retries them.
+      await ctx.runMutation(internal.connectData.completePayout, {
+        payoutId: reserved.payoutId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      failed += 1;
+    }
+  }
+
+  return { paid, failed, totalCents };
+}
+
+/** Pays creators now. Admin → Marketplace → Pay creators (the monthly cron does the same). */
 export const runPayouts = action({
   args: {},
-  handler: async (ctx): Promise<{ paid: number; failed: number; totalCents: number }> => {
+  handler: async (ctx): Promise<PayoutRun> => {
     const admin = await requireUser(ctx);
     if (admin.role !== "platform_admin") throw new Error("Not authorized");
-    const stripe = getStripe();
-    const creators = await ctx.runQuery(internal.connectData.payableCreators, {});
-    let paid = 0;
-    let failed = 0;
-    let totalCents = 0;
+    return payCreators(ctx);
+  },
+});
 
-    for (const creator of creators) {
-      const reserved = await ctx.runMutation(internal.connectData.reservePayout, { clerkId: creator.clerkId });
-      if (!reserved) continue;
-
-      try {
-        const transfer = await stripe.transfers.create(
-          {
-            amount: reserved.amountCents,
-            currency: "aud",
-            destination: creator.stripeAccountId,
-            description: "XINGO course earnings",
-            metadata: { clerkId: creator.clerkId, payoutId: reserved.payoutId },
-          },
-          { idempotencyKey: `payout-${reserved.payoutId}` },
-        );
-        await ctx.runMutation(internal.connectData.completePayout, { payoutId: reserved.payoutId, stripeTransferId: transfer.id });
-        paid += 1;
-        totalCents += reserved.amountCents;
-      } catch (error) {
-        await ctx.runMutation(internal.connectData.completePayout, {
-          payoutId: reserved.payoutId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        failed += 1;
-      }
+/** Monthly cron (convex/crons.ts): pays creators automatically. Does nothing until Connect is switched on. */
+export const monthlyPayouts = internalAction({
+  args: {},
+  handler: async (ctx): Promise<PayoutRun | { skipped: string }> => {
+    if (process.env.STRIPE_CONNECT_ENABLED !== "true" || !process.env.STRIPE_SECRET_KEY) {
+      return { skipped: "Stripe Connect not enabled" };
     }
-
-    return { paid, failed, totalCents };
+    const result = await payCreators(ctx);
+    console.log(`[payouts] monthly run: paid ${result.paid} creators, ${result.totalCents} cents; ${result.failed} failed`);
+    return result;
   },
 });
 

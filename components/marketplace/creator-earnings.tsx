@@ -115,7 +115,7 @@ export function CreatorEarnings() {
       <section>
         <SectionTitle>Balance</SectionTitle>
         <Card className="grid grid-cols-2 gap-6 p-6 lg:grid-cols-4">
-          <Stat label="Ready to pay" value={formatAud(totals.availableCents)} hint={`Paid monthly once it reaches ${formatAud(PAYOUT_THRESHOLD_CENTS)}`} />
+          <Stat label="Ready to pay" value={formatAud(totals.availableCents)} hint={`Paid automatically early each month from ${formatAud(PAYOUT_THRESHOLD_CENTS)}`} />
           <Stat label="On hold" value={formatAud(totals.pendingCents)} hint={`Held ${EARNINGS_HOLD_DAYS} days for refunds`} />
           <Stat label="Sent to Stripe" value={formatAud(totals.transferredCents)} hint="Total XINGO has paid you" />
           <Stat label="Earned all time" value={formatAud(totals.earnedCents)} hint="Across every course" />
@@ -208,7 +208,7 @@ export function CreatorEarnings() {
         <div>
           <SectionTitle>Payments from XINGO</SectionTitle>
           <HistoryList
-            empty="No payments yet. XINGO pays your available balance to your Stripe account each month."
+            empty="No payments yet. XINGO pays your available balance to your Stripe account automatically early each month."
             rows={data.transfers.map((transfer) => ({
               id: transfer.id,
               date: transfer.paidAt ?? transfer.createdAt,
@@ -320,7 +320,7 @@ function ConnectGuide({
             </li>
             <li className="flex gap-2.5">
               <Clock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              Earnings are held for {EARNINGS_HOLD_DAYS} days to cover refunds, then paid monthly once you have at least{" "}
+              Earnings are held for {EARNINGS_HOLD_DAYS} days to cover refunds, then paid automatically early each month once you have at least{" "}
               {formatAud(PAYOUT_THRESHOLD_CENTS)}. Smaller amounts carry over.
             </li>
             <li className="flex gap-2.5">

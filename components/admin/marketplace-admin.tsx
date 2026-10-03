@@ -256,7 +256,9 @@ export function MarketplaceAdmin() {
           {running ? "Paying…" : "Pay creators"}
         </Button>
         <p className="text-sm text-gray-500">
-          {overview?.connectEnabled ? "Pays balances past the holding period, from A$50." : "Stripe Connect isn't switched on yet."}
+          {overview?.connectEnabled
+            ? "Runs automatically early each month (the 2nd, Sydney time). Pays balances past the holding period, from A$50. Use this to pay now."
+            : "Stripe Connect isn't switched on yet."}
         </p>
       </div>
       {message ? <p className="text-sm">{message}</p> : null}

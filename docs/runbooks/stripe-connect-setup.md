@@ -98,8 +98,8 @@ card `4000 0000 0000 0077` (funds become available immediately).
 2. Repeat steps 1–5 in **live mode** (Connect settings, branding and the webhook are per mode).
 3. Set `STRIPE_CONNECT_WEBHOOK_SECRET` (live `whsec_`) and `STRIPE_CONNECT_ENABLED=true` on the live
    deployment.
-4. Pay creators monthly from Admin → Marketplace. Once you're comfortable, this can become a cron job
-   (`convex/crons.ts`) that calls the same logic.
+4. Creators are paid automatically by the monthly cron (`pay creators`, convex/crons.ts, the 1st at 23:30 UTC).
+   Admin → Marketplace → Pay creators runs it on demand.
 
 ## 8. Legal, tax and housekeeping (talk to your accountant)
 

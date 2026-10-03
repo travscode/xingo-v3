@@ -34,7 +34,8 @@ export function EmailPreview({
       recipient: { firstName: recipientName.split(" ")[0] || "there", name: recipientName, email: recipientEmail },
       unsubscribeUrl: `${siteUrl}/account`,
       senderName: "XINGO",
-      senderAddress: "Your business address (set EMAIL_POSTAL_ADDRESS)",
+      // Matches the EMAIL_POSTAL_ADDRESS value set in Convex for real sends.
+      senderAddress: "XINGO Pty Ltd (ABN 26 683 778 010), Australia",
     }).html;
   }, [content, preheader, recipientEmail, recipientName, templateId]);
 
