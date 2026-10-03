@@ -10,6 +10,7 @@
  */
 
 import { SITE_URL } from "./seo-pages";
+import { LEGAL_ABN, LEGAL_ENTITY } from "./legal";
 
 export const ORGANIZATION_NAME = "XINGO";
 export const ORGANIZATION_ID = `${SITE_URL}/#organization`;
@@ -35,6 +36,8 @@ export function organizationJsonLd(): JsonLdObject {
     "@type": "Organization",
     "@id": ORGANIZATION_ID,
     name: ORGANIZATION_NAME,
+    legalName: LEGAL_ENTITY,
+    taxID: `ABN ${LEGAL_ABN}`,
     url: SITE_URL,
     email: "hello@xingo.ai",
     description:

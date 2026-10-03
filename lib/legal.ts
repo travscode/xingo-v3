@@ -6,3 +6,5 @@
 export const LEGAL_VERSION = "2026-10-03";
 export const LEGAL_LAST_UPDATED = "3 October 2026";
 export const LEGAL_CONTACT_EMAIL = "hello@xingo.ai";
+export const LEGAL_ENTITY = "XINGO Pty Ltd";
+export const LEGAL_ABN = "26 683 778 010";

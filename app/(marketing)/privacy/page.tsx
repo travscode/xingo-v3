@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalDocument, type LegalSection } from "@/components/marketing/legal/legal-document";
-import { LEGAL_CONTACT_EMAIL } from "@/lib/legal";
+import { LEGAL_ABN, LEGAL_CONTACT_EMAIL, LEGAL_ENTITY } from "@/lib/legal";
 import { pageMetadata } from "@/lib/seo-metadata";
 
 export const metadata: Metadata = pageMetadata({
@@ -28,7 +28,7 @@ const sections: LegalSection[] = [
     heading: "Who we are",
     body: (
       <p>
-        XINGO (&ldquo;we&rdquo;, &ldquo;us&rdquo;) runs xingo.ai and the XINGO practice app. We handle personal information in line
+        {LEGAL_ENTITY} (ABN {LEGAL_ABN}) (&ldquo;XINGO&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) runs xingo.ai and the XINGO practice app. We handle personal information in line
         with the <em>Privacy Act 1988</em> (Cth) and the Australian Privacy Principles. This policy explains what we collect, why,
         who we share it with, and your choices. Contact us at {mail}.
       </p>

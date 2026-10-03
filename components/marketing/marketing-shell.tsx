@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LEGAL_ABN, LEGAL_ENTITY } from "@/lib/legal";
 import type { ReactNode } from "react";
 import { HeaderAuth } from "@/components/auth/header-auth";
 import { MarketingMobileNav } from "@/components/marketing/mobile-nav";
@@ -86,7 +87,9 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           </nav>
         </div>
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 border-t border-gray-700 px-4 py-6 text-xs text-gray-500 sm:px-6">
-          <span>© {new Date().getFullYear()} XINGO</span>
+          <span>
+            © {new Date().getFullYear()} {LEGAL_ENTITY} · ABN {LEGAL_ABN}
+          </span>
           <span className="flex gap-4">
             <Link href="/terms" className="hover:text-paper">Terms</Link>
             <Link href="/privacy" className="hover:text-paper">Privacy</Link>

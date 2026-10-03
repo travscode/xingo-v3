@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalDocument, type LegalSection } from "@/components/marketing/legal/legal-document";
-import { LEGAL_CONTACT_EMAIL } from "@/lib/legal";
+import { LEGAL_ABN, LEGAL_CONTACT_EMAIL, LEGAL_ENTITY } from "@/lib/legal";
 import {
   CREATOR_GUIDELINES,
   CREATOR_REVENUE_SHARE,
@@ -28,7 +28,8 @@ const sections: LegalSection[] = [
     heading: "These terms",
     body: (
       <p>
-        These Creator Terms apply when you create or publish a course on the XINGO marketplace. They add to our{" "}
+        These Creator Terms are an agreement between you and {LEGAL_ENTITY} (ABN {LEGAL_ABN}) (&ldquo;XINGO&rdquo;) and apply
+        when you create or publish a course on the XINGO marketplace. They add to our{" "}
         <Link href="/terms">Terms of Service</Link> and <Link href="/privacy">Privacy Policy</Link>. You accept them when you publish
         a course.
       </p>

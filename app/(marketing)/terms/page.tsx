@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalDocument, type LegalSection } from "@/components/marketing/legal/legal-document";
-import { LEGAL_CONTACT_EMAIL } from "@/lib/legal";
+import { LEGAL_ABN, LEGAL_CONTACT_EMAIL, LEGAL_ENTITY } from "@/lib/legal";
 import { MAX_ATTEMPT_MINUTES, packList, plans } from "@/lib/plans";
 import { pageMetadata } from "@/lib/seo-metadata";
 
@@ -20,7 +20,7 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          These terms are an agreement between you and XINGO (&ldquo;XINGO&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;), which
+          These terms are an agreement between you and {LEGAL_ENTITY} (ABN {LEGAL_ABN}) (&ldquo;XINGO&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;), which
           operates the website at xingo.ai and the XINGO practice app (together, the &ldquo;Service&rdquo;). By creating an
           account or using the Service you agree to these terms and to our <Link href="/privacy">Privacy Policy</Link>. If you
           publish courses on the marketplace, our <Link href="/creator-terms">Creator Terms</Link> also apply.
