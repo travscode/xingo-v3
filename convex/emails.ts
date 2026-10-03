@@ -512,7 +512,18 @@ export const unsubscribe = internalMutation({
       .unique();
 
     if (!recipient) {
-      return { ok: false };
+      // Onboarding-series links carry the user's own token instead (D-037).
+      const owner = args.token
+        ? await ctx.db
+            .query("users")
+            .withIndex("by_emailToken", (q) => q.eq("emailToken", args.token))
+            .unique()
+        : null;
+      if (!owner) return { ok: false };
+      if (!owner.emailOptOut) {
+        await ctx.db.patch(owner._id, { emailOptOut: true, emailOptOutAt: new Date().toISOString() });
+      }
+      return { ok: true };
     }
 
     const now = new Date().toISOString();
@@ -588,5 +599,29 @@ export const setMyEmailPreference = mutation({
         emailOptOutAt: args.subscribed ? undefined : new Date().toISOString(),
       });
     }
+  },
+});
+
+/** Admin → Email: what the automated onboarding series has sent (D-037). */
+export const automationStats = query({
+  args: {},
+  handler: async (ctx) => {
+    await requirePlatformAdmin(ctx);
+    const rows = await ctx.db.query("onboardingEmails").collect();
+    const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
+    const recent = rows.filter((row) => row.createdAt >= since);
+    const byDay = new Map<number, { sent: number; skipped: number; failed: number }>();
+    for (const row of recent) {
+      const entry = byDay.get(row.day) ?? { sent: 0, skipped: 0, failed: 0 };
+      if (row.status === "sent") entry.sent += 1;
+      else if (row.status === "skipped") entry.skipped += 1;
+      else if (row.status === "failed") entry.failed += 1;
+      byDay.set(row.day, entry);
+    }
+    return {
+      sent30d: recent.filter((row) => row.status === "sent").length,
+      failed30d: recent.filter((row) => row.status === "failed").length,
+      byDay: [...byDay.entries()].sort((a, b) => a[0] - b[0]).map(([day, counts]) => ({ day, ...counts })),
+    };
   },
 });

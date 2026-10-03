@@ -141,6 +141,8 @@ export default defineSchema({
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     stripeSubscriptionStatus: v.optional(v.string()),
+    /** Set while a cancelled subscription runs to the end of its period (ISO). */
+    subscriptionCancelAt: v.optional(v.string()),
     languagePreferences: v.optional(v.array(languagePreference)),
     practiceGoal: v.optional(v.string()),
     onboardedAt: v.optional(v.string()),
@@ -150,12 +152,16 @@ export default defineSchema({
     /** Unsubscribed from admin/marketing emails (Spam Act). */
     emailOptOut: v.optional(v.boolean()),
     emailOptOutAt: v.optional(v.string()),
+    /** Secret for one-click unsubscribe links in the onboarding series (D-037). */
+    emailToken: v.optional(v.string()),
     createdAt: v.string(),
     updatedAt: v.string(),
   })
     .index("by_clerkId", ["clerkId"])
     .index("by_email", ["email"])
-    .index("by_stripeCustomerId", ["stripeCustomerId"]),
+    .index("by_stripeCustomerId", ["stripeCustomerId"])
+    .index("by_createdAt", ["createdAt"])
+    .index("by_emailToken", ["emailToken"]),
 
   organizations: defineTable({
     id: v.string(),
@@ -252,6 +258,17 @@ export default defineSchema({
     .index("by_scenarioId", ["scenarioId"])
     .index("by_status", ["completionStatus"]),
 
+  /** One row per onboarding email per learner (D-037): stops repeats, records results. */
+  onboardingEmails: defineTable({
+    clerkId: v.string(),
+    day: v.number(),
+    track: v.string(),
+    status: v.union(v.literal("queued"), v.literal("sent"), v.literal("skipped"), v.literal("failed")),
+    createdAt: v.string(),
+    sentAt: v.optional(v.string()),
+    error: v.optional(v.string()),
+  }).index("by_clerk_day", ["clerkId", "day"]),
+
   /** Marketplace page for a community course (one per course). */
   courseListings: defineTable({
     moduleId: v.string(),
@@ -285,8 +302,16 @@ export default defineSchema({
     /** Denormalised counters for sorting and analytics. */
     viewCount: v.number(),
     addCount: v.number(),
+    /** Creator profile this course belongs to (creatorProfiles.handle). */
+    creatorHandle: v.optional(v.string()),
+    /** Real usage, updated as learners practise and rate (never seeded). */
+    practiceCount: v.optional(v.number()),
+    passCount: v.optional(v.number()),
+    ratingSum: v.optional(v.number()),
+    ratingCount: v.optional(v.number()),
   })
     .index("by_moduleId", ["moduleId"])
+    .index("by_creatorHandle", ["creatorHandle"])
     .index("by_slug", ["slug"])
     .index("by_owner", ["ownerClerkId"])
     .index("by_status", ["status"]),
@@ -347,6 +372,38 @@ export default defineSchema({
   })
     .index("by_owner", ["ownerClerkId"])
     .index("by_status", ["status"]),
+
+  /** Public creator page (/marketplace/creators/<handle>). House creators are XINGO Originals. */
+  creatorProfiles: defineTable({
+    handle: v.string(),
+    displayName: v.string(),
+    tagline: v.string(),
+    bio: v.string(),
+    location: v.optional(v.string()),
+    /** Brand colour for the profile and course accents (hex). */
+    accent: v.string(),
+    avatarStorageId: v.optional(v.id("_storage")),
+    bannerStorageId: v.optional(v.id("_storage")),
+    logoStorageId: v.optional(v.id("_storage")),
+    /** XINGO-made studio: labelled "XINGO Original", never earns or gets paid. */
+    isHouse: v.boolean(),
+    ownerClerkId: v.optional(v.string()),
+    createdAt: v.string(),
+  })
+    .index("by_handle", ["handle"])
+    .index("by_owner", ["ownerClerkId"]),
+
+  /** One rating per learner per course, only after they've practised it. */
+  courseRatings: defineTable({
+    moduleId: v.string(),
+    clerkId: v.string(),
+    stars: v.number(),
+    comment: v.optional(v.string()),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_moduleId", ["moduleId"])
+    .index("by_clerk_module", ["clerkId", "moduleId"]),
 
   /** Learner reports about marketplace courses, reviewed in Admin → Reports. */
   contentReports: defineTable({

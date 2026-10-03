@@ -24,7 +24,8 @@ import {
 } from "../lib/plans";
 import { resolveEndReason } from "../lib/scoring";
 import { LEGAL_VERSION } from "../lib/legal";
-import { canPractiseCourse, getListing, recordCreatorEarning } from "./model/courses";
+import { bumpCourseCounters, canPractiseCourse, getListing, recordCreatorEarning } from "./model/courses";
+import { queueEmail } from "./model/notify";
 
 const transcriptEntry = v.object({
   id: v.string(),
@@ -151,6 +152,17 @@ async function closeAndCharge(
         createdAt: new Date(endMs).toISOString(),
       });
       await recordCreatorEarning(ctx, attempt, user, entitlement, split, new Date(endMs).toISOString());
+
+      // This session used the last of their minutes: tell them once per month.
+      if (user.role !== "platform_admin" && split.charged >= entitlement.remainingMinutes) {
+        const month = getBillingMonthKey(new Date(endMs));
+        const [year, monthNumber] = month.split("-").map(Number);
+        await queueEmail(ctx, {
+          clerkId: attempt.clerkId,
+          email: { kind: "minutes_used_up", resetsOn: new Date(Date.UTC(year, monthNumber, 1)).toISOString() },
+          dedupeKey: `minutes_used_up-${attempt.clerkId}-${month}`,
+        });
+      }
     }
 
     chargedMinutes = split.charged;
@@ -409,6 +421,8 @@ export const closeForGrading = internalMutation({
       .filter((entry) => entry.text.trim().length > 0);
     const interpreterTurns = transcriptEntries.filter((e) => e.role === "user").length;
 
+    if (interpreterTurns > 0) await bumpCourseCounters(ctx, attempt.moduleId, "practiceCount");
+
     await closeAndCharge(ctx, attempt, now, {
       completionStatus: "ungraded",
       ungradedReason: "grading",
@@ -509,6 +523,10 @@ export const saveAssessment = internalMutation({
       ungradedReason: undefined,
       assessment: { ...args.assessment, overallScore: score },
     });
+
+    if (args.assessment.completionDecision === "completed" && attempt.completionStatus !== "completed") {
+      await bumpCourseCounters(ctx, attempt.moduleId, "passCount");
+    }
   },
 });
 

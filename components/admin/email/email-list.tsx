@@ -9,6 +9,7 @@ import { api } from "@/convex/_generated/api";
 import { friendlyError } from "@/lib/errors";
 import { Badge, EmptyState, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
+import { AutomatedEmails } from "@/components/admin/email/automated-emails";
 
 const statusTone = { draft: "neutral", sending: "live", sent: "success", cancelled: "warning" } as const;
 
@@ -48,6 +49,7 @@ export function EmailList() {
         </Button>
       </div>
       {error ? <p className="text-sm text-record">{error}</p> : null}
+      <AutomatedEmails />
 
       {campaigns.length === 0 ? (
         <EmptyState title="No emails yet" description="Create your first email from a branded template." />

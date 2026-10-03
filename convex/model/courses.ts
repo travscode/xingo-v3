@@ -93,6 +93,8 @@ export async function recordCreatorEarning(
 
   const course = await getCourse(ctx, attempt.moduleId);
   if (!course || !isCommunityCourse(course) || !course.ownerClerkId || course.ownerClerkId === attempt.clerkId) return;
+  // XINGO Originals (house studios) are owned by "house:<handle>" and never earn (D-038).
+  if (isHouseOwner(course.ownerClerkId)) return;
 
   const existing = await ctx.db
     .query("creatorEarnings")
@@ -135,4 +137,20 @@ export async function courseVisibility(ctx: QueryCtx) {
   );
 
   return (moduleId: string) => !hidden.has(moduleId);
+}
+
+/** Owner id used for XINGO Originals studios (no user account behind it). */
+export function houseOwnerId(handle: string) {
+  return `house:${handle}`;
+}
+
+export function isHouseOwner(ownerClerkId: string | undefined) {
+  return Boolean(ownerClerkId?.startsWith("house:"));
+}
+
+/** Counts a finished practice session (and a pass) on a community course's listing. */
+export async function bumpCourseCounters(ctx: MutationCtx, moduleId: string, field: "practiceCount" | "passCount") {
+  const listing = await getListing(ctx, moduleId);
+  if (!listing) return;
+  await ctx.db.patch(listing._id, { [field]: (listing[field] ?? 0) + 1 });
 }

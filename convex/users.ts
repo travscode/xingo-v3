@@ -13,6 +13,7 @@ import {
   requireUser,
 } from "./model/auth";
 import { getEntitlement } from "./model/entitlements";
+import { queueEmail } from "./model/notify";
 
 const languagePreference = v.object({
   sourceLanguage: v.string(),
@@ -178,6 +179,8 @@ export const syncCurrentUser = mutation({
       await applyPendingInvite(ctx, clerkId, verifiedEmail);
     }
 
+    await queueEmail(ctx, { clerkId, email: { kind: "welcome" }, dedupeKey: `welcome-${clerkId}` });
+
     return { created: true };
   },
 });
@@ -328,6 +331,8 @@ export const applySubscription = internalMutation({
     stripeSubscriptionId: v.optional(v.string()),
     stripeSubscriptionStatus: v.optional(v.string()),
     subscriptionStatus,
+    /** When a cancelled subscription ends (ISO). Absent = not cancelling; null = resumed. */
+    cancelAt: v.optional(v.union(v.string(), v.null())),
   },
   handler: async (ctx, args) => {
     let user = args.clerkId ? await getUserByClerkId(ctx, args.clerkId) : null;
@@ -345,14 +350,41 @@ export const applySubscription = internalMutation({
       return { updated: false };
     }
 
+    const before = { plan: user.subscriptionStatus, stripeStatus: user.stripeSubscriptionStatus, cancelAt: user.subscriptionCancelAt };
+    const subscriptionId = args.stripeSubscriptionId ?? user.stripeSubscriptionId ?? "none";
+
     await ctx.db.patch(user._id, {
       subscriptionStatus: args.subscriptionStatus,
       stripeCustomerId: args.stripeCustomerId ?? user.stripeCustomerId,
       stripeSubscriptionId: args.stripeSubscriptionId ?? user.stripeSubscriptionId,
       stripeSubscriptionStatus:
         args.stripeSubscriptionStatus ?? user.stripeSubscriptionStatus,
+      ...(args.cancelAt !== undefined ? { subscriptionCancelAt: args.cancelAt ?? undefined } : {}),
       updatedAt: new Date().toISOString(),
     });
+
+    // Customer emails for real changes only (Stripe sends overlapping events).
+    const clerkId = user.clerkId;
+    const failing = (status?: string) => status === "past_due" || status === "unpaid";
+    if (before.plan !== "professional" && args.subscriptionStatus === "professional") {
+      await queueEmail(ctx, { clerkId, email: { kind: "pro_started" }, dedupeKey: `pro_started-${subscriptionId}` });
+    } else if (before.plan === "professional" && args.subscriptionStatus === "free") {
+      await queueEmail(ctx, { clerkId, email: { kind: "pro_ended" }, dedupeKey: `pro_ended-${subscriptionId}` });
+    }
+    if (args.subscriptionStatus === "professional" && failing(args.stripeSubscriptionStatus) && !failing(before.stripeStatus)) {
+      await queueEmail(ctx, {
+        clerkId,
+        email: { kind: "payment_failed" },
+        dedupeKey: `payment_failed-${subscriptionId}-${new Date().toISOString().slice(0, 10)}`,
+      });
+    }
+    if (args.cancelAt && args.cancelAt !== before.cancelAt && args.subscriptionStatus === "professional") {
+      await queueEmail(ctx, {
+        clerkId,
+        email: { kind: "pro_cancelling", endsAt: args.cancelAt },
+        dedupeKey: `pro_cancelling-${subscriptionId}-${args.cancelAt}`,
+      });
+    }
 
     return { updated: true };
   },

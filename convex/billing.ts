@@ -242,6 +242,12 @@ export const handleWebhook = internalAction({
               event.type === "customer.subscription.deleted"
                 ? "free"
                 : subscriptionPlan(subscription),
+            cancelAt:
+              event.type === "customer.subscription.deleted"
+                ? null
+                : subscription.cancel_at
+                  ? new Date(subscription.cancel_at * 1000).toISOString()
+                  : null,
           });
           break;
         }

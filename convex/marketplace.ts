@@ -3,8 +3,9 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getClerkIdFromIdentity, getUserByClerkId, requirePlatformAdmin, requireUser } from "./model/auth";
-import { getCourse, getListing, isCourseOwner, libraryModuleIds } from "./model/courses";
+import { getCourse, getListing, isCourseOwner, isHouseOwner, libraryModuleIds } from "./model/courses";
 import { normalizeAgent } from "./model/scenario";
+import { ensureCreatorProfile } from "./creators";
 import {
   communityCourseIdPrefix,
   EARNINGS_HOLD_DAYS,
@@ -13,8 +14,12 @@ import {
   listingMatches,
   normalizeKeywords,
   slugify,
+  averageRating,
+  compareCourses,
+  courseBadges,
 } from "../lib/marketplace";
 import { scenarioTimeLimitMinutes } from "../lib/plans";
+import { queueEmail } from "./model/notify";
 
 /**
  * Community marketplace (D-031). Creators publish courses; learners add them to
@@ -86,7 +91,7 @@ async function requireCourseEditor(ctx: MutationCtx | QueryCtx, moduleId: string
 }
 
 /** Paths under /marketplace that are pages, not courses. */
-const RESERVED_SLUGS = new Set(["new", "manage", "earnings", "create"]);
+const RESERVED_SLUGS = new Set(["new", "manage", "earnings", "create", "creators"]);
 
 async function uniqueSlug(ctx: MutationCtx, title: string) {
   const slug = slugify(title);
@@ -146,7 +151,7 @@ function cleanCharacter(input: typeof character.type, fallbackVoice: string, lan
 }
 
 /** Builds the full scenario record from a creator's short form. */
-function buildScenario(courseKind: "roleplay" | "interpreting", input: typeof scenarioInput.type) {
+export function buildScenario(courseKind: "roleplay" | "interpreting", input: typeof scenarioInput.type) {
   if (!input.title.trim() || !input.character.role.trim() || !input.character.goal.trim()) {
     throw new ConvexError("COURSE_INCOMPLETE");
   }
@@ -221,6 +226,13 @@ async function listingCard(ctx: Ctx, listing: Doc<"courseListings">, scenarioCou
     scenarioCount,
     addCount: listing.addCount,
     publishedAt: listing.publishedAt ?? null,
+    creatorHandle: listing.creatorHandle ?? null,
+    isOriginal: isHouseOwner(listing.ownerClerkId),
+    rating: averageRating(listing),
+    ratingCount: listing.ratingCount ?? 0,
+    practiceCount: listing.practiceCount ?? 0,
+    passCount: listing.passCount ?? 0,
+    badges: courseBadges(listing),
   };
 }
 
@@ -235,7 +247,11 @@ async function scenarioCounts(ctx: Ctx) {
 
 /** Published community courses, newest and most added first, optionally searched. */
 export const browse = query({
-  args: { search: v.optional(v.string()), kind: v.optional(kind) },
+  args: {
+    search: v.optional(v.string()),
+    kind: v.optional(kind),
+    sort: v.optional(v.union(v.literal("popular"), v.literal("top"), v.literal("new"))),
+  },
   handler: async (ctx, args) => {
     const [listings, counts, user] = await Promise.all([
       ctx.db
@@ -249,10 +265,10 @@ export const browse = query({
     const matching = listings
       .filter((listing) => !args.kind || listing.kind === args.kind)
       .filter((listing) => listingMatches(listing, args.search ?? ""))
-      .sort((a, b) => b.addCount - a.addCount || (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
+      .sort(compareCourses(args.sort ?? "popular"));
 
     return Promise.all(
-      matching.slice(0, 60).map(async (listing) => ({
+      matching.slice(0, 150).map(async (listing) => ({
         ...(await listingCard(ctx, listing, counts.get(listing.moduleId) ?? 0)),
         inLibrary: added.has(listing.moduleId),
         isOwner: user?.clerkId === listing.ownerClerkId,
@@ -477,6 +493,8 @@ export const createCourse = mutation({
       source: "community",
       ownerClerkId: user.clerkId,
     });
+    const creatorName = clip(args.creatorName, 80) || user.name;
+    const creatorHandle = await ensureCreatorProfile(ctx, user, creatorName);
     await ctx.db.insert("courseListings", {
       moduleId,
       ownerClerkId: user.clerkId,
@@ -488,7 +506,8 @@ export const createCourse = mutation({
       description: "",
       keywords: [],
       whatYouGet: [],
-      creatorName: clip(args.creatorName, 80) || user.name,
+      creatorName,
+      creatorHandle,
       certifications: [],
       createdAt: now,
       updatedAt: now,
@@ -668,6 +687,13 @@ export const publish = mutation({
       guidelinesAcceptedAt: now,
       updatedAt: now,
     });
+    if (!listing.publishedAt) {
+      await queueEmail(ctx, {
+        clerkId: listing.ownerClerkId,
+        email: { kind: "course_published", courseTitle: listing.title, slug: listing.slug },
+        dedupeKey: `course_published-${listing.moduleId}`,
+      });
+    }
     return { slug: listing.slug };
   },
 });
@@ -958,12 +984,20 @@ export const adminSetListingStatus = mutation({
     const now = new Date().toISOString();
 
     if (args.action === "remove") {
+      const reason = clip(args.reason, 500) || "Removed by XINGO for breaking the creator guidelines.";
       await ctx.db.patch(listing._id, {
         status: "removed",
         removedAt: now,
-        removedReason: clip(args.reason, 500) || "Removed by XINGO for breaking the creator guidelines.",
+        removedReason: reason,
         updatedAt: now,
       });
+      if (listing.status !== "removed") {
+        await queueEmail(ctx, {
+          clerkId: listing.ownerClerkId,
+          email: { kind: "course_removed", courseTitle: listing.title, reason },
+          dedupeKey: `course_removed-${listing.moduleId}-${now}`,
+        });
+      }
     } else {
       // Restored courses come back as drafts; the creator republishes.
       await ctx.db.patch(listing._id, { status: "draft", removedAt: undefined, removedReason: undefined, updatedAt: now });
@@ -988,12 +1022,20 @@ export const resolveReport = mutation({
     if (args.action === "remove_course") {
       const listing = await getListing(ctx, item.moduleId);
       if (listing) {
+        const reason = clip(args.note, 500) || "Removed by XINGO after a report.";
         await ctx.db.patch(listing._id, {
           status: "removed",
           removedAt: now,
-          removedReason: clip(args.note, 500) || "Removed by XINGO after a report.",
+          removedReason: reason,
           updatedAt: now,
         });
+        if (listing.status !== "removed") {
+          await queueEmail(ctx, {
+            clerkId: listing.ownerClerkId,
+            email: { kind: "course_removed", courseTitle: listing.title, reason },
+            dedupeKey: `course_removed-${listing.moduleId}-${now}`,
+          });
+        }
       }
       // Close every open report on the same course.
       const open = await ctx.db

@@ -173,3 +173,54 @@ export const creatorVoices = [
 export function isCreatorVoice(value: string) {
   return creatorVoices.some((voice) => voice.value === value);
 }
+
+// ---- Ratings, popularity and badges (D-038) -------------------------------------
+// All computed from real activity: nothing here is seeded or invented.
+
+export type CourseActivity = {
+  publishedAt?: string | null;
+  addCount: number;
+  practiceCount?: number;
+  passCount?: number;
+  ratingSum?: number;
+  ratingCount?: number;
+};
+
+export const NEW_COURSE_DAYS = 21;
+export const TOP_RATED_MIN_RATINGS = 5;
+export const TOP_RATED_MIN_AVERAGE = 4.5;
+export const POPULAR_MIN_SCORE = 10;
+
+export function averageRating(course: CourseActivity) {
+  return course.ratingCount ? Math.round(((course.ratingSum ?? 0) / course.ratingCount) * 10) / 10 : null;
+}
+
+/** Adds weigh more than sessions: adding is a deliberate choice. */
+export function popularityScore(course: CourseActivity) {
+  return course.addCount * 2 + (course.practiceCount ?? 0);
+}
+
+export type CourseBadge = "new" | "popular" | "top_rated";
+
+export function courseBadges(course: CourseActivity, now = Date.now()): CourseBadge[] {
+  const badges: CourseBadge[] = [];
+  const average = averageRating(course);
+  if ((course.ratingCount ?? 0) >= TOP_RATED_MIN_RATINGS && average !== null && average >= TOP_RATED_MIN_AVERAGE) badges.push("top_rated");
+  if (popularityScore(course) >= POPULAR_MIN_SCORE) badges.push("popular");
+  if (course.publishedAt && now - Date.parse(course.publishedAt) < NEW_COURSE_DAYS * 86_400_000) badges.push("new");
+  return badges;
+}
+
+export type MarketplaceSort = "popular" | "top" | "new";
+
+export function compareCourses(sort: MarketplaceSort) {
+  return (a: CourseActivity, b: CourseActivity) => {
+    const newer = (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
+    if (sort === "new") return newer;
+    if (sort === "top") {
+      const rated = (c: CourseActivity) => ((c.ratingCount ?? 0) >= 3 ? averageRating(c) ?? 0 : 0);
+      return rated(b) - rated(a) || (b.ratingCount ?? 0) - (a.ratingCount ?? 0) || popularityScore(b) - popularityScore(a) || newer;
+    }
+    return popularityScore(b) - popularityScore(a) || newer;
+  };
+}

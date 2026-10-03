@@ -48,3 +48,13 @@ Bounces mark the recipient as bounced; a spam complaint unsubscribes that person
 1. Send a test to yourself on Gmail and Outlook/Apple Mail; check images, button and unsubscribe.
 2. Start with a small batch (e.g. 20 people) and check the report for bounces.
 3. Keep the "Personal note" template for important one-to-one style messages — plain emails land in the primary inbox more often.
+
+## Automated emails (set up 2026-10-03)
+
+Live configuration on the deployment serving users (`deafening-cow-810`): domain **xingo.ai** verified in Resend; `RESEND_API_KEY` set by the owner; `EMAIL_FROM_ADDRESS=hello@xingo.ai`, `EMAIL_SENDER_NAME=XINGO`, `EMAIL_REPLY_TO=hello@xingo.ai`, `EMAIL_POSTAL_ADDRESS=XINGO Pty Ltd (ABN 26 683 778 010), Australia`. Make sure the hello@xingo.ai mailbox exists, because customers will reply to it.
+
+- **Customer emails** (D-036): welcome, pack bought, Pro started/cancelling/ended, payment failed, out of minutes, and creator emails. Content: `lib/email/transactional.ts`.
+- **Onboarding series** (D-037): days 1–13, every other day, by goal pathway. Content: `lib/email/onboarding-content.ts`. Sent by the daily cron "send onboarding emails".
+- **Check sending:** Resend dashboard → Emails (filter by tag `type`), Convex logs for `transactional` / `onboarding`, and Admin → Email.
+- **Pause the series:** comment out the cron in `convex/crons.ts` and deploy, or unset `RESEND_API_KEY` (pauses all email).
+

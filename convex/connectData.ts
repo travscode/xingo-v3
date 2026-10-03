@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { EARNINGS_HOLD_DAYS, PAYOUT_THRESHOLD_CENTS } from "../lib/marketplace";
+import { queueEmail } from "./model/notify";
 
 /** Data side of Stripe Connect payouts (convex/connect.ts is the Stripe side). */
 
@@ -43,6 +44,15 @@ export const saveAccount = internalMutation({
       await ctx.db.patch(existing._id, fields);
     } else if (args.clerkId) {
       await ctx.db.insert("creatorAccounts", { clerkId: args.clerkId, ...fields });
+    }
+
+    const ownerClerkId = existing?.clerkId ?? args.clerkId;
+    if (ownerClerkId && args.payoutsEnabled && !existing?.payoutsEnabled) {
+      await queueEmail(ctx, {
+        clerkId: ownerClerkId,
+        email: { kind: "payout_account_ready" },
+        dedupeKey: `payout_account_ready-${args.stripeAccountId}`,
+      });
     }
   },
 });
@@ -110,6 +120,14 @@ export const completePayout = internalMutation({
   handler: async (ctx, args) => {
     if (args.stripeTransferId) {
       await ctx.db.patch(args.payoutId, { status: "paid", stripeTransferId: args.stripeTransferId, paidAt: new Date().toISOString() });
+      const paid = await ctx.db.get(args.payoutId);
+      if (paid) {
+        await queueEmail(ctx, {
+          clerkId: paid.ownerClerkId,
+          email: { kind: "payout_sent", amountCents: paid.amountCents },
+          dedupeKey: `payout_sent-${args.payoutId}`,
+        });
+      }
       return;
     }
 

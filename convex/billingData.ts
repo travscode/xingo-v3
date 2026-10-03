@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
 import { getUserByClerkId } from "./model/auth";
 import { isPackId, packs } from "../lib/plans";
+import { queueEmail } from "./model/notify";
 
 /**
  * Records a Stripe event id. Returns false when the event was already handled,
@@ -80,6 +81,12 @@ export const grantPack = internalMutation({
       packId: args.packId,
       stripeCheckoutSessionId: args.stripeCheckoutSessionId,
       createdAt: new Date().toISOString(),
+    });
+
+    await queueEmail(ctx, {
+      clerkId: args.clerkId,
+      email: { kind: "pack_purchased", packId: args.packId },
+      dedupeKey: `pack-${args.stripeCheckoutSessionId}`,
     });
 
     return { granted: true };
