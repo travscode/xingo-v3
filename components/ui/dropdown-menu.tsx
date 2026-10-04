@@ -14,13 +14,16 @@ export const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 export const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 8, ...props }, ref) => (
+>(({ className, sideOffset = 8, collisionPadding = 12, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
+      collisionPadding={collisionPadding}
+      // Never taller than the space Radix measured on the side it opened, so long
+      // lists scroll inside the menu instead of running off the top of the window.
       className={cn(
-        "z-50 min-w-52 overflow-hidden rounded-xl border border-gray-200 bg-paper p-1.5 text-ink shadow-[0_8px_30px_rgba(0,0,0,0.12)]",
+        "z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto rounded-xl border border-gray-200 bg-paper p-1.5 text-ink shadow-[0_8px_30px_rgba(0,0,0,0.12)]",
         className,
       )}
       {...props}

@@ -60,7 +60,7 @@ export function LanguagePairPicker({ variant = "pair" }: { variant?: "pair" | "s
           <ChevronDown className="h-4 w-4 text-gray-500" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="max-h-[70vh] w-72 overflow-y-auto rounded-xl p-1.5">
+      <DropdownMenuContent align="end" className="max-h-[min(70vh,var(--radix-dropdown-menu-content-available-height))] w-72 rounded-xl p-1.5">
         <DropdownMenuItem
           onSelect={() => choose(ENGLISH_ONLY_PAIR)}
           className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-sm font-medium outline-none focus:bg-gray-100"
