@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { createLanguagePair, ENGLISH_ONLY_PAIR, flagEmoji, isEnglishOnly, pairLabel, practiceLanguages, type LanguagePair } from "@/lib/languages";
+import { track } from "@/lib/analytics";
 
 /**
  * "English ⇄ <your language>". The English-speaking participant always speaks
@@ -27,6 +28,9 @@ export function LanguagePairPicker({ variant = "pair" }: { variant?: "pair" | "s
   const [custom, setCustom] = useState("");
 
   const choose = (pair: LanguagePair) => {
+    if (pair.key !== activePair.key) {
+      track("language_pair_change", { language: spokenLanguage(pair), pair: pair.key, from: activePair.key });
+    }
     setActivePair(pair);
     const rest = savedPairs.filter((saved) => saved.key !== pair.key);
     void updatePreferences({

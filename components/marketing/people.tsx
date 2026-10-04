@@ -40,6 +40,14 @@ export const scenes = {
     src: "/images/scenes/clinic-consultation.webp",
     alt: "A doctor speaks with an older patient while an interpreter takes notes beside her.",
   },
+  speakingTestPrep: {
+    src: "/images/scenes/speaking-test-prep.webp",
+    alt: "A man wearing a headset holds a cue card and a timer as he practises a speaking test out loud at his desk.",
+  },
+  clinicInterpreter: {
+    src: "/images/scenes/clinic-interpreter.webp",
+    alt: "An interpreter with a notepad listens to a doctor beside an older couple in a clinic.",
+  },
   examPrep: {
     src: "/images/scenes/exam-prep.webp",
     alt: "A nurse in scrubs rehearses a speaking exam at her kitchen table in the evening.",

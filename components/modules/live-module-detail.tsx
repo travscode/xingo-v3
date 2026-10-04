@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { ArrowLeft, Check, Clock } from "lucide-react";
 import { useProgressPair } from "@/components/providers/language-pair-context";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { displayPassMark, displayMaxScore, isCclModule } from "@/lib/scoring";
 import { Badge, Card, EmptyState, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
@@ -14,6 +16,19 @@ import { FreeBadge, IndustryIcon, PremiumBadge } from "@/components/ui/badges";
 export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
   const catalog = useQuery(api.catalog.forCurrentUser, { pair: useProgressPair() });
   const me = useQuery(api.users.me, {});
+  const viewed = catalog?.modules.find((m) => m.id === moduleId);
+  const viewedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!viewed || me === undefined || viewedRef.current === moduleId) return;
+    viewedRef.current = moduleId;
+    track("course_view", {
+      module_id: moduleId,
+      course_title: viewed.title,
+      free: viewed.isFree,
+      locked: !viewed.isFree && !(me?.entitlement.premiumAccess ?? false),
+    });
+  }, [me, moduleId, viewed]);
 
   if (!catalog) {
     return (

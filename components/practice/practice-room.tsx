@@ -611,6 +611,10 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
       if (code === "OUT_OF_MINUTES" || code === "PREMIUM_REQUIRED") {
         track("paywall_view", { reason: code, scenario_id: scenario.id });
+      } else {
+        // e.g. MIC_BLOCKED, MIC_NOT_FOUND, TERMS_REQUIRED; otherwise the raw error name.
+        const errorName = startError instanceof Error ? startError.name : "unknown";
+        track("practice_error", { code: code ?? errorName, scenario_id: scenario.id, module_id: scenario.moduleId, mode });
       }
 
       disconnectAll();
@@ -678,11 +682,17 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
       void cancelAttempt({ attemptId: id }).catch(() => undefined);
       attemptIdRef.current = null;
+      track("practice_abandon", {
+        scenario_id: scenario.id,
+        module_id: scenario.moduleId,
+        mode,
+        turns: turnsRef.current.agent_a + turnsRef.current.agent_b,
+      });
     }
 
     disconnectAll();
     router.push(`/courses/${scenario.moduleId}`);
-  }, [cancelAttempt, disconnectAll, phase, router, scenario.moduleId]);
+  }, [cancelAttempt, disconnectAll, mode, phase, router, scenario.id, scenario.moduleId]);
 
   // Cancel a live attempt if the learner navigates away inside the app.
   useEffect(() => {

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useAction, useQuery } from "convex/react";
 import { ArrowRight, Banknote, CheckCircle2, Clock, ExternalLink, Landmark, ShieldCheck } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
 import { CREATOR_REVENUE_SHARE, EARNINGS_HOLD_DAYS, formatAud, PAYOUT_THRESHOLD_CENTS } from "@/lib/marketplace";
 import { formatMinuteCount } from "@/lib/plans";
@@ -107,7 +108,10 @@ export function CreatorEarnings() {
           connected={account.connected}
           detailsSubmitted={account.detailsSubmitted}
           busy={busy}
-          onConnect={() => void go(() => startSetup({}))}
+          onConnect={() => {
+            track("payout_setup_start");
+            void go(() => startSetup({}));
+          }}
           error={error}
         />
       )}

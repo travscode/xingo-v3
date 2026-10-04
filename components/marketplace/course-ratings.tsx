@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { Star, Trophy } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,10 @@ function RateForm({ moduleId, initial }: { moduleId: string; initial: { stars: n
         setState("saving");
         setError(null);
         rate({ moduleId, stars, comment: comment || undefined })
-          .then(() => setState("saved"))
+          .then(() => {
+            track("course_rate", { module_id: moduleId, stars, with_comment: Boolean(comment.trim()), updated: Boolean(initial) });
+            setState("saved");
+          })
           .catch((rateError) => {
             setError(friendlyError(rateError));
             setState("idle");

@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { ExternalLink, Link2, PartyPopper } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
 import { CREATOR_GUIDELINES } from "@/lib/marketplace";
 import { cn } from "@/lib/utils";
@@ -50,7 +51,10 @@ function PublishPanel({ moduleId, onClose }: { moduleId: string; onClose: () => 
             setBusy(true);
             setError(null);
             publish({ moduleId, acceptGuidelines: accepted })
-              .then(onClose)
+              .then(() => {
+                track("course_publish", { module_id: moduleId });
+                onClose();
+              })
               .catch((publishError) => setError(friendlyError(publishError)))
               .finally(() => setBusy(false));
           }}
@@ -131,7 +135,7 @@ export function CourseEditor({ moduleId }: { moduleId: string }) {
               >
                 <Link2 className="h-4 w-4" aria-hidden /> {copied ? "Copied" : "Copy link"}
               </Button>
-              <Button variant="ghost" onClick={() => window.confirm("Unpublish? It disappears from the marketplace and from learners' libraries until you publish again.") && void unpublish({ moduleId })}>
+              <Button variant="ghost" onClick={() => window.confirm("Unpublish? It disappears from the marketplace and from learners' libraries until you publish again.") && void unpublish({ moduleId }).then(() => track("course_unpublish", { module_id: moduleId }))}>
                 Unpublish
               </Button>
             </>
@@ -224,7 +228,10 @@ export function CourseEditor({ moduleId }: { moduleId: string }) {
             setDeleting(true);
             setDeleteError(null);
             deleteCourse({ moduleId })
-              .then(({ orgHandle }) => router.replace(orgHandle ? `/marketplace/org/${orgHandle}?tab=courses` : "/marketplace?tab=yours"))
+              .then(({ orgHandle }) => {
+                track("course_delete", { module_id: moduleId, organisation: Boolean(orgHandle) });
+                router.replace(orgHandle ? `/marketplace/org/${orgHandle}?tab=courses` : "/marketplace?tab=yours");
+              })
               .catch((error) => {
                 setDeleteError(friendlyError(error));
                 setDeleting(false);

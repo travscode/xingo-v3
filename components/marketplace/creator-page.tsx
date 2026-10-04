@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft, MapPin, Star } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
 import { Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
@@ -108,6 +109,7 @@ export function CreatorPage({ handle }: { handle: string }) {
                 setAdding(course.moduleId);
                 setError(null);
                 add({ moduleId: course.moduleId })
+                  .then(() => track("course_add", { module_id: course.moduleId, source: "creator", creator: handle }))
                   .catch((addError) => {
                     if (/Not authenticated|not found/i.test(String(addError))) router.push(`/sign-up?redirect=${encodeURIComponent(pathname)}`);
                     else setError(friendlyError(addError));

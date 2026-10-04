@@ -2,17 +2,25 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { analyticsPath, GA4_MEASUREMENT_ID, gtag } from "@/lib/analytics";
+import { analyticsPath, GA4_MEASUREMENT_ID, gtag, trackLinkClick } from "@/lib/analytics";
 
 /**
  * Sends one GA4 page_view per App Router navigation (including the first load;
  * the gtag config in app/layout.tsx disables GA's own automatic page_view).
- * Only campaign query parameters are sent.
+ * Only campaign query parameters are sent. Also reports sign-up / log-in link
+ * clicks site-wide (see trackLinkClick).
  */
 export function GA4Analytics() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const lastReportedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!GA4_MEASUREMENT_ID) return;
+    // Capture phase, so the click is seen before Next.js navigates.
+    document.addEventListener("click", trackLinkClick, true);
+    return () => document.removeEventListener("click", trackLinkClick, true);
+  }, []);
 
   useEffect(() => {
     if (!GA4_MEASUREMENT_ID) return;

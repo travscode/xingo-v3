@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft, ArrowRight, Check, Languages, MessagesSquare } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
 import { courseKinds, type CourseKind } from "@/lib/marketplace";
 import { cn } from "@/lib/utils";
@@ -154,6 +155,7 @@ export function CourseWizard({ orgHandle }: { orgHandle?: string } = {}) {
           taskCard: isRoleplay ? draft.taskCard || undefined : undefined,
         },
       });
+      track("course_create", { module_id: result.moduleId, kind: draft.kind, organisation: Boolean(org) });
       router.push(`/marketplace/manage/${result.moduleId}?created=1`);
     } catch (createError) {
       setError(friendlyError(createError));

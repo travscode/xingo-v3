@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { friendlyError } from "@/lib/errors";
 import { LEGAL_VERSION } from "@/lib/legal";
 import { Button } from "@/components/ui/button";
+import { track } from "@/lib/analytics";
 
 /**
  * Blocks the app until the signed-in user has accepted the current Terms of
@@ -70,6 +71,7 @@ export function TermsGate() {
             setSaving(true);
             setError(null);
             acceptTerms({ version: LEGAL_VERSION })
+              .then(() => track("terms_accept", { version: LEGAL_VERSION, updated }))
               .catch((acceptError) => setError(friendlyError(acceptError)))
               .finally(() => setSaving(false));
           }}

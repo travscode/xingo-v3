@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { Check } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
 import { canManageOrg, MAX_INVITES_PER_BATCH, ORG_ROLE_LABELS, parseEmailList, type OrgRole } from "@/lib/orgs";
 import { Button } from "@/components/ui/button";
@@ -162,6 +163,7 @@ function TeamInviteBox({ handle }: { handle: string }) {
     setSummary(null);
     try {
       const result = await inviteTeam({ handle, emails: parsed.emails, role });
+      track("org_invite_send", { kind: "team", role, invited: result.invited, skipped: result.skipped });
       const parts = [
         result.invited ? `${result.invited} ${result.invited === 1 ? "invitation" : "invitations"} sent` : null,
         result.skipped ? `${result.skipped} already on the team` : null,

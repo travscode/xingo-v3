@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { BadgeCheck } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Card, EmptyState, PageHeader, Skeleton } from "@/components/ui/primitives";
@@ -70,6 +71,7 @@ export function JoinInvitation({ token }: { token: string }) {
     setError(null);
     try {
       const result = await accept({ token });
+      track("invite_accept", { kind: result.team ? "team" : "collection", organisation: result.orgHandle });
       router.push(
         result.team || !result.collectionSlug ? `/marketplace/org/${result.orgHandle}` : `/${result.orgHandle}/${result.collectionSlug}`,
       );

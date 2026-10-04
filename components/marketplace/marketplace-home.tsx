@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { ArrowRight, ArrowUpRight, BarChart3, Building2, ChevronRight, Plus, Search, Sparkles, Wallet } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
 import { formatAud } from "@/lib/marketplace";
 import { ORG_ROLE_LABELS } from "@/lib/orgs";
@@ -190,8 +191,17 @@ function Discover({ signedIn }: { signedIn: boolean }) {
   const [adding, setAdding] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Report a search once the learner stops typing.
+  useEffect(() => {
+    const term = search.trim();
+    if (term.length < 2) return;
+    const timer = setTimeout(() => track("search", { search_term: term.slice(0, 100), area: "marketplace", kind }), 1200);
+    return () => clearTimeout(timer);
+  }, [kind, search]);
+
   const addCourse = async (moduleId: string, slug: string) => {
     if (!signedIn) {
+      track("cta_click", { cta_text: "Add to my courses", cta_location: "marketplace_browse", destination: "sign_up", redirect: `/marketplace/${slug}` });
       router.push(`/sign-up?redirect=${encodeURIComponent(`/marketplace/${slug}`)}`);
       return;
     }
@@ -199,6 +209,7 @@ function Discover({ signedIn }: { signedIn: boolean }) {
     setError(null);
     try {
       await add({ moduleId });
+      track("course_add", { module_id: moduleId, source: "browse" });
     } catch (addError) {
       setError(friendlyError(addError));
     } finally {

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAction, useQuery } from "convex/react";
 import { Check, Clock, Crown, Package } from "lucide-react";
 import { api } from "@/convex/_generated/api";
-import { track } from "@/lib/analytics";
+import { rememberCheckout, takePendingCheckout, track, type AnalyticsItem } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
-import { CURRENCY_LABEL, packList, plans, type PackId, formatMinuteCount } from "@/lib/plans";
+import { CURRENCY_LABEL, packList, packs, plans, type PackId, formatMinuteCount } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import { Badge, Card, PageHeader, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,28 @@ export function LiveBilling() {
   const status = searchParams.get("status");
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const reportedReturnRef = useRef(false);
+
+  // Back from Stripe Checkout: report the purchase (or the cancel) once.
+  useEffect(() => {
+    if (reportedReturnRef.current || (status !== "success" && status !== "cancelled")) return;
+    reportedReturnRef.current = true;
+    const item = takePendingCheckout();
+
+    if (status === "cancelled") {
+      track("checkout_cancel", { kind: item?.item_category, item_id: item?.item_id });
+      return;
+    }
+    if (!item) return; // Refreshed the page, or a different tab started checkout.
+
+    track("purchase", {
+      transaction_id: searchParams.get("session_id") ?? undefined,
+      value: item.price,
+      currency: CURRENCY_LABEL,
+      kind: item.item_category,
+      items: [item],
+    });
+  }, [searchParams, status]);
 
   const go = async (key: string, run: () => Promise<{ url: string }>) => {
     setPending(key);
@@ -34,17 +56,33 @@ export function LiveBilling() {
     }
   };
 
+  const startCheckout = (item: AnalyticsItem) => {
+    rememberCheckout(item);
+    track("checkout_start", {
+      kind: item.item_category,
+      pack_id: item.item_category === "pack" ? item.item_id : undefined,
+      value: item.price,
+      currency: CURRENCY_LABEL,
+      items: [item],
+    });
+  };
+
   const buyPack = (packId: PackId) => {
-    track("checkout_start", { kind: "pack", pack_id: packId });
+    const pack = packs[packId];
+    startCheckout({ item_id: pack.id, item_name: pack.label, item_category: "pack", price: pack.priceCents / 100, quantity: 1 });
     void go(packId, () => createCheckout({ kind: "pack", packId }));
   };
 
   const subscribe = () => {
-    track("checkout_start", { kind: "subscription" });
+    const pro = plans.professional;
+    startCheckout({ item_id: pro.id, item_name: pro.label, item_category: "subscription", price: pro.priceCents / 100, quantity: 1 });
     void go("pro", () => createCheckout({ kind: "subscription" }));
   };
 
-  const openPortal = () => void go("portal", () => createPortal({}));
+  const openPortal = () => {
+    track("billing_portal_open");
+    void go("portal", () => createPortal({}));
+  };
 
   if (!summary) {
     return (

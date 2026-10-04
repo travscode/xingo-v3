@@ -30,6 +30,7 @@ export type ExamPage = {
 };
 
 const commonLimits = "Your score is an estimate from an AI examiner, not an official result.";
+const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
 
 export const examPages: ExamPage[] = [
   {
@@ -62,7 +63,7 @@ export const examPages: ExamPage[] = [
     notCovered: [
       "Intelligibility and pronunciation (can't be judged from a transcript)",
       "Professions other than nursing and medicine (coming later)",
-      "An official OET score — " + commonLimits.toLowerCase(),
+      "An official OET score — " + lowerFirst(commonLimits),
     ],
     scenarios: [
       { title: "Post-op mobilisation (Nursing)", description: "A frightened patient refuses to get out of bed after hip surgery." },
@@ -115,7 +116,7 @@ export const examPages: ExamPage[] = [
       "Estimated band with feedback on fluency & coherence, vocabulary and grammar",
       "Practice extending answers and speaking for the full two minutes",
     ],
-    notCovered: ["Pronunciation (a quarter of the real band) — the estimate leaves it out", "An official band score — " + commonLimits.toLowerCase()],
+    notCovered: ["Pronunciation (a quarter of the real band) — the estimate leaves it out", "An official band score — " + lowerFirst(commonLimits)],
     scenarios: [
       { title: "Mock test 1 — Neighbourhoods", description: "Describe a public place you enjoy visiting." },
       { title: "Mock test 2 — Learning", description: "Describe a skill you learned as an adult." },
@@ -166,7 +167,7 @@ export const examPages: ExamPage[] = [
       "Explaining diagnoses, counselling, breaking bad news and safety-netting",
       "Completing every task in the stem within eight minutes",
     ],
-    notCovered: ["Physical examination technique", "Interpreting images, ECGs and charts", "An official AMC result — " + commonLimits.toLowerCase()],
+    notCovered: ["Physical examination technique", "Interpreting images, ECGs and charts", "An official AMC result — " + lowerFirst(commonLimits)],
     scenarios: [
       { title: "Fatigue in a 58-year-old", description: "Find the red flags and explain your differentials." },
       { title: "Toddler with fever and rash", description: "Third-party history and urgent management." },
@@ -216,7 +217,7 @@ export const examPages: ExamPage[] = [
       "Patient education with teach-back, consent conversations",
       "De-escalating anxious or angry relatives; pain reassessment",
     ],
-    notCovered: ["Hands-on clinical skills (injections, ANTT, BLS, IV)", "Documentation in the patient folder", "An official OSCE result — " + commonLimits.toLowerCase()],
+    notCovered: ["Hands-on clinical skills (injections, ANTT, BLS, IV)", "Documentation in the patient folder", "An official OSCE result — " + lowerFirst(commonLimits)],
     scenarios: [
       { title: "ISBAR call — deteriorating patient", description: "A rushed after-hours doctor asks 'what do you want me to do?'" },
       { title: "New anticoagulant education", description: "Apixaban, bleeding signs, supplements and teach-back." },
@@ -262,7 +263,7 @@ export const examPages: ExamPage[] = [
       { title: "Languages", body: "The oral exam is offered in a limited set of languages — check NBCMI's current list." },
     ],
     covered: ["Short consecutive turns in both directions, first person", "Doses, numbers and drug names across specialties", "Feedback on omissions, additions and register"],
-    notCovered: ["Sight translation", "Exam software conditions (think time, recorded prompts)", "An official CMI result — " + commonLimits.toLowerCase()],
+    notCovered: ["Sight translation", "Exam software conditions (think time, recorded prompts)", "An official CMI result — " + lowerFirst(commonLimits)],
     scenarios: [
       { title: "Endocrinology — new type 2 diabetes", description: "HbA1c, metformin dosing, hypoglycaemia." },
       { title: "OB/GYN — 28-week visit", description: "Glucose test, swelling, kick counts." },
@@ -308,7 +309,7 @@ export const examPages: ExamPage[] = [
       { title: "Languages", body: "The CHI oral exam is offered in a small set of languages; other languages take CoreCHI-Performance. Check CCHI." },
     ],
     covered: ["Consecutive dialogue practice in both directions", "Terminology across common clinical settings", "Feedback on omissions, additions and register shifts"],
-    notCovered: ["Simultaneous items", "Sight translation", "The English-only ETOE exam for CoreCHI-Performance", "An official CCHI result — " + commonLimits.toLowerCase()],
+    notCovered: ["Simultaneous items", "Sight translation", "The English-only ETOE exam for CoreCHI-Performance", "An official CCHI result — " + lowerFirst(commonLimits)],
     scenarios: [
       { title: "Emergency — chest pain", description: "Fast, short exchanges with urgent register." },
       { title: "Pediatrics — fever and ear pain", description: "A parent, doses by weight and warning signs." },

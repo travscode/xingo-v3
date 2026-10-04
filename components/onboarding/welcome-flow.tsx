@@ -134,7 +134,15 @@ export function WelcomeFlow() {
                 </div>
               </div>
             ))}
-            <Button size="lg" className="mt-8" disabled={!goal} onClick={() => setStep(speakingOnly ? 3 : 2)}>
+            <Button
+              size="lg"
+              className="mt-8"
+              disabled={!goal}
+              onClick={() => {
+                track("onboarding_step", { step: "goal", goal: goal ?? undefined, preset: Boolean(presetGoal) });
+                setStep(speakingOnly ? 3 : 2);
+              }}
+            >
               Continue
             </Button>
           </>
@@ -183,7 +191,20 @@ export function WelcomeFlow() {
                 className="mt-3 h-12 rounded-xl bg-gray-100 px-4 text-base outline-none focus:ring-2 focus:ring-live"
               />
             ) : null}
-            <Button size="lg" className="mt-8" disabled={!chosenLanguage} onClick={() => setStep(3)}>
+            <Button
+              size="lg"
+              className="mt-8"
+              disabled={!chosenLanguage}
+              onClick={() => {
+                track("onboarding_step", {
+                  step: "language",
+                  goal: goal ?? undefined,
+                  language: chosenLanguage ?? undefined,
+                  custom_language: language === "__custom",
+                });
+                setStep(3);
+              }}
+            >
               Continue
             </Button>
           </>

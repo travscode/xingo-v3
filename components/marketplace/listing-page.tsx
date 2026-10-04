@@ -18,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
 import { reportReasons, type ReportReason } from "@/lib/marketplace";
 import { Badge, Card, Skeleton } from "@/components/ui/primitives";
@@ -64,7 +65,10 @@ function ReportForm({ moduleId, signedIn, slug }: { moduleId: string; signedIn: 
         setState("sending");
         setError(null);
         report({ moduleId, reason, details })
-          .then(() => setState("sent"))
+          .then(() => {
+            track("course_report", { module_id: moduleId, reason });
+            setState("sent");
+          })
           .catch((reportError) => {
             setError(friendlyError(reportError));
             setState("idle");
@@ -113,6 +117,14 @@ export function CourseListingPage({ slug }: { slug: string }) {
     if (listing && !viewed.current) {
       viewed.current = true;
       void recordView({ slug }).catch(() => undefined);
+      track("marketplace_course_view", {
+        module_id: listing.moduleId,
+        course_title: listing.title,
+        kind: listing.kind,
+        creator: listing.creatorHandle ?? undefined,
+        signed_in: listing.signedIn,
+        in_library: listing.inLibrary,
+      });
     }
   }, [listing, recordView, slug]);
 
@@ -170,7 +182,12 @@ export function CourseListingPage({ slug }: { slug: string }) {
       </Link>
     </Button>
   ) : (
-    <Button size="lg" disabled={busy} onClick={() => void run(() => add({ moduleId: listing.moduleId }))}>
+    <Button size="lg" disabled={busy} onClick={() =>
+        void run(() =>
+          add({ moduleId: listing.moduleId }).then(() => track("course_add", { module_id: listing.moduleId, source: "listing" })),
+        )
+      }
+    >
       <Plus className="h-4 w-4" aria-hidden /> {busy ? "Adding…" : "Add to my courses"}
     </Button>
   );
@@ -235,7 +252,12 @@ export function CourseListingPage({ slug }: { slug: string }) {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {primary}
               {listing.inLibrary && !listing.isOwner ? (
-                <Button variant="ghost" disabled={busy} onClick={() => void run(() => remove({ moduleId: listing.moduleId }))}>
+                <Button variant="ghost" disabled={busy} onClick={() =>
+                    void run(() =>
+                      remove({ moduleId: listing.moduleId }).then(() => track("course_remove", { module_id: listing.moduleId })),
+                    )
+                  }
+                >
                   <Check className="h-4 w-4" aria-hidden /> Added · Remove
                 </Button>
               ) : null}

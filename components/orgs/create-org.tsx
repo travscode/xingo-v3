@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft, Check, Globe, Lock, Mail } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
 import { handleProblem, normaliseHandle } from "@/lib/orgs";
 import { slugify } from "@/lib/marketplace";
@@ -54,6 +55,7 @@ export function CreateOrg() {
     setError(null);
     try {
       const result = await create({ displayName: name.trim(), handle });
+      track("org_create", { handle: result.handle });
       router.push(`/marketplace/org/${result.handle}`);
     } catch (createError) {
       setError(friendlyError(createError));

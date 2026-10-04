@@ -1,14 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Check, Minus } from "lucide-react";
-import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
+import { ArrowRight } from "lucide-react";
+import { MarketingIntro } from "@/components/marketing/cta-band";
+import { examIndex } from "@/components/marketing/exam-index";
+import {
+  ExamClosingCta,
+  ExamCoverage,
+  ExamGlance,
+  ExamHeroFootnote,
+  ExamHeroVisual,
+  ExamScenarios,
+  ExamTips,
+  OtherExams,
+} from "@/components/marketing/exam-page-parts";
+import { examVisual } from "@/components/marketing/exam-visuals";
 import { Breadcrumbs } from "@/components/marketing/seo/breadcrumbs";
 import { FaqSection } from "@/components/marketing/seo/faq-section";
 import { GuideLinks } from "@/components/marketing/seo/guide-links";
 import { MigrationGuidesCallout } from "@/components/marketing/migration-guides-callout";
 import { HowSteps } from "@/components/marketing/seo/how-steps";
-import { ScenarioList } from "@/components/marketing/seo/scenario-list";
 import { Button } from "@/components/ui/button";
 import { examPages, getExamPage } from "@/lib/exam-pages";
 import { isSpeakingGoal } from "@/lib/goals";
@@ -35,10 +46,12 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
   if (!page) notFound();
 
   const href = signUpHref(page.goal);
-  const others = examPages.filter((other) => other.slug !== page.slug);
+  const path = `/exams/${page.slug}`;
+  const visual = examVisual(page.slug);
+  const partners = examIndex.find((exam) => exam.href === path)?.partners.label ?? "A realistic partner";
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 pb-8 sm:gap-20 sm:px-6">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-4 pb-8 sm:gap-28 sm:px-6">
       <MarketingIntro
         breadcrumbs={
           <Breadcrumbs
@@ -46,13 +59,15 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
             crumbs={[
               { name: "Home", path: "/" },
               { name: "Exams", path: "/exams" },
-              { name: page.shortName, path: `/exams/${page.slug}` },
+              { name: page.shortName, path },
             ]}
           />
         }
         eyebrow={`${page.shortName} · ${page.region}`}
         title={page.headline}
         description={page.intro}
+        media={<ExamHeroVisual page={page} visual={visual} />}
+        footnote={<ExamHeroFootnote visual={visual} partners={partners} />}
       >
         <Button asChild size="lg">
           <Link href={href}>
@@ -64,78 +79,19 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
         </Button>
       </MarketingIntro>
 
-      <section id="format" className="scroll-mt-24">
-        <h2 className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">The {page.shortName} at a glance</h2>
-        <p className="mt-2 text-gray-500">{page.fullName}, run by {page.body}.</p>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {page.format.map((item) => (
-            <div key={item.title} className="rounded-xl border border-gray-200 p-5">
-              <p className="font-bold">{item.title}</p>
-              <p className="mt-1 text-sm leading-6 text-gray-500">{item.body}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-4 text-xs text-gray-500">
-          Summary only — exam rules change. Always read the official candidate information before you book.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">What XINGO helps you practise</h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl bg-gray-50 p-5">
-            <p className="font-bold">Covered</p>
-            <ul className="mt-3 space-y-2">
-              {page.covered.map((item) => (
-                <li key={item} className="flex gap-2 text-[15px] leading-6">
-                  <Check className="mt-1 h-4 w-4 shrink-0 text-success" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-xl border border-gray-200 p-5">
-            <p className="font-bold">Not covered (yet)</p>
-            <ul className="mt-3 space-y-2">
-              {page.notCovered.map((item) => (
-                <li key={item} className="flex gap-2 text-[15px] leading-6 text-gray-500">
-                  <Minus className="mt-1 h-4 w-4 shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <ScenarioList title="Practice scenarios" scenarios={page.scenarios} />
-
-      <section>
-        <h2 className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">Tips from the marking criteria</h2>
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          {page.tips.map((tip) => (
-            <div key={tip.title} className="rounded-xl bg-gray-50 p-5">
-              <p className="font-bold">{tip.title}</p>
-              <p className="mt-2 text-sm leading-6 text-gray-700">{tip.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
+      <ExamGlance page={page} />
+      <ExamCoverage page={page} visual={visual} />
+      <ExamScenarios page={page} visual={visual} href={href} />
+      <ExamTips tips={page.tips} />
       <HowSteps variant={isSpeakingGoal(page.goal) ? "roleplay" : "interpreting"} />
       <FaqSection faqs={page.faqs} />
-      <GuideLinks pagePath={`/exams/${page.slug}`} />
+      <GuideLinks pagePath={path} />
 
-      <MigrationGuidesCallout pagePath={`/exams/${page.slug}`} />
+      <MigrationGuidesCallout pagePath={path} />
 
-      <CtaBand
-        title={`Practise for the ${page.shortName} today.`}
-        description="Free practice minutes every month. No card needed. Prices are in AUD."
-        href={href}
-        label="Try one free"
-      />
+      <ExamClosingCta page={page} visual={visual} href={href} />
 
-      <section className="grid gap-8 md:grid-cols-2">
+      <section className="grid gap-10 md:grid-cols-2">
         <div>
           <h2 className="text-lg font-bold">Official sources</h2>
           <ul className="mt-3 space-y-1.5 text-sm">
@@ -149,20 +105,7 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
           </ul>
           <p className="mt-3 text-xs text-gray-500">XINGO is independent and not affiliated with {page.body}.</p>
         </div>
-        <div>
-          <h2 className="text-lg font-bold">Other exams</h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {[
-              { href: "/naati/ccl", label: "NAATI CCL" },
-              { href: "/naati/cpi", label: "NAATI CPI" },
-              ...others.map((other) => ({ href: `/exams/${other.slug}`, label: other.shortName })),
-            ].map((link) => (
-              <Link key={link.href} href={link.href} className="rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-semibold hover:bg-gray-200">
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </div>
+        <OtherExams currentHref={path} />
       </section>
     </main>
   );

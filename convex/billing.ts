@@ -115,7 +115,8 @@ export const createCheckout = action({
         allow_promotion_codes: true,
         metadata: { clerkId: user.clerkId, kind: "subscription" },
         subscription_data: { metadata: { clerkId: user.clerkId } },
-        success_url: `${base}/billing?status=success`,
+        // Stripe fills in the session id; the billing page reports it to GA as the transaction id.
+        success_url: `${base}/billing?status=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${base}/billing?status=cancelled`,
       });
 
@@ -134,7 +135,7 @@ export const createCheckout = action({
       allow_promotion_codes: true,
       metadata: { clerkId: user.clerkId, kind: "pack", packId: args.packId },
       payment_intent_data: { metadata: { clerkId: user.clerkId, packId: args.packId } },
-      success_url: `${base}/billing?status=success`,
+      success_url: `${base}/billing?status=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/billing?status=cancelled`,
     });
 

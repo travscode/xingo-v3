@@ -44,6 +44,7 @@ export function MarketingIntro({
   children,
   breadcrumbs,
   media,
+  footnote,
 }: {
   eyebrow: string;
   title: ReactNode;
@@ -53,6 +54,8 @@ export function MarketingIntro({
   breadcrumbs?: ReactNode;
   /** Optional image or illustration shown beside the text from `lg` (below it on smaller screens). */
   media?: ReactNode;
+  /** Optional line under the buttons (e.g. who you'll practise with). */
+  footnote?: ReactNode;
 }) {
   const text = (
     <>
@@ -70,6 +73,7 @@ export function MarketingIntro({
         <p className="mt-5 max-w-2xl text-lg leading-7 text-gray-500">{description}</p>
       ) : null}
       {children ? <div className="mt-8 flex flex-col gap-3 sm:flex-row">{children}</div> : null}
+      {footnote}
     </>
   );
 

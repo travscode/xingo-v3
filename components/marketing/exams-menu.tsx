@@ -40,6 +40,15 @@ export function ExamsMenu() {
     if (closeTimer.current) window.clearTimeout(closeTimer.current);
     setOpen(true);
   };
+  // Close the moment an exam is picked: the next page can take a second to arrive,
+  // and an open panel over it makes the click look like it did nothing.
+  const closeOnPick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const link = (event.target as Element).closest("a");
+    if (!link) return;
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    setOpen(false);
+    link.blur();
+  };
   const hide = () => {
     if (closeTimer.current) window.clearTimeout(closeTimer.current);
     closeTimer.current = window.setTimeout(() => setOpen(false), 120);
@@ -68,6 +77,7 @@ export function ExamsMenu() {
       </Link>
 
       <div
+        onClick={closeOnPick}
         className={cn(
           "absolute inset-x-4 top-full z-40 pt-2 transition-[opacity,transform] duration-200 sm:inset-x-6",
           open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0",

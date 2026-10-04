@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { Check, ExternalLink, Globe, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import type { Id } from "@/convex/_generated/dataModel";
 import { friendlyError } from "@/lib/errors";
 import { canManageOrg, MAX_INVITES_PER_BATCH, parseEmailList } from "@/lib/orgs";
@@ -162,6 +163,7 @@ function CollectionForm({ data, collection, onDone }: { data: OrgDashboardData; 
         moduleIds: data.courses.filter((course) => selected.has(course.moduleId)).map((course) => course.moduleId),
         ...(banner.id !== undefined ? { bannerStorageId: banner.id } : {}),
       });
+      track("collection_save", { created: !collection, visibility, courses: selected.size });
       onDone();
     } catch (saveError) {
       setError(friendlyError(saveError));
@@ -324,6 +326,7 @@ function InviteBox({ collection }: { collection: Collection }) {
     setSummary(null);
     try {
       const result = await invite({ collectionId: collection.id, emails: parsed.emails });
+      track("org_invite_send", { kind: "collection", invited: result.invited, approved: result.approved });
       const parts = [
         result.invited ? `${result.invited} ${result.invited === 1 ? "invitation" : "invitations"} sent` : null,
         result.approved ? `${result.approved} waiting ${result.approved === 1 ? "request" : "requests"} approved` : null,

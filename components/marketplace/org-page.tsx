@@ -7,6 +7,7 @@ import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowLeft, ArrowRight, Lock, Mail, MapPin, Settings } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
 import { Badge, Card, PageHeader, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ function CollectionCourses({ courses, signedIn }: { courses: Collection["courses
               setAdding(course.moduleId);
               setError(null);
               add({ moduleId: course.moduleId })
+                .then(() => track("course_add", { module_id: course.moduleId, source: "organisation" }))
                 .catch((addError) => setError(friendlyError(addError)))
                 .finally(() => setAdding(null));
             }}
@@ -99,6 +101,7 @@ function CollectionAccess({
     setError(null);
     try {
       const result = await requestAccess({ collectionId: collection.id, note: withNote ? note.trim() || undefined : undefined });
+      track("org_access_request", { collection_id: collection.id, with_note: withNote, status: result.status });
       // "active" means they were already invited: the courses appear as the page updates.
       if (result.status === "requested") setSent(true);
       setWriting(false);
