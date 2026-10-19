@@ -46,8 +46,9 @@ type AgentKey = "agent_a" | "agent_b";
 type Phase = "setup" | "countdown" | "connecting" | "live" | "finishing";
 type Mode = "assessed" | "practice";
 
-export type PracticeRoomData = NonNullable<
-  FunctionReturnType<typeof api.catalog.scenarioForPractice>
+export type PracticeRoomData = Extract<
+  NonNullable<FunctionReturnType<typeof api.catalog.scenarioForPractice>>,
+  { comingSoon: false }
 >;
 
 /**
@@ -1168,7 +1169,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
           </div>
           <h1 className="mt-5 text-3xl font-bold tracking-[-0.03em]">Unlock {data.module.title}</h1>
           <p className="mt-2 text-gray-500">
-            This dialogue is part of a premium course. Go Pro or buy a minute pack to practise every course.
+            This dialogue is part of a premium course. Go Pro or buy a minute pack to unlock it.
           </p>
           <div className="mt-6 flex justify-center gap-2">
             <Button asChild size="lg">

@@ -22,7 +22,8 @@ import { MigrationGuidesCallout } from "@/components/marketing/migration-guides-
 import { HowSteps } from "@/components/marketing/seo/how-steps";
 import { Button } from "@/components/ui/button";
 import { examPages, getExamPage } from "@/lib/exam-pages";
-import { isSpeakingGoal } from "@/lib/goals";
+import { isGoalComingSoonOnSite, isSpeakingGoal } from "@/lib/goals";
+import { ComingSoonHeroButton } from "@/components/marketing/coming-soon";
 import { pageMetadata } from "@/lib/seo-metadata";
 import { signUpHref } from "@/lib/seo-pages";
 
@@ -46,6 +47,7 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
   if (!page) notFound();
 
   const href = signUpHref(page.goal);
+  const comingSoon = isGoalComingSoonOnSite(page.goal);
   const path = `/exams/${page.slug}`;
   const visual = examVisual(page.slug);
   const partners = examIndex.find((exam) => exam.href === path)?.partners.label ?? "A realistic partner";
@@ -63,17 +65,21 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
             ]}
           />
         }
-        eyebrow={`${page.shortName} · ${page.region}`}
+        eyebrow={comingSoon ? `${page.shortName} · ${page.region} · Coming soon` : `${page.shortName} · ${page.region}`}
         title={page.headline}
         description={page.intro}
         media={<ExamHeroVisual page={page} visual={visual} />}
         footnote={<ExamHeroFootnote visual={visual} partners={partners} />}
       >
-        <Button asChild size="lg">
-          <Link href={href}>
-            Try one free <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
+        {comingSoon ? (
+          <ComingSoonHeroButton />
+        ) : (
+          <Button asChild size="lg">
+            <Link href={href}>
+              Try one free <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        )}
         <Button asChild size="lg" variant="secondary">
           <Link href="#format">About the exam</Link>
         </Button>
@@ -81,7 +87,7 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
 
       <ExamGlance page={page} />
       <ExamCoverage page={page} visual={visual} />
-      <ExamScenarios page={page} visual={visual} href={href} />
+      <ExamScenarios page={page} visual={visual} href={comingSoon ? null : href} />
       <ExamTips tips={page.tips} />
       <HowSteps variant={isSpeakingGoal(page.goal) ? "roleplay" : "interpreting"} />
       <FaqSection faqs={page.faqs} />
@@ -89,7 +95,7 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
 
       <MigrationGuidesCallout pagePath={path} />
 
-      <ExamClosingCta page={page} visual={visual} href={href} />
+      <ExamClosingCta page={page} visual={visual} href={href} comingSoon={comingSoon} />
 
       <section className="grid gap-10 md:grid-cols-2">
         <div>

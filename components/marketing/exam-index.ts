@@ -1,6 +1,7 @@
 import type { FlagCountry } from "@/components/marketing/flag";
 import type { PersonKey } from "@/components/marketing/people";
 import { examPages, type ExamPage } from "@/lib/exam-pages";
+import { isGoalComingSoonOnSite } from "@/lib/goals";
 import { rubricForModule, rubrics, type Rubric } from "@/lib/rubrics";
 import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "@/lib/scoring";
 
@@ -24,6 +25,8 @@ export type ExamIndexEntry = {
   partners: { people: readonly PersonKey[]; label: string };
   /** Two short "at a glance" facts from the exam data. */
   glance: Array<{ label: string; value: string }>;
+  /** XINGO practice isn't open yet (D-043). */
+  comingSoon: boolean;
 };
 
 function practiceScore(rubric: Rubric) {
@@ -48,6 +51,7 @@ function fromExamPage(
       { label: "Format", value: extra.format },
       { label: "XINGO practice score", value: practiceScore(rubricForModule(page.moduleId)) },
     ],
+    comingSoon: isGoalComingSoonOnSite(page.goal),
   };
 }
 
@@ -74,6 +78,7 @@ export const examIndex: ExamIndexEntry[] = [
       { label: "Format", value: "Two dialogues, short segments" },
       { label: "XINGO practice score", value: `Out of ${CCL_MAX_SCORE}, pass mark ${CCL_PASS_SCORE}` },
     ],
+    comingSoon: isGoalComingSoonOnSite("naati_ccl"),
   },
   {
     href: "/naati/cpi",
@@ -89,6 +94,7 @@ export const examIndex: ExamIndexEntry[] = [
       { label: "Format", value: "Live role-plays, face-to-face and remote" },
       { label: "XINGO practice score", value: practiceScore(rubrics.interpreting) },
     ],
+    comingSoon: isGoalComingSoonOnSite("naati_cpi"),
   },
   fromExamPage(page("oet-speaking"), {
     kind: "Speaking exam",

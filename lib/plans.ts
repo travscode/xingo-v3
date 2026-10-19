@@ -49,7 +49,7 @@ export const plans: Record<PlanId, PlanConfig> = {
     premiumAccess: false,
     priceLabel: "A$0",
     priceCents: 0,
-    tagline: "Free courses plus one preview dialogue in every premium course.",
+    tagline: "The free course plus free preview dialogues in NAATI CCL.",
   },
   professional: {
     id: "professional",
@@ -58,7 +58,7 @@ export const plans: Record<PlanId, PlanConfig> = {
     premiumAccess: true,
     priceLabel: "A$29 / month",
     priceCents: 2900,
-    tagline: "Every course, 150 practice minutes each month.",
+    tagline: "Every NAATI CCL dialogue and every open course, 150 practice minutes each month.",
   },
   organization: {
     id: "organization",
@@ -86,7 +86,7 @@ export const packs: Record<PackId, PackConfig> = {
     minutes: 80,
     priceLabel: "A$39",
     priceCents: 3900,
-    description: "Steady weekly practice across every course.",
+    description: "Steady weekly practice across every open course.",
   },
   sprint: {
     id: "sprint",

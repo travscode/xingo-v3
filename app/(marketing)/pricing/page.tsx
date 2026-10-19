@@ -13,20 +13,20 @@ import { pageMetadata } from "@/lib/seo-metadata";
 export const metadata: Metadata = pageMetadata({
   title: "Pricing — Free Minutes, Pro Plan and Minute Packs",
   description:
-    "Free practice minutes every month, a Pro plan with every course, or one-off minute packs that never expire. Scoring and feedback included. Prices in AUD.",
+    "Free practice minutes every month, a Pro plan with full NAATI CCL practice, or one-off minute packs that never expire. Scoring and feedback included. Prices in AUD.",
   path: "/pricing",
 });
 
 const freeFeatures = [
   `${plans.free.monthlyMinutes} practice minutes every month`,
-  "Full access to the free courses",
-  "One free preview dialogue in every premium course",
+  "Full access to the free course",
+  "Free preview dialogues in NAATI CCL",
   "Scoring and feedback included",
 ];
 
 const proFeatures = [
   `${plans.professional.monthlyMinutes} practice minutes every month`,
-  "Every course, including NAATI CCL and CPI practice",
+  "Every NAATI CCL dialogue, plus every other open course",
   "Scoring and feedback included",
   "Cancel any time",
 ];
@@ -46,7 +46,7 @@ const faqs = [
   },
   {
     question: "Do packs unlock premium courses?",
-    answer: "Yes. While you have pack minutes, every course is open to you, not just CCL practice.",
+    answer: "Yes. While you have pack minutes, every NAATI CCL dialogue and every other open course is unlocked.",
   },
   {
     question: "How do I cancel Pro?",
@@ -65,7 +65,7 @@ export default function PricingPage() {
       <MarketingIntro
         eyebrow="Pricing"
         title="Pay for practice time. Scoring is included."
-        description={`Start free. Upgrade to Pro for every course, or buy a one-off pack before your test. Prices in ${CURRENCY_LABEL}.`}
+        description={`Start free. Upgrade to Pro for full NAATI CCL practice, or buy a one-off pack before your test. Prices in ${CURRENCY_LABEL}.`}
       />
 
       {/* Plans */}
@@ -102,8 +102,8 @@ export default function PricingPage() {
             <p className="eyebrow">Minute packs</p>
             <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Preparing for a test date?</h2>
             <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
-              One-off payment, no subscription. Pack minutes never expire, and every course is unlocked while you have
-              them.
+              One-off payment, no subscription. Pack minutes never expire, and every open course is unlocked while you
+              have them.
             </p>
           </div>
           <ScenePhoto
@@ -169,7 +169,7 @@ export default function PricingPage() {
 
       <CtaBand
         title="Try it before you pay."
-        description={`${plans.free.monthlyMinutes} free practice minutes every month, plus a free preview dialogue in every premium course.`}
+        description={`${plans.free.monthlyMinutes} free practice minutes every month, plus free preview dialogues in NAATI CCL.`}
       />
     </main>
   );
@@ -203,7 +203,7 @@ function PlanCard({
           {highlight ? <Crown className="h-4 w-4" aria-hidden /> : null}
           {name}
         </h2>
-        {highlight ? <Badge tone="accent">Every course</Badge> : null}
+        {highlight ? <Badge tone="accent">Full CCL practice</Badge> : null}
       </div>
       <div className="mt-4 flex items-baseline gap-2">
         <span className="text-4xl font-bold tracking-[-0.03em]">{price}</span>

@@ -14,6 +14,7 @@ import {
   canPractiseCourse,
   getListing,
   inLibrary,
+  isCourseLocked,
   libraryModuleIds,
   publishedCommunityIds,
 } from "./model/courses";
@@ -101,6 +102,7 @@ export const forCurrentUser = query({
 
     const catalogModules = await Promise.all(
       orderModulesForGoal(modules, user?.practiceGoal).map(async (learningModule) => {
+        const comingSoon = isCourseLocked(user, learningModule);
         const moduleScenarios = await Promise.all(
           scenarios
             .filter((scenario) => scenario.moduleId === learningModule.id)
@@ -114,7 +116,7 @@ export const forCurrentUser = query({
                 description: scenario.description,
                 difficultyLevel: scenario.difficultyLevel,
                 isFreePreview: Boolean(scenario.isFreePreview),
-                locked: !access.allowed,
+                locked: comingSoon || !access.allowed,
                 participants: await Promise.all(
                   [normalized.aiAgentA, normalized.aiAgentB]
                     .filter((agent) => agent !== undefined)
@@ -151,6 +153,7 @@ export const forCurrentUser = query({
           durationMinutes: learningModule.durationMinutes,
           learningObjectives: learningModule.learningObjectives,
           isFree: learningModule.isFree,
+          comingSoon,
           isAccredited: learningModule.isAccredited,
           accreditationProvider: learningModule.accreditationProvider,
           source: learningModule.source ?? ("xingo" as const),
@@ -168,6 +171,9 @@ export const forCurrentUser = query({
         };
       }),
     );
+
+    // Open courses first, keeping goal order within each group; coming-soon ones last.
+    catalogModules.sort((a, b) => Number(a.comingSoon) - Number(b.comingSoon));
 
     const nextUp =
       catalogModules
@@ -226,6 +232,10 @@ export const scenarioForPractice = query({
     if (!canPractiseCourse(user, learningModule, listing) || !(await hasCourseAccess(ctx, user, listing))) {
       return null;
     }
+    // Coming-soon courses (D-043): say so without sending the scenario.
+    if (isCourseLocked(user, learningModule)) {
+      return { comingSoon: true as const, module: { id: learningModule.id, title: learningModule.title } };
+    }
     const entitlement = user ? await getEntitlement(ctx, user) : null;
     const access = getScenarioAccess(
       entitlement ?? { premiumAccess: false },
@@ -239,6 +249,7 @@ export const scenarioForPractice = query({
     ]);
 
     return {
+      comingSoon: false as const,
       scenario: {
         ...normalized,
         aiAgentA: { ...normalized.aiAgentA, avatarImageUrl: agentAAvatar },

@@ -6,13 +6,14 @@ import { useConvex, useMutation, useQuery } from "convex/react";
 import { ArrowLeft, Check, Mic, Repeat, Trophy, Users } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { track } from "@/lib/analytics";
-import { isSpeakingGoal, practiceGoals, type PracticeGoalId } from "@/lib/goals";
+import { isGoalComingSoon, isSpeakingGoal, practiceGoals, type PracticeGoalId } from "@/lib/goals";
 import { createLanguagePair, flagEmoji, practiceLanguages } from "@/lib/languages";
 import { plans } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
 import { HeadphonesTip, Kbd, MicCheck } from "@/components/practice/room-parts";
 import { Button } from "@/components/ui/button";
+import { ComingSoonBadge } from "@/components/ui/badges";
 import { XingoMark } from "@/components/ui/logo";
 
 const TOTAL_STEPS = 3;
@@ -35,11 +36,17 @@ export function WelcomeFlow() {
     (option) => option.name.toLowerCase() === (searchParams.get("language") ?? "").toLowerCase(),
   )?.name ?? null;
   const [step, setStep] = useState(1);
-  const [goal, setGoal] = useState<PracticeGoalId | null>(presetGoal);
+  const [pickedGoal, setGoal] = useState<PracticeGoalId | null>(presetGoal);
   const [language, setLanguage] = useState<string | null>(presetLanguage);
   const [customLanguage, setCustomLanguage] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Goals whose main course is coming soon (D-043) are shown but can't be picked.
+  const catalog = useQuery(api.catalog.forCurrentUser, {});
+  const comingSoonIds = new Set(catalog?.modules.filter((m) => m.comingSoon).map((m) => m.id) ?? []);
+  const goalComingSoon = (id: PracticeGoalId) => isGoalComingSoon(id, (moduleId) => comingSoonIds.has(moduleId));
+  const goal = pickedGoal && !goalComingSoon(pickedGoal) ? pickedGoal : null;
 
   const firstName = me?.user.name.split(" ")[0];
   const speakingOnly = isSpeakingGoal(goal);
@@ -113,8 +120,8 @@ export function WelcomeFlow() {
             <p className="mt-2 text-gray-500">We&apos;ll put the right dialogues first. You can practise anything later.</p>
             {(
               [
-                ["speaking", "English speaking exams"],
                 ["interpreting", "Interpreting"],
+                ["speaking", "English speaking exams"],
               ] as const
             ).map(([kind, heading]) => (
               <div key={kind} className="mt-8">
@@ -122,6 +129,7 @@ export function WelcomeFlow() {
                 <div className="grid gap-3">
                   {practiceGoals
                     .filter((option) => option.kind === kind)
+                    .sort((a, b) => Number(goalComingSoon(a.id)) - Number(goalComingSoon(b.id)))
                     .map((option) => (
                       <ChoiceCard
                         key={option.id}
@@ -129,6 +137,7 @@ export function WelcomeFlow() {
                         onClick={() => setGoal(option.id)}
                         title={option.label}
                         description={option.description}
+                        comingSoon={goalComingSoon(option.id)}
                       />
                     ))}
                 </div>
@@ -137,7 +146,7 @@ export function WelcomeFlow() {
             <Button
               size="lg"
               className="mt-8"
-              disabled={!goal}
+              disabled={!goal || !catalog}
               onClick={() => {
                 track("onboarding_step", { step: "goal", goal: goal ?? undefined, preset: Boolean(presetGoal) });
                 setStep(speakingOnly ? 3 : 2);
@@ -276,12 +285,26 @@ function ChoiceCard({
   onClick,
   title,
   description,
+  comingSoon = false,
 }: {
   selected: boolean;
   onClick: () => void;
   title: string;
   description: string;
+  comingSoon?: boolean;
 }) {
+  if (comingSoon) {
+    return (
+      <div className="flex items-center justify-between gap-4 rounded-xl border-2 border-transparent bg-gray-50 px-5 py-4" aria-disabled="true">
+        <div>
+          <p className="font-bold text-gray-500">{title}</p>
+          <p className="mt-0.5 text-sm text-gray-500">{description}</p>
+        </div>
+        <ComingSoonBadge />
+      </div>
+    );
+  }
+
   return (
     <button
       type="button"

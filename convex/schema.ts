@@ -197,6 +197,8 @@ export default defineSchema({
     /** "community" courses come from the marketplace and only appear for people who add them. Absent = XINGO. */
     source: v.optional(v.union(v.literal("xingo"), v.literal("community"))),
     ownerClerkId: v.optional(v.string()),
+    /** "coming_soon" courses are listed but can't be opened (platform admins excepted, D-043). Absent = available. */
+    status: v.optional(v.union(v.literal("available"), v.literal("coming_soon"))),
   })
     .index("by_public_id", ["id"])
     .index("by_category", ["industryCategory"])

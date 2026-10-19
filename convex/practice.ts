@@ -24,7 +24,7 @@ import {
 } from "../lib/plans";
 import { resolveEndReason } from "../lib/scoring";
 import { LEGAL_VERSION } from "../lib/legal";
-import { bumpCourseCounters, canPractiseCourse, getListing, recordCreatorEarning } from "./model/courses";
+import { bumpCourseCounters, canPractiseCourse, getListing, isCourseLocked, recordCreatorEarning } from "./model/courses";
 import { queueEmail } from "./model/notify";
 import { bumpUsage } from "./model/usageRollups";
 import { fundingOrgFor, hasCourseAccess, orgMinutesRemaining } from "./model/orgs";
@@ -260,6 +260,10 @@ export const startAttempt = mutation({
     const listing = await getListing(ctx, learningModule.id);
     if (!canPractiseCourse(user, learningModule, listing) || !(await hasCourseAccess(ctx, user, listing))) {
       throw new ConvexError("COURSE_UNAVAILABLE");
+    }
+
+    if (isCourseLocked(user, learningModule)) {
+      throw new ConvexError("COURSE_COMING_SOON");
     }
 
     const now = Date.now();

@@ -29,6 +29,7 @@ const moduleFields = {
   isAccredited: v.boolean(),
   accreditationProvider: v.optional(v.string()),
   badgeIcon: v.string(),
+  status: v.optional(v.union(v.literal("available"), v.literal("coming_soon"))),
 } as const;
 
 function slugify(value: string) {
@@ -126,6 +127,7 @@ export const updateAdmin = mutation({
       isAccredited: args.isAccredited,
       accreditationProvider: args.isAccredited ? args.accreditationProvider : undefined,
       badgeIcon: args.badgeIcon,
+      status: args.status,
     });
 
     return { ok: true };

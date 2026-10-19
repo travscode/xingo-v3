@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requirePlatformAdmin } from "./model/auth";
+import { viewerMarketplaceOpen } from "./model/courses";
 import { isSafeFeatureLink } from "../lib/orgs";
 
 /** Up to three admin-picked banners at the top of the marketplace (D-039). */
@@ -10,6 +11,7 @@ export const FEATURED_SLOTS = [1, 2, 3] as const;
 export const list = query({
   args: {},
   handler: async (ctx) => {
+    if (!(await viewerMarketplaceOpen(ctx))) return [];
     const slots = await ctx.db.query("featuredSlots").withIndex("by_position").collect();
     return Promise.all(
       slots

@@ -3,6 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getClerkIdFromIdentity, getUserByClerkId, requireUser } from "./model/auth";
 import { queueEmail } from "./model/notify";
+import { requireMarketplaceOpen, viewerMarketplaceOpen } from "./model/courses";
 import {
   activateInvite,
   addCollectionToLibrary,
@@ -124,6 +125,7 @@ async function pruneLibrary(ctx: MutationCtx, clerkId: string, moduleIds: string
 export const page = query({
   args: { handle: v.string() },
   handler: async (ctx, args) => {
+    if (!(await viewerMarketplaceOpen(ctx))) return null;
     const profile = await getProfile(ctx, normaliseHandle(args.handle));
     if (!profile) return null;
     if (profile.kind !== "organization") return { kind: "person" as const, handle: profile.handle };
@@ -218,6 +220,7 @@ export const page = query({
 export const invitation = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
+    if (!(await viewerMarketplaceOpen(ctx))) return null;
     const invite = await ctx.db
       .query("orgInvites")
       .withIndex("by_token", (q) => q.eq("token", args.token))
@@ -250,6 +253,7 @@ export const acceptInvitation = mutation({
   args: { token: v.string() },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
+    await requireMarketplaceOpen(ctx);
     const invite = await ctx.db
       .query("orgInvites")
       .withIndex("by_token", (q) => q.eq("token", args.token))
@@ -267,6 +271,7 @@ export const requestAccess = mutation({
   args: { collectionId: v.id("orgCollections"), note: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
+    await requireMarketplaceOpen(ctx);
     const collection = await ctx.db.get(args.collectionId);
     if (!collection || collection.visibility !== "invite") throw new ConvexError("ORG_NOT_FOUND");
     const org = await getOrg(ctx, collection.orgHandle);
@@ -331,6 +336,7 @@ export const create = mutation({
   args: { displayName: v.string(), handle: v.string() },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
+    await requireMarketplaceOpen(ctx);
     const displayName = clip(args.displayName, 80);
     const handle = normaliseHandle(args.handle);
     if (!displayName || handleProblem(handle)) throw new ConvexError("HANDLE_INVALID");
@@ -365,6 +371,7 @@ export const create = mutation({
 export const publicPages = query({
   args: {},
   handler: async (ctx) => {
+    if (!(await viewerMarketplaceOpen(ctx))) return [];
     const orgs = (await ctx.db.query("creatorProfiles").collect()).filter((profile) => profile.kind === "organization");
     const pages: Array<{ path: string; updatedAt: string }> = [];
     for (const org of orgs) {

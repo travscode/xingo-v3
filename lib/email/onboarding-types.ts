@@ -3,6 +3,7 @@
  * lib/email/onboarding-content.ts; sending in convex/onboarding.ts.
  */
 import type { BuiltEmail } from "./transactional";
+import { isGoalComingSoonOnSite } from "../goals";
 
 /** Every other day for the first two weeks (day 0 is the transactional welcome). */
 export const ONBOARDING_DAYS = [1, 3, 5, 7, 9, 11, 13] as const;
@@ -12,6 +13,10 @@ export type OnboardingDay = (typeof ONBOARDING_DAYS)[number];
 export type OnboardingTrack = "ielts" | "oet" | "clinical" | "ccl" | "interpreter" | "us_interpreter" | "general";
 
 export function trackForGoal(goal: string | undefined | null): OnboardingTrack {
+  // Goals whose course is coming soon (D-043) get the general series, so nobody is
+  // emailed about practice they can't open yet.
+  if (goal && isGoalComingSoonOnSite(goal)) return "general";
+
   switch (goal) {
     case "ielts":
       return "ielts";

@@ -2,6 +2,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import type { DifficultyLevel, IndustryCategory } from "@/types/module";
 import type { Scenario } from "@/types/scenario";
 import { MAX_ATTEMPT_MINUTES } from "@/lib/plans";
+import type { CourseStatus } from "@/lib/course-status";
 
 export const industryOptions: Array<{ value: IndustryCategory; label: string }> = [
   { value: "medical", label: "Medical & health" },
@@ -27,6 +28,7 @@ export type ModuleForm = {
   difficultyLevel: DifficultyLevel;
   learningObjectives: string[];
   isFree: boolean;
+  status: CourseStatus;
   isAccredited: boolean;
   accreditationProvider: string;
   badgeIcon: string;
@@ -40,13 +42,14 @@ export const emptyModuleForm: ModuleForm = {
   difficultyLevel: "intermediate",
   learningObjectives: [],
   isFree: false,
+  status: "available",
   isAccredited: false,
   accreditationProvider: "",
   badgeIcon: "",
 };
 
 export function moduleFormFromRecord(
-  record: Omit<ModuleForm, "accreditationProvider"> & { accreditationProvider?: string },
+  record: Omit<ModuleForm, "accreditationProvider" | "status"> & { accreditationProvider?: string; status?: CourseStatus },
 ): ModuleForm {
   return {
     title: record.title,
@@ -56,6 +59,7 @@ export function moduleFormFromRecord(
     difficultyLevel: record.difficultyLevel,
     learningObjectives: [...record.learningObjectives],
     isFree: record.isFree,
+    status: record.status ?? "available",
     isAccredited: record.isAccredited,
     accreditationProvider: record.accreditationProvider ?? "",
     badgeIcon: record.badgeIcon,
@@ -71,6 +75,7 @@ export function modulePayload(form: ModuleForm) {
     difficultyLevel: form.difficultyLevel,
     learningObjectives: form.learningObjectives,
     isFree: form.isFree,
+    status: form.status,
     isAccredited: form.isAccredited,
     accreditationProvider: form.isAccredited ? form.accreditationProvider.trim() || undefined : undefined,
     badgeIcon: form.badgeIcon.trim() || form.title.trim(),

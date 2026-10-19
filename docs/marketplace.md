@@ -1,5 +1,8 @@
 # Marketplace
 
+> **Closed for the CCL-first launch (D-043).** While `MARKETPLACE_OPEN` in `lib/marketplace.ts` is
+> `false`, everything below is available to platform admins only.
+
 Community practice courses: anyone can create one, learners add them to their library, and creators
 earn a share of the revenue from paid minutes practised in their courses. Decision record: D-031.
 

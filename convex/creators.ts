@@ -4,6 +4,7 @@ import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/s
 import { getClerkIdFromIdentity, getUserByClerkId, requireUser } from "./model/auth";
 import { averageRating, compareCourses, courseBadges, slugify } from "../lib/marketplace";
 import { handleProblem } from "../lib/orgs";
+import { viewerMarketplaceOpen } from "./model/courses";
 
 /**
  * Creator profiles (/marketplace/creators/<handle>). Real creators get one the
@@ -63,6 +64,7 @@ export async function ensureCreatorProfile(ctx: MutationCtx, user: Doc<"users">,
 export const profile = query({
   args: { handle: v.string() },
   handler: async (ctx, args) => {
+    if (!(await viewerMarketplaceOpen(ctx))) return null;
     const profile = await ctx.db
       .query("creatorProfiles")
       .withIndex("by_handle", (q) => q.eq("handle", args.handle))
@@ -143,6 +145,7 @@ export const profile = query({
 export const featured = query({
   args: {},
   handler: async (ctx) => {
+    if (!(await viewerMarketplaceOpen(ctx))) return [];
     const published = await ctx.db
       .query("courseListings")
       .withIndex("by_status", (q) => q.eq("status", "published"))

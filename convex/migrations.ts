@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
+import { LAUNCH_AVAILABLE_COURSE_IDS, LAUNCH_CCL_FREE_PREVIEW_IDS } from "../lib/course-status";
 
 /**
  * One-off data fixes. Run each with `npx convex run migrations:<name>`,
@@ -186,5 +187,43 @@ export const refundSilentAttempts = internalMutation({
     }
 
     return { dryRun: args.dryRun, refunded };
+  },
+});
+
+/**
+ * CCL-first launch (D-043): every XINGO course except NAATI CCL and the free course
+ * becomes "coming soon", and two CCL dialogues become free previews. Community
+ * (marketplace) courses are left alone; they're hidden with the marketplace instead.
+ */
+export const applyCclLaunchStatuses = internalMutation({
+  args: { dryRun: v.boolean() },
+  handler: async (ctx, args) => {
+    const open = new Set<string>(LAUNCH_AVAILABLE_COURSE_IDS);
+    const courses = (await ctx.db.query("modules").collect()).filter((course) => course.source !== "community");
+    const available: string[] = [];
+    const comingSoon: string[] = [];
+
+    for (const course of courses) {
+      const status = open.has(course.id) ? "available" : "coming_soon";
+      (status === "available" ? available : comingSoon).push(course.id);
+      if (!args.dryRun && course.status !== status) {
+        await ctx.db.patch(course._id, { status });
+      }
+    }
+
+    const previews: string[] = [];
+    for (const scenarioId of LAUNCH_CCL_FREE_PREVIEW_IDS) {
+      const scenario = await ctx.db
+        .query("scenarios")
+        .withIndex("by_public_id", (q) => q.eq("id", scenarioId))
+        .unique();
+      if (!scenario) continue;
+      previews.push(scenarioId);
+      if (!args.dryRun && !scenario.isFreePreview) {
+        await ctx.db.patch(scenario._id, { isFreePreview: true });
+      }
+    }
+
+    return { dryRun: args.dryRun, available, comingSoon, freePreviews: previews };
   },
 });
