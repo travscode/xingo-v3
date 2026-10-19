@@ -51,10 +51,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   }
 
   const isAdmin = me?.user.role === "platform_admin";
+  // The marketplace is admin-only while closed (D-043).
+  const navItems = dashboardNavigation.filter((item) => item.href !== "/marketplace" || me?.marketplaceOpen);
 
   const nav = (
     <nav className="flex flex-1 flex-col gap-1">
-      {dashboardNavigation.map((item) => {
+      {navItems.map((item) => {
         const active = isNavItemActive(item, pathname);
         const Icon = item.icon;
         const link = (

@@ -2,6 +2,14 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "../_generated/api";
 import { seedUser, setup } from "./setup.helpers";
 
+// These tests cover the marketplace while it's open. It's closed for the CCL-first launch
+// (D-043); that behaviour is tested in course-status.test.ts.
+vi.mock("../../lib/marketplace", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/marketplace")>()),
+  MARKETPLACE_OPEN: true,
+  marketplaceOpenForRole: () => true,
+}));
+
 const pair = { sourceLanguage: "English", targetLanguage: "English" };
 const scenario = {
   title: "Launch day questions",

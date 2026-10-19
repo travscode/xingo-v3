@@ -7,6 +7,7 @@ import { MarketingMobileNav } from "@/components/marketing/mobile-nav";
 import { Logo } from "@/components/ui/logo";
 import { marketingNavItems } from "@/components/marketing/nav-items";
 import { ExamsMenu } from "@/components/marketing/exams-menu";
+import { MARKETPLACE_OPEN } from "@/lib/marketplace";
 
 const footerLinks = [
   { href: "/naati/ccl", label: "NAATI CCL practice" },
@@ -28,10 +29,14 @@ const footerLinks = [
   { href: "/migrate-to-australia", label: "Migrating to Australia" },
   { href: "/migrate-to-australia#guides", label: "Migration guides" },
   { href: "/for-organizations", label: "For training providers" },
-  { href: "/sell-practice-courses", label: "Sell practice courses" },
-  { href: "/marketplace", label: "Marketplace" },
+  ...(MARKETPLACE_OPEN
+    ? [
+        { href: "/sell-practice-courses", label: "Sell practice courses" },
+        { href: "/marketplace", label: "Marketplace" },
+      ]
+    : []),
   { href: "/pricing", label: "Pricing" },
-] as const;
+];
 
 /** Public site frame: header, nav and footer. Used by marketing and signed-out marketplace pages. */
 export function MarketingShell({ children }: { children: ReactNode }) {

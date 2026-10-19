@@ -31,5 +31,17 @@ export function LivePractice({ scenarioId }: { scenarioId: string }) {
     );
   }
 
+  if (data.comingSoon) {
+    return (
+      <div className="mx-auto max-w-md py-24 text-center">
+        <h1 className="text-2xl font-bold">{data.module.title} is coming soon</h1>
+        <p className="mt-2 text-gray-500">For now you can practise for the NAATI CCL test.</p>
+        <Button asChild className="mt-6">
+          <Link href="/courses">Back to practice</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return <PracticeRoom data={data} />;
 }

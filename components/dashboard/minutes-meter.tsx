@@ -50,7 +50,7 @@ export function MinutesMeter() {
         tone={low ? "record" : "accent"}
       />
       {entitlement.plan === "free" ? (
-        <p className="mt-3 text-xs font-semibold">{low ? "Get more minutes →" : "Upgrade for every course →"}</p>
+        <p className="mt-3 text-xs font-semibold">{low ? "Get more minutes →" : "Upgrade for all of NAATI CCL →"}</p>
       ) : null}
     </Link>
   );

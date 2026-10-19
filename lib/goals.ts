@@ -1,3 +1,5 @@
+import { courseOpenAtLaunch } from "./course-status";
+
 /**
  * What a learner is preparing for. Chosen in the welcome flow; drives which
  * module the app recommends first.
@@ -91,6 +93,20 @@ export function isSpeakingGoal(goalId: string | null | undefined) {
 
 export function getGoal(goalId: string | undefined) {
   return practiceGoals.find((goal) => goal.id === goalId) ?? null;
+}
+
+/**
+ * A goal is coming soon when its main course is (D-043). "General practice" isn't tied
+ * to one course, so it's always open.
+ */
+export function isGoalComingSoon(goalId: string, courseComingSoon: (moduleId: string) => boolean) {
+  const goal = getGoal(goalId);
+  return Boolean(goal && goal.id !== "general" && courseComingSoon(goal.moduleOrder[0]));
+}
+
+/** For public pages, which can't read live course statuses (D-032). */
+export function isGoalComingSoonOnSite(goalId: string) {
+  return isGoalComingSoon(goalId, (moduleId) => !courseOpenAtLaunch(moduleId));
 }
 
 /** Orders module ids so the learner's goal modules come first. */

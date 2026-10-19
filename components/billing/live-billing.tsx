@@ -185,8 +185,8 @@ export function LiveBilling() {
                   <li className="flex gap-2">
                     <Check className="h-4 w-4 shrink-0" />
                     {plan.premiumAccess
-                      ? "Every course, including NAATI CCL & CPI"
-                      : "Free courses + a preview dialogue in each premium course"}
+                      ? "Every NAATI CCL dialogue, plus every open course"
+                      : "The free course + free NAATI CCL preview dialogues"}
                   </li>
                   <li className="flex gap-2">
                     <Check className="h-4 w-4 shrink-0" /> Instant scoring and feedback

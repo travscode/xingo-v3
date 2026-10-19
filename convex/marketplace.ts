@@ -3,7 +3,16 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getClerkIdFromIdentity, getUserByClerkId, requirePlatformAdmin, requireUser } from "./model/auth";
-import { deleteCommunityCourse, getCourse, getListing, isCourseOwner, isHouseOwner, libraryModuleIds } from "./model/courses";
+import {
+  deleteCommunityCourse,
+  getCourse,
+  getListing,
+  isCourseOwner,
+  isHouseOwner,
+  libraryModuleIds,
+  requireMarketplaceOpen,
+  viewerMarketplaceOpen,
+} from "./model/courses";
 import { normalizeAgent } from "./model/scenario";
 import { ensureCreatorProfile } from "./creators";
 import {
@@ -264,6 +273,7 @@ export const browse = query({
     sort: v.optional(v.union(v.literal("popular"), v.literal("top"), v.literal("new"))),
   },
   handler: async (ctx, args) => {
+    if (!(await viewerMarketplaceOpen(ctx))) return [];
     const [listings, counts, user] = await Promise.all([
       ctx.db
         .query("courseListings")
@@ -294,6 +304,7 @@ export const browse = query({
 export const publishedSlugs = query({
   args: {},
   handler: async (ctx) => {
+    if (!(await viewerMarketplaceOpen(ctx))) return [];
     const listings = await ctx.db
       .query("courseListings")
       .withIndex("by_status", (q) => q.eq("status", "published"))
@@ -306,6 +317,7 @@ export const publishedSlugs = query({
 export const listing = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
+    if (!(await viewerMarketplaceOpen(ctx))) return null;
     const listing = await ctx.db
       .query("courseListings")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
@@ -370,6 +382,7 @@ export const listing = query({
 export const recordView = mutation({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
+    if (!(await viewerMarketplaceOpen(ctx))) return;
     const listing = await ctx.db
       .query("courseListings")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
@@ -399,6 +412,7 @@ export const addToLibrary = mutation({
   args: { moduleId: v.string() },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
+    await requireMarketplaceOpen(ctx);
     const listing = await getListing(ctx, args.moduleId);
 
     if (!listing || listing.status !== "published" || !(await hasCourseAccess(ctx, user, listing))) {
@@ -487,6 +501,7 @@ export const createCourse = mutation({
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
+    await requireMarketplaceOpen(ctx);
     const org = args.orgHandle ? (await requireOrgRole(ctx, args.orgHandle)).org : null;
     const title = clip(args.title, LISTING_LIMITS.title);
 

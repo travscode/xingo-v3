@@ -12,6 +12,8 @@ export type AppErrorCode =
   | "MIC_NOT_FOUND"
   | "EMAIL_NOT_CONFIGURED"
   | "COURSE_UNAVAILABLE"
+  | "COURSE_COMING_SOON"
+  | "MARKETPLACE_CLOSED"
   | "COURSE_INCOMPLETE"
   | "GUIDELINES_REQUIRED"
   | "PAYOUTS_NOT_CONFIGURED"
@@ -33,6 +35,8 @@ export type AppErrorCode =
 
 const messages: Record<AppErrorCode, string> = {
   COURSE_UNAVAILABLE: "This course isn't available right now. It may have been unpublished by its creator.",
+  COURSE_COMING_SOON: "This course is coming soon. For now you can practise NAATI CCL.",
+  MARKETPLACE_CLOSED: "The marketplace isn't open yet.",
   COURSE_INCOMPLETE: "Add a title, a one-line summary and at least one scenario before publishing.",
   GUIDELINES_REQUIRED: "Please confirm the creator guidelines before publishing.",
   PAYOUTS_NOT_CONFIGURED: "Payouts aren't switched on yet. Your earnings are safe and will be paid once they are.",

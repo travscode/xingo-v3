@@ -11,6 +11,8 @@ import { CheckList, ScenarioList } from "@/components/marketing/seo/scenario-lis
 import { Button } from "@/components/ui/button";
 import { pageMetadata } from "@/lib/seo-metadata";
 import { signUpHref } from "@/lib/seo-pages";
+import { ComingSoonCtaBand, ComingSoonHeroButton } from "@/components/marketing/coming-soon";
+import { isGoalComingSoonOnSite } from "@/lib/goals";
 
 export const metadata: Metadata = pageMetadata({
   title: "NAATI CPI Test Practice — Live Role-Plays with AI",
@@ -20,6 +22,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 const href = signUpHref("naati_cpi");
+const comingSoon = isGoalComingSoonOnSite("naati_cpi");
 
 export default function NaatiCpiPage() {
   return (
@@ -35,18 +38,24 @@ export default function NaatiCpiPage() {
             ]}
           />
         }
-        eyebrow="NAATI CPI preparation"
+        eyebrow={comingSoon ? "NAATI CPI preparation · Coming soon" : "NAATI CPI preparation"}
         title="Rehearse the CPI role-plays until they feel routine."
         description="The Certified Provisional Interpreter test is a set of live role-plays: an English speaker, a speaker of your language, and you in the middle. XINGO gives you that format on demand — two AI speakers, consecutive interpreting, scored feedback."
       >
-        <Button asChild size="lg">
-          <Link href={href}>
-            Start free <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
-        <Button asChild size="lg" variant="secondary">
-          <Link href="/interpreting/telephone-interpreting-practice">Practise the phone task</Link>
-        </Button>
+        {comingSoon ? (
+          <ComingSoonHeroButton />
+        ) : (
+          <>
+            <Button asChild size="lg">
+              <Link href={href}>
+                Start free <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="secondary">
+              <Link href="/interpreting/telephone-interpreting-practice">Practise the phone task</Link>
+            </Button>
+          </>
+        )}
       </MarketingIntro>
 
       <section className="grid gap-4 sm:grid-cols-3">
@@ -91,7 +100,11 @@ export default function NaatiCpiPage() {
       />
       <GuideLinks slugs={["naati-cpi-test-preparation", "telephone-interpreting-tips", "naati-ccl-note-taking"]} />
       <MigrationGuidesCallout pagePath="/naati/cpi" />
-      <CtaBand title="Try a CPI-style dialogue free." description="Free practice minutes every month. No card needed." href={href} label="Start free" />
+      {comingSoon ? (
+        <ComingSoonCtaBand name="NAATI CPI" />
+      ) : (
+        <CtaBand title="Try a CPI-style dialogue free." description="Free practice minutes every month. No card needed." href={href} label="Start free" />
+      )}
     </main>
   );
 }

@@ -16,6 +16,7 @@ import { packs, plans } from "../plans";
 import { cclLanguagePages } from "../seo-pages";
 import type { OnboardingContext, OnboardingDay, OnboardingTrack } from "./onboarding-types";
 import type { BuiltEmail } from "./transactional";
+import { MARKETPLACE_OPEN } from "../marketplace";
 
 type Draft = {
   subject: string;
@@ -1272,8 +1273,10 @@ function general(h: Helpers): Series {
       ctaUrl: h.url("/migrate-to-australia"),
     },
     11: {
-      subject: "Try Assessed mode, and explore the marketplace",
-      preheader: "Practise like it counts, see your progress, and find community courses for your goals.",
+      subject: MARKETPLACE_OPEN ? "Try Assessed mode, and explore the marketplace" : "Try Assessed mode",
+      preheader: MARKETPLACE_OPEN
+        ? "Practise like it counts, see your progress, and find community courses for your goals."
+        : "Practise like it counts, and see your progress side by side.",
       body: [
         "Once Practice mode feels comfortable, try an assessed session. There are no tips, and you get a score with feedback at the end.",
         bullets([
@@ -1282,10 +1285,14 @@ function general(h: Helpers): Series {
           `**No peeking.** ${transcriptRule()}`,
         ]),
         `Your ${h.link("Progress page", "/progress")} shows every session side by side.`,
-        `Want something more specific? The ${h.link("marketplace", "/marketplace")} has community courses made by trainers, teachers and employers, including English-only role-plays. Add one to your library and it works just like the others.`,
+        ...(MARKETPLACE_OPEN
+          ? [
+              `Want something more specific? The ${h.link("marketplace", "/marketplace")} has community courses made by trainers, teachers and employers, including English-only role-plays. Add one to your library and it works just like the others.`,
+            ]
+          : []),
       ],
-      ctaLabel: "Browse the marketplace",
-      ctaUrl: h.url("/marketplace"),
+      ctaLabel: MARKETPLACE_OPEN ? "Browse the marketplace" : "Start an assessed session",
+      ctaUrl: h.url(MARKETPLACE_OPEN ? "/marketplace" : course),
     },
     13: {
       subject: "Make speaking practice a habit",

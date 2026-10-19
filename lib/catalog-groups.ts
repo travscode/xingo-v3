@@ -61,6 +61,7 @@ export const libraryFilters: Array<{ id: LibraryFilterId; label: string }> = [
 type FilterableModule = {
   id: string;
   isFree: boolean;
+  comingSoon?: boolean;
   practiceType: "interpreting" | "roleplay";
   attemptCount: number;
   scenarios: Array<{ isFreePreview: boolean }>;
@@ -69,7 +70,10 @@ type FilterableModule = {
 export function matchesLibraryFilter(learningModule: FilterableModule, filter: LibraryFilterId) {
   switch (filter) {
     case "free":
-      return learningModule.isFree || learningModule.scenarios.some((scenario) => scenario.isFreePreview);
+      return (
+        !learningModule.comingSoon &&
+        (learningModule.isFree || learningModule.scenarios.some((scenario) => scenario.isFreePreview))
+      );
     case "exam":
       return examModuleIds.has(learningModule.id);
     case "training":

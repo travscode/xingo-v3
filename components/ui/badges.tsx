@@ -1,4 +1,4 @@
-import { Briefcase, Crown, Plane, Scale, Sparkles, Stethoscope, Users, type LucideIcon } from "lucide-react";
+import { Briefcase, Clock, Crown, Plane, Scale, Sparkles, Stethoscope, Users, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/primitives";
 
 /** Premium content marker (crown), used wherever Premium is shown. */
@@ -16,6 +16,16 @@ export function FreeBadge({ label = "Free" }: { label?: string }) {
     <Badge tone="accent">
       <Sparkles className="h-3 w-3" aria-hidden />
       {label}
+    </Badge>
+  );
+}
+
+/** Course not open yet (D-043). Neutral: it's information, not progress. */
+export function ComingSoonBadge() {
+  return (
+    <Badge>
+      <Clock className="h-3 w-3" aria-hidden />
+      Coming soon
     </Badge>
   );
 }

@@ -9,6 +9,7 @@ import type { ExamPage } from "@/lib/exam-pages";
 import { plans } from "@/lib/plans";
 import { rubricForModule } from "@/lib/rubrics";
 import { cn } from "@/lib/utils";
+import { OPEN_COURSE_HREF } from "@/components/marketing/coming-soon";
 
 /*
  * Building blocks for /exams/[slug]. Photos and portraits are fictional
@@ -207,8 +208,11 @@ export function ExamCoverage({ page, visual }: { page: ExamPage; visual: ExamVis
   );
 }
 
-/** Scenario cards with the people you'll talk to; each one starts the free sign-up. */
-export function ExamScenarios({ page, visual, href }: { page: ExamPage; visual: ExamVisual; href: string }) {
+/**
+ * Scenario cards with the people you'll talk to; each one starts the free sign-up.
+ * Without an `href` (practice coming soon, D-043) the cards are shown but not links.
+ */
+export function ExamScenarios({ page, visual, href }: { page: ExamPage; visual: ExamVisual; href: string | null }) {
   const interpreting = Boolean(visual.listener);
 
   return (
@@ -217,37 +221,52 @@ export function ExamScenarios({ page, visual, href }: { page: ExamPage; visual: 
         <div>
           <h2 className="text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Practice scenarios</h2>
           <p className="mt-2 text-gray-500">
-            {interpreting ? "Two AI voices, one interpreter: you." : "One AI person, in character. You play yourself."}
+            {href
+              ? interpreting
+                ? "Two AI voices, one interpreter: you."
+                : "One AI person, in character. You play yourself."
+              : "Coming soon. These are the scenarios we're preparing."}
           </p>
         </div>
-        <Link href={href} className="inline-flex items-center gap-1 text-sm font-semibold hover:underline">
-          Try one free <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
+        {href ? (
+          <Link href={href} className="inline-flex items-center gap-1 text-sm font-semibold hover:underline">
+            Try one free <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        ) : null}
       </div>
       <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {page.scenarios.map((scenario, index) => {
           const cast = castFor(visual, index);
+          const body = (
+            <>
+              <span className="flex items-center justify-between">
+                <span className="flex -space-x-2" aria-hidden>
+                  {cast.map((person) => (
+                    <Portrait key={person} person={person} size={48} className="h-12 w-12 ring-2 ring-paper" />
+                  ))}
+                </span>
+                <span className="text-xs font-semibold tabular-nums text-gray-500">{String(index + 1).padStart(2, "0")}</span>
+              </span>
+              <span className="mt-5 block font-bold leading-6">{scenario.title}</span>
+              <span className="mt-1 block flex-1 text-sm leading-6 text-gray-500">{scenario.description}</span>
+            </>
+          );
           return (
             <li key={scenario.title}>
-              <Link
-                href={href}
-                data-analytics-cta={`Scenario: ${scenario.title}`}
-                className="mk-lift group flex h-full flex-col rounded-2xl border border-gray-200 p-5 hover:border-ink"
-              >
-                <span className="flex items-center justify-between">
-                  <span className="flex -space-x-2" aria-hidden>
-                    {cast.map((person) => (
-                      <Portrait key={person} person={person} size={48} className="h-12 w-12 ring-2 ring-paper" />
-                    ))}
+              {href ? (
+                <Link
+                  href={href}
+                  data-analytics-cta={`Scenario: ${scenario.title}`}
+                  className="mk-lift group flex h-full flex-col rounded-2xl border border-gray-200 p-5 hover:border-ink"
+                >
+                  {body}
+                  <span className="mt-5 flex items-center gap-1 text-sm font-semibold opacity-60 transition-opacity group-hover:opacity-100">
+                    Practise this <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
                   </span>
-                  <span className="text-xs font-semibold tabular-nums text-gray-500">{String(index + 1).padStart(2, "0")}</span>
-                </span>
-                <span className="mt-5 block font-bold leading-6">{scenario.title}</span>
-                <span className="mt-1 block flex-1 text-sm leading-6 text-gray-500">{scenario.description}</span>
-                <span className="mt-5 flex items-center gap-1 text-sm font-semibold opacity-60 transition-opacity group-hover:opacity-100">
-                  Practise this <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
-                </span>
-              </Link>
+                </Link>
+              ) : (
+                <div className="flex h-full flex-col rounded-2xl border border-gray-200 p-5">{body}</div>
+              )}
             </li>
           );
         })}
@@ -277,18 +296,31 @@ export function ExamTips({ tips }: { tips: ExamPage["tips"] }) {
 }
 
 /** Closing call to action with the hero photo. */
-export function ExamClosingCta({ page, visual, href }: { page: ExamPage; visual: ExamVisual; href: string }) {
+export function ExamClosingCta({
+  page,
+  visual,
+  href,
+  comingSoon = false,
+}: {
+  page: ExamPage;
+  visual: ExamVisual;
+  href: string;
+  comingSoon?: boolean;
+}) {
   return (
     <section className="grid overflow-hidden rounded-[2rem] bg-ink text-paper md:grid-cols-2" data-analytics-location="closing_cta">
       <div className="flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-14">
-        <h2 className="text-3xl font-bold tracking-[-0.03em] text-balance sm:text-4xl">Practise for the {page.shortName} today.</h2>
+        <h2 className="text-3xl font-bold tracking-[-0.03em] text-balance sm:text-4xl">
+          {comingSoon ? `${page.shortName} practice is coming soon.` : `Practise for the ${page.shortName} today.`}
+        </h2>
         <p className="mt-3 max-w-md text-[15px] leading-6 text-paper/60">
+          {comingSoon ? "NAATI CCL practice is open now. " : ""}
           {plans.free.monthlyMinutes} free practice minutes every month. No card needed. Prices are in AUD.
         </p>
         <div className="mt-8">
           <Button asChild variant="accent" size="lg">
-            <Link href={href}>
-              Try one free <ArrowRight className="h-4 w-4" />
+            <Link href={comingSoon ? OPEN_COURSE_HREF : href}>
+              {comingSoon ? "Practise NAATI CCL" : "Try one free"} <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         </div>

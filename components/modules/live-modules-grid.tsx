@@ -36,7 +36,7 @@ import {
 } from "@/lib/catalog-groups";
 import { cn } from "@/lib/utils";
 import { EmptyState, PageHeader, ProgressBar, Skeleton } from "@/components/ui/primitives";
-import { FreeBadge, IndustryIcon, PremiumBadge } from "@/components/ui/badges";
+import { ComingSoonBadge, FreeBadge, IndustryIcon, PremiumBadge } from "@/components/ui/badges";
 import { Button } from "@/components/ui/button";
 
 type CatalogModule = FunctionReturnType<typeof api.catalog.forCurrentUser>["modules"][number];
@@ -217,13 +217,15 @@ export function LiveModulesGrid() {
             ) : null}
           </>
         )}
-        <p className="mt-8 text-center text-sm text-gray-500">
-          Looking for something else?{" "}
-          <Link href="/marketplace" className="font-semibold text-ink underline">
-            Browse the marketplace
-          </Link>{" "}
-          for courses made by trainers and teachers.
-        </p>
+        {me?.marketplaceOpen ? (
+          <p className="mt-8 text-center text-sm text-gray-500">
+            Looking for something else?{" "}
+            <Link href="/marketplace" className="font-semibold text-ink underline">
+              Browse the marketplace
+            </Link>{" "}
+            for courses made by trainers and teachers.
+          </p>
+        ) : null}
       </section>
     </div>
   );
@@ -284,7 +286,7 @@ export function CategoryCarousel({
               </span>
               <span className="mt-3 text-sm font-bold">{group.label}</span>
               <span className={cn("mt-0.5 text-xs", isActive ? "text-paper/60" : "text-gray-500")}>
-                {group.modules.length} module{group.modules.length === 1 ? "" : "s"}
+                {group.modules.length} course{group.modules.length === 1 ? "" : "s"}
                 {practised > 0 && group.id !== "for-you" ? ` · ${practised} started` : ""}
               </span>
             </button>
@@ -326,6 +328,25 @@ export function ModuleCard({ learningModule, premiumAccess }: { learningModule: 
     learningModule.scenarios.find((s) => !s.locked && !s.stats.passed) ?? learningModule.scenarios.find((s) => !s.locked);
   const locked = !learningModule.isFree && !premiumAccess;
   const started = learningModule.attemptCount > 0;
+
+  if (learningModule.comingSoon) {
+    return (
+      <article className="flex flex-col rounded-xl border border-gray-200 bg-gray-50 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
+            <IndustryIcon category={learningModule.industryCategory} />
+          </span>
+          <ComingSoonBadge />
+        </div>
+        <p className="mt-3 font-bold text-gray-500">{learningModule.title}</p>
+        <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{learningModule.description}</p>
+        <p className="mt-3 text-xs text-gray-500">
+          {learningModule.practiceType === "roleplay" ? "Role-play" : "Interpreting"} · {total} dialogue
+          {total === 1 ? "" : "s"}
+        </p>
+      </article>
+    );
+  }
 
   return (
     <article className="flex flex-col rounded-xl border border-gray-200 p-5 transition-colors hover:border-gray-300">

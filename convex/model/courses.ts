@@ -1,8 +1,10 @@
+import { ConvexError } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { getClerkIdFromIdentity, getUserByClerkId } from "./auth";
 import type { Entitlement } from "./entitlements";
-import { creatorEarningCents } from "../../lib/marketplace";
+import { creatorEarningCents, marketplaceOpenForRole } from "../../lib/marketplace";
+import { isComingSoon } from "../../lib/course-status";
 
 type Ctx = QueryCtx | MutationCtx;
 
@@ -33,7 +35,8 @@ export function isCourseOwner(
 
 /**
  * Who may practise a course. XINGO courses: everyone (plan rules apply separately).
- * Community courses: anyone while published; the owner and platform admins always.
+ * Community courses: anyone while published; the owner and platform admins always;
+ * nobody but platform admins while the marketplace is closed (D-043).
  */
 export function canPractiseCourse(
   user: Pick<Doc<"users">, "clerkId" | "role"> | null,
@@ -41,8 +44,36 @@ export function canPractiseCourse(
   listing: Pick<Doc<"courseListings">, "status"> | null,
 ) {
   if (!isCommunityCourse(course)) return true;
-  if (user?.role === "platform_admin" || isCourseOwner(user, course)) return true;
+  if (user?.role === "platform_admin") return true;
+  if (!marketplaceOpenFor(user)) return false;
+  if (isCourseOwner(user, course)) return true;
   return listing?.status === "published";
+}
+
+/** Whether this person may see community courses and the marketplace (D-043 launch switch). */
+export function marketplaceOpenFor(user: Pick<Doc<"users">, "role"> | null) {
+  return marketplaceOpenForRole(user?.role);
+}
+
+export async function viewerMarketplaceOpen(ctx: Ctx) {
+  const identity = await ctx.auth.getUserIdentity();
+  const user = identity ? await getUserByClerkId(ctx, getClerkIdFromIdentity(identity)) : null;
+  return marketplaceOpenFor(user);
+}
+
+/** Guard for marketplace, creator and organisation entry points while the marketplace is closed. */
+export async function requireMarketplaceOpen(ctx: Ctx) {
+  if (!(await viewerMarketplaceOpen(ctx))) {
+    throw new ConvexError("MARKETPLACE_CLOSED");
+  }
+}
+
+/** Coming-soon courses (D-043) are locked for everyone but platform admins. */
+export function isCourseLocked(
+  user: Pick<Doc<"users">, "role"> | null,
+  course: Pick<Doc<"modules">, "status">,
+) {
+  return isComingSoon(course) && user?.role !== "platform_admin";
 }
 
 /** Course ids the user added from the marketplace. */
@@ -56,15 +87,16 @@ export async function libraryModuleIds(ctx: Ctx, clerkId: string) {
 
 /**
  * Community courses never appear in someone's library unless they added them
- * (and they're still published) or they own them.
+ * (and they're still published) or they own them, and only while the marketplace is open to them.
  */
 export function inLibrary(
   course: Pick<Doc<"modules">, "id" | "source" | "ownerClerkId">,
-  user: Pick<Doc<"users">, "clerkId"> | null,
+  user: Pick<Doc<"users">, "clerkId" | "role"> | null,
   added: Set<string>,
   publishedIds: Set<string>,
 ) {
   if (!isCommunityCourse(course)) return true;
+  if (!marketplaceOpenFor(user)) return false;
   if (isCourseOwner(user, course)) return true;
   return added.has(course.id) && publishedIds.has(course.id);
 }
@@ -131,10 +163,11 @@ export async function courseVisibility(ctx: QueryCtx) {
     publishedCommunityIds(ctx),
     ctx.db.query("modules").collect(),
   ]);
+  const open = marketplaceOpenFor(user);
   const hidden = new Set(
     communityCourses
-      .filter((course) => isCommunityCourse(course) && !published.has(course.id))
-      .filter((course) => user?.role !== "platform_admin" && course.ownerClerkId !== user?.clerkId)
+      .filter((course) => isCommunityCourse(course) && (!open || !published.has(course.id)))
+      .filter((course) => user?.role !== "platform_admin" && (!open || course.ownerClerkId !== user?.clerkId))
       .map((course) => course.id),
   );
 

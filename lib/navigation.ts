@@ -3,7 +3,6 @@ import { CircleHelp, CreditCard, Home, Mic, Store, TrendingUp, UserRound } from 
 
 export const marketingNavigation = [
   { href: "/naati/ccl", label: "NAATI CCL" },
-  { href: "/exams", label: "Exams" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/staff-training", label: "For employers" },
   { href: "/pricing", label: "Pricing" },

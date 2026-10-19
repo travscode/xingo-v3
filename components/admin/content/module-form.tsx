@@ -21,6 +21,7 @@ import {
   modulePayload,
   type ModuleForm,
 } from "@/components/admin/content/model";
+import { courseStatusOptions } from "@/lib/course-status";
 
 /** Module details. Creates a module when `moduleId` is absent. */
 export function ModuleDetailsForm({ moduleId, initial }: { moduleId?: string; initial: ModuleForm }) {
@@ -108,6 +109,18 @@ export function ModuleDetailsForm({ moduleId, initial }: { moduleId?: string; in
       </FormSection>
 
       <FormSection title="Access">
+        <Field
+          label="Status"
+          htmlFor="module-status"
+          hint="Coming soon courses stay in the library, greyed out, and can't be opened. Admins can still open them."
+        >
+          <Select
+            id="module-status"
+            value={form.status}
+            onChange={(event) => set("status", event.target.value as ModuleForm["status"])}
+            options={courseStatusOptions}
+          />
+        </Field>
         <Switch
           checked={form.isFree}
           onChange={(checked) => set("isFree", checked)}

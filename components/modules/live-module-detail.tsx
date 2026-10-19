@@ -54,6 +54,20 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
     );
   }
 
+  if (learningModule.comingSoon) {
+    return (
+      <EmptyState
+        title={`${learningModule.title} is coming soon`}
+        description="For now you can practise for the NAATI CCL test."
+        action={
+          <Button asChild>
+            <Link href="/courses">Back to practice</Link>
+          </Button>
+        }
+      />
+    );
+  }
+
   const locked = !learningModule.isFree && !(me?.entitlement.premiumAccess ?? false);
   const total = learningModule.scenarios.length;
   const firstPlayable = learningModule.scenarios.find((s) => !s.locked && !s.stats.passed) ??

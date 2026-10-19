@@ -120,7 +120,7 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
       <section>
         <h2 className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">Pricing</h2>
         <p className="mt-2 text-gray-500">
-          Start with {plans.free.monthlyMinutes} free minutes. Packs never expire and unlock every course.
+          Start with {plans.free.monthlyMinutes} free minutes. Packs never expire and unlock every CCL dialogue.
         </p>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           {packList.map((pack) => (

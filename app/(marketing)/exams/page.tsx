@@ -116,8 +116,9 @@ function ExamCard({ exam }: { exam: ExamIndexEntry }) {
         </p>
       </div>
       <div className="flex flex-1 flex-col p-5 sm:p-6">
-        <div>
+        <div className="flex flex-wrap gap-2">
           <Badge>{exam.kind}</Badge>
+          {exam.comingSoon ? <Badge>Coming soon</Badge> : null}
         </div>
         <h3 className="mt-3 text-xl font-bold tracking-[-0.02em]">{exam.shortName}</h3>
         <p className="text-sm text-gray-500">{exam.fullName}</p>

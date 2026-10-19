@@ -7,6 +7,18 @@
 
 import { packs, plans, type PlanId } from "./plans";
 
+// ---- Launch switch ------------------------------------------------------------------
+
+/**
+ * While false (CCL-first launch, D-043) the marketplace, creator tools, organisation pages
+ * and community courses are for platform admins only. Flip to true to reopen everything.
+ */
+export const MARKETPLACE_OPEN = false;
+
+export function marketplaceOpenForRole(role: string | null | undefined) {
+  return MARKETPLACE_OPEN || role === "platform_admin";
+}
+
 // ---- Creator earnings ----------------------------------------------------------
 
 /** Share of XINGO's net revenue from minutes practised in a creator's course. */

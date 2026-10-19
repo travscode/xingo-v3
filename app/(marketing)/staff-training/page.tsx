@@ -18,6 +18,7 @@ import { MAX_ATTEMPT_MINUTES } from "@/lib/plans";
 import { rubrics } from "@/lib/rubrics";
 import { pageMetadata } from "@/lib/seo-metadata";
 import { servicePageJsonLd } from "@/lib/structured-data";
+import { MARKETPLACE_OPEN } from "@/lib/marketplace";
 
 /*
  * Employer landing page (docs/seo.md). Scenario building, scoring and practice
@@ -102,7 +103,9 @@ const finishedWhen = [
 ];
 
 const availableNow = [
-  "Scenario builder: one-on-one role-plays or interpreter in the middle",
+  MARKETPLACE_OPEN
+    ? "Scenario builder: one-on-one role-plays or interpreter in the middle"
+    : "Custom scenarios: one-on-one role-plays or interpreter in the middle",
   "AI voice characters that stay in role",
   "English only, or English and another language",
   "Task cards, a clear finish line and a time limit",
@@ -125,7 +128,9 @@ const faqs = [
   },
   {
     q: "Can we build scenarios for our own situations?",
-    a: "Yes, today. The scenario builder asks who the AI plays, what they want, what your staff member plays, what's on their task card, when the conversation is finished, and the time limit. Courses built today are published on the XINGO marketplace, so anyone can practise them. Private, team-only courses are part of the pilot.",
+    a: MARKETPLACE_OPEN
+      ? "Yes, today. The scenario builder asks who the AI plays, what they want, what your staff member plays, what's on their task card, when the conversation is finished, and the time limit. Courses built today are published on the XINGO marketplace, so anyone can practise them. Private, team-only courses are part of the pilot."
+      : "Yes, as part of a pilot. Each scenario sets who the AI plays, what they want, what your staff member plays, what's on their task card, when the conversation is finished, and the time limit. Book a pilot and we'll set them up with you.",
   },
   {
     q: "Which languages can staff practise in?",
@@ -260,9 +265,11 @@ export default function StaffTrainingPage() {
             <ArrowRight size={18} />
           </a>
         </Button>
-        <Button asChild size="lg" variant="ghost">
-          <Link href="/marketplace/create">Try the scenario builder</Link>
-        </Button>
+        {MARKETPLACE_OPEN ? (
+          <Button asChild size="lg" variant="ghost">
+            <Link href="/marketplace/create">Try the scenario builder</Link>
+          </Button>
+        ) : null}
       </MarketingIntro>
 
       {/* Team view */}
@@ -544,9 +551,11 @@ export default function StaffTrainingPage() {
               <ArrowRight size={18} />
             </a>
           </Button>
-          <Button asChild variant="ghost" size="lg" className="text-paper hover:bg-gray-700">
-            <Link href="/marketplace/create">Try the scenario builder</Link>
-          </Button>
+          {MARKETPLACE_OPEN ? (
+            <Button asChild variant="ghost" size="lg" className="text-paper hover:bg-gray-700">
+              <Link href="/marketplace/create">Try the scenario builder</Link>
+            </Button>
+          ) : null}
         </div>
       </section>
     </main>

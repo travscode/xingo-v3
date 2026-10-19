@@ -5,6 +5,7 @@ import { blogPostPath, BLOG_PATH, getAllPosts } from "@/lib/blog";
 import { examPages } from "@/lib/exam-pages";
 import { getAllMigrationGuides, migrationGuidePath } from "@/lib/migration-guides";
 import { cclLanguagePages, SITE_URL, topicPages } from "@/lib/seo-pages";
+import { MARKETPLACE_OPEN } from "@/lib/marketplace";
 
 /** Re-generate hourly so newly published marketplace courses appear. */
 export const revalidate = 3600;
@@ -44,7 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const posts = getAllPosts();
   const latestPost = posts.reduce((latest, post) => (post.updated > latest ? post.updated : latest), "1970-01-01");
-  const [courses, orgPages] = await Promise.all([marketplaceCourses(), organisationPages()]);
+  const [courses, orgPages] = MARKETPLACE_OPEN ? await Promise.all([marketplaceCourses(), organisationPages()]) : [[], []];
 
   return [
     page("/", 1),
@@ -68,9 +69,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...topicPages.map((topic) => page(`/interpreting/${topic.slug}`, 0.7)),
     page(BLOG_PATH, 0.6, new Date(`${latestPost}T00:00:00Z`)),
     ...posts.map((post) => page(blogPostPath(post.slug), 0.6, new Date(`${post.updated}T00:00:00Z`))),
-    page("/sell-practice-courses", 0.7),
-    page("/marketplace", 0.7),
-    page("/marketplace/create", 0.5),
+    // The marketplace is admin-only while closed (D-043).
+    ...(MARKETPLACE_OPEN
+      ? [page("/sell-practice-courses", 0.7), page("/marketplace", 0.7), page("/marketplace/create", 0.5)]
+      : []),
     ...courses.map((course) => page(`/marketplace/${course.slug}`, 0.6, toDate(course.updatedAt, now))),
     ...orgPages.map((org) => page(org.path, 0.6, toDate(org.updatedAt, now))),
   ];

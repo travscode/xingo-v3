@@ -71,7 +71,7 @@ describe("onboarding series", () => {
   test("dispatch queues each learner's day once, skipping opted-out, admins and older accounts", async () => {
     const t = setup();
     const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000 - 60_000).toISOString();
-    await seedUser(t, "day3", { createdAt: daysAgo(3), practiceGoal: "ielts" });
+    await seedUser(t, "day3", { createdAt: daysAgo(3), practiceGoal: "naati_ccl" });
     await seedUser(t, "optout", { createdAt: daysAgo(3), emailOptOut: true });
     await seedUser(t, "admin", { createdAt: daysAgo(3), role: "platform_admin" });
     await seedUser(t, "old", { createdAt: daysAgo(40) });
@@ -80,7 +80,7 @@ describe("onboarding series", () => {
     await t.mutation(internal.onboarding.dispatch, {});
 
     const rows = await t.run((ctx) => ctx.db.query("onboardingEmails").collect());
-    expect(rows.map((row) => [row.clerkId, row.day, row.track])).toEqual([["day3", 3, "ielts"]]);
+    expect(rows.map((row) => [row.clerkId, row.day, row.track])).toEqual([["day3", 3, "ccl"]]);
 
     const user = await t.run((ctx) => ctx.db.query("users").withIndex("by_clerkId", (q) => q.eq("clerkId", "day3")).unique());
     expect(user?.emailToken).toBeTruthy();

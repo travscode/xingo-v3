@@ -50,7 +50,7 @@ function pickRecorderMime() {
 export function AutoSwitchRoom({ scenarioId }: { scenarioId: string }) {
   const data = useQuery(api.catalog.scenarioForPractice, { scenarioId });
   if (data === undefined) return <Skeleton className="h-96" />;
-  if (data === null) return <p className="text-gray-500">Scenario not found.</p>;
+  if (data === null || data.comingSoon) return <p className="text-gray-500">Scenario not found.</p>;
   if (!data.scenario.aiAgentB) return <p className="text-gray-500">The lab needs a scenario with two participants.</p>;
   return <Room scenario={data.scenario as unknown as Scenario} />;
 }
