@@ -119,7 +119,7 @@ export function guideReadingMinutes(guide: MigrationGuide) {
  */
 const pageGuideLinks: Record<string, string[]> = {
   "/naati/ccl": ["community-language-points", "skilled-migration-points-test"],
-  "/naati/ccl/[language]": ["community-language-points", "become-an-interpreter-in-australia"],
+  "/naati/ccl/[language]": ["community-language-points", "skilled-migration-points-test"],
   "/naati/cpi": ["become-an-interpreter-in-australia", "jobs-for-bilingual-migrants"],
   "/exams/ielts-speaking": ["english-test-for-australian-pr", "ielts-vs-pte-vs-oet"],
   "/exams/oet-speaking": ["ielts-vs-pte-vs-oet", "nurses-moving-to-australia"],

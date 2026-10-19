@@ -18,10 +18,11 @@ export const metadata: Metadata = {
     default: "XINGO",
     template: "%s | XINGO",
   },
+  applicationName: "XINGO",
   openGraph: { siteName: "XINGO", locale: "en_AU", type: "website" },
   twitter: { card: "summary_large_image" },
   description:
-    "Practise interpreting out loud with AI role-play partners, get scored instantly, and prepare for NAATI CCL and real assignments.",
+    "Practise the NAATI CCL test out loud with AI dialogues in your language, get scored instantly, and prepare for real interpreting work.",
 };
 
 export default function RootLayout({

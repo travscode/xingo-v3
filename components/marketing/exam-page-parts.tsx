@@ -9,7 +9,7 @@ import type { ExamPage } from "@/lib/exam-pages";
 import { plans } from "@/lib/plans";
 import { rubricForModule } from "@/lib/rubrics";
 import { cn } from "@/lib/utils";
-import { OPEN_COURSE_HREF } from "@/components/marketing/coming-soon";
+import { openAlternativeFor } from "@/lib/site-status";
 
 /*
  * Building blocks for /exams/[slug]. Photos and portraits are fictional
@@ -161,7 +161,7 @@ export function ExamGlance({ page }: { page: ExamPage }) {
 }
 
 /** Photo with the first scenario's card, beside what's covered and what isn't. */
-export function ExamCoverage({ page, visual }: { page: ExamPage; visual: ExamVisual }) {
+export function ExamCoverage({ page, visual, comingSoon = false }: { page: ExamPage; visual: ExamVisual; comingSoon?: boolean }) {
   const first = page.scenarios[0];
 
   return (
@@ -181,7 +181,9 @@ export function ExamCoverage({ page, visual }: { page: ExamPage; visual: ExamVis
       </div>
 
       <div className={first ? "pt-6 lg:pt-0" : undefined}>
-        <h2 className="text-3xl font-bold tracking-[-0.03em] sm:text-4xl">What XINGO helps you practise</h2>
+        <h2 className="text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
+          {comingSoon ? "What XINGO's practice will cover" : "What XINGO helps you practise"}
+        </h2>
         <ul className="mt-6 space-y-3">
           {page.covered.map((item) => (
             <li key={item} className="flex gap-3 text-[15px] leading-6">
@@ -314,13 +316,13 @@ export function ExamClosingCta({
           {comingSoon ? `${page.shortName} practice is coming soon.` : `Practise for the ${page.shortName} today.`}
         </h2>
         <p className="mt-3 max-w-md text-[15px] leading-6 text-paper/60">
-          {comingSoon ? "NAATI CCL practice is open now. " : ""}
+          {comingSoon ? `${openAlternativeFor(page.goal).name} practice is open now. ` : ""}
           {plans.free.monthlyMinutes} free practice minutes every month. No card needed. Prices are in AUD.
         </p>
         <div className="mt-8">
           <Button asChild variant="accent" size="lg">
-            <Link href={comingSoon ? OPEN_COURSE_HREF : href}>
-              {comingSoon ? "Practise NAATI CCL" : "Try one free"} <ArrowRight className="h-4 w-4" />
+            <Link href={comingSoon ? openAlternativeFor(page.goal).href : href}>
+              {comingSoon ? openAlternativeFor(page.goal).label : "Try one free"} <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         </div>

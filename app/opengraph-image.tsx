@@ -1,7 +1,8 @@
 import { ImageResponse } from "next/og";
+import { CCL_MAX_SCORE } from "@/lib/scoring";
 
 /** Default share image for every route that doesn't define its own. Statically generated at build. */
-export const alt = "XINGO — practise interpreting tests and speaking exams out loud";
+export const alt = "XINGO — NAATI CCL practice with AI dialogues";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -30,7 +31,7 @@ export default function OpengraphImage() {
             <span style={{ background: "#c6f432", color: "#1b2400", padding: "0 12px" }}>Pass your test.</span>
           </div>
           <div style={{ display: "flex", marginTop: 32, fontSize: 30, color: "#b3b3b3" }}>
-            NAATI CCL · CPI · OET · IELTS · AMC · OSCE — AI role-play practice with scored feedback
+            NAATI CCL practice in your language — AI dialogues, scored out of {CCL_MAX_SCORE}
           </div>
         </div>
       </div>

@@ -1,14 +1,18 @@
+import { CCL_MAX_SCORE } from "../../scoring";
 import type { MigrationGuide } from "../types";
 
 export const guide: MigrationGuide = {
   slug: "english-test-for-australian-pr",
-  title: "English tests for Australian PR: accepted tests, levels and points",
-  metaTitle: "English Test for Australian PR: Levels & Points",
+  title: "English proficiency tests for Australia: accepted tests, scores and PR points",
+  metaTitle: "English Proficiency Tests for Australian Visas",
   description:
-    "Which English tests Home Affairs accepts for Australian visas, what Competent, Proficient and Superior English mean, and how English counts in the points test.",
-  excerpt: "Accepted tests, the Competent, Proficient and Superior levels, and how your English result turns into points.",
+    "The English proficiency tests Australia accepts (IELTS, PTE, TOEFL, OET and more), the scores for Competent, Proficient and Superior English, and PR points.",
+  excerpt: "The eight accepted English tests, the Competent, Proficient and Superior levels, and how your result turns into points.",
   group: "Language & tests",
   keywords: [
+    "english proficiency test",
+    "english tests for australia",
+    "english language tests for visa",
     "english test for australian pr",
     "competent english australia",
     "proficient english 10 points",
@@ -16,20 +20,20 @@ export const guide: MigrationGuide = {
     "accepted english tests home affairs",
   ],
   published: "2026-10-03",
-  updated: "2026-10-03",
+  updated: "2026-10-19",
   image: {
     src: "/images/scenes/speaking-test-prep.webp",
     alt: "A man wearing a headset rehearses a spoken test answer out loud at his desk, holding a small timer.",
   },
   atAGlance: [
-    "Home Affairs accepts results from a set list of English tests, taken at a secure test centre. At-home and remote-proctored versions aren't accepted.",
+    "Home Affairs accepts **eight English proficiency tests**, including IELTS, PTE Academic, TOEFL iBT and OET, taken at a secure test centre. At-home versions aren't accepted.",
     "Most skilled visas need at least **Competent English**. For points-tested visas, **Proficient** adds 10 points and **Superior** adds 20.",
     "Each level is a minimum score in **each** of the four parts of the test (listening, reading, writing and speaking), not an overall score.",
     "For most visas the result must be from the **three years** before you apply. Check the page for your visa.",
   ],
   intro: [
-    "If you're applying for permanent residence in Australia, your English test result does two jobs. It shows you meet the visa's minimum English requirement, and on points-tested skilled visas a higher result can add points to your score.",
-    "This guide explains which tests the Department of Home Affairs accepts, what the English levels mean and how they connect to points. It's general information drawn from the official pages, checked in October 2026. The rules for your visa are on [immi.homeaffairs.gov.au](https://immi.homeaffairs.gov.au/), and a registered migration agent can advise on your situation.",
+    "An English proficiency test measures how well you listen, read, write and speak in English, and gives a score for each. If you're applying for an Australian visa or permanent residence, your result does two jobs. It shows you meet the visa's minimum English requirement, and on points-tested skilled visas a higher result can add points to your score.",
+    "This guide explains which English language tests the Department of Home Affairs accepts, what the English levels mean and how they connect to points. It's general information drawn from the official pages, checked in October 2026. The rules for your visa are on [immi.homeaffairs.gov.au](https://immi.homeaffairs.gov.au/), and a registered migration agent can advise on your situation.",
   ],
   sections: [
     {
@@ -103,7 +107,12 @@ export const guide: MigrationGuide = {
         },
         {
           type: "p",
-          text: "That 20-point gap is one of the largest you can change through your own preparation. It's why many applicants re-sit a test even after they've met the visa minimum. Read [the points test explained](/migrate-to-australia/skilled-migration-points-test) to see how English fits with the other factors, and check the [current points table](https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/skilled-independent-189/points-table) for your visa.",
+          text: "That 20-point gap is one of the largest you can change through your own preparation. It's why many applicants re-sit a test even after they've met the visa minimum. Read our [PR points test guide](/migrate-to-australia/skilled-migration-points-test) to see how English fits with the other factors, and check the [current points table](https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/skilled-independent-189/points-table) for your visa.",
+        },
+        {
+          type: "callout",
+          title: "Speak another language too?",
+          text: "A credentialled community language adds another **5 points**, separate from English. Most people get it by passing the [NAATI CCL test](/naati/ccl) in their other language. See [community language points](/migrate-to-australia/community-language-points).",
         },
       ],
     },
@@ -137,12 +146,12 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "Speaking is the part most people find hardest to practise alone. XINGO runs IELTS Speaking mock tests with an AI examiner on real timings, then gives an estimated band and specific feedback. Health professionals can rehearse OET Speaking role-plays with an AI patient or relative.",
-      "Our scores are estimates to guide your practice, not official results, and XINGO isn't affiliated with any test provider or Home Affairs.",
+      "XINGO's IELTS and OET Speaking practice is coming soon. If you speak a language other than English, you can work on the other language claim today: practise CCL-style dialogues in your language pair with two AI speakers, scored out of " + `${CCL_MAX_SCORE}, with feedback on what to fix.`,
+      "Our scores are estimates to guide your practice, not official results, and XINGO isn't affiliated with any test provider, NAATI or Home Affairs.",
     ],
     links: [
-      { href: "/exams/ielts-speaking", label: "IELTS Speaking practice", description: "All three parts, timed, with an estimated band." },
-      { href: "/exams/oet-speaking", label: "OET Speaking practice", description: "Timed role-plays with an AI patient or relative." },
+      { href: "/naati/ccl", label: "NAATI CCL practice", description: `Two-speaker dialogues in your language, scored out of ${CCL_MAX_SCORE}.` },
+      { href: "/exams/ielts-speaking", label: "IELTS Speaking", description: "The format, what's assessed and how to prepare." },
     ],
   },
   faqs: [
@@ -163,8 +172,8 @@ export const guide: MigrationGuide = {
       a: "Home Affairs accepts IELTS One Skill Retake and MET Single Section Retake for eligible visas. Apart from those, check your visa's rules before relying on scores from more than one sitting.",
     },
     {
-      q: "Does XINGO give an official IELTS score?",
-      a: "No. XINGO gives an estimated band from an AI examiner to help you practise. Only the test provider issues official results.",
+      q: "Which English proficiency test is best for Australia?",
+      a: "There's no official \"best\" or easiest test. All eight accepted tests can show the same English levels, each with its own score table. Choose the format you perform best in, and check that it's accepted for your visa or registration body.",
     },
   ],
   sources: [
@@ -177,9 +186,9 @@ export const guide: MigrationGuide = {
   ],
   related: ["ielts-vs-pte-vs-oet", "skilled-migration-points-test", "community-language-points", "free-english-classes-amep"],
   cta: {
-    title: "Practise IELTS Speaking out loud",
-    body: "A full mock test with an AI examiner, on real timings, with an estimated band and feedback. Free practice minutes every month.",
-    goal: "ielts",
-    buttonLabel: "Try a free mock test",
+    title: "Bilingual? Work on 5 more points",
+    body: `Practise for the NAATI CCL in your language with CCL-style dialogues, scored out of ${CCL_MAX_SCORE}. Free practice minutes every month, no card needed.`,
+    goal: "naati_ccl",
+    buttonLabel: "Try a free CCL dialogue",
   },
 };

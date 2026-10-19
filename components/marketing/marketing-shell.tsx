@@ -28,6 +28,8 @@ const footerLinks = [
   { href: "/staff-training", label: "Staff training" },
   { href: "/migrate-to-australia", label: "Migrating to Australia" },
   { href: "/migrate-to-australia#guides", label: "Migration guides" },
+  { href: "/migrate-to-australia/skilled-migration-points-test", label: "PR points test guide" },
+  { href: "/migrate-to-australia/english-test-for-australian-pr", label: "English tests for Australia" },
   { href: "/for-organizations", label: "For training providers" },
   ...(MARKETPLACE_OPEN
     ? [

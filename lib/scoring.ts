@@ -11,6 +11,8 @@ export const PASS_SCORE = 75;
 export const CCL_MODULE_ID = "naati-certification-practice-ccl";
 export const CCL_MAX_SCORE = 90;
 export const CCL_PASS_SCORE = 63;
+/** NAATI also requires at least this many marks in each of the two dialogues (public pages quote it). */
+export const CCL_DIALOGUE_PASS_SCORE = 29;
 
 export const assessmentDimensions = [
   { key: "accuracy", label: "Accuracy" },

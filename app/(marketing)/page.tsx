@@ -10,7 +10,9 @@ import { ScoreMock } from "@/components/marketing/practice-mock";
 import { HeroStory } from "@/components/marketing/hero-story";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
-import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
+import { ComingSoonBadge, FreeBadge, PremiumBadge } from "@/components/ui/badges";
+import { courseOpenAtLaunch } from "@/lib/course-status";
+import { isPathComingSoonOnSite } from "@/lib/site-status";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
 import { LogoCarousel } from "@/components/marketing/logo-carousel";
 import { examPages } from "@/lib/exam-pages";
@@ -21,9 +23,8 @@ import { organizationJsonLd, websiteJsonLd } from "@/lib/structured-data";
 import { TwoMLink } from "@/components/marketing/two-m-link";
 
 export const metadata: Metadata = pageMetadata({
-  title: "XINGO — Practise NAATI CCL, OET and IELTS Speaking Out Loud",
-  description:
-    "Spoken AI role-play practice for NAATI CCL and CPI, OET, IELTS, AMC and OSCE. Talk out loud, get scored against the test's criteria. Free minutes monthly.",
+  title: "XINGO — NAATI CCL Practice Tests with AI Role-Play",
+  description: `XINGO is AI practice for the NAATI CCL test: interpret two-speaker dialogues in your language, get scored out of ${CCL_MAX_SCORE} and see what to fix. Free minutes monthly.`,
   path: "/",
   absoluteTitle: true,
 });
@@ -52,7 +53,7 @@ const practiceModes: Array<{
     people: ["examiner"],
     title: "Talk one-on-one",
     description:
-      "One AI character plays the patient, relative, colleague or examiner, and you play yourself. For OET, IELTS, AMC and OSCE role-plays.",
+      "One AI character plays the patient, relative, colleague or examiner, and you play yourself. For OET, IELTS, AMC and OSCE role-plays, coming soon.",
     href: "/how-it-works#roleplay",
     link: "How role-play practice works",
   },
@@ -60,10 +61,29 @@ const practiceModes: Array<{
 
 const examLinks = [
   { href: "/naati/ccl", label: "NAATI CCL" },
+  { href: "/interpreting/medical-interpreting-practice", label: "Medical interpreting" },
   { href: "/naati/cpi", label: "NAATI CPI" },
   ...examPages.map((page) => ({ href: `/exams/${page.slug}`, label: page.shortName })),
-  { href: "/interpreting/medical-interpreting-practice", label: "Medical interpreting" },
   { href: "/interpreting/ndis-interpreting", label: "NDIS interpreting" },
+].map((link) => ({ ...link, comingSoon: isPathComingSoonOnSite(link.href) }));
+
+/** Guides for people moving to Australia (docs/seo.md: query → page map). */
+const migrationLinks = [
+  {
+    href: "/migrate-to-australia/skilled-migration-points-test",
+    title: "Australian PR points test guide",
+    description: "The full points table, the 65-point pass mark and a quick points estimate.",
+  },
+  {
+    href: "/migrate-to-australia/english-test-for-australian-pr",
+    title: "English proficiency tests for Australia",
+    description: "The accepted tests and the scores for Competent, Proficient and Superior English.",
+  },
+  {
+    href: "/blog/naati-ccl-5-points-australian-pr",
+    title: "NAATI CCL and the 5 PR points",
+    description: "What the CCL is, who it's for and what to check before you book.",
+  },
 ];
 
 export default function HomePage() {
@@ -72,7 +92,7 @@ export default function HomePage() {
       {/* Hero */}
       <section className="grid items-center gap-10 pt-8 sm:pt-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
         <div>
-          <p className="eyebrow mk-rise">Interpreting tests and speaking exams</p>
+          <p className="eyebrow mk-rise">NAATI CCL practice with AI</p>
           <h1 className="mk-rise mk-delay-1 mt-4 text-[2.75rem] leading-[1.04] font-bold tracking-[-0.04em] text-balance sm:text-7xl">
             Practise out loud. Pass your test.{" "}
             <span className="relative whitespace-nowrap">
@@ -81,8 +101,8 @@ export default function HomePage() {
             </span>
           </h1>
           <p className="mk-rise mk-delay-2 mt-6 max-w-xl text-lg leading-7 text-gray-500">
-            Realistic spoken role-plays with AI voices for NAATI, OET, IELTS and more. You talk, XINGO scores you
-            against the test&apos;s criteria, and you know exactly what to fix before the day that counts.
+            Realistic NAATI CCL dialogues with two AI voices, in your language pair. You interpret, XINGO scores you out
+            of {CCL_MAX_SCORE} against the test&apos;s criteria, and you know exactly what to fix before the day that counts.
           </p>
           <div className="mk-rise mk-delay-3 mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg">
@@ -202,20 +222,53 @@ export default function HomePage() {
         <ScoreMock scale="ccl" className="mx-auto w-full max-w-sm" />
       </section>
 
+      {/* Moving to Australia: links into the migration guides */}
+      <section aria-labelledby="migration-heading">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="eyebrow">Moving to Australia?</p>
+            <h2 id="migration-heading" className="mt-3 max-w-2xl text-2xl font-bold tracking-[-0.03em] text-balance sm:text-3xl">
+              See where your English and your languages count.
+            </h2>
+          </div>
+          <Link href="/migrate-to-australia" className="group inline-flex shrink-0 items-center gap-1 text-sm font-semibold">
+            All migration guides
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+        <ul className="mt-6 grid gap-3 md:grid-cols-3">
+          {migrationLinks.map((link) => (
+            <li key={link.href}>
+              <Link href={link.href} className="mk-lift flex h-full flex-col rounded-xl border border-gray-200 p-5 hover:border-ink">
+                <span className="font-bold leading-6">{link.title}</span>
+                <span className="mt-1 text-sm leading-6 text-gray-500">{link.description}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       {/* Exams */}
       <section aria-labelledby="exams-heading">
         <h2 id="exams-heading" className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">
           Practising for a different test?
         </h2>
-        <p className="mt-2 text-[15px] text-gray-500">These are the tests you can practise for on XINGO today.</p>
+        <p className="mt-2 text-[15px] text-gray-500">
+          NAATI CCL and medical interpreting are open now. Practice for the other tests is coming soon.
+        </p>
         <ul className="mt-4 flex flex-wrap gap-2">
           {examLinks.map((link) => (
             <li key={link.href}>
               <Link
                 href={link.href}
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3.5 py-2 text-sm font-semibold transition-colors hover:border-ink hover:bg-gray-50"
+                className={
+                  link.comingSoon
+                    ? "inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3.5 py-2 text-sm font-semibold text-gray-500 transition-colors hover:border-ink hover:text-ink"
+                    : "inline-flex items-center rounded-lg border border-ink px-3.5 py-2 text-sm font-semibold transition-colors hover:bg-gray-50"
+                }
               >
                 {link.label}
+                {link.comingSoon ? <span className="text-xs font-normal">· Coming soon</span> : null}
               </Link>
             </li>
           ))}
@@ -239,7 +292,8 @@ export default function HomePage() {
             Practise for the settings you&apos;ll work in.
           </h2>
           <p className="max-w-sm text-sm text-gray-500">
-            Free courses are open to everyone. Every premium course includes one free preview dialogue.
+            NAATI CCL and the free Medical ER intake course are open now, and two CCL dialogues are free to try. More courses
+            are coming soon.
           </p>
         </div>
         <ul className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -250,7 +304,13 @@ export default function HomePage() {
             >
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-base font-bold">{course.title}</h3>
-                {course.access === "free" ? <FreeBadge /> : <PremiumBadge />}
+                {!courseOpenAtLaunch(course.moduleId) ? (
+                  <ComingSoonBadge />
+                ) : course.access === "free" ? (
+                  <FreeBadge />
+                ) : (
+                  <PremiumBadge />
+                )}
               </div>
               <p className="mt-2 text-sm leading-6 text-gray-500">{course.description}</p>
             </li>

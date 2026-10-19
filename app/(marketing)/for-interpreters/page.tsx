@@ -4,7 +4,8 @@ import { CtaBand, MarketingIntro } from "@/components/marketing/cta-band";
 import { practiceModules } from "@/components/marketing/catalogue";
 import { ScenePhoto } from "@/components/marketing/people";
 import { Button } from "@/components/ui/button";
-import { FreeBadge, PremiumBadge } from "@/components/ui/badges";
+import { FreeBadge, PremiumBadge, ComingSoonBadge } from "@/components/ui/badges";
+import { courseOpenAtLaunch } from "@/lib/course-status";
 import { pageMetadata } from "@/lib/seo-metadata";
 
 export const metadata: Metadata = pageMetadata({
@@ -78,7 +79,13 @@ export default function ForInterpretersPage() {
                   <div className="font-semibold">{course.title}</div>
                   <div className="text-sm text-gray-500">{course.description}</div>
                 </div>
-                {course.access === "free" ? <FreeBadge /> : <PremiumBadge label="Pro or pack" />}
+                {!courseOpenAtLaunch(course.moduleId) ? (
+                  <ComingSoonBadge />
+                ) : course.access === "free" ? (
+                  <FreeBadge />
+                ) : (
+                  <PremiumBadge label="Pro or pack" />
+                )}
               </li>
             ))}
           </ul>

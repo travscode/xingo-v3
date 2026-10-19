@@ -1,3 +1,4 @@
+import { CCL_MAX_SCORE } from "../../scoring";
 import type { MigrationGuide } from "../types";
 
 export const guide: MigrationGuide = {
@@ -10,7 +11,7 @@ export const guide: MigrationGuide = {
   group: "Language & tests",
   keywords: ["ielts vs pte for australia pr", "oet or ielts for nurses", "pte vs ielts speaking", "which english test for australia", "ahpra accepted english tests"],
   published: "2026-10-03",
-  updated: "2026-10-03",
+  updated: "2026-10-19",
   atAGlance: [
     "Home Affairs accepts IELTS (Academic and General Training), PTE Academic and OET, plus several other tests, taken at a secure test centre.",
     "**Ahpra** accepts IELTS **Academic** (not General Training), PTE Academic, OET, TOEFL iBT and Cambridge C1 Advanced or C2 Proficiency.",
@@ -115,12 +116,13 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "XINGO lets you practise the speaking formats that involve another person. The IELTS Speaking mock test has an AI examiner who runs all three parts on real timings, and OET Speaking has an AI patient or relative who reacts like an interlocutor. Each assessed session ends with specific feedback; IELTS sessions also get an estimated band.",
-      "We don't offer PTE practice. XINGO isn't affiliated with IELTS, Pearson or OET, and our scores are estimates, not official results.",
+      "XINGO's IELTS Speaking and OET Speaking practice is coming soon. Our exam pages already explain each speaking format and what's assessed.",
+      "If you speak another language, you can practise for the NAATI CCL today: CCL-style dialogues in your language pair, scored out of " + `${CCL_MAX_SCORE}. A pass can add 5 points on top of your English points. We don't offer PTE practice, and XINGO isn't affiliated with IELTS, Pearson, OET or NAATI.`,
     ],
     links: [
-      { href: "/exams/ielts-speaking", label: "IELTS Speaking practice", description: "Mock tests with an AI examiner and an estimated band." },
-      { href: "/exams/oet-speaking", label: "OET Speaking practice", description: "Nursing and medicine role-plays, timed." },
+      { href: "/naati/ccl", label: "NAATI CCL practice", description: `Two-speaker dialogues in your language, scored out of ${CCL_MAX_SCORE}.` },
+      { href: "/exams/ielts-speaking", label: "IELTS Speaking", description: "The three parts, timings and what's assessed." },
+      { href: "/exams/oet-speaking", label: "OET Speaking", description: "Role-play format and the clinical communication criteria." },
     ],
   },
   faqs: [
@@ -151,8 +153,9 @@ export const guide: MigrationGuide = {
   ],
   related: ["english-test-for-australian-pr", "nurses-moving-to-australia", "doctors-moving-to-australia", "skilled-migration-points-test"],
   cta: {
-    title: "Find out which speaking format suits you",
-    body: "Run an IELTS Speaking mock test or an OET role-play out loud, with feedback after each assessed session. Free practice minutes every month.",
-    goal: "ielts",
+    title: "Bilingual? Work on 5 more points",
+    body: `Practise for the NAATI CCL in your language with CCL-style dialogues, scored out of ${CCL_MAX_SCORE}. Free practice minutes every month, no card needed.`,
+    goal: "naati_ccl",
+    buttonLabel: "Try a free CCL dialogue",
   },
 };

@@ -54,7 +54,7 @@ export default async function TopicPage({ params }: { params: Promise<{ topic: s
         description={page.intro}
       >
         {comingSoon ? (
-          <ComingSoonHeroButton />
+          <ComingSoonHeroButton goal={page.goal} />
         ) : (
           <>
             <Button asChild size="lg">
@@ -76,7 +76,7 @@ export default async function TopicPage({ params }: { params: Promise<{ topic: s
       <FaqSection faqs={page.faqs} />
       <GuideLinks pagePath={`/interpreting/${page.slug}`} />
       {comingSoon ? (
-        <ComingSoonCtaBand name={page.eyebrow} />
+        <ComingSoonCtaBand name={page.eyebrow} goal={page.goal} />
       ) : (
         <CtaBand
           title="Try a dialogue free."

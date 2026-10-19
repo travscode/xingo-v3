@@ -16,6 +16,8 @@ export const ORGANIZATION_NAME = "XINGO";
 export const ORGANIZATION_ID = `${SITE_URL}/#organization`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 export const BLOG_AUTHOR = "XINGO team";
+/** Square raster logo (app/logo.png/route.tsx). */
+export const ORGANIZATION_LOGO_PATH = "/logo.png";
 
 type JsonLdObject = Record<string, unknown>;
 
@@ -36,13 +38,16 @@ export function organizationJsonLd(): JsonLdObject {
     "@type": "Organization",
     "@id": ORGANIZATION_ID,
     name: ORGANIZATION_NAME,
+    alternateName: "xingo.ai",
     legalName: LEGAL_ENTITY,
     taxID: `ABN ${LEGAL_ABN}`,
     url: SITE_URL,
+    logo: { "@type": "ImageObject", url: absoluteUrl(ORGANIZATION_LOGO_PATH), width: 512, height: 512 },
     email: "hello@xingo.ai",
     description:
-      "Spoken practice for interpreting tests and English speaking exams with AI role-play partners and scored feedback.",
+      "Spoken AI practice for the NAATI CCL test and interpreting, with two-speaker role-play dialogues and scored feedback.",
     areaServed: "AU",
+    knowsAbout: ["NAATI CCL test preparation", "Interpreting practice", "Medical interpreting"],
   };
 }
 
@@ -52,6 +57,7 @@ export function websiteJsonLd(): JsonLdObject {
     "@type": "WebSite",
     "@id": WEBSITE_ID,
     name: ORGANIZATION_NAME,
+    alternateName: "xingo.ai",
     url: SITE_URL,
     inLanguage: "en-AU",
     publisher: { "@id": ORGANIZATION_ID },

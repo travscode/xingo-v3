@@ -29,7 +29,7 @@ export const RESERVED_HANDLES = new Set([
   "jobs", "join", "login", "logout", "marketplace", "migrate-to-australia", "naati", "org", "orgs", "organisation",
   "organisations", "organization", "organizations", "practice", "pricing", "privacy", "progress", "results",
   "sell-practice-courses", "settings", "sign-in", "sign-up", "signin", "signup", "sitemap.xml", "robots.txt",
-  "staff-training", "support", "terms", "welcome", "opengraph-image", "favicon.ico",
+  "staff-training", "support", "terms", "welcome", "opengraph-image", "favicon.ico", "logo.png",
   // Names people could mistake for XINGO itself
   "xingo", "xingo-team", "team", "staff", "official", "security", "legal", "status", "www", "mail", "app",
 ]);

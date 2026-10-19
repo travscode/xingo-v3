@@ -10,6 +10,8 @@ import { FaqSection } from "@/components/marketing/seo/faq-section";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
 import { RichText } from "@/components/marketing/seo/rich-text";
 import { MigrationDisclaimer } from "@/components/marketing/migration-disclaimer";
+import { PointsEstimator } from "@/components/marketing/points-estimator";
+import { ComingSoonBadge } from "@/components/ui/badges";
 import { formatPostDate, sectionId } from "@/lib/blog/utils";
 import {
   getAllMigrationGuides,
@@ -24,6 +26,8 @@ import {
 } from "@/lib/migration-guides";
 import { DEFAULT_OG_IMAGE, pageMetadata } from "@/lib/seo-metadata";
 import { signUpHref } from "@/lib/seo-pages";
+import { goalDisplayName, isPathComingSoonOnSite, openAlternativeFor } from "@/lib/site-status";
+import { isGoalComingSoonOnSite } from "@/lib/goals";
 import { articleJsonLd, BLOG_AUTHOR } from "@/lib/structured-data";
 
 /*
@@ -69,6 +73,22 @@ export default async function MigrationGuidePage({ params }: { params: Promise<{
   const path = migrationGuidePath(guide.slug);
   const related = getRelatedGuides(guide);
   const hubGuides = `${MIGRATION_HUB_PATH}#${MIGRATION_GUIDES_ANCHOR}`;
+  // D-043: a guide whose goal is coming soon points at the open course instead.
+  const ctaComingSoon = isGoalComingSoonOnSite(guide.cta.goal);
+  const alternative = openAlternativeFor(guide.cta.goal);
+  const cta = ctaComingSoon
+    ? {
+        title: `${goalDisplayName(guide.cta.goal)} practice is coming soon`,
+        body: `${alternative.name} practice is open now, with free practice minutes every month. No card needed.`,
+        href: alternative.href,
+        label: alternative.label,
+      }
+    : {
+        title: guide.cta.title,
+        body: guide.cta.body,
+        href: signUpHref(guide.cta.goal),
+        label: guide.cta.buttonLabel ?? "Start practising free",
+      };
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-8 sm:px-6">
@@ -123,6 +143,8 @@ export default async function MigrationGuidePage({ params }: { params: Promise<{
 
         <MigrationDisclaimer className="mt-6" />
 
+        {guide.tool === "points-estimator" ? <PointsEstimator cclHref={signUpHref("naati_ccl")} /> : null}
+
         {guide.image ? (
           <div className="relative mt-8 aspect-[3/2] overflow-hidden rounded-2xl bg-gray-100">
             <Image
@@ -139,6 +161,13 @@ export default async function MigrationGuidePage({ params }: { params: Promise<{
         <nav aria-label="In this guide" className="mt-8 rounded-xl border border-gray-200 p-5">
           <p className="text-sm font-bold">In this guide</p>
           <ol className="mt-2 space-y-1 text-sm">
+            {guide.tool === "points-estimator" ? (
+              <li>
+                <a href="#points-estimator" className="text-gray-500 hover:text-ink">
+                  Estimate your points
+                </a>
+              </li>
+            ) : null}
             {guide.sections.map((section) => (
               <li key={section.heading}>
                 <a href={`#${section.id ?? sectionId(section.heading)}`} className="text-gray-500 hover:text-ink">
@@ -178,9 +207,10 @@ export default async function MigrationGuidePage({ params }: { params: Promise<{
             {guide.xingo.links.map((link) => (
               <li key={link.href}>
                 <Link href={link.href} className="mk-lift group flex h-full flex-col rounded-xl bg-gray-50 p-4 hover:bg-gray-100">
-                  <span className="inline-flex items-center gap-1.5 font-bold">
+                  <span className="inline-flex flex-wrap items-center gap-1.5 font-bold">
                     {link.label}
                     <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
+                    {isPathComingSoonOnSite(link.href) ? <ComingSoonBadge /> : null}
                   </span>
                   <span className="mt-1 text-sm leading-6 text-gray-500">{link.description}</span>
                 </Link>
@@ -194,12 +224,12 @@ export default async function MigrationGuidePage({ params }: { params: Promise<{
         </div>
 
         <aside aria-label="Start practising" className="mt-12 rounded-xl bg-ink p-6 text-paper sm:p-8">
-          <p className="text-xl font-bold tracking-[-0.02em]">{guide.cta.title}</p>
-          <p className="mt-2 text-[15px] leading-6 text-gray-300">{guide.cta.body}</p>
+          <p className="text-xl font-bold tracking-[-0.02em]">{cta.title}</p>
+          <p className="mt-2 text-[15px] leading-6 text-gray-300">{cta.body}</p>
           <div className="mt-5">
             <Button asChild variant="accent" size="md">
-              <Link href={signUpHref(guide.cta.goal)}>
-                {guide.cta.buttonLabel ?? "Start practising free"} <ArrowRight className="h-4 w-4" />
+              <Link href={cta.href}>
+                {cta.label} <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>

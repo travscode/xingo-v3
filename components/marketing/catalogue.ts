@@ -7,31 +7,37 @@ import { CCL_MAX_SCORE } from "@/lib/scoring";
 
 export const practiceModules = [
   {
+    moduleId: "medical-er-intake",
     title: "Medical ER intake",
     description: "Triage conversations: urgent symptoms, medication checks and family history.",
     access: "free",
   },
   {
+    moduleId: "community-services",
     title: "Community services",
     description: "Housing, benefits and social support appointments.",
     access: "free",
   },
   {
+    moduleId: "courtroom-hearings",
     title: "Courtroom hearings",
     description: "Bail hearings, judicial instructions and procedural terms.",
     access: "premium",
   },
   {
+    moduleId: "immigration-interviews",
     title: "Immigration interviews",
     description: "Timelines, documents and trauma-aware questioning.",
     access: "premium",
   },
   {
+    moduleId: "naati-certification-practice-ccl",
     title: "NAATI CCL practice",
     description: `Short two-way community dialogues, scored out of ${CCL_MAX_SCORE}.`,
     access: "premium",
   },
   {
+    moduleId: "naati-certification-practice-cpi",
     title: "NAATI CPI practice",
     description: "Everyday community settings for early-career interpreters.",
     access: "premium",

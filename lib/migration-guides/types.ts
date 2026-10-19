@@ -36,6 +36,8 @@ export type MigrationGuide = {
   updated: string;
   /** Optional scene image from public/images/scenes. */
   image?: { src: string; alt: string };
+  /** Optional interactive tool rendered after the "At a glance" box. */
+  tool?: "points-estimator";
   /** 3–5 short points shown in the "At a glance" box. */
   atAGlance: string[];
   intro: string[];

@@ -11,9 +11,10 @@ import { HowSteps } from "@/components/marketing/seo/how-steps";
 import { ScenarioList } from "@/components/marketing/seo/scenario-list";
 import { Button } from "@/components/ui/button";
 import { packList, plans } from "@/lib/plans";
-import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "@/lib/scoring";
+import { CCL_DIALOGUE_PASS_SCORE, CCL_MAX_SCORE, CCL_PASS_SCORE } from "@/lib/scoring";
+import { COMMUNITY_LANGUAGE_POINTS } from "@/lib/points-test";
 import { pageMetadata } from "@/lib/seo-metadata";
-import { cclLanguagePages, flagFor, getCclLanguagePage, signUpHref } from "@/lib/seo-pages";
+import { cclLanguagePages, flagFor, getCclLanguagePage, NAATI_CCL_URL, signUpHref } from "@/lib/seo-pages";
 
 export function generateStaticParams() {
   return cclLanguagePages.map((page) => ({ language: page.slug }));
@@ -26,8 +27,10 @@ export async function generateMetadata({ params }: { params: Promise<{ language:
   if (!page) return {};
 
   return pageMetadata({
-    title: `NAATI CCL ${page.name} Practice — Mock Dialogues`,
-    description: `Practise NAATI CCL ${page.name} dialogues out loud with two AI speakers, English ⇄ ${page.name}. Scored out of ${CCL_MAX_SCORE} with specific feedback. Try one free.`,
+    title: page.seoTitle ?? `NAATI CCL ${page.name} Practice — Mock Dialogues`,
+    description:
+      page.seoDescription ??
+      `Practise NAATI CCL ${page.name} dialogues out loud with two AI speakers, English ⇄ ${page.name}. Scored out of ${CCL_MAX_SCORE} with specific feedback. Try one free.`,
     path: `/naati/ccl/${page.slug}`,
   });
 }
@@ -49,6 +52,7 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
 
   const href = signUpHref("naati_ccl", page.name.split(" (")[0]);
   const others = cclLanguagePages.filter((other) => other.slug !== page.slug);
+  const naatiName = page.naatiName ?? page.name.split(" (")[0];
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 pb-8 sm:gap-20 sm:px-6">
@@ -69,7 +73,7 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
             NAATI CCL {page.name} practice, <span className="whitespace-nowrap">out loud.</span>
           </>
         }
-        description={`Interpret realistic English ⇄ ${page.name} (${page.nativeName}) dialogues between two AI speakers, then get a score out of ${CCL_MAX_SCORE} and specific feedback — the way you'll be marked on test day.`}
+        description={`Interpret realistic English ⇄ ${page.name} (${page.nativeName}) dialogues between two AI speakers, then get a score out of ${CCL_MAX_SCORE} and specific feedback — the way you'll be marked on test day.${page.naatiName ? ` NAATI lists the language as ${page.naatiName}.` : ""}`}
       >
         <Button asChild size="lg">
           <Link href={href}>
@@ -84,7 +88,7 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
       <section className="grid gap-4 sm:grid-cols-3">
         {[
           ["Two dialogues", "Each test has two dialogues between an English speaker and a speaker of your language, in community settings."],
-          [`Marked out of ${CCL_MAX_SCORE}`, `Each dialogue is marked out of ${CCL_MAX_SCORE / 2}. The overall pass mark is ${CCL_PASS_SCORE}, with a minimum on each dialogue.`],
+          [`Marked out of ${CCL_MAX_SCORE}`, `Each dialogue is marked out of ${CCL_MAX_SCORE / 2}. The overall pass mark is ${CCL_PASS_SCORE}, with at least ${CCL_DIALOGUE_PASS_SCORE} on each dialogue.`],
           ["Short segments", "You interpret each short segment as soon as it ends, in both directions."],
         ].map(([title, body]) => (
           <div key={title} className="rounded-xl border border-gray-200 p-5">
@@ -92,7 +96,13 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
             <p className="mt-1 text-sm leading-6 text-gray-500">{body}</p>
           </div>
         ))}
-        <p className="text-xs text-gray-500 sm:col-span-3">Test rules can change — always check the NAATI website.</p>
+        <p className="text-xs text-gray-500 sm:col-span-3">
+          Test rules can change — always check the{" "}
+          <a href={NAATI_CCL_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+            NAATI CCL page
+          </a>
+          . XINGO is independent and not affiliated with NAATI.
+        </p>
       </section>
 
       <section>
@@ -135,6 +145,15 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
 
       <FaqSection
         faqs={[
+          {
+            q: `Is the NAATI CCL test available in ${page.name}?`,
+            a: `Yes, at the time of writing NAATI lists ${naatiName} among its CCL test languages. The test is held online only. NAATI adds and removes languages over time, so check its CCL page before you book.`,
+          },
+          {
+            q: `How many PR points does a ${page.name} CCL pass give?`,
+            a: `A credentialled community language is worth ${COMMUNITY_LANGUAGE_POINTS} points in the skilled visa points test (subclasses 189, 190 and 491) at the time of writing. NAATI issues the credential; Home Affairs decides whether you can claim the points.`,
+          },
+          ...(page.faqs ?? []),
           {
             q: `Can I practise the CCL in ${page.name} with XINGO?`,
             a: `Yes. Choose ${page.name} as your language and the client in every dialogue speaks ${page.name}, while the professional speaks English. You interpret both ways.`,

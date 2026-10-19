@@ -7,6 +7,8 @@ import { blogPostPath, BLOG_PATH, getAllPosts, getPost, getRelatedPosts } from "
 import { formatPostDate, postWordCount, readingTimeMinutes, sectionId } from "@/lib/blog/utils";
 import { DEFAULT_OG_IMAGE } from "@/lib/seo-metadata";
 import { signUpHref } from "@/lib/seo-pages";
+import { isGoalComingSoonOnSite } from "@/lib/goals";
+import { goalDisplayName, openAlternativeFor } from "@/lib/site-status";
 import { articleJsonLd, BLOG_AUTHOR, faqJsonLd } from "@/lib/structured-data";
 import { ArticleBlock } from "@/components/marketing/seo/article-blocks";
 import { Breadcrumbs } from "@/components/marketing/seo/breadcrumbs";
@@ -57,17 +59,32 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const path = blogPostPath(post.slug);
   const related = getRelatedPosts(post);
   const minutes = readingTimeMinutes(post);
-  const ctaHref = signUpHref(post.cta.goal);
   const midpoint = Math.ceil(post.sections.length / 2);
+  // D-043: a post whose goal is coming soon points at the open course instead.
+  const comingSoon = isGoalComingSoonOnSite(post.cta.goal);
+  const alternative = openAlternativeFor(post.cta.goal);
+  const ctaCopy = comingSoon
+    ? {
+        title: `${goalDisplayName(post.cta.goal)} practice is coming soon`,
+        body: `${alternative.name} practice is open now, with free practice minutes every month. No card needed.`,
+        href: alternative.href,
+        label: alternative.label,
+      }
+    : {
+        title: post.cta.title,
+        body: post.cta.body,
+        href: signUpHref(post.cta.goal),
+        label: post.cta.buttonLabel ?? "Start practising free",
+      };
 
   const cta = (
     <aside aria-label="Practise this" className="rounded-xl bg-ink p-6 text-paper sm:p-8">
-      <p className="text-xl font-bold tracking-[-0.02em]">{post.cta.title}</p>
-      <p className="mt-2 text-[15px] leading-6 text-gray-300">{post.cta.body}</p>
+      <p className="text-xl font-bold tracking-[-0.02em]">{ctaCopy.title}</p>
+      <p className="mt-2 text-[15px] leading-6 text-gray-300">{ctaCopy.body}</p>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
         <Button asChild variant="accent" size="md">
-          <Link href={ctaHref}>
-            {post.cta.buttonLabel ?? "Start practising free"} <ArrowRight className="h-4 w-4" />
+          <Link href={ctaCopy.href}>
+            {ctaCopy.label} <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
         <Link href={post.cta.pagePath} className="text-sm font-semibold text-gray-300 underline underline-offset-2 hover:text-paper">

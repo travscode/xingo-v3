@@ -72,7 +72,7 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
         footnote={<ExamHeroFootnote visual={visual} partners={partners} />}
       >
         {comingSoon ? (
-          <ComingSoonHeroButton />
+          <ComingSoonHeroButton goal={page.goal} />
         ) : (
           <Button asChild size="lg">
             <Link href={href}>
@@ -86,7 +86,7 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
       </MarketingIntro>
 
       <ExamGlance page={page} />
-      <ExamCoverage page={page} visual={visual} />
+      <ExamCoverage page={page} visual={visual} comingSoon={comingSoon} />
       <ExamScenarios page={page} visual={visual} href={comingSoon ? null : href} />
       <ExamTips tips={page.tips} />
       <HowSteps variant={isSpeakingGoal(page.goal) ? "roleplay" : "interpreting"} />

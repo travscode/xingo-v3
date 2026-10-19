@@ -18,6 +18,8 @@ import { MAX_ATTEMPT_MINUTES, plans } from "@/lib/plans";
 import { CCL_MAX_SCORE } from "@/lib/scoring";
 import { MIGRATION_GUIDES_ANCHOR, migrationGuideGroups, migrationGuidePath } from "@/lib/migration-guides";
 import { pageMetadata } from "@/lib/seo-metadata";
+import { isPathComingSoonOnSite } from "@/lib/site-status";
+import { ComingSoonBadge } from "@/components/ui/badges";
 import { webPageJsonLd } from "@/lib/structured-data";
 import { TWO_M_URL, TwoMLink, withTwoMLinks } from "@/components/marketing/two-m-link";
 
@@ -33,7 +35,7 @@ import { TWO_M_URL, TwoMLink, withTwoMLinks } from "@/components/marketing/two-m
 const PATH = "/migrate-to-australia";
 const TITLE = "Migrating to Australia: English Tests, CCL and Work";
 const DESCRIPTION =
-  "Moving to Australia? See where English tests, NAATI CCL points and interpreter certification fit, and practise IELTS, OET and CCL speaking out loud with AI.";
+  "Moving to Australia? See where English tests, the PR points test, NAATI CCL points and interpreter certification fit, and practise for the CCL out loud with AI.";
 
 export const metadata: Metadata = pageMetadata({ title: TITLE, description: DESCRIPTION, path: PATH });
 
@@ -136,7 +138,7 @@ const features = [
   },
   {
     title: "Scored feedback after assessed sessions",
-    body: `CCL-style dialogues are scored out of ${CCL_MAX_SCORE}, IELTS mock tests get an estimated band, and OET, AMC and OSCE role-plays get feedback on the criteria. Scores are estimates, not official results.`,
+    body: `CCL-style dialogues are scored out of ${CCL_MAX_SCORE}, with feedback on what to fix. IELTS, OET, AMC and OSCE practice is coming soon. Scores are estimates, not official results.`,
   },
   {
     title: "Your language pair",
@@ -357,9 +359,10 @@ export default function MigrateToAustraliaPage() {
                     <ul className="mt-2 space-y-2">
                       {step.practice.map((item) => (
                         <li key={item.href}>
-                          <Link href={item.href} className="group inline-flex items-center gap-1.5 text-[15px] font-semibold">
+                          <Link href={item.href} className="group inline-flex flex-wrap items-center gap-1.5 text-[15px] font-semibold">
                             {item.label}
                             <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
+                            {isPathComingSoonOnSite(item.href) ? <ComingSoonBadge /> : null}
                           </Link>
                         </li>
                       ))}

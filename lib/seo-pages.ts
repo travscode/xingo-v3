@@ -21,7 +21,21 @@ export type CclLanguagePage = {
   tips: Array<{ title: string; body: string }>;
   /** Shown when realtime voice support for the language is less mature. */
   voiceNote?: boolean;
+  /** NAATI's spelling in its CCL language list, when it differs from `name` (e.g. "Sinhalese"). */
+  naatiName?: string;
+  /** Overrides the default <title> (before " | XINGO") and meta description, e.g. to add a spelling people search for. */
+  seoTitle?: string;
+  seoDescription?: string;
+  /** Extra language-specific FAQs, shown before the shared ones. */
+  faqs?: Array<{ q: string; a: string }>;
 };
+
+/**
+ * Checked 2026-10-19 on naati.com.au/migration-assessments/ccl/: every language below
+ * is on NAATI's CCL list. Remove a language's availability claim if NAATI drops it.
+ */
+export const NAATI_CCL_LANGUAGES_CHECKED = "2026-10-19";
+export const NAATI_CCL_URL = "https://www.naati.com.au/migration-assessments/ccl/";
 
 const englishLoanwordsTip = (language: string) => ({
   title: "Watch your English borrowings",
@@ -182,10 +196,29 @@ export const cclLanguagePages: CclLanguagePage[] = [
     nativeName: "සිංහල",
     flag: "LK",
     voiceNote: true,
+    naatiName: "Sinhalese",
+    seoTitle: "NAATI CCL Sinhala (Sinhalese) Practice Test",
+    seoDescription:
+      "Preparing for the NAATI CCL in Sinhala (Sinhalese)? Practise English ⇄ Sinhala dialogues out loud with two AI speakers, scored out of 90. Try one free.",
     tips: [
-      { title: "Spoken Sinhala", body: "Sinhala has distinct written and spoken forms. Use natural spoken Sinhala with a polite register — not the written style." },
-      englishLoanwordsTip("Sinhala"),
-      numbersTip,
+      {
+        title: "Spoken, not written, Sinhala",
+        body: "Sinhala has distinct written and spoken forms. Use natural spoken Sinhala with a polite register, not the written style, and use Sinhala terms where common ones exist rather than English borrowings.",
+      },
+      {
+        title: "Address people respectfully",
+        body: "Spoken Sinhala often avoids a direct \"you\". Address the community member respectfully, for example with ඔබ or a title such as මහත්තයා or නෝනා, and keep it consistent through the dialogue.",
+      },
+      {
+        title: "Lakhs and thousands",
+        body: "Australian dialogues use thousands and millions. If you count in lakhs, drill conversions such as $250,000 = 2.5 lakh until they're automatic, and say amounts the way a native speaker would.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Is NAATI certification available in Sinhala?",
+        a: "The CCL isn't a certification: it gives a community language credential for migration points, not the right to work as an interpreter or translator. NAATI runs separate certification tests, so check its website for the ones currently offered in Sinhalese.",
+      },
     ],
   },
   {
