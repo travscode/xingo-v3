@@ -2,6 +2,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import type { DifficultyLevel, IndustryCategory } from "@/types/module";
 import type { Scenario } from "@/types/scenario";
 import { MAX_ATTEMPT_MINUTES } from "@/lib/plans";
+import type { EnhanceDraft, EnhanceParticipant } from "@/lib/content-enhance";
 
 export const industryOptions: Array<{ value: IndustryCategory; label: string }> = [
   { value: "medical", label: "Medical & health" },
@@ -265,4 +266,146 @@ export function scenarioWarnings(scenario: Scenario) {
   if (!scenario.aiAgentA.openingLine) warnings.push("No opening line");
 
   return warnings;
+}
+
+// ---- Enhance with AI (D-042) ------------------------------------------------------
+
+export function isRoleplayForm(form: DialogueForm) {
+  return form.roleplay?.practiceType === "roleplay";
+}
+
+function participantDraft(participant: ParticipantForm): EnhanceParticipant {
+  return {
+    name: participant.name,
+    role: participant.role,
+    demeanor: participant.demeanor,
+    goal: participant.goal,
+    openingLine: participant.openingLine,
+    endCondition: participant.endCondition,
+    instructions: participant.instructions,
+  };
+}
+
+export function enhanceDraftFromForm(form: DialogueForm): EnhanceDraft {
+  return {
+    title: form.title,
+    description: form.description,
+    interpreterRole: form.interpreterRole,
+    learnerRole: form.roleplay?.learnerRole ?? "",
+    taskCard: form.roleplay?.taskCard ?? "",
+    briefing: form.briefing,
+    assessmentFocus: form.assessmentFocus,
+    expectedSkills: form.expectedSkills,
+    professional: participantDraft(form.professional),
+    client: participantDraft(form.client),
+  };
+}
+
+/** One field the AI changed, with a getter/setter pair so the review can apply it alone. */
+export type EnhanceChange = {
+  key: string;
+  section: DialogueSectionId;
+  label: string;
+  before: string | string[];
+  after: string | string[];
+  apply: (form: DialogueForm) => DialogueForm;
+};
+
+const participantLabels: Array<[keyof EnhanceParticipant, string]> = [
+  ["name", "Name"],
+  ["role", "Role"],
+  ["demeanor", "Manner"],
+  ["goal", "Goal"],
+  ["openingLine", "First real line"],
+  ["endCondition", "Finish when they have…"],
+  ["instructions", "Character notes"],
+];
+
+function same(a: string | string[], b: string | string[]) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** Lists only the fields that differ, in editor order. */
+export function enhanceChanges(form: DialogueForm, next: EnhanceDraft): EnhanceChange[] {
+  const roleplay = isRoleplayForm(form);
+  const changes: EnhanceChange[] = [];
+  const push = (change: EnhanceChange) => {
+    if (!same(change.before, change.after)) changes.push(change);
+  };
+
+  push({ key: "title", section: "overview", label: "Title", before: form.title, after: next.title, apply: (f) => ({ ...f, title: next.title }) });
+  push({
+    key: "description",
+    section: "overview",
+    label: "Description",
+    before: form.description,
+    after: next.description,
+    apply: (f) => ({ ...f, description: next.description }),
+  });
+
+  const participants: Array<["professional" | "client", string]> = [["professional", roleplay ? "AI character" : "Professional"]];
+  if (form.hasClient && !roleplay) participants.push(["client", "Client"]);
+
+  for (const [who, prefix] of participants) {
+    for (const [field, label] of participantLabels) {
+      if (field === "endCondition" && who === "client") continue;
+      push({
+        key: `${who}.${field}`,
+        section: who,
+        label: `${prefix} · ${label}`,
+        before: form[who][field],
+        after: next[who][field],
+        apply: (f) => ({ ...f, [who]: { ...f[who], [field]: next[who][field] } }),
+      });
+    }
+  }
+
+  if (roleplay) {
+    push({
+      key: "learnerRole",
+      section: "assessment",
+      label: "Learner's role",
+      before: form.roleplay?.learnerRole ?? "",
+      after: next.learnerRole,
+      apply: (f) => ({ ...f, roleplay: { ...f.roleplay, learnerRole: next.learnerRole } }),
+    });
+    push({
+      key: "taskCard",
+      section: "assessment",
+      label: "Task card",
+      before: form.roleplay?.taskCard ?? "",
+      after: next.taskCard,
+      apply: (f) => ({ ...f, roleplay: { ...f.roleplay, taskCard: next.taskCard } }),
+    });
+  }
+
+  push({ key: "briefing", section: "assessment", label: "Briefing", before: form.briefing, after: next.briefing, apply: (f) => ({ ...f, briefing: next.briefing }) });
+  if (!roleplay) {
+    push({
+      key: "interpreterRole",
+      section: "assessment",
+      label: "Interpreter role",
+      before: form.interpreterRole,
+      after: next.interpreterRole,
+      apply: (f) => ({ ...f, interpreterRole: next.interpreterRole }),
+    });
+  }
+  push({
+    key: "assessmentFocus",
+    section: "assessment",
+    label: "Scoring focus",
+    before: form.assessmentFocus,
+    after: next.assessmentFocus,
+    apply: (f) => ({ ...f, assessmentFocus: next.assessmentFocus }),
+  });
+  push({
+    key: "expectedSkills",
+    section: "assessment",
+    label: "Skills practised",
+    before: form.expectedSkills,
+    after: next.expectedSkills,
+    apply: (f) => ({ ...f, expectedSkills: next.expectedSkills }),
+  });
+
+  return changes;
 }

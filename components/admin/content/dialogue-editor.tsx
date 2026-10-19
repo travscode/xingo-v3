@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMutation, useQuery } from "convex/react";
-import { ExternalLink } from "lucide-react";
+import { useAction, useMutation, useQuery } from "convex/react";
+import { ExternalLink, WandSparkles } from "lucide-react";
 import { DEFAULT_TIME_LIMIT_MINUTES, MAX_ATTEMPT_MINUTES } from "@/lib/plans";
 import { api } from "@/convex/_generated/api";
 import type { Scenario } from "@/types/scenario";
@@ -24,12 +24,17 @@ import {
   TextInput,
 } from "@/components/admin/content/fields";
 import { ParticipantSection } from "@/components/admin/content/participant-section";
+import { EnhanceReview } from "@/components/admin/content/enhance-review";
 import {
   dialogueFormFromRecord,
   dialogueIssues,
   dialoguePayload,
   difficultyOptions,
   emptyDialogueForm,
+  enhanceChanges,
+  enhanceDraftFromForm,
+  isRoleplayForm,
+  type EnhanceChange,
   type DialogueForm,
   type DialogueSectionId,
 } from "@/components/admin/content/model";
@@ -70,6 +75,7 @@ export function DialogueEditorPage({ moduleId, scenarioId }: { moduleId: string;
       key={scenarioId ?? "new"}
       moduleId={moduleId}
       moduleTitle={learningModule.title}
+      moduleDescription={learningModule.description}
       scenarioId={scenarioId}
       initial={initial}
     />
@@ -79,17 +85,22 @@ export function DialogueEditorPage({ moduleId, scenarioId }: { moduleId: string;
 function DialogueEditor({
   moduleId,
   moduleTitle,
+  moduleDescription,
   scenarioId,
   initial,
 }: {
   moduleId: string;
   moduleTitle: string;
+  moduleDescription: string;
   scenarioId?: string;
   initial: DialogueForm;
 }) {
   const router = useRouter();
   const createScenario = useMutation(api.scenarios.createAdmin);
   const updateScenario = useMutation(api.scenarios.updateAdmin);
+  const enhanceDialogue = useAction(api.contentActions.enhanceDialogueAdmin);
+  const [enhancing, setEnhancing] = useState(false);
+  const [review, setReview] = useState<{ changes: EnhanceChange[]; summary: string } | null>(null);
   const [saved, setSaved] = useState(initial);
   const [form, setForm] = useState(initial);
   const [section, setSection] = useState<DialogueSectionId>("overview");
@@ -99,11 +110,45 @@ function DialogueEditor({
   const dirty = JSON.stringify(form) !== JSON.stringify(saved);
   const issues = dialogueIssues(form);
   const issueCount = Object.values(issues).flat().length;
-  const visibleSections = sections.filter((item) => item.id !== "client" || form.hasClient);
+  const roleplay = isRoleplayForm(form);
+  const visibleSections = sections
+    .filter((item) => item.id !== "client" || (form.hasClient && !roleplay))
+    .map((item) => (roleplay && item.id === "professional" ? { ...item, label: "AI character", hint: "Who the learner talks to" } : item));
 
   const update = (next: Partial<DialogueForm>) => {
     setMessage(null);
     setForm((current) => ({ ...current, ...next }));
+  };
+
+  const enhance = async () => {
+    setMessage(null);
+    setEnhancing(true);
+
+    try {
+      const result = await enhanceDialogue({
+        moduleId,
+        scenarioId,
+        context: {
+          courseTitle: moduleTitle,
+          courseDescription: moduleDescription,
+          practiceType: roleplay ? "roleplay" : "interpreting",
+          hasClient: form.hasClient,
+          difficultyLevel: form.difficultyLevel,
+        },
+        draft: enhanceDraftFromForm(form),
+      });
+      setReview({ changes: enhanceChanges(form, result.draft), summary: result.summary });
+    } catch (error) {
+      setMessage(friendlyError(error, "Couldn't enhance the dialogue. Try again."));
+    } finally {
+      setEnhancing(false);
+    }
+  };
+
+  const applyEnhancement = (selected: EnhanceChange[]) => {
+    setForm((current) => selected.reduce((next, change) => change.apply(next), current));
+    setReview(null);
+    setMessage(`Applied ${selected.length} change${selected.length === 1 ? "" : "s"}. Review, then save.`);
   };
 
   const save = async () => {
@@ -154,14 +199,24 @@ function DialogueEditor({
             {form.isFreePreview ? " · Free preview" : ""}
           </p>
         </div>
-        {!isNew ? (
-          <Button asChild variant="outline">
-            <Link href={`/practice/${scenarioId}`} target="_blank">
-              Try it <ExternalLink className="h-4 w-4" />
-            </Link>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={() => void enhance()} disabled={enhancing}>
+            <WandSparkles className={cn("h-4 w-4", enhancing && "animate-pulse")} />
+            {enhancing ? "Enhancing…" : "Enhance with AI"}
           </Button>
-        ) : null}
+          {!isNew ? (
+            <Button asChild variant="outline">
+              <Link href={`/practice/${scenarioId}`} target="_blank">
+                Try it <ExternalLink className="h-4 w-4" />
+              </Link>
+            </Button>
+          ) : null}
+        </div>
       </header>
+
+      {review ? (
+        <EnhanceReview changes={review.changes} summary={review.summary} onApply={applyEnhancement} onClose={() => setReview(null)} />
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         <nav aria-label="Dialogue sections" className="flex gap-1 overflow-x-auto lg:sticky lg:top-6 lg:h-fit lg:flex-col">
@@ -243,8 +298,8 @@ function DialogueEditor({
               <ParticipantSection kind="professional" value={form.professional} onChange={(professional) => update({ professional })} />
               <SectionFooter
                 back={() => setSection("overview")}
-                next={() => setSection(form.hasClient ? "client" : "assessment")}
-                nextLabel={form.hasClient ? "Next: the client" : "Next: briefing & scoring"}
+                next={() => setSection(form.hasClient && !roleplay ? "client" : "assessment")}
+                nextLabel={form.hasClient && !roleplay ? "Next: the client" : "Next: briefing & scoring"}
               />
             </>
           ) : null}
@@ -258,6 +313,25 @@ function DialogueEditor({
 
           {section === "assessment" ? (
             <div className="flex flex-col gap-5">
+              {roleplay ? (
+                <FormSection title="The learner" description="Who the learner plays and what they must do. Shown before the session starts.">
+                  <Field label="Learner's role" htmlFor="dialogue-learner-role" hint="e.g. Apple Store Specialist, Registered nurse, OET candidate.">
+                    <TextInput
+                      id="dialogue-learner-role"
+                      value={form.roleplay?.learnerRole ?? ""}
+                      onChange={(event) => update({ roleplay: { ...form.roleplay, learnerRole: event.target.value } })}
+                    />
+                  </Field>
+                  <Field label="Task card" htmlFor="dialogue-task-card" hint="The situation and the numbered things the learner must do.">
+                    <TextArea
+                      id="dialogue-task-card"
+                      rows={6}
+                      value={form.roleplay?.taskCard ?? ""}
+                      onChange={(event) => update({ roleplay: { ...form.roleplay, taskCard: event.target.value } })}
+                    />
+                  </Field>
+                </FormSection>
+              ) : null}
               <FormSection title="Learner briefing" description="Shown before the session starts and used to guide scoring.">
                 <Field label="Briefing" required htmlFor="dialogue-briefing" hint="What the learner should pay attention to, in one or two sentences.">
                   <TextArea id="dialogue-briefing" rows={3} value={form.briefing} onChange={(event) => update({ briefing: event.target.value })} />
@@ -288,7 +362,7 @@ function DialogueEditor({
               <FormSection title="Skills practised" description="Listed for learners and used in progress tracking.">
                 <ListEditor items={form.expectedSkills} onChange={(expectedSkills) => update({ expectedSkills })} placeholder="e.g. Number retention" />
               </FormSection>
-              <SectionFooter back={() => setSection(form.hasClient ? "client" : "professional")} />
+              <SectionFooter back={() => setSection(form.hasClient && !roleplay ? "client" : "professional")} />
             </div>
           ) : null}
 

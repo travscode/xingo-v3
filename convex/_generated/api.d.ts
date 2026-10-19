@@ -33,6 +33,7 @@ import type * as content_originals_schoolGateStudio from "../content/originals/s
 import type * as content_originals_smokoStudio from "../content/originals/smokoStudio.js";
 import type * as content_originals_types from "../content/originals/types.js";
 import type * as content_originals_ugc from "../content/originals/ugc.js";
+import type * as contentActions from "../contentActions.js";
 import type * as creators from "../creators.js";
 import type * as crons from "../crons.js";
 import type * as emailActions from "../emailActions.js";
@@ -103,6 +104,7 @@ declare const fullApi: ApiFromModules<{
   "content/originals/smokoStudio": typeof content_originals_smokoStudio;
   "content/originals/types": typeof content_originals_types;
   "content/originals/ugc": typeof content_originals_ugc;
+  contentActions: typeof contentActions;
   creators: typeof creators;
   crons: typeof crons;
   emailActions: typeof emailActions;
