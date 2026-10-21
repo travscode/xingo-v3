@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { getClerkIdFromIdentity, getUserByClerkId, requireUser } from "./model/auth";
+import { actsAsAdmin, getClerkIdFromIdentity, getUserByClerkId, requireUser } from "./model/auth";
 import { queueEmail } from "./model/notify";
 import { requireMarketplaceOpen, viewerMarketplaceOpen } from "./model/courses";
 import {
@@ -132,7 +132,7 @@ export const page = query({
 
     const viewer = await optionalUser(ctx);
     const membership = viewer ? await getMembership(ctx, profile.handle, viewer.clerkId) : null;
-    const isPlatformAdmin = viewer?.role === "platform_admin";
+    const isPlatformAdmin = actsAsAdmin(viewer);
     const isTeam = Boolean(membership) || isPlatformAdmin;
 
     const viewerRows = viewer

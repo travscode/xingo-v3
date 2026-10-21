@@ -14,6 +14,7 @@ export type AppErrorCode =
   | "COURSE_UNAVAILABLE"
   | "COURSE_COMING_SOON"
   | "MARKETPLACE_CLOSED"
+  | "PREVIEW_MODE"
   | "COURSE_INCOMPLETE"
   | "GUIDELINES_REQUIRED"
   | "PAYOUTS_NOT_CONFIGURED"
@@ -37,6 +38,7 @@ const messages: Record<AppErrorCode, string> = {
   COURSE_UNAVAILABLE: "This course isn't available right now. It may have been unpublished by its creator.",
   COURSE_COMING_SOON: "This course is coming soon. For now you can practise NAATI CCL.",
   MARKETPLACE_CLOSED: "The marketplace isn't open yet.",
+  PREVIEW_MODE: "You're previewing as a member, so nothing is charged. Exit the preview to buy for real.",
   COURSE_INCOMPLETE: "Add a title, a one-line summary and at least one scenario before publishing.",
   GUIDELINES_REQUIRED: "Please confirm the creator guidelines before publishing.",
   PAYOUTS_NOT_CONFIGURED: "Payouts aren't switched on yet. Your earnings are safe and will be paid once they are.",
