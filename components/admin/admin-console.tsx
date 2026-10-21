@@ -13,6 +13,7 @@ import { ContentIndex } from "@/components/admin/content/content-index";
 import { EmailList } from "@/components/admin/email/email-list";
 import { MarketplaceAdmin, ReportsAdmin } from "@/components/admin/marketplace-admin";
 import { UsageAdmin } from "@/components/admin/usage-admin";
+import { PreviewAsMenu } from "@/components/admin/preview-as";
 import { Badge, Card, EmptyState, PageHeader, SectionTitle, Skeleton, Stat } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { formatMinuteCount } from "@/lib/plans";
@@ -79,9 +80,12 @@ export function AdminConsole() {
         title="Admin"
         description="Revenue, users and content. Visible to platform admins only."
         actions={
-          <Button asChild variant="outline">
-            <Link href="/admin/lab">Lab</Link>
-          </Button>
+          <>
+            <PreviewAsMenu />
+            <Button asChild variant="outline">
+              <Link href="/admin/lab">Lab</Link>
+            </Button>
+          </>
         }
       />
       <div className="flex gap-1 overflow-x-auto border-b border-gray-200" role="tablist">

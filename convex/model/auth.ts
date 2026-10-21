@@ -1,3 +1,4 @@
+import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 
 type AuthCtx = QueryCtx | MutationCtx;
@@ -30,6 +31,22 @@ export async function getUserByClerkId(ctx: AuthCtx, clerkId: string) {
     .query("users")
     .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
     .unique();
+}
+
+type RoleHolder = { role?: Doc<"users">["role"]; previewAs?: Doc<"users">["previewAs"] };
+
+/**
+ * Whether learner-facing rules should treat this person as a platform admin: true for
+ * admins unless they're previewing the app as a member (D-044). Admin tools, earnings
+ * and emails use the real role instead.
+ */
+export function actsAsAdmin(user: RoleHolder | null | undefined) {
+  return user?.role === "platform_admin" && !user.previewAs;
+}
+
+/** The member type a platform admin is previewing as, or null (non-admins never preview). */
+export function previewOf(user: RoleHolder | null | undefined) {
+  return user?.role === "platform_admin" ? (user.previewAs ?? null) : null;
 }
 
 /** Returns the signed-in user's profile, throwing if it has not been synced yet. */

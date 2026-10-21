@@ -1,9 +1,9 @@
 import { ConvexError } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import { getClerkIdFromIdentity, getUserByClerkId } from "./auth";
+import { actsAsAdmin, getClerkIdFromIdentity, getUserByClerkId } from "./auth";
 import type { Entitlement } from "./entitlements";
-import { creatorEarningCents, marketplaceOpenForRole } from "../../lib/marketplace";
+import { creatorEarningCents, MARKETPLACE_OPEN } from "../../lib/marketplace";
 import { isComingSoon } from "../../lib/course-status";
 
 type Ctx = QueryCtx | MutationCtx;
@@ -39,20 +39,20 @@ export function isCourseOwner(
  * nobody but platform admins while the marketplace is closed (D-043).
  */
 export function canPractiseCourse(
-  user: Pick<Doc<"users">, "clerkId" | "role"> | null,
+  user: (Pick<Doc<"users">, "clerkId" | "role"> & Partial<Pick<Doc<"users">, "previewAs">>) | null,
   course: Pick<Doc<"modules">, "source" | "ownerClerkId">,
   listing: Pick<Doc<"courseListings">, "status"> | null,
 ) {
   if (!isCommunityCourse(course)) return true;
-  if (user?.role === "platform_admin") return true;
+  if (actsAsAdmin(user)) return true;
   if (!marketplaceOpenFor(user)) return false;
   if (isCourseOwner(user, course)) return true;
   return listing?.status === "published";
 }
 
 /** Whether this person may see community courses and the marketplace (D-043 launch switch). */
-export function marketplaceOpenFor(user: Pick<Doc<"users">, "role"> | null) {
-  return marketplaceOpenForRole(user?.role);
+export function marketplaceOpenFor(user: (Pick<Doc<"users">, "role"> & Partial<Pick<Doc<"users">, "previewAs">>) | null) {
+  return MARKETPLACE_OPEN || actsAsAdmin(user);
 }
 
 export async function viewerMarketplaceOpen(ctx: Ctx) {
@@ -68,12 +68,12 @@ export async function requireMarketplaceOpen(ctx: Ctx) {
   }
 }
 
-/** Coming-soon courses (D-043) are locked for everyone but platform admins. */
+/** Coming-soon courses (D-043) are locked for everyone but platform admins (unless previewing, D-044). */
 export function isCourseLocked(
-  user: Pick<Doc<"users">, "role"> | null,
+  user: (Pick<Doc<"users">, "role"> & Partial<Pick<Doc<"users">, "previewAs">>) | null,
   course: Pick<Doc<"modules">, "status">,
 ) {
-  return isComingSoon(course) && user?.role !== "platform_admin";
+  return isComingSoon(course) && !actsAsAdmin(user);
 }
 
 /** Course ids the user added from the marketplace. */
@@ -167,7 +167,7 @@ export async function courseVisibility(ctx: QueryCtx) {
   const hidden = new Set(
     communityCourses
       .filter((course) => isCommunityCourse(course) && (!open || !published.has(course.id)))
-      .filter((course) => user?.role !== "platform_admin" && (!open || course.ownerClerkId !== user?.clerkId))
+      .filter((course) => !actsAsAdmin(user) && (!open || course.ownerClerkId !== user?.clerkId))
       .map((course) => course.id),
   );
 

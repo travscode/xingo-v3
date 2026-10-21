@@ -15,7 +15,7 @@ import {
 import { getEntitlement } from "./model/entitlements";
 import { activateInvitesForUser } from "./model/orgs";
 import { queueEmail } from "./model/notify";
-import { marketplaceOpenForRole } from "../lib/marketplace";
+import { marketplaceOpenFor } from "./model/courses";
 
 const languagePreference = v.object({
   sourceLanguage: v.string(),
@@ -111,7 +111,7 @@ export const me = query({
       user,
       entitlement: await getEntitlement(ctx, user),
       /** Marketplace links and pages show only when this is true (D-043). */
-      marketplaceOpen: marketplaceOpenForRole(user.role),
+      marketplaceOpen: marketplaceOpenFor(user),
     };
   },
 });
