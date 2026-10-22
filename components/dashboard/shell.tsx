@@ -14,6 +14,7 @@ import { LanguagePairPicker } from "@/components/dashboard/language-pair-picker"
 import { MinutesMeter } from "@/components/dashboard/minutes-meter";
 import { XingoMark } from "@/components/ui/logo";
 import { TermsGate } from "@/components/auth/terms-gate";
+import { PreviewBanner } from "@/components/admin/preview-as";
 
 /** Routes that render full-screen, without app chrome. */
 function isFocusRoute(pathname: string) {
@@ -46,11 +47,13 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <LanguagePairProvider>
         {children}
         <TermsGate />
+        <PreviewBanner compact />
       </LanguagePairProvider>
     );
   }
 
-  const isAdmin = me?.user.role === "platform_admin";
+  // While previewing as a member (D-044) the Admin link hides; the preview banner leads back.
+  const isAdmin = me?.user.role === "platform_admin" && !me.user.previewAs;
   // The marketplace is admin-only while closed (D-043).
   const navItems = dashboardNavigation.filter((item) => item.href !== "/marketplace" || me?.marketplaceOpen);
 
@@ -149,6 +152,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         ) : null}
 
         <div className="min-w-0">
+          <PreviewBanner />
           <div className="hidden items-center justify-end gap-3 px-8 pt-5 lg:flex">
             <LanguagePairPicker />
             <UserButton />

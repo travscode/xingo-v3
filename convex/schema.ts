@@ -157,6 +157,8 @@ export default defineSchema({
     /** Set by an admin to stop new practice on this account (ISO). */
     practicePausedAt: v.optional(v.string()),
     practicePausedReason: v.optional(v.string()),
+    /** Platform admins only: browse the app as this kind of member (D-044). */
+    previewAs: v.optional(v.union(v.literal("free"), v.literal("pack"), v.literal("professional"))),
     createdAt: v.string(),
     updatedAt: v.string(),
   })

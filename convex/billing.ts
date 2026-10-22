@@ -98,6 +98,10 @@ export const createCheckout = action({
     if (user.termsVersion !== LEGAL_VERSION) {
       throw new ConvexError("TERMS_REQUIRED");
     }
+    // Previewing as a member (D-044) never buys anything for real.
+    if (user.role === "platform_admin" && user.previewAs) {
+      throw new ConvexError("PREVIEW_MODE");
+    }
     const stripe = getStripe();
     const customer = await ensureCustomer(ctx, stripe, user);
     const base = siteUrl();

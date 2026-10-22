@@ -3,7 +3,7 @@ import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { getBillingMonthKey } from "../../lib/plans";
 import { canManageOrg, type OrgRole } from "../../lib/orgs";
-import { requireUser } from "./auth";
+import { actsAsAdmin, requireUser } from "./auth";
 
 /**
  * Organisations (D-039): an org is a creator profile with `kind: "organization"`,
@@ -69,12 +69,12 @@ async function activeAccess(ctx: Ctx, orgHandle: string, clerkId: string) {
  */
 export async function hasCourseAccess(
   ctx: Ctx,
-  user: Pick<Doc<"users">, "clerkId" | "role"> | null,
+  user: (Pick<Doc<"users">, "clerkId" | "role"> & Partial<Pick<Doc<"users">, "previewAs">>) | null,
   listing: Pick<Doc<"courseListings">, "moduleId" | "ownerClerkId" | "orgHandle" | "restricted"> | null,
 ) {
   if (!listing?.restricted) return true;
   if (!user) return false;
-  if (user.role === "platform_admin" || listing.ownerClerkId === user.clerkId) return true;
+  if (actsAsAdmin(user) || listing.ownerClerkId === user.clerkId) return true;
   if (!listing.orgHandle) return false;
   if (await getMembership(ctx, listing.orgHandle, user.clerkId)) return true;
   return hasCollectionAccessToCourse(ctx, listing.orgHandle, user.clerkId, listing.moduleId);

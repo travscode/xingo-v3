@@ -146,7 +146,8 @@ export const listUsers = query({
 
     const rows = await Promise.all(
       users.map(async (user) => {
-        const entitlement = await getEntitlement(ctx, user);
+        // Real balances, even for an admin who is previewing as a member.
+        const entitlement = await getEntitlement(ctx, { ...user, previewAs: undefined });
         const stats = statsByUser.get(user.clerkId);
 
         return {
@@ -187,6 +188,18 @@ export const setUserRole = mutation({
     }
 
     await ctx.db.patch(user._id, { role: args.role, updatedAt: new Date().toISOString() });
+  },
+});
+
+/**
+ * "Preview as" (D-044): browse the app as a Free, pack or Pro member, or pass null to
+ * go back to admin. Uses the real role, so it works while previewing.
+ */
+export const setPreview = mutation({
+  args: { as: v.union(v.literal("free"), v.literal("pack"), v.literal("professional"), v.null()) },
+  handler: async (ctx, args) => {
+    const admin = await requirePlatformAdmin(ctx);
+    await ctx.db.patch(admin._id, { previewAs: args.as ?? undefined, updatedAt: new Date().toISOString() });
   },
 });
 

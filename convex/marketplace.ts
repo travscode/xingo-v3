@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { getClerkIdFromIdentity, getUserByClerkId, requirePlatformAdmin, requireUser } from "./model/auth";
+import { actsAsAdmin, getClerkIdFromIdentity, getUserByClerkId, requirePlatformAdmin, requireUser } from "./model/auth";
 import {
   deleteCommunityCourse,
   getCourse,
@@ -328,7 +328,7 @@ export const listing = query({
     const user = await optionalUser(ctx);
     const isOrgEditor = Boolean(user && listing.orgHandle && (await getMembership(ctx, listing.orgHandle, user.clerkId)));
     const isOwner = user?.clerkId === listing.ownerClerkId || isOrgEditor;
-    const isAdmin = user?.role === "platform_admin";
+    const isAdmin = actsAsAdmin(user);
 
     if (listing.status !== "published" && !isOwner && !isAdmin) return null;
     // Invite-only org courses: only the team and learners with access (D-039).

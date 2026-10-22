@@ -101,7 +101,7 @@ export const users = query({
     const page = Math.min(pageCount, Math.max(1, Math.round(args.page)));
     const pageRows = await Promise.all(
       rows.slice((page - 1) * pageSize, page * pageSize).map(async ({ user, totals }) => {
-        const entitlement = await getEntitlement(ctx, user, now);
+        const entitlement = await getEntitlement(ctx, { ...user, previewAs: undefined }, now);
         return {
           clerkId: user.clerkId,
           name: user.name,
@@ -149,7 +149,7 @@ export const user = query({
     if (!user) return null;
 
     const [entitlement, rollups, sessions, grants] = await Promise.all([
-      getEntitlement(ctx, user),
+      getEntitlement(ctx, { ...user, previewAs: undefined }),
       ctx.db.query("usageRollups").withIndex("by_clerkId_month", (q) => q.eq("clerkId", user.clerkId)).collect(),
       ctx.db.query("sessions").withIndex("by_clerkId", (q) => q.eq("clerkId", user.clerkId)).order("desc").take(15),
       ctx.db.query("minuteGrants").withIndex("by_clerkId", (q) => q.eq("clerkId", user.clerkId)).order("desc").take(20),
