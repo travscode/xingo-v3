@@ -21,7 +21,7 @@ Traffic rose after the NAATI CCL page went up. Competitors already rank for gene
 | `/staff-training` | AI role-play training for staff, customer service training simulation, multilingual staff and volunteer training | Scenario builder, scoring, practice/assessed modes; team view, invites and private courses shown as **pilot** (D-021), demo labelled illustrative |
 | `/sell-practice-courses` | sell practice courses online, monetise your expertise, create AI role-play training, sell practice exams, earn money teaching | Marketplace landing (header "Marketplace" link); creator wizard, page tools, insights and the 25% share (D-031) are built; team-only courses shown as **pilot**; hero mock labelled illustrative. Cross-links /marketplace, /marketplace/create, /staff-training |
 | `/migrate-to-australia` | migrate to Australia English test, CCL points for PR, IELTS/OET for Australian visa, how to become an interpreter in Australia | Pathway hub linking IELTS, OET, CCL, AMC, OSCE, CPI pages + 2M partnership. General information only (registered migration agents give advice); facts sourced from Home Affairs/NAATI/Ahpra, re-check the points table before big promotion |
-| `/migrate-to-australia/[guide]` (13 guides) | Topic cluster around the hub — see table below | Typed data in `lib/migration-guides/guides/*.ts`, one route (`[guide]/page.tsx`). Each guide: at-a-glance box, migration disclaimer, "How XINGO helps", FAQ, official sources, related guides, back link to the hub. Article + BreadcrumbList + FAQPage JSON-LD |
+| `/migrate-to-australia/[guide]` (14 guides; guides.test.ts caps the cluster at 14, so raise the cap deliberately before adding more) | Topic cluster around the hub — see table below | Typed data in `lib/migration-guides/guides/*.ts`, one route (`[guide]/page.tsx`). Each guide: at-a-glance box, migration disclaimer, "How XINGO helps", FAQ, official sources, related guides, back link to the hub. Article + BreadcrumbList + FAQPage JSON-LD |
 
 Every page: one `h1`, unique title/description, canonical URL, FAQ with `FAQPage` JSON-LD, links to sibling pages, and a sign-up CTA that lands in the welcome flow with **goal and language preselected** (`signUpHref`).
 
@@ -40,10 +40,11 @@ Hub: `/migrate-to-australia` ("Migration guides" section, anchor `#guides`, grou
 | Group | Slug | Target queries |
 |---|---|---|
 | Language & tests | `english-test-for-australian-pr` | english proficiency test, english (language) tests for australia, english test for australian pr, competent/proficient/superior english points |
+| Language & tests | `celpip-for-australian-pr` | celpip australia, celpip australia points test, celpip for australian pr |
 | Language & tests | `ielts-vs-pte-vs-oet` | ielts vs pte for australia pr, oet or ielts for nurses, ahpra accepted tests |
 | Language & tests | `free-english-classes-amep` | free english classes for migrants, AMEP eligibility/time limits, SEE program |
 | Points & visas | `skilled-migration-points-test` | australian pr points test, pr test, points test guide, points table 189, 65 points, SkillSelect EOI (has the points estimator) |
-| Points & visas | `community-language-points` | naati ccl points, credentialled community language, ccl vs cpi (complements the blog's CCL 5-points article — keep them distinct) |
+| Points & visas | `community-language-points` | credentialed/credentialled community language, which naati test for pr, naati ccl points, ccl vs cpi (complements the blog's CCL 5-points article — keep them distinct) |
 | Points & visas | `find-a-registered-migration-agent` | registered migration agent, check MARN, OMARA register, visa scams |
 | Points & visas | `translating-documents-for-a-visa` | naati translation for visa, free translating service |
 | Professions | `nurses-moving-to-australia` | nurses moving to australia, NMBA OSCE, Self-check streams, OET for nurses |
@@ -76,6 +77,29 @@ Site-wide in the same pass:
 - `CCL_DIALOGUE_PASS_SCORE` (29 per dialogue, NAATI) added to `lib/scoring.ts` for public copy.
 
 Re-check before promoting: the Home Affairs points table (`lib/points-test.ts`, `POINTS_TABLE_CHECKED`), NAATI's CCL language list (`NAATI_CCL_LANGUAGES_CHECKED` in `lib/seo-pages.ts`) and CCHI's CHI description.
+
+## Query → page map, update (2026-10-22 export, last 6 months)
+
+Every query in the 22 October Search Console export has exactly one target page. Where a query fitted an existing page, that page was retargeted rather than duplicated.
+
+| Queries (impressions / avg position) | Target page | Change |
+|---|---|---|
+| xingo (193 / 4.9), xingo train, xingos | `/` | As above. **Host split:** `xingo.ai` (171 impressions) and `www.xingo.ai` (84) are both indexed because the apex returns a **307 (temporary)** redirect to www, set in Vercel. Fix in Vercel → Domains: set `xingo.ai` to redirect to `www.xingo.ai` with **308 (permanent)**. Canonicals, `metadataBase` and the sitemap already use www |
+| pr test (5 / 85), points test guide (5 / 90), point test, points test, pr point system in australia, australia pr point system, pr poin | `/migrate-to-australia/skilled-migration-points-test` | Title "Australian PR Points Test and Point System Guide", h1 "…how the point system works", "PR point system" in the intro. Anchor text on internal links now says "PR points test guide" (hub, CCL 5-points post, footer, home) |
+| which naati test for pr, credentialed community language (2 / 58), credentialled community language | `/migrate-to-australia/community-language-points` | Retitled "Credentialed Community Language: Which NAATI Test?". Both spellings explained in the intro (Home Affairs says "credentialled", NAATI says "Credentialed"), a "Which NAATI test for PR: CCL or certification?" section and FAQ. Linked from the CCL hub's format section |
+| ccl test, ccl exam, c.c.l | `/naati/ccl` | Title "NAATI CCL Test Practice — Mock Dialogues Online"; the eyebrow, intro and description name the "Credentialed Community Language (CCL) test". New "About the CCL test" FAQ (format, pass mark, points, languages, fee, validity) with FAQPage JSON-LD, using facts from `lib/naati-ccl.ts` |
+| naati exam format | `/blog/naati-ccl-test-format-and-marking` | Retitled "NAATI CCL Exam Format and Marking, Explained"; linked from the CCL hub's format section |
+| naati languages | **New** `/naati/ccl/languages` | All 55 CCL test languages in NAATI's spelling (from `lib/naati-ccl.ts`; `lib/naati-ccl.test.ts` checks that every practice page is on the list), linking the 21 practice pages. Linked from the CCL hub, every language page, the footer and the community-language guide |
+| naati sinhala | `/naati/ccl/sinhala` | As above |
+| english proficiency test (3 / 9.3), english tests, english language tests | `/migrate-to-australia/english-test-for-australian-pr` (the English-tests hub) | Now has a score table for all 8 accepted tests × 3 levels (Home Affairs, tests from 7 August 2025) and a "Which test suits you" section linking IELTS, OET, CELPIP and the comparison guide |
+| celpip australia points test | **New** `/migrate-to-australia/celpip-for-australian-pr` | CELPIP General is accepted for tests taken from 7 August 2025, but CELPIP Online isn't. Scores per level, points, a note for Canadian passport holders. Linked from the English-tests guide, the points guide and the "Language & tests" group on the hub |
+| occupational english test | `/exams/oet-speaking` | Retitled "Occupational English Test (OET) Speaking Guide"; FAQs give the Ahpra (from 23 April 2026) and Home Affairs Proficient OET scores |
+| english speaking test with ai, ielts practice test for doctors australia | `/exams/ielts-speaking` | Retitled "IELTS Speaking Test: Format, Bands and AI Practice"; FAQs give the Home Affairs IELTS levels and Ahpra's IELTS Academic minimums for doctors (7 overall, 7 L/R/S, 6.5 W). The AI mock test is labelled coming soon |
+| chii chii oral | `/exams/cchi-oral-exam` | As above |
+
+Also in this pass:
+- **Coming-soon copy (D-043):** body text in 7 blog posts and 8 migration guides no longer implies that IELTS, OET, AMC, OSCE, CPI, CMI/CHI, telephone, NDIS or legal practice is open. Each now points to NAATI CCL or the free emergency department course. Coming-soon exam pages get an automatic "Can I practise for the X on XINGO?" FAQ that says "Not yet". The NDIS and legal topic FAQs were fixed the same way.
+- Shared CCL facts live in `lib/naati-ccl.ts` (fee, segment length, review threshold, validity, language list, `NAATI_CCL_CHECKED`).
 
 ## After deploying
 1. Google Search Console → add `xingo.ai` (DNS verification) → submit `https://www.xingo.ai/sitemap.xml`.

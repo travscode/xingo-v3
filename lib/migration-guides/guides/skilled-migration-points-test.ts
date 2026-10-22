@@ -3,10 +3,10 @@ import type { MigrationGuide } from "../types";
 
 export const guide: MigrationGuide = {
   slug: "skilled-migration-points-test",
-  title: "Australian PR points test: a plain-English guide",
-  metaTitle: "Australian PR Points Test Guide (189, 190, 491)",
+  title: "Australian PR points test: how the point system works",
+  metaTitle: "Australian PR Points Test and Point System Guide",
   description:
-    "The Australian PR points test in plain English: the full points table for 189, 190 and 491 visas, the 65-point pass mark and 5 points for the NAATI CCL.",
+    "The Australian PR points test and point system in plain English: the full table for 189, 190 and 491 visas, the 65-point pass mark and a points estimate.",
   excerpt: "The full points table, the pass mark, how invitations work and the 5 points your second language can add.",
   group: "Points & visas",
   keywords: [
@@ -14,12 +14,15 @@ export const guide: MigrationGuide = {
     "pr test australia",
     "points test guide",
     "pr points calculator",
+    "pr point system in australia",
+    "australia pr point system",
+    "points test",
     "points table 189",
     "65 points pr australia",
     "how to increase pr points australia",
   ],
   published: "2026-10-03",
-  updated: "2026-10-19",
+  updated: "2026-10-22",
   tool: "points-estimator",
   atAGlance: [
     "There's no single \"PR test\". Skilled visas 189, 190 and 491 use a **points test**: you add up points for age, English, work, study and other factors.",
@@ -28,7 +31,7 @@ export const guide: MigrationGuide = {
     "Nomination adds 5 points for a 190 visa and 15 for a 491 visa.",
   ],
   intro: [
-    "Australia's main permanent skilled visas use a points test. You make claims about yourself in an expression of interest, the claims add up to a score, and the Department of Home Affairs invites people to apply from that pool. When people search for the \"PR test\", this is usually what they mean, along with the English and NAATI tests whose results add points.",
+    "Australia's main permanent skilled visas use a points test, often called the PR point system. You make claims about yourself in an expression of interest, the claims add up to a score, and the Department of Home Affairs invites people to apply from that pool. When people search for the \"PR test\", this is usually what they mean, along with the English and NAATI tests whose results add points.",
     "This guide sets out the whole points table in plain English, with a rough estimator you can try, and focuses on the parts you can still change. It isn't migration advice. The tables are published on [immi.homeaffairs.gov.au](https://immi.homeaffairs.gov.au/) and can change, so check the current table for your visa before you rely on any number here.",
   ],
   sections: [
@@ -106,7 +109,7 @@ export const guide: MigrationGuide = {
         },
         {
           type: "p",
-          text: "**English: up to 20 points.** Moving from Competent to Proficient English adds 10 points, and Superior adds 20. Each level is a minimum score in every component of an accepted test, so your weakest skill decides your level. Our guide to [English tests for Australian visas](/migrate-to-australia/english-test-for-australian-pr) shows the scores.",
+          text: "**English: up to 20 points.** Moving from Competent to Proficient English adds 10 points, and Superior adds 20. Each level is a minimum score in every component of an accepted test, so your weakest skill decides your level. Our guide to [English proficiency tests](/migrate-to-australia/english-test-for-australian-pr) shows the scores for all eight accepted tests, and there's a separate guide to [CELPIP for Australian PR](/migrate-to-australia/celpip-for-australian-pr).",
         },
         {
           type: "p",

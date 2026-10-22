@@ -3,15 +3,23 @@ import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "../../scoring";
 
 export const guide: MigrationGuide = {
   slug: "community-language-points",
-  title: "Community language points: the NAATI CCL and what counts for PR",
-  metaTitle: "NAATI CCL Points: What Counts for PR",
+  title: "Credentialed community language points: which NAATI test counts for PR",
+  metaTitle: "Credentialed Community Language: Which NAATI Test?",
   description:
-    "Which NAATI credentials earn the 5 credentialled community language points, what the CCL test is and isn't, and how it compares with interpreter certification.",
-  excerpt: "Which NAATI credentials earn the 5 community language points, and why the CCL isn't a licence to interpret.",
+    "Credentialed (credentialled) community language points explained: which NAATI test to take for PR, what the CCL test involves, and CCL vs certification.",
+  excerpt: "Which NAATI test earns the 5 credentialed community language points, and why the CCL isn't a licence to interpret.",
   group: "Points & visas",
-  keywords: ["naati ccl points", "credentialled community language points", "ccl for pr australia", "naati ccl vs cpi", "is ccl a certification"],
+  keywords: [
+    "credentialed community language",
+    "credentialled community language",
+    "which naati test for pr",
+    "naati ccl points",
+    "ccl for pr australia",
+    "naati ccl vs cpi",
+    "is ccl a certification",
+  ],
   published: "2026-10-03",
-  updated: "2026-10-03",
+  updated: "2026-10-22",
   image: {
     src: "/images/scenes/interpreter-desk.webp",
     alt: "A woman wearing headphones speaks while taking notes beside her laptop, practising an interpreting dialogue.",
@@ -23,8 +31,8 @@ export const guide: MigrationGuide = {
     `For points, it's pass or fail: ${CCL_PASS_SCORE} and ${CCL_MAX_SCORE} out of ${CCL_MAX_SCORE} earn the same 5 points.`,
   ],
   intro: [
-    "If you speak a language other than English, it may be worth points on your skilled visa. The points tables for the Skilled Independent (189), Skilled Nominated (190) and Skilled Work Regional (491) visas include a row called \"credentialled community language\", worth 5 points at the time of writing.",
-    "Most people claim those points with NAATI's Credentialed Community Language (CCL) test. This guide explains which credentials count, what the CCL involves and how it differs from interpreter certification. For booking, results and timing, read our companion article on [the CCL and the 5 points for PR](/blog/naati-ccl-5-points-australian-pr).",
+    "If you speak a language other than English, it may be worth points on your skilled visa. The points tables for the Skilled Independent (189), Skilled Nominated (190) and Skilled Work Regional (491) visas include a row called \"credentialled community language\", worth 5 points at the time of writing. (Home Affairs spells it \"credentialled\"; NAATI's test is the \"Credentialed\" Community Language test. They mean the same thing.)",
+    "So which NAATI test should you take for PR? For most people it's the Credentialed Community Language (CCL) test. This guide explains which credentials count, what the CCL involves and how it differs from interpreter certification. For booking, results and timing, read our companion article on [the CCL and the 5 points for PR](/blog/naati-ccl-5-points-australian-pr).",
   ],
   sections: [
     {
@@ -67,7 +75,7 @@ export const guide: MigrationGuide = {
             "There are **two recorded dialogues** of about 300 words each, half in English and half in your other language, set in everyday community situations such as health, housing or employment.",
             "Each dialogue is split into segments of up to 35 words. After each segment a chime sounds, and you should start interpreting within five seconds.",
             `Each dialogue is worth 45 marks. You pass with at least ${CCL_PASS_SCORE} out of ${CCL_MAX_SCORE}, and at least 29 in each dialogue.`,
-            "NAATI lists the test fee on its CCL page (A$814 when we checked) and offers the test in more than 50 languages.",
+            "NAATI lists the test fee on its CCL page (A$814 when we checked) and offers the test in 55 languages. See our [list of NAATI CCL languages](/naati/ccl/languages).",
           ],
         },
         {
@@ -90,7 +98,8 @@ export const guide: MigrationGuide = {
       ],
     },
     {
-      heading: "CCL or interpreter certification?",
+      heading: "Which NAATI test for PR: CCL or certification?",
+      id: "ccl-or-certification",
       blocks: [
         {
           type: "p",
@@ -160,7 +169,11 @@ export const guide: MigrationGuide = {
     },
     {
       q: "Is the CCL available in my language?",
-      a: "NAATI offers the CCL in more than 50 languages and lists them on its website, along with test dates. Check there before you plan around it.",
+      a: "NAATI offers the CCL in 55 languages at the time of writing, from Arabic to Yoruba, and lists them on its website. Check there before you plan around it.",
+    },
+    {
+      q: "Which NAATI test should I take for PR?",
+      a: "If you only want the 5 community language points, the CCL test is the usual choice: it has no prerequisites and is designed for migration. NAATI certification at Certified Provisional level or above also counts, but it's built for people who want to work as interpreters or translators.",
     },
   ],
   sources: [

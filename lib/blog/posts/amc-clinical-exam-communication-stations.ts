@@ -141,7 +141,7 @@ export const post: BlogPost = {
         },
         {
           type: "p",
-          text: "XINGO's [AMC clinical exam practice](/exams/amc-clinical-exam) gives you eight-minute stations with an AI patient or relative who answers in character — fatigue with red flags, a febrile toddler, a pregnant patient on valproate, post-operative delirium, breaking bad news and a suicide risk assessment — followed by feedback on task completion and communication. It doesn't assess physical examination, so pair it with hands-on practice.",
+          text: "XINGO's [AMC clinical exam practice](/exams/amc-clinical-exam), with eight-minute stations and an AI patient or relative who answers in character, is coming soon. Until then, rehearse stations with a study partner playing the patient, keep to the eight-minute timing, and pair communication practice with hands-on examination practice.",
         },
         {
           type: "callout",

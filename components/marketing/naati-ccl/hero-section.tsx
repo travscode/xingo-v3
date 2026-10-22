@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { ScenePhoto } from "@/components/marketing/people";
 import { Button } from "@/components/ui/button";
+import { CCL_MAX_SCORE } from "@/lib/scoring";
 import { cclSignUpHref, heroPoints, pageSections } from "./content";
 
 export function NaatiCclHeroSection() {
@@ -9,13 +10,13 @@ export function NaatiCclHeroSection() {
     <section className="pt-8 sm:pt-14">
       <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-14">
         <div>
-          <p className="eyebrow">NAATI CCL practice</p>
+          <p className="eyebrow">NAATI CCL test practice</p>
           <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-[-0.04em] text-balance sm:text-6xl">
             Don&apos;t walk into your CCL test unpractised.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-7 text-gray-500">
-            Practise CCL-style dialogues out loud with two AI speakers, in your language pair. Get a score out of 90 and
-            feedback after every attempt.
+            Practise for the NAATI Credentialed Community Language (CCL) test out loud. Interpret CCL-style dialogues with
+            two AI speakers in your language pair, then get a score out of {CCL_MAX_SCORE} and feedback after every attempt.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg">

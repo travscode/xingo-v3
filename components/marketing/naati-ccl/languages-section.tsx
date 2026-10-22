@@ -12,7 +12,11 @@ export function NaatiCclLanguagesSection() {
       <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Practise in your language pair</h2>
       <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
         Every dialogue pairs English with your other language. Choose yours for tips specific to it, or type in a
-        language that isn&apos;t listed once you sign up.
+        language that isn&apos;t listed once you sign up. Not sure NAATI tests your language? See the{" "}
+        <Link href="/naati/ccl/languages" className="font-semibold text-ink underline underline-offset-4">
+          full list of NAATI CCL languages
+        </Link>
+        .
       </p>
       <ul className="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         {practiceLanguages.map((language) => {

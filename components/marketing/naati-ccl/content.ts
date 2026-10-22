@@ -1,4 +1,4 @@
-import { CCL_MAX_SCORE, CCL_MODULE_ID, CCL_PASS_SCORE } from "@/lib/scoring";
+import { CCL_DIALOGUE_PASS_SCORE, CCL_MAX_SCORE, CCL_MODULE_ID, CCL_PASS_SCORE } from "@/lib/scoring";
 
 export const cclModuleId = CCL_MODULE_ID;
 /** In-app course page for CCL practice (the library lives under /courses). */
@@ -34,7 +34,7 @@ export const formatFacts = [
   {
     title: `Marked out of ${CCL_MAX_SCORE}`,
     description:
-      `Each dialogue is marked out of ${CCL_MAX_SCORE / 2}. You need ${CCL_PASS_SCORE} out of ${CCL_MAX_SCORE} overall to pass, with a minimum score on each dialogue.`,
+      `Each dialogue is marked out of ${CCL_MAX_SCORE / 2}. You need ${CCL_PASS_SCORE} out of ${CCL_MAX_SCORE} overall to pass, with at least ${CCL_DIALOGUE_PASS_SCORE} on each dialogue.`,
   },
 ] as const;
 

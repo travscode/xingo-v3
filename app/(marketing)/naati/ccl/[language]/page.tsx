@@ -14,7 +14,7 @@ import { packList, plans } from "@/lib/plans";
 import { CCL_DIALOGUE_PASS_SCORE, CCL_MAX_SCORE, CCL_PASS_SCORE } from "@/lib/scoring";
 import { COMMUNITY_LANGUAGE_POINTS } from "@/lib/points-test";
 import { pageMetadata } from "@/lib/seo-metadata";
-import { cclLanguagePages, flagFor, getCclLanguagePage, NAATI_CCL_URL, signUpHref } from "@/lib/seo-pages";
+import { cclLanguagePages, flagFor, getCclLanguagePage, NAATI_CCL_URL, naatiNameFor, signUpHref } from "@/lib/seo-pages";
 
 export function generateStaticParams() {
   return cclLanguagePages.map((page) => ({ language: page.slug }));
@@ -52,7 +52,7 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
 
   const href = signUpHref("naati_ccl", page.name.split(" (")[0]);
   const others = cclLanguagePages.filter((other) => other.slug !== page.slug);
-  const naatiName = page.naatiName ?? page.name.split(" (")[0];
+  const naatiName = naatiNameFor(page);
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 pb-8 sm:gap-20 sm:px-6">
@@ -196,6 +196,13 @@ export default async function CclLanguagePage({ params }: { params: Promise<{ la
 
       <section>
         <h2 className="text-lg font-bold">CCL practice in other languages</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Or see{" "}
+          <Link href="/naati/ccl/languages" className="font-semibold text-ink underline underline-offset-2">
+            every language NAATI offers the CCL test in
+          </Link>
+          .
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {others.map((other) => (
             <Link

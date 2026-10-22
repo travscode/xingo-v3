@@ -116,7 +116,7 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "XINGO lets you rehearse the spoken parts out loud. NMBA OSCE-style stations cover ISBAR handover, patient education, consent and upset relatives, with an AI patient or colleague who responds to what you say. OET Speaking role-plays for nursing use a five-minute timer and feedback on the clinical communication criteria.",
+      "XINGO's NMBA OSCE-style stations and OET Speaking role-plays for nursing are coming soon. In the meantime, our [NMBA OSCE](/exams/nmba-osce) and [OET Speaking](/exams/oet-speaking) pages explain each format and what's assessed.",
       "Stations are original practice scenarios, not real exam content, and XINGO isn't affiliated with the NMBA, Ahpra or OET. Feedback is an estimate to guide your practice.",
     ],
     links: [

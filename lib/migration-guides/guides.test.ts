@@ -25,6 +25,7 @@ const knownPaths = new Set<string>([
   "/blog",
   "/naati/ccl",
   "/naati/ccl/vocabulary",
+  "/naati/ccl/languages",
   "/naati/cpi",
   "/interpreting",
   "/exams",

@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { NAATI_CCL_URL } from "@/lib/naati-ccl";
 import { formatFacts } from "./content";
 
 /** About the CCL test format. */
@@ -8,7 +10,16 @@ export function NaatiCclWhySection() {
       <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.03em] sm:text-4xl">How the CCL test works</h2>
       <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
         The Credentialed Community Language (CCL) test checks that you can interpret everyday community conversations.
-        Many people sit it for the points it can add to some Australian visa applications.
+        Many people sit it for the points a credentialled community language adds to some Australian skilled visa
+        applications. See{" "}
+        <Link href="/migrate-to-australia/community-language-points" className="font-semibold text-ink underline underline-offset-4">
+          which NAATI test counts for PR
+        </Link>{" "}
+        and the{" "}
+        <Link href="/blog/naati-ccl-test-format-and-marking" className="font-semibold text-ink underline underline-offset-4">
+          CCL exam format and marking
+        </Link>
+        .
       </p>
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {formatFacts.map((fact, index) => (
@@ -22,7 +33,7 @@ export function NaatiCclWhySection() {
       <p className="mt-6 text-sm text-gray-500">
         Test rules can change. Always check the current details on the{" "}
         <a
-          href="https://www.naati.com.au/"
+          href={NAATI_CCL_URL}
           target="_blank"
           rel="noreferrer"
           className="font-semibold text-ink underline underline-offset-4"

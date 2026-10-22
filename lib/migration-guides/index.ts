@@ -9,6 +9,7 @@ import { plainText } from "../blog/utils";
 import type { BlogBlock } from "../blog/types";
 import type { MigrationGuide, MigrationGuideGroup } from "./types";
 import { guide as becomeInterpreter } from "./guides/become-an-interpreter-in-australia";
+import { guide as celpip } from "./guides/celpip-for-australian-pr";
 import { guide as communityLanguagePoints } from "./guides/community-language-points";
 import { guide as doctors } from "./guides/doctors-moving-to-australia";
 import { guide as englishTest } from "./guides/english-test-for-australian-pr";
@@ -34,7 +35,7 @@ export const migrationGuideGroups: Array<{ group: MigrationGuideGroup; descripti
   {
     group: "Language & tests",
     description: "Proving your English, choosing a test and free classes.",
-    guides: [englishTest, whichTest, freeEnglish],
+    guides: [englishTest, whichTest, celpip, freeEnglish],
   },
   {
     group: "Points & visas",

@@ -3,12 +3,14 @@ import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "../../scoring";
 
 export const post: BlogPost = {
   slug: "naati-ccl-test-format-and-marking",
-  title: "NAATI CCL test format and marking, explained",
-  metaTitle: "NAATI CCL Test Format and Marking Explained",
+  title: "NAATI CCL exam format and marking, explained",
+  metaTitle: "NAATI CCL Exam Format and Marking, Explained",
   description: `How the NAATI CCL test works: two dialogues, 35-word segments, marking out of ${CCL_MAX_SCORE}, the ${CCL_PASS_SCORE} pass mark and 29-per-dialogue minimum, repeats and what loses marks.`,
   excerpt: `Two dialogues, short segments, mark deduction and a pass mark of ${CCL_PASS_SCORE}/${CCL_MAX_SCORE} with a minimum per dialogue — what each part means for how you practise.`,
   category: "NAATI CCL",
   keywords: [
+    "NAATI exam format",
+    "CCL exam format",
     "NAATI CCL test format",
     "CCL marking criteria",
     "CCL pass mark",
@@ -17,7 +19,7 @@ export const post: BlogPost = {
     "CCL segments 35 words",
   ],
   published: "2026-10-03",
-  updated: "2026-10-03",
+  updated: "2026-10-22",
   intro: [
     "The NAATI Credentialed Community Language (CCL) test checks whether you can communicate between English and another language at a community level. Many people sit it for the five points it can add to an Australian skilled migration points test; others want a first step towards interpreting work.",
     "The test is short, and the format is very consistent. Knowing exactly how it runs and how it's marked changes how you should practise. This guide summarises NAATI's published information — always read NAATI's own [CCL test page](https://www.naati.com.au/migration-assessments/ccl/) and [candidate instructions](https://www.naati.com.au/resources/candidate-instructions-ccl/) before your test, because details change.",

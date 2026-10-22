@@ -22,6 +22,7 @@ const footerLinks = [
   { href: "/interpreting/ndis-interpreting", label: "NDIS interpreting" },
   { href: "/interpreting/telephone-interpreting-practice", label: "Telephone interpreting" },
   { href: "/naati/ccl/vocabulary", label: "CCL vocabulary" },
+  { href: "/naati/ccl/languages", label: "NAATI CCL languages" },
   { href: "/blog", label: "Guides" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/for-interpreters", label: "For interpreters" },

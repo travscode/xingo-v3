@@ -116,7 +116,7 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "XINGO lets you practise using both your languages out loud. Interpret dialogues between two AI speakers, an English-speaking professional and a client speaking your language, in community, medical and phone settings. Assessed sessions end with scored feedback on accuracy and delivery, so you can see whether interpreting suits you before you commit to training.",
+      "XINGO lets you practise using both your languages out loud. Interpret CCL-style dialogues between two AI speakers, an English-speaking professional and a client speaking your language, or try the free emergency department course for medical interpreting. Assessed sessions end with scored feedback on accuracy and delivery, so you can see whether interpreting suits you before you commit to training.",
       "XINGO is independent practice and isn't affiliated with NAATI.",
     ],
     links: [

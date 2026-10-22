@@ -129,7 +129,7 @@ export const post: BlogPost = {
         },
         {
           type: "p",
-          text: "XINGO's [CMI](/exams/cmi-oral-exam) and [CHI](/exams/cchi-oral-exam) practice gives you short consecutive medical role-plays — endocrinology, OB/GYN, emergency, paediatrics, neurology and pharmacy — with an AI provider and patient, then scores accuracy, terminology and delivery from your transcript. Sight translation and simultaneous items aren't covered, so practise those separately.",
+          text: "XINGO's [CMI](/exams/cmi-oral-exam) and [CHI](/exams/cchi-oral-exam) practice, with short consecutive role-plays across specialties, is coming soon. Today you can practise consecutive medical interpreting free in XINGO's [emergency department course](/interpreting/medical-interpreting-practice): an English-speaking clinician and a patient who speaks your language, with feedback from your transcript. Sight translation and simultaneous items aren't covered, so practise those separately.",
         },
       ],
     },

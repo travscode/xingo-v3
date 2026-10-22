@@ -140,7 +140,7 @@ export const post: BlogPost = {
       blocks: [
         {
           type: "p",
-          text: "Phone skills come from reps without visual cues. Practise with a partner in another room, or with recordings of service calls. XINGO's [telephone interpreting practice](/interpreting/telephone-interpreting-practice) runs audio-only calls — a Centrelink-style payment enquiry, a GP results call and an energy hardship call — with AI callers who speak quickly and quote reference numbers, then scores your interpreting. The [NAATI CPI page](/naati/cpi) explains how this fits CPI preparation.",
+          text: "Phone skills come from reps without visual cues. Practise with a partner in another room, or with recordings of service calls, and sit with your back to them so you can't lip-read or watch their hands. XINGO's [telephone interpreting practice](/interpreting/telephone-interpreting-practice), with audio-only calls and AI callers who quote reference numbers, is coming soon. The [NAATI CPI page](/naati/cpi) explains how phone work fits CPI preparation.",
         },
       ],
     },

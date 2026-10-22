@@ -172,7 +172,7 @@ export const post: BlogPost = {
         },
         {
           type: "p",
-          text: "XINGO's [OET Speaking practice](/exams/oet-speaking) gives you original nursing and medicine cards and an AI patient or relative who reacts to what you say — scared, sceptical or angry — on a five-minute timer. Afterwards you get feedback against the clinical communication criteria and language. It can't assess intelligibility from a transcript, so keep recording yourself for pronunciation.",
+          text: "XINGO's [OET Speaking practice](/exams/oet-speaking), with original nursing and medicine cards and an AI patient or relative on a five-minute timer, is coming soon. Until then, practise with a colleague playing the interlocutor, time each role-play, and record yourself to check pronunciation and intelligibility.",
         },
         {
           type: "callout",

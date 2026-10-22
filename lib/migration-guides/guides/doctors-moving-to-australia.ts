@@ -115,7 +115,7 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "XINGO's AMC clinical exam practice gives you eight-minute stations with an AI simulated patient or relative: history taking, counselling and breaking bad news. You talk, they respond, and each assessed station ends with feedback on structure and communication. OET Speaking role-plays for medicine are there if you're also preparing for your English test.",
+      "XINGO's AMC clinical exam practice, with eight-minute stations and an AI simulated patient or relative, is coming soon, and so is OET Speaking practice for medicine. Our [AMC clinical exam page](/exams/amc-clinical-exam) explains the stations and what's assessed in the meantime.",
       "Stations are original practice scenarios, not AMC exam content. XINGO isn't affiliated with the AMC, the Medical Board or Ahpra, and feedback is an estimate to guide your practice.",
     ],
     links: [

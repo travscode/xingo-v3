@@ -31,11 +31,10 @@ export type CclLanguagePage = {
 };
 
 /**
- * Checked 2026-10-19 on naati.com.au/migration-assessments/ccl/: every language below
- * is on NAATI's CCL list. Remove a language's availability claim if NAATI drops it.
+ * Every language below is on NAATI's CCL list (lib/naati-ccl.ts; naati-ccl.test.ts
+ * checks it). Remove a language's availability claim if NAATI drops it.
  */
-export const NAATI_CCL_LANGUAGES_CHECKED = "2026-10-19";
-export const NAATI_CCL_URL = "https://www.naati.com.au/migration-assessments/ccl/";
+export { NAATI_CCL_URL } from "./naati-ccl";
 
 const englishLoanwordsTip = (language: string) => ({
   title: "Watch your English borrowings",
@@ -389,7 +388,7 @@ export const topicPages: TopicPage[] = [
       },
       {
         q: "Can I try an NDIS scenario for free?",
-        a: "Yes — the planning meeting is a free preview dialogue. The full course is included with Pro or any minute pack.",
+        a: "Not yet. NDIS interpreting practice is coming soon. NAATI CCL practice is open now, with free practice minutes every month.",
       },
       {
         q: "Do I need to know NDIS terms first?",
@@ -452,7 +451,7 @@ export const topicPages: TopicPage[] = [
     skills: ["First-person rendition", "Formal register", "Legal terminology", "Preserving hesitation and exact answers"],
     faqs: [
       { q: "Are these real court transcripts?", a: "No — they're realistic role-plays written for practice. Nothing is taken from real proceedings." },
-      { q: "Which course is free?", a: "Legal courses are premium. Every premium course includes a free preview dialogue so you can try the format first." },
+      { q: "Can I practise legal interpreting now?", a: "Not yet. Legal interpreting practice is coming soon. NAATI CCL practice is open now, with free practice minutes every month." },
       { q: "Is this legal advice?", a: "No. The content is for interpreting practice only." },
     ],
     goal: "legal",
@@ -484,6 +483,11 @@ export const topicPages: TopicPage[] = [
     goal: "naati_cpi",
   },
 ];
+
+/** NAATI's spelling of a CCL language page's language (e.g. "Sinhalese" for Sinhala). */
+export function naatiNameFor(page: CclLanguagePage) {
+  return page.naatiName ?? page.name.split(" (")[0];
+}
 
 export function getTopicPage(slug: string) {
   return topicPages.find((page) => page.slug === slug) ?? null;

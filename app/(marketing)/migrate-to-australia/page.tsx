@@ -80,7 +80,7 @@ const pathway: PathStep[] = [
     note: "This step is yours and your agent's. XINGO doesn't give migration advice.",
     guides: [
       { label: "Finding a registered migration agent", slug: "find-a-registered-migration-agent" },
-      { label: "The points test explained", slug: "skilled-migration-points-test" },
+      { label: "PR points test guide", slug: "skilled-migration-points-test" },
     ],
   },
   {

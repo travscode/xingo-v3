@@ -123,7 +123,7 @@ export const post: BlogPost = {
         {
           type: "callout",
           title: "Moving to Australia?",
-          text: "For the bigger picture, see [the skilled migration points test explained](/migrate-to-australia/skilled-migration-points-test) and [which NAATI credentials count for community language points](/migrate-to-australia/community-language-points).",
+          text: "For the bigger picture, see [the Australian PR points test guide](/migrate-to-australia/skilled-migration-points-test) and [which NAATI credentials count for community language points](/migrate-to-australia/community-language-points).",
         },
       ],
     },

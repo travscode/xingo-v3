@@ -130,7 +130,7 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "XINGO doesn't give migration advice, and nothing on our site replaces a registered agent or lawyer. What we do is help with the language parts of your plan that you prepare for yourself: the speaking section of an English test and the NAATI CCL.",
+      "XINGO doesn't give migration advice, and nothing on our site replaces a registered agent or lawyer. What we do is help with a language part of your plan that you prepare for yourself: the NAATI CCL test. English speaking practice is coming soon.",
       "If you're working on your English result or community language points while your agent handles the application, you can practise out loud with AI voice partners and get feedback after each assessed session.",
     ],
     links: [

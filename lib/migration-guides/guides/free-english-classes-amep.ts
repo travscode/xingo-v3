@@ -125,7 +125,7 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "The AMEP is the right place to start learning English, and it's free. XINGO is for a later stage: when you're preparing for a speaking test such as IELTS or OET and want to practise answering out loud, on real timings, with an AI examiner and feedback.",
+      "The AMEP is the right place to start learning English, and it's free. XINGO is for a later stage. Our IELTS and OET Speaking practice is coming soon. If you speak another language, you can already practise for the [NAATI CCL](/naati/ccl), which can add 5 points to some skilled visa applications.",
       "If you speak another language too, you can also practise interpreting between English and your language with NAATI-style dialogues.",
     ],
     links: [

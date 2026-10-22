@@ -51,6 +51,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page("/", 1),
     page("/naati/ccl", 0.9),
     page("/naati/ccl/vocabulary", 0.7),
+    page("/naati/ccl/languages", 0.7),
     page("/naati/cpi", 0.8),
     page("/interpreting", 0.7),
     page("/exams", 0.8),

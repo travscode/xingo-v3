@@ -41,12 +41,12 @@ export const examPages: ExamPage[] = [
     region: "Australia",
     moduleId: "oet-speaking-nursing",
     goal: "oet",
-    title: "OET Speaking Practice — Nursing & Medicine Role-Plays",
+    title: "Occupational English Test (OET) Speaking Guide",
     metaDescription:
-      "Practise OET Speaking role-plays out loud with an AI patient. Nursing and medicine cards, a 5-minute timer and feedback on the clinical communication criteria.",
-    headline: "Practise OET Speaking role-plays with a patient who talks back.",
+      "The Occupational English Test (OET) Speaking sub-test explained: two 5-minute role-plays, nine criteria, the 0–500 scale and the scores Australia asks for.",
+    headline: "OET Speaking: how the Occupational English Test role-plays work.",
     intro:
-      "Read your task card, then run a timed five-minute role-play with an AI patient or relative who is anxious, reluctant or confused — just like the interlocutor. Get feedback on the criteria assessors actually use.",
+      "The Occupational English Test (OET) is the English test built for health professionals, accepted by Home Affairs for visas and by Ahpra for registration. In its Speaking sub-test you run two five-minute role-plays with a patient, relative or carer. Here's the format, how it's marked and how to prepare.",
     format: [
       { title: "Two role-plays", body: "Each about 5 minutes, after 3 minutes to read the card. You play your own profession; the interlocutor plays a patient, relative or carer." },
       { title: "You lead", body: "The candidate card sets the scene and lists 3–5 tasks. You normally open the conversation and keep it moving." },
@@ -79,15 +79,25 @@ export const examPages: ExamPage[] = [
       { title: "Respond to emotion", body: "Acknowledge worry or frustration specifically — formulaic phrases like 'I understand how you feel' can count against you." },
     ],
     faqs: [
-      { q: "Is this the official OET?", a: "No. XINGO is independent practice software with original role-play cards modelled on the public format." },
-      { q: "Which professions are covered?", a: "Nursing and Medicine today. Tell us which profession you need next." },
-      { q: "Can it score my pronunciation?", a: "Not reliably — feedback is based on what you said, so intelligibility isn't assessed. Everything else on the card is." },
-      { q: "How long is each role-play?", a: "Five minutes, timed. Read your card first; it stays on screen during the role-play." },
+      {
+        q: "What is the Occupational English Test?",
+        a: "OET is an English language test for health professionals, with Listening, Reading, Writing and Speaking sub-tests. Writing and Speaking are set in your own profession. Home Affairs accepts it for visas, and Ahpra accepts it for registration.",
+      },
+      {
+        q: "What OET score do I need in Australia?",
+        a: "It depends on your goal. For tests taken from 23 April 2026, Ahpra's minimums are 350 in Listening and Writing and 360 in Reading and Speaking. For visas, Home Affairs sets a minimum in each sub-test for each English level; for example, Proficient English needs 350 Listening, 360 Reading, 380 Writing and 360 Speaking. Check the official pages before you book.",
+      },
+      { q: "How long is each role-play?", a: "About five minutes, after three minutes to read your role-play card." },
+      {
+        q: "Can I practise OET Speaking on XINGO?",
+        a: "Not yet. OET Speaking practice for nursing and medicine is coming soon. XINGO is independent and not affiliated with OET.",
+      },
     ],
     sources: [
       { label: "OET — Speaking test information", url: "https://oet.com/test-information/speaking/" },
       { label: "OET — Speaking criteria overview", url: "https://oet.com/en-us/post/speaking-criteria-overview" },
       { label: "AHPRA — Accepted English language tests", url: "https://www.ahpra.gov.au/Registration/Registration-Standards/English-language-skills/Accepted-English-language-tests.aspx" },
+      { label: "Home Affairs — Proficient English", url: "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/proficient-english" },
     ],
   },
   {
@@ -98,12 +108,12 @@ export const examPages: ExamPage[] = [
     region: "Australia",
     moduleId: "ielts-speaking",
     goal: "ielts",
-    title: "IELTS Speaking Mock Test Online with an AI Examiner",
+    title: "IELTS Speaking Test: Format, Bands and AI Practice",
     metaDescription:
-      "A full IELTS Speaking mock test with an AI examiner: Part 1, the Part 2 cue card and Part 3, on real timings. Get an estimated band and specific feedback.",
-    headline: "A full IELTS Speaking mock test, any time you need one.",
+      "The IELTS Speaking test explained: three parts in 11–14 minutes, the four band criteria, and the scores Australian visas and Ahpra ask for. AI mock tests soon.",
+    headline: "The IELTS Speaking test: format, band criteria and how to practise.",
     intro:
-      "An AI examiner runs all three parts on the real timings and never helps you out — then you get an estimated band and specific feedback on fluency, vocabulary and grammar.",
+      "IELTS Speaking is a face-to-face English speaking test with an examiner, the same for Academic and General Training. Here's how the three parts run, what the examiner listens for and the scores Australia asks for. An IELTS Speaking mock test with an AI examiner is coming soon on XINGO.",
     format: [
       { title: "11–14 minutes", body: "A one-to-one conversation with an examiner, the same for Academic and General Training." },
       { title: "Part 1 · 4–5 min", body: "Questions about you and familiar topics." },
@@ -131,14 +141,25 @@ export const examPages: ExamPage[] = [
       { title: "Don't memorise", body: "Examiners spot rehearsed answers. Practise flexible language instead of scripts." },
     ],
     faqs: [
-      { q: "Is the band accurate?", a: "It's an estimate based on three of the four criteria from your transcript. Pronunciation isn't included." },
-      { q: "Is this the same for Academic and General Training?", a: "Yes — the Speaking test is the same for both." },
-      { q: "What band do I need in Australia?", a: "It depends on your visa, university or registration body. Check the official requirement for your pathway." },
-      { q: "Does the examiner give feedback?", a: "Not during the test — just like the real thing. You get detailed feedback afterwards." },
+      { q: "Is the Speaking test the same for Academic and General Training?", a: "Yes. Both versions use the same Speaking test." },
+      {
+        q: "What IELTS score do I need in Australia?",
+        a: "For visas, Home Affairs sets a minimum in each component: at least 6 for Competent English, 7 for Proficient and 8 for Superior, for tests taken from 7 August 2025. Universities and registration bodies set their own scores.",
+      },
+      {
+        q: "What IELTS score do doctors need in Australia?",
+        a: "For registration, Ahpra's minimums for IELTS Academic taken from 23 April 2026 are 7 overall, 7 in Listening, Reading and Speaking, and 6.5 in Writing. General Training isn't accepted for registration. Check Ahpra's page for the full rules.",
+      },
+      {
+        q: "Can I take an English speaking test with AI on XINGO?",
+        a: "Not yet. An IELTS Speaking mock test with an AI examiner is coming soon. It will give an estimated band, not an official result, and XINGO isn't affiliated with IELTS.",
+      },
     ],
     sources: [
       { label: "IELTS — Speaking test format", url: "https://ielts.org/take-a-test/test-types/ielts-academic-test/ielts-academic-format-speaking" },
       { label: "IELTS — Speaking band descriptors (PDF)", url: "https://ielts.org/cdn/ielts-guides/ielts-speaking-band-descriptors.pdf" },
+      { label: "Home Affairs — Proficient English", url: "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/proficient-english" },
+      { label: "Ahpra — Accepted English language tests", url: "https://www.ahpra.gov.au/Registration/Registration-Standards/English-language-skills/Accepted-English-language-tests.aspx" },
     ],
   },
   {
@@ -183,7 +204,7 @@ export const examPages: ExamPage[] = [
     ],
     faqs: [
       { q: "Is this endorsed by the AMC?", a: "No. XINGO is independent; the stations are original practice scenarios." },
-      { q: "Can I practise examination stations?", a: "Not hands-on. You can practise describing your approach, which suits the online format." },
+      { q: "Will XINGO cover examination stations?", a: "Not hands-on. When AMC practice opens, you'll be able to practise describing your approach, which suits the online format." },
       { q: "How long is each station?", a: "Eight minutes, timed, after you read the stem." },
     ],
     sources: [
@@ -233,7 +254,7 @@ export const examPages: ExamPage[] = [
     ],
     faqs: [
       { q: "Is this endorsed by NMBA or Ahpra?", a: "No. XINGO is independent; stations are original practice scenarios." },
-      { q: "Can I practise clinical skills?", a: "No — voice practice covers the communication in each station, which is assessed throughout." },
+      { q: "Will XINGO cover clinical skills?", a: "No. When OSCE practice opens, voice practice will cover the communication in each station, which is assessed throughout." },
       { q: "Is it timed?", a: "Yes, eight minutes per station after reading your task." },
     ],
     sources: [

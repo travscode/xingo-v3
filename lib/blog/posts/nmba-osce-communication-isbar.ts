@@ -135,7 +135,7 @@ export const post: BlogPost = {
         },
         {
           type: "p",
-          text: "XINGO's [NMBA OSCE practice](/exams/nmba-osce) covers the talking parts of the OSCE: ISBAR calls to a rushed doctor, anticoagulant education, a falls conversation with an angry daughter, pain reassessment, transfusion consent and bedside handover, each timed, followed by feedback on structure and communication. Clinical skills still need hands-on practice.",
+          text: "XINGO's [NMBA OSCE practice](/exams/nmba-osce), covering the talking parts such as ISBAR calls, patient education and conversations with upset relatives, is coming soon. In the meantime, rehearse ISBAR out loud with a colleague and time each station. Clinical skills still need hands-on practice.",
         },
         {
           type: "callout",

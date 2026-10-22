@@ -106,7 +106,7 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "Once the essentials are sorted, many people start planning their next step: an English test for permanent residence, registration in their profession, or work that uses their languages. XINGO helps with the speaking parts: IELTS and OET Speaking with an AI examiner or patient, and NAATI-style interpreting dialogues in your language pair.",
+      "Once the essentials are sorted, many people start planning their next step: an English test for permanent residence, registration in their profession, or work that uses their languages. XINGO helps with the speaking parts. NAATI CCL practice in your language pair is open now, and IELTS and OET Speaking practice is coming soon.",
       "Every account gets free practice minutes each month, no card needed. XINGO is independent and doesn't give migration advice.",
     ],
     links: [

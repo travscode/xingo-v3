@@ -20,7 +20,7 @@ export const guide: MigrationGuide = {
     "accepted english tests home affairs",
   ],
   published: "2026-10-03",
-  updated: "2026-10-19",
+  updated: "2026-10-22",
   image: {
     src: "/images/scenes/speaking-test-prep.webp",
     alt: "A man wearing a headset rehearses a spoken test answer out loud at his desk, holding a small timer.",
@@ -63,6 +63,25 @@ export const guide: MigrationGuide = {
       ],
     },
     {
+      heading: "Which test suits you",
+      blocks: [
+        {
+          type: "ul",
+          items: [
+            "**IELTS** is the most familiar choice, with a face-to-face Speaking interview. See our [IELTS Speaking guide](/exams/ielts-speaking).",
+            "**PTE Academic** is fully computer-based, including speaking into a microphone.",
+            "**OET**, the Occupational English Test, is built for health professionals, and its Writing and Speaking tasks are set in your profession. See our [OET Speaking guide](/exams/oet-speaking).",
+            "**CELPIP General** is a Canadian test that's newly accepted for Australian visas. See [CELPIP for Australian PR](/migrate-to-australia/celpip-for-australian-pr).",
+            "**TOEFL iBT, Cambridge C1 Advanced, LANGUAGECERT Academic and MET** are also on the list; check each provider for test centres near you.",
+          ],
+        },
+        {
+          type: "p",
+          text: "We compare the three most common tests in [IELTS, PTE or OET?](/migrate-to-australia/ielts-vs-pte-vs-oet).",
+        },
+      ],
+    },
+    {
       heading: "The English levels: Functional to Superior",
       blocks: [
         {
@@ -71,21 +90,27 @@ export const guide: MigrationGuide = {
         },
         {
           type: "p",
-          text: "Each level is defined as a minimum score in **each** of the four test components, not an average. For example, if Proficient asks for 7 in every IELTS component, an overall 7.5 with a 6.5 in writing doesn't meet it. The official minimums for tests taken from 7 August 2025 include:",
+          text: "Each level is defined as a minimum score in **each** of the four test components, not an average. For example, if Proficient asks for 7 in every IELTS component, an overall 7.5 with a 6.5 in writing doesn't meet it. These are the official minimums for tests taken from 7 August 2025:",
         },
         {
           type: "table",
-          caption: "Minimum score in each component (listening / reading / writing / speaking), tests taken on or after 7 August 2025. Source: Home Affairs English level pages, October 2026.",
-          head: ["Level", "IELTS (Academic or General Training)", "PTE Academic"],
+          caption:
+            "Minimum score in each component (listening / reading / writing / speaking), tests taken on or after 7 August 2025. Source: Home Affairs English level pages, checked October 2026. Older results use different tables.",
+          head: ["Test", "Competent", "Proficient", "Superior"],
           rows: [
-            ["Competent", "6 / 6 / 6 / 6", "47 / 48 / 51 / 54"],
-            ["Proficient", "7 / 7 / 7 / 7", "58 / 59 / 69 / 76"],
-            ["Superior", "8 / 8 / 8 / 8", "69 / 70 / 85 / 88"],
+            ["IELTS (Academic or General Training)", "6 / 6 / 6 / 6", "7 / 7 / 7 / 7", "8 / 8 / 8 / 8"],
+            ["PTE Academic", "47 / 48 / 51 / 54", "58 / 59 / 69 / 76", "69 / 70 / 85 / 88"],
+            ["TOEFL iBT", "16 / 16 / 19 / 19", "22 / 22 / 26 / 24", "26 / 27 / 30 / 28"],
+            ["OET", "290 / 310 / 290 / 330", "350 / 360 / 380 / 360", "390 / 400 / 420 / 400"],
+            ["CELPIP General", "7 / 7 / 7 / 7", "9 / 8 / 10 / 8", "10 / 10 / 12 / 10"],
+            ["Cambridge C1 Advanced", "163 / 163 / 170 / 179", "175 / 179 / 193 / 194", "186 / 190 / 210 / 208"],
+            ["LANGUAGECERT Academic", "57 / 60 / 64 / 70", "67 / 71 / 78 / 82", "80 / 83 / 89 / 89"],
+            ["Michigan English Test (MET)", "56 / 55 / 57 / 48", "61 / 63 / 74 / 59", "Not listed"],
           ],
         },
         {
           type: "p",
-          text: "OET, TOEFL iBT, C1 Advanced, CELPIP General, LANGUAGECERT Academic and MET each have their own score tables, and older results use different tables again. Check the [Competent](https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/competent-english), [Proficient](https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/proficient-english) and [Superior](https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/superior-english) pages for the test you're taking. Note that the new PTE Academic keeps the old name but has different scores.",
+          text: "Check the [Competent](https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/competent-english), [Proficient](https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/proficient-english) and [Superior](https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/superior-english) pages before you book. The new PTE Academic keeps the old name but has different scores, and TOEFL iBT only counts if you select \"Taking TOEFL for Australia\" when you register.",
         },
         {
           type: "callout",
@@ -130,7 +155,7 @@ export const guide: MigrationGuide = {
       blocks: [
         {
           type: "p",
-          text: "The tests differ in format more than in difficulty. IELTS Speaking is a face-to-face interview with an examiner; PTE Academic is computer-based and you speak into a microphone; OET uses health-care role-plays. We compare them in [IELTS, PTE or OET: which test?](/migrate-to-australia/ielts-vs-pte-vs-oet).",
+          text: "The tests differ in format more than in difficulty, so pick the one you perform best in. Whichever you choose, these steps help:",
         },
         {
           type: "ol",
@@ -184,7 +209,7 @@ export const guide: MigrationGuide = {
     { label: "Home Affairs — Points table, Skilled Independent visa (subclass 189)", url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/skilled-independent-189/points-table" },
     { label: "Ahpra — Accepted English language tests", url: "https://www.ahpra.gov.au/Registration/Registration-Standards/English-language-skills/Accepted-English-language-tests.aspx" },
   ],
-  related: ["ielts-vs-pte-vs-oet", "skilled-migration-points-test", "community-language-points", "free-english-classes-amep"],
+  related: ["ielts-vs-pte-vs-oet", "celpip-for-australian-pr", "skilled-migration-points-test", "community-language-points", "free-english-classes-amep"],
   cta: {
     title: "Bilingual? Work on 5 more points",
     body: `Practise for the NAATI CCL in your language with CCL-style dialogues, scored out of ${CCL_MAX_SCORE}. Free practice minutes every month, no card needed.`,

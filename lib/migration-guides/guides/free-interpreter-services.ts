@@ -117,7 +117,7 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "If you need an interpreter, call TIS National: XINGO doesn't provide interpreting. If you're bilingual and interested in becoming an interpreter, XINGO lets you practise interpreting dialogues out loud between two AI speakers, including medical appointments and phone calls, with scored feedback after each assessed session.",
+      "If you need an interpreter, call TIS National: XINGO doesn't provide interpreting. If you're bilingual and interested in becoming an interpreter, XINGO lets you practise interpreting out loud between two AI speakers: CCL-style community dialogues and a free emergency department course, with scored feedback after each assessed session.",
       "XINGO is partnered with 2M Language Services. Once you're NAATI certified, you can apply to work with 2M as an interpreter. 2M makes its own decisions about who it engages.",
     ],
     links: [

@@ -25,6 +25,7 @@ import { examPages, getExamPage } from "@/lib/exam-pages";
 import { isGoalComingSoonOnSite, isSpeakingGoal } from "@/lib/goals";
 import { ComingSoonHeroButton } from "@/components/marketing/coming-soon";
 import { pageMetadata } from "@/lib/seo-metadata";
+import { openAlternativeFor } from "@/lib/site-status";
 import { signUpHref } from "@/lib/seo-pages";
 
 export function generateStaticParams() {
@@ -51,6 +52,18 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
   const path = `/exams/${page.slug}`;
   const visual = examVisual(page.slug);
   const partners = examIndex.find((exam) => exam.href === path)?.partners.label ?? "A realistic partner";
+  // D-043: coming-soon pages say so in the FAQ too, unless the page already answers it.
+  const alternative = openAlternativeFor(page.goal);
+  const faqs =
+    comingSoon && !page.faqs.some((faq) => /on XINGO/.test(faq.q))
+      ? [
+          {
+            q: `Can I practise for the ${page.shortName} on XINGO?`,
+            a: `Not yet. ${page.shortName} practice is coming soon. ${alternative.name} practice is open now, with free practice minutes every month.`,
+          },
+          ...page.faqs,
+        ]
+      : page.faqs;
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-4 pb-8 sm:gap-28 sm:px-6">
@@ -90,7 +103,7 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
       <ExamScenarios page={page} visual={visual} href={comingSoon ? null : href} />
       <ExamTips tips={page.tips} />
       <HowSteps variant={isSpeakingGoal(page.goal) ? "roleplay" : "interpreting"} />
-      <FaqSection faqs={page.faqs} />
+      <FaqSection faqs={faqs} />
       <GuideLinks pagePath={path} />
 
       <MigrationGuidesCallout pagePath={path} />

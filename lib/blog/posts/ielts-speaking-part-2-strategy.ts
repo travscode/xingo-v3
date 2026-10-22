@@ -145,7 +145,7 @@ export const post: BlogPost = {
         },
         {
           type: "p",
-          text: "Speaking to a real listener matters, because an examiner's silence feels different from talking to your phone. XINGO's [IELTS Speaking mock test](/exams/ielts-speaking) runs all three parts with an AI examiner on the real timings and gives an estimated band with feedback on fluency, vocabulary and grammar. It doesn't assess pronunciation, so the estimate is a guide, not an official score.",
+          text: "Speaking to a real listener matters, because an examiner's silence feels different from talking to your phone. Practise with a friend or tutor who plays the examiner and keeps time. XINGO's [IELTS Speaking practice](/exams/ielts-speaking), with an AI examiner on the real timings, is coming soon.",
         },
         {
           type: "callout",
