@@ -16,6 +16,7 @@ import { Badge, Card, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import type { Scenario, VoiceAgent } from "@/types/scenario";
 import type { TranscriptEntry } from "@/types/session";
+import { localizeScenarioNames } from "@/lib/agent-names";
 
 /**
  * EXPERIMENT (Admin → Lab, D-033): the learner never switches person. Both AI
@@ -55,8 +56,12 @@ export function AutoSwitchRoom({ scenarioId }: { scenarioId: string }) {
   return <Room scenario={data.scenario as unknown as Scenario} />;
 }
 
-function Room({ scenario }: { scenario: Scenario }) {
+function Room({ scenario: authoredScenario }: { scenario: Scenario }) {
   const { activePair } = useActiveLanguagePair();
+  const scenario = useMemo(
+    () => localizeScenarioNames(authoredScenario, activePair.targetLanguage),
+    [authoredScenario, activePair.targetLanguage],
+  );
   const startAttempt = useMutation(api.practice.startAttempt);
   const cancelAttempt = useMutation(api.practice.cancelAttempt);
   const heartbeat = useMutation(api.practice.heartbeat);

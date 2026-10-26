@@ -12,6 +12,8 @@ export interface VoiceAgent {
   instructions: string;
   openingLine?: string;
   endCondition?: string;
+  /** The name used when the session is held in each language (D-045). */
+  localizedNames?: Array<{ language: string; name: string }>;
 }
 
 export interface PracticeRuntime {
