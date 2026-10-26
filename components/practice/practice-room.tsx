@@ -41,6 +41,7 @@ import type { Scenario, VoiceAgent } from "@/types/scenario";
 import type { TranscriptEntry } from "@/types/session";
 import { deriveInterpretingSteps, taskItems, type CoachResult, type Party } from "@/components/practice/session-guide";
 import { StepGuide, TaskChecklist, TranscriptSection } from "@/components/practice/session-panel";
+import { localizeScenarioNames } from "@/lib/agent-names";
 
 type AgentKey = "agent_a" | "agent_b";
 type Phase = "setup" | "countdown" | "connecting" | "live" | "finishing";
@@ -62,7 +63,17 @@ export type PracticeRoomData = Extract<
 export function PracticeRoom({ data }: { data: PracticeRoomData }) {
   const router = useRouter();
   const { activePair } = useActiveLanguagePair();
-  const scenario = data.scenario as unknown as Scenario;
+  const authoredScenario = data.scenario as unknown as Scenario;
+  // Characters take their name for the session's language (D-045). XINGO's English test
+  // role-plays always run in English, so they keep their authored names.
+  const sessionLanguage =
+    authoredScenario.practiceRuntime.practiceType === "roleplay" && !isCommunityRoleplayId(authoredScenario.moduleId)
+      ? "English"
+      : activePair.targetLanguage;
+  const scenario = useMemo(
+    () => localizeScenarioNames(authoredScenario, sessionLanguage),
+    [authoredScenario, sessionLanguage],
+  );
 
   const startAttempt = useMutation(api.practice.startAttempt);
   const heartbeat = useMutation(api.practice.heartbeat);

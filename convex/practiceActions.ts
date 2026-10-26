@@ -6,6 +6,7 @@ import { assessmentJsonSchema, buildGradingPrompt } from "./model/grading";
 import { MIN_INTERPRETER_TURNS_TO_GRADE } from "../lib/plans";
 import { rubricForModule } from "../lib/rubrics";
 import { applyCompletion, type EndReason } from "../lib/scoring";
+import { localizeScenarioNames } from "../lib/agent-names";
 
 const OPENAI_API = "https://api.openai.com/v1";
 
@@ -244,7 +245,8 @@ async function grade(
     return { status: "too_short" };
   }
 
-  const scenario = input.scenario;
+  // Grade against the names the learner actually heard (D-045).
+  const scenario = localizeScenarioNames(input.scenario, input.spokenLanguage ?? input.targetLanguage);
 
   try {
     const result = await callResponses({
