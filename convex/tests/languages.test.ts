@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { api } from "../_generated/api";
 import { seedCatalog, seedUser, setup } from "./setup.helpers";
 import { buildGradingPrompt } from "../model/grading";
+import { languageLabel, practiceLanguages } from "../../lib/languages";
 
 const spanish = { sourceLanguage: "English", targetLanguage: "Spanish" };
 const arabic = { sourceLanguage: "English", targetLanguage: "Arabic" };
@@ -81,5 +82,24 @@ describe("progress per language pair", () => {
     );
     expect(prompt).toContain("speaks Spanish throughout");
     expect(prompt).toContain("judge their Spanish");
+  });
+});
+
+describe("language picker labels", () => {
+  test("shows the English name and the name in the language's own script", () => {
+    expect(languageLabel("Spanish")).toBe("Spanish · Español");
+    expect(languageLabel(" mandarin ")).toBe("mandarin · 中文");
+  });
+
+  test("every listed language has its own name, different from the English one", () => {
+    for (const language of practiceLanguages) {
+      expect(language.nativeName.trim()).not.toBe("");
+      expect(language.nativeName).not.toBe(language.name);
+    }
+  });
+
+  test("languages typed in by the learner keep just their name", () => {
+    expect(languageLabel("Klingon")).toBe("Klingon");
+    expect(languageLabel("English")).toBe("English");
   });
 });
