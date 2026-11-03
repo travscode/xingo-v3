@@ -3,6 +3,7 @@ import type { DifficultyLevel, IndustryCategory } from "@/types/module";
 import type { Scenario } from "@/types/scenario";
 import { MAX_ATTEMPT_MINUTES } from "@/lib/plans";
 import type { EnhanceDraft, EnhanceParticipant } from "@/lib/content-enhance";
+import type { LocalizedName } from "@/lib/agent-names";
 import type { CourseStatus } from "@/lib/course-status";
 
 export const industryOptions: Array<{ value: IndustryCategory; label: string }> = [
@@ -98,6 +99,8 @@ export type ParticipantForm = {
   avatarStorageId: string;
   /** Authored language, kept as-is; the runtime language comes from the learner (D-010). */
   language: string;
+  /** Name per session language (D-045); blank names fall back to `name`. */
+  localizedNames: LocalizedName[];
 };
 
 export type DialogueForm = {
@@ -134,6 +137,7 @@ const emptyParticipant = (role: string, voice: string, language: string): Partic
   avatarImageUrl: "",
   avatarStorageId: "",
   language,
+  localizedNames: [],
 });
 
 export const emptyDialogueForm: DialogueForm = {
@@ -167,6 +171,7 @@ function participantFromRecord(agent: Scenario["aiAgentA"] | undefined, fallback
     avatarImageUrl: agent?.avatarImageUrl ?? "",
     avatarStorageId: agent?.avatarStorageId ?? "",
     language: agent?.language ?? fallbackLanguage,
+    localizedNames: agent?.localizedNames?.map((entry) => ({ ...entry })) ?? [],
   };
 }
 
@@ -210,7 +215,15 @@ function participantPayload(participant: ParticipantForm) {
     instructions: participant.instructions.trim() || undefined,
     avatarImageUrl: participant.avatarImageUrl.trim() || undefined,
     avatarStorageId: participant.avatarStorageId ? (participant.avatarStorageId as Id<"_storage">) : undefined,
+    localizedNames: localizedNamesPayload(participant.localizedNames),
   };
+}
+
+function localizedNamesPayload(entries: LocalizedName[]) {
+  const cleaned = entries
+    .map((entry) => ({ language: entry.language.trim(), name: entry.name.trim() }))
+    .filter((entry) => entry.language && entry.name);
+  return cleaned.length > 0 ? cleaned : undefined;
 }
 
 function parseTimeLimit(value: string) {

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
 import { LAUNCH_AVAILABLE_COURSE_IDS, LAUNCH_CCL_FREE_PREVIEW_IDS } from "../lib/course-status";
+import { genderForVoice, languagesNameSuits, suggestLocalizedNames, type Gender } from "../lib/agent-names";
 
 /**
  * One-off data fixes. Run each with `npx convex run migrations:<name>`,
@@ -225,5 +226,63 @@ export const applyCclLaunchStatuses = internalMutation({
     }
 
     return { dryRun: args.dryRun, available, comingSoon, freePreviews: previews };
+  },
+});
+
+/**
+ * Per-language names (D-045) for every character in XINGO courses who speaks the
+ * learner's language (interpreting clients). Names come from the bank in
+ * lib/agent-names.ts by voice gender; characters are numbered within each gender, course
+ * by course, so a course doesn't repeat a name. An authored name is kept for languages it
+ * already suits (e.g. "Ana Torres" in Spanish). Characters that already have names are
+ * left alone unless `overwrite` is true. English-speaking professionals and English
+ * test role-plays are untouched.
+ */
+export const applyLocalizedNames = internalMutation({
+  args: { dryRun: v.boolean(), overwrite: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const xingoCourseIds = new Set(
+      (await ctx.db.query("modules").collect()).filter((course) => course.source !== "community").map((course) => course.id),
+    );
+    const scenarios = (await ctx.db.query("scenarios").collect())
+      .filter((scenario) => xingoCourseIds.has(scenario.moduleId) && scenario.practiceRuntime?.practiceType !== "roleplay")
+      .sort((a, b) => a.moduleId.localeCompare(b.moduleId) || a.id.localeCompare(b.id));
+
+    const nextSlot: Record<Gender, number> = { female: 0, male: 0 };
+    const updated: Array<{ scenarioId: string; agent: "aiAgentA" | "aiAgentB"; name: string; examples: Record<string, string> }> = [];
+    const skipped: Array<{ scenarioId: string; name: string; reason: string }> = [];
+
+    for (const scenario of scenarios) {
+      const patch: Partial<Pick<typeof scenario, "aiAgentA" | "aiAgentB">> = {};
+      for (const key of ["aiAgentA", "aiAgentB"] as const) {
+        const agent = scenario[key];
+        if (!agent || !agent.language || agent.language.trim().toLowerCase() === "english") continue;
+        const name = agent.name?.trim() || agent.role;
+        const gender = genderForVoice(agent.voice);
+        if (!gender) {
+          skipped.push({ scenarioId: scenario.id, name, reason: `no gender for voice "${agent.voice}"` });
+          continue;
+        }
+        const slot = nextSlot[gender]++;
+        if (agent.localizedNames?.length && !args.overwrite) {
+          skipped.push({ scenarioId: scenario.id, name, reason: "already has names" });
+          continue;
+        }
+        const localizedNames = suggestLocalizedNames(gender, slot, { name, languages: languagesNameSuits(name) });
+        patch[key] = { ...agent, localizedNames };
+        const pick = (language: string) => localizedNames.find((entry) => entry.language === language)?.name ?? name;
+        updated.push({
+          scenarioId: scenario.id,
+          agent: key,
+          name,
+          examples: { Spanish: pick("Spanish"), German: pick("German"), Mandarin: pick("Mandarin"), Arabic: pick("Arabic") },
+        });
+      }
+      if (!args.dryRun && Object.keys(patch).length > 0) {
+        await ctx.db.patch(scenario._id, patch);
+      }
+    }
+
+    return { dryRun: args.dryRun, updatedCount: updated.length, updated, skipped };
   },
 });

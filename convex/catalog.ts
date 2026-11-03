@@ -20,6 +20,8 @@ import {
 } from "./model/courses";
 import { orderModulesForGoal } from "../lib/goals";
 import { isPassingScore } from "../lib/scoring";
+import { localizeScenarioNames } from "../lib/agent-names";
+import { isCommunityRoleplayId } from "../lib/marketplace";
 
 type ScenarioStats = {
   attempts: number;
@@ -108,12 +110,17 @@ export const forCurrentUser = query({
             .filter((scenario) => scenario.moduleId === learningModule.id)
             .map(async (scenario) => {
               const access = getScenarioAccess(entitlement, learningModule, scenario);
-              const normalized = normalizeScenario(scenario);
+              // Names follow the selected pair's language (D-045); English test role-plays stay in English.
+              const englishTest = scenario.practiceRuntime?.practiceType === "roleplay" && !isCommunityRoleplayId(scenario.moduleId);
+              const normalized = localizeScenarioNames(
+                normalizeScenario(scenario),
+                englishTest ? "English" : args.pair?.targetLanguage,
+              );
 
               return {
                 id: scenario.id,
                 title: scenario.title,
-                description: scenario.description,
+                description: normalized.description,
                 difficultyLevel: scenario.difficultyLevel,
                 isFreePreview: Boolean(scenario.isFreePreview),
                 locked: comingSoon || !access.allowed,

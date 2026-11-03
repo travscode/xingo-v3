@@ -41,6 +41,8 @@ const voiceAgent = v.object({
   openingLine: v.optional(v.string()),
   /** What this participant must achieve before closing the conversation. */
   endCondition: v.optional(v.string()),
+  /** The name this character uses when the session is held in each language (D-045). */
+  localizedNames: v.optional(v.array(v.object({ language: v.string(), name: v.string() }))),
 });
 
 const languagePreference = v.object({

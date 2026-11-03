@@ -8,6 +8,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Field, FormSection, Select, TextArea, TextInput, realtimeVoices } from "@/components/admin/content/fields";
 import type { ParticipantForm } from "@/components/admin/content/model";
+import { LocalizedNamesField } from "@/components/admin/content/localized-names";
 
 export function ParticipantSection({
   kind,
@@ -81,6 +82,14 @@ export function ParticipantSection({
           </Field>
         ) : null}
       </FormSection>
+
+      <LocalizedNamesField
+        idPrefix={kind}
+        name={value.name}
+        voice={value.voice}
+        value={value.localizedNames}
+        onChange={(next) => set("localizedNames", next)}
+      />
 
       <details className="group rounded-xl border border-gray-200 p-5 sm:p-6">
         <summary className="cursor-pointer list-none text-lg font-bold tracking-[-0.02em]">

@@ -43,6 +43,7 @@ export function normalizeAgent(
     instructions?: string;
     openingLine?: string;
     endCondition?: string;
+    localizedNames?: Array<{ language: string; name: string }>;
   },
   fallbackLanguage: string,
 ) {

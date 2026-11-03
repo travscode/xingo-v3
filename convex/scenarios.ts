@@ -24,6 +24,7 @@ const voiceAgent = v.object({
   instructions: v.optional(v.string()),
   openingLine: v.optional(v.string()),
   endCondition: v.optional(v.string()),
+  localizedNames: v.optional(v.array(v.object({ language: v.string(), name: v.string() }))),
 });
 
 const practiceRuntime = v.object({
