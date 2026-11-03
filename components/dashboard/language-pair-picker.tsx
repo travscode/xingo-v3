@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { createLanguagePair, ENGLISH_ONLY_PAIR, flagEmoji, isEnglishOnly, pairLabel, practiceLanguages, type LanguagePair } from "@/lib/languages";
+import { createLanguagePair, ENGLISH_ONLY_PAIR, isEnglishOnly, languageLabel, practiceLanguages, type LanguagePair } from "@/lib/languages";
 import { track } from "@/lib/analytics";
 
 /**
@@ -48,16 +48,14 @@ export function LanguagePairPicker({ variant = "pair" }: { variant?: "pair" | "s
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="inline-flex h-10 items-center gap-2 rounded-lg bg-gray-100 px-3 text-sm font-semibold hover:bg-gray-200"
+          className="inline-flex h-10 max-w-full items-center gap-2 rounded-lg bg-gray-100 px-3 text-sm font-semibold hover:bg-gray-200"
           aria-label={single ? "Change conversation language" : "Change practice language"}
         >
-          <span className="text-gray-500">{single ? "Language" : "Practising"}</span>
-          <span>
-            {single
-              ? `${flagEmoji(spokenLanguage(activePair))} ${spokenLanguage(activePair)}`.trim()
-              : pairLabel(activePair)}
+          <span className="shrink-0 text-gray-500">{single ? "Language" : "Practising"}</span>
+          <span className="min-w-0 truncate">
+            {single ? languageLabel(spokenLanguage(activePair)) : pickerPairLabel(activePair)}
           </span>
-          <ChevronDown className="h-4 w-4 text-gray-500" />
+          <ChevronDown className="h-4 w-4 shrink-0 text-gray-500" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="max-h-[min(70vh,var(--radix-dropdown-menu-content-available-height))] w-72 rounded-xl p-1.5">
@@ -66,7 +64,7 @@ export function LanguagePairPicker({ variant = "pair" }: { variant?: "pair" | "s
           className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-sm font-medium outline-none focus:bg-gray-100"
         >
           <span>
-            {flagEmoji("English")} {single ? "English" : "English only"}
+            {single ? "English" : "English only"}
             {single ? null : <span className="block text-xs font-normal text-gray-500">Everyone speaks English</span>}
           </span>
           {activePair.key === ENGLISH_ONLY_PAIR.key ? <Check className="h-4 w-4" /> : null}
@@ -80,9 +78,7 @@ export function LanguagePairPicker({ variant = "pair" }: { variant?: "pair" | "s
             onSelect={() => choose(option)}
             className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-sm font-medium outline-none focus:bg-gray-100"
           >
-            <span>
-              {flagEmoji(option.targetLanguage)} {option.targetLanguage}
-            </span>
+            <span>{languageLabel(option.targetLanguage)}</span>
             {option.key === activePair.key ? <Check className="h-4 w-4" /> : null}
           </DropdownMenuItem>
         ))}
@@ -110,6 +106,11 @@ export function LanguagePairPicker({ variant = "pair" }: { variant?: "pair" | "s
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+/** "English only" or "English ⇄ Spanish · Español". */
+function pickerPairLabel(pair: LanguagePair) {
+  return isEnglishOnly(pair) ? "English only" : `${pair.sourceLanguage} ⇄ ${languageLabel(pair.targetLanguage)}`;
 }
 
 /** The one language spoken in a one-on-one session for this pair. */

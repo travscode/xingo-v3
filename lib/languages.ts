@@ -2,39 +2,41 @@
  * Languages offered in the pair picker. English is the default "other side";
  * learners can still type any language not listed here.
  *
- * `flag` is an ISO 3166 country code used only for a decorative emoji.
+ * `nativeName` is the language's name in its own script. `flag` is an ISO 3166
+ * country code used only for a decorative emoji; the pair picker shows no flags,
+ * because a flag can misrepresent the people who speak a language.
  */
 export const practiceLanguages = [
-  { name: "Arabic", flag: "SA" },
-  { name: "Bangla", flag: "BD" },
-  { name: "Cantonese", flag: "HK" },
-  { name: "Dari", flag: "AF" },
-  { name: "Filipino", flag: "PH" },
-  { name: "French", flag: "FR" },
-  { name: "Greek", flag: "GR" },
-  { name: "Gujarati", flag: "IN" },
-  { name: "Haitian Creole", flag: "HT" },
-  { name: "Hindi", flag: "IN" },
-  { name: "Indonesian", flag: "ID" },
-  { name: "Italian", flag: "IT" },
-  { name: "Japanese", flag: "JP" },
-  { name: "Korean", flag: "KR" },
-  { name: "Malay", flag: "MY" },
-  { name: "Malayalam", flag: "IN" },
-  { name: "Mandarin", flag: "CN" },
-  { name: "Nepali", flag: "NP" },
-  { name: "Persian", flag: "IR" },
-  { name: "Portuguese", flag: "BR" },
-  { name: "Punjabi", flag: "IN" },
-  { name: "Russian", flag: "RU" },
-  { name: "Sinhala", flag: "LK" },
-  { name: "Spanish", flag: "ES" },
-  { name: "Tamil", flag: "IN" },
-  { name: "Telugu", flag: "IN" },
-  { name: "Thai", flag: "TH" },
-  { name: "Turkish", flag: "TR" },
-  { name: "Urdu", flag: "PK" },
-  { name: "Vietnamese", flag: "VN" },
+  { name: "Arabic", nativeName: "العربية", flag: "SA" },
+  { name: "Bangla", nativeName: "বাংলা", flag: "BD" },
+  { name: "Cantonese", nativeName: "粵語", flag: "HK" },
+  { name: "Dari", nativeName: "دری", flag: "AF" },
+  { name: "Filipino", nativeName: "Wikang Filipino", flag: "PH" },
+  { name: "French", nativeName: "Français", flag: "FR" },
+  { name: "Greek", nativeName: "Ελληνικά", flag: "GR" },
+  { name: "Gujarati", nativeName: "ગુજરાતી", flag: "IN" },
+  { name: "Haitian Creole", nativeName: "Kreyòl ayisyen", flag: "HT" },
+  { name: "Hindi", nativeName: "हिन्दी", flag: "IN" },
+  { name: "Indonesian", nativeName: "Bahasa Indonesia", flag: "ID" },
+  { name: "Italian", nativeName: "Italiano", flag: "IT" },
+  { name: "Japanese", nativeName: "日本語", flag: "JP" },
+  { name: "Korean", nativeName: "한국어", flag: "KR" },
+  { name: "Malay", nativeName: "Bahasa Melayu", flag: "MY" },
+  { name: "Malayalam", nativeName: "മലയാളം", flag: "IN" },
+  { name: "Mandarin", nativeName: "中文", flag: "CN" },
+  { name: "Nepali", nativeName: "नेपाली", flag: "NP" },
+  { name: "Persian", nativeName: "فارسی", flag: "IR" },
+  { name: "Portuguese", nativeName: "Português", flag: "BR" },
+  { name: "Punjabi", nativeName: "ਪੰਜਾਬੀ / پنجابی", flag: "IN" },
+  { name: "Russian", nativeName: "Русский", flag: "RU" },
+  { name: "Sinhala", nativeName: "සිංහල", flag: "LK" },
+  { name: "Spanish", nativeName: "Español", flag: "ES" },
+  { name: "Tamil", nativeName: "தமிழ்", flag: "IN" },
+  { name: "Telugu", nativeName: "తెలుగు", flag: "IN" },
+  { name: "Thai", nativeName: "ไทย", flag: "TH" },
+  { name: "Turkish", nativeName: "Türkçe", flag: "TR" },
+  { name: "Urdu", nativeName: "اردو", flag: "PK" },
+  { name: "Vietnamese", nativeName: "Tiếng Việt", flag: "VN" },
 ] as const;
 
 const flagByName = new Map<string, string>([
@@ -52,6 +54,17 @@ export function flagEmoji(languageName: string) {
   return code
     .toUpperCase()
     .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)));
+}
+
+const nativeNameByName = new Map<string, string>(
+  practiceLanguages.map((language) => [language.name.toLowerCase(), language.nativeName]),
+);
+
+/** "Spanish · Español". Languages typed in by the learner keep just their name. */
+export function languageLabel(languageName: string) {
+  const name = languageName.trim();
+  const nativeName = nativeNameByName.get(name.toLowerCase());
+  return nativeName ? `${name} · ${nativeName}` : name;
 }
 
 /**
