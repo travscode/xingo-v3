@@ -3,6 +3,7 @@ import { internalMutation, internalQuery, mutation, query } from "./_generated/s
 import { getUserByClerkId, requirePlatformAdmin } from "./model/auth";
 import { getEntitlement } from "./model/entitlements";
 import { estimateCostUsd } from "../lib/costs";
+import { formatLanguageName } from "../lib/languages";
 import { getBillingMonthKey, packs, isPackId } from "../lib/plans";
 
 const platformRole = v.union(
@@ -157,7 +158,7 @@ export const listUsers = query({
           role: user.role,
           plan: user.subscriptionStatus,
           practiceGoal: user.practiceGoal ?? null,
-          languages: (user.languagePreferences ?? []).map((pair) => pair.targetLanguage),
+          languages: (user.languagePreferences ?? []).map((pair) => formatLanguageName(pair.targetLanguage)),
           createdAt: user.createdAt,
           onboarded: Boolean(user.onboardedAt),
           attempts: stats?.attempts ?? 0,

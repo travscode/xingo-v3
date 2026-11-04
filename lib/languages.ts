@@ -39,6 +39,25 @@ export const practiceLanguages = [
   { name: "Vietnamese", nativeName: "Tiếng Việt", flag: "VN" },
 ] as const;
 
+const canonicalNames = new Map<string, string>([
+  ["english", "English"],
+  ...practiceLanguages.map((language) => [language.name.toLowerCase(), language.name] as [string, string]),
+]);
+
+/**
+ * English names of languages take a capital, however the learner typed them:
+ * "german" and "GERMAN" become "German", "haitian creole" becomes "Haitian Creole".
+ * Deliberate mixed case in a language we don't list ("isiZulu") is left alone.
+ * Only letter case changes, so pair keys and saved progress are unaffected.
+ */
+export function formatLanguageName(languageName: string) {
+  const name = languageName.trim();
+  const canonical = canonicalNames.get(name.toLowerCase());
+  if (canonical) return canonical;
+  if (name !== name.toLowerCase() && name !== name.toUpperCase()) return name;
+  return name.toLowerCase().replace(/(^|[\s\-(/])(\p{L})/gu, (_, before: string, letter: string) => before + letter.toUpperCase());
+}
+
 const flagByName = new Map<string, string>([
   ["english", "AU"],
   ...practiceLanguages.map((language) => [language.name.toLowerCase(), language.flag] as [string, string]),
@@ -62,7 +81,7 @@ const nativeNameByName = new Map<string, string>(
 
 /** "Spanish · Español". Languages typed in by the learner keep just their name. */
 export function languageLabel(languageName: string) {
-  const name = languageName.trim();
+  const name = formatLanguageName(languageName);
   const nativeName = nativeNameByName.get(name.toLowerCase());
   return nativeName ? `${name} · ${nativeName}` : name;
 }
@@ -79,8 +98,8 @@ export type LanguagePair = {
 };
 
 export function createLanguagePair(sourceLanguage: string, targetLanguage: string): LanguagePair {
-  const source = sourceLanguage.trim();
-  const target = targetLanguage.trim();
+  const source = formatLanguageName(sourceLanguage);
+  const target = formatLanguageName(targetLanguage);
 
   return {
     key: `${source.toLowerCase()}::${target.toLowerCase()}`,
@@ -100,7 +119,7 @@ export function isEnglishOnly(pair: Pick<LanguagePair, "sourceLanguage" | "targe
 export function pairLabel(pair: Pick<LanguagePair, "sourceLanguage" | "targetLanguage">) {
   if (isEnglishOnly(pair)) return "English only";
   const flag = flagEmoji(pair.targetLanguage);
-  return `${pair.sourceLanguage} ⇄ ${flag ? `${flag} ` : ""}${pair.targetLanguage}`;
+  return `${formatLanguageName(pair.sourceLanguage)} ⇄ ${flag ? `${flag} ` : ""}${formatLanguageName(pair.targetLanguage)}`;
 }
 
 export const DEFAULT_LANGUAGE_PAIR = createLanguagePair("English", "Spanish");

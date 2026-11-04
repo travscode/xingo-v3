@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { formatLanguageName } from "../lib/languages";
 import { LEGAL_VERSION } from "../lib/legal";
 import {
   internalMutation,
@@ -68,8 +69,8 @@ function cleanLanguagePairs(
 ) {
   return pairs
     .map((pair) => ({
-      sourceLanguage: pair.sourceLanguage.trim(),
-      targetLanguage: pair.targetLanguage.trim(),
+      sourceLanguage: formatLanguageName(pair.sourceLanguage),
+      targetLanguage: formatLanguageName(pair.targetLanguage),
     }))
     .filter((pair) => pair.sourceLanguage && pair.targetLanguage)
     .slice(0, 10);

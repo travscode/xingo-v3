@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { api } from "../_generated/api";
 import { seedCatalog, seedUser, setup } from "./setup.helpers";
 import { buildGradingPrompt } from "../model/grading";
-import { languageLabel, practiceLanguages } from "../../lib/languages";
+import { createLanguagePair, formatLanguageName, languageLabel, pairLabel, practiceLanguages } from "../../lib/languages";
 
 const spanish = { sourceLanguage: "English", targetLanguage: "Spanish" };
 const arabic = { sourceLanguage: "English", targetLanguage: "Arabic" };
@@ -88,7 +88,7 @@ describe("progress per language pair", () => {
 describe("language picker labels", () => {
   test("shows the English name and the name in the language's own script", () => {
     expect(languageLabel("Spanish")).toBe("Spanish · Español");
-    expect(languageLabel(" mandarin ")).toBe("mandarin · 中文");
+    expect(languageLabel(" mandarin ")).toBe("Mandarin · 中文");
   });
 
   test("every listed language has its own name, different from the English one", () => {
@@ -101,5 +101,43 @@ describe("language picker labels", () => {
   test("languages typed in by the learner keep just their name", () => {
     expect(languageLabel("Klingon")).toBe("Klingon");
     expect(languageLabel("English")).toBe("English");
+  });
+});
+
+describe("language name capitals", () => {
+  test("typed names get a capital, however they were typed", () => {
+    expect(formatLanguageName("german")).toBe("German");
+    expect(formatLanguageName(" GERMAN ")).toBe("German");
+    expect(formatLanguageName("swiss german")).toBe("Swiss German");
+    expect(formatLanguageName("serbo-croatian")).toBe("Serbo-Croatian");
+  });
+
+  test("listed languages use their listed spelling", () => {
+    expect(formatLanguageName("eNgLiSh")).toBe("English");
+    expect(formatLanguageName("haitian creole")).toBe("Haitian Creole");
+  });
+
+  test("deliberate mixed case and other scripts are left alone", () => {
+    expect(formatLanguageName("isiZulu")).toBe("isiZulu");
+    expect(formatLanguageName("Deutsch")).toBe("Deutsch");
+    expect(formatLanguageName("日本語")).toBe("日本語");
+  });
+
+  test("pairs saved in lower case display correctly and keep their progress key", () => {
+    const pair = createLanguagePair("english", "german");
+    expect(pair).toEqual({ key: "english::german", sourceLanguage: "English", targetLanguage: "German" });
+    expect(pair.key).toBe(createLanguagePair("English", "German").key);
+    expect(pairLabel({ sourceLanguage: "english", targetLanguage: "german" })).toBe("English ⇄ German");
+    expect(languageLabel("spanish")).toBe("Spanish · Español");
+  });
+
+  test("saving language preferences stores the capitalised name", async () => {
+    const t = setup();
+    const asUser = await seedUser(t, "caps");
+    await asUser.mutation(api.users.updateLanguagePreferences, {
+      languagePreferences: [{ sourceLanguage: "english", targetLanguage: "german" }],
+    });
+    const user = await asUser.query(api.users.current, {});
+    expect(user?.languagePreferences).toEqual([{ sourceLanguage: "English", targetLanguage: "German" }]);
   });
 });

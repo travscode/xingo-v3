@@ -236,3 +236,8 @@ Format: **ID — title** · date · status. Context → Decision → Consequence
 **Context.** Client feedback: a flag can misrepresent the people who speak a language, and some cases are very sensitive (a Chinese flag for a speaker from Taiwan).
 **Decision.** The pair picker shows no flags. Each language appears in English and in its own script, "Spanish · Español" (`nativeName` in `lib/languages.ts`, `languageLabel`). Mandarin is 中文, which is written the same in Simplified and Traditional, and avoids 普通话 (a mainland term; Taiwan says 國語). Punjabi shows both Gurmukhi and Shahmukhi. Languages typed in by the learner keep just their name.
 **Consequences.** The client only asked about the picker, so flags stay elsewhere for now: `pairLabel` on the dashboard, progress and account pages, plus onboarding, the practice room and marketing pages. The native names haven't been checked by native speakers yet.
+
+### D-047 — Language names always start with a capital · 2026-11-04 · accepted
+**Context.** Client feedback: the app showed "English - german". Listed languages were fine, but a language typed by the learner was saved and shown exactly as typed.
+**Decision.** `formatLanguageName` (`lib/languages.ts`) capitalises names when pairs are created, labelled and saved, so existing lower-case values display correctly without a data migration. Listed languages use their listed spelling. A name typed in deliberate mixed case that we don't list ("isiZulu") is left alone. Only letter case changes, so pair keys and saved progress are unaffected.
+**Consequences.** Values already stored in lower case stay that way in the database until the learner next saves their languages; everything that displays them goes through the formatter.

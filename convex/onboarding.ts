@@ -8,6 +8,7 @@ import { renderEmail } from "../lib/email/render";
 import { buildOnboardingEmail } from "../lib/email/onboarding-content";
 import { ONBOARDING_DAYS, trackForGoal, type OnboardingDay } from "../lib/email/onboarding-types";
 import { getGoal } from "../lib/goals";
+import { formatLanguageName } from "../lib/languages";
 import { plans } from "../lib/plans";
 import { rubricForModule } from "../lib/rubrics";
 
@@ -95,7 +96,7 @@ export const context = internalQuery({
     const { count, best } = bestScoreLabel(sessions);
     const entitlement = await getEntitlement(ctx, user);
     const pair = user.languagePreferences?.[0];
-    const language = pair && pair.targetLanguage.toLowerCase() !== "english" ? pair.targetLanguage : null;
+    const language = pair && pair.targetLanguage.toLowerCase() !== "english" ? formatLanguageName(pair.targetLanguage) : null;
 
     return {
       row,

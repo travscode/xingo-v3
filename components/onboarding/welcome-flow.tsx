@@ -7,7 +7,7 @@ import { ArrowLeft, Check, Mic, Repeat, Trophy, Users } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { track } from "@/lib/analytics";
 import { isGoalComingSoon, isSpeakingGoal, practiceGoals, type PracticeGoalId } from "@/lib/goals";
-import { createLanguagePair, flagEmoji, practiceLanguages } from "@/lib/languages";
+import { createLanguagePair, flagEmoji, formatLanguageName, practiceLanguages } from "@/lib/languages";
 import { plans } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
@@ -51,7 +51,7 @@ export function WelcomeFlow() {
   const firstName = me?.user.name.split(" ")[0];
   const speakingOnly = isSpeakingGoal(goal);
   // English-only exams skip the language step.
-  const chosenLanguage = speakingOnly ? "English" : language === "__custom" ? customLanguage.trim() : language;
+  const chosenLanguage = speakingOnly ? "English" : language === "__custom" ? formatLanguageName(customLanguage) : language;
   const totalSteps = speakingOnly ? 2 : TOTAL_STEPS;
   const visibleStep = speakingOnly && step === 3 ? 2 : step;
 
