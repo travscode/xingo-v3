@@ -7,7 +7,7 @@ import { ArrowLeft, Check, Mic, Repeat, Trophy, Users } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { track } from "@/lib/analytics";
 import { isGoalComingSoon, isSpeakingGoal, practiceGoals, type PracticeGoalId } from "@/lib/goals";
-import { createLanguagePair, flagEmoji, formatLanguageName, practiceLanguages } from "@/lib/languages";
+import { createLanguagePair, flagEmoji, practiceLanguages } from "@/lib/languages";
 import { plans } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import { useActiveLanguagePair } from "@/components/providers/language-pair-context";
@@ -38,7 +38,6 @@ export function WelcomeFlow() {
   const [step, setStep] = useState(1);
   const [pickedGoal, setGoal] = useState<PracticeGoalId | null>(presetGoal);
   const [language, setLanguage] = useState<string | null>(presetLanguage);
-  const [customLanguage, setCustomLanguage] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +50,7 @@ export function WelcomeFlow() {
   const firstName = me?.user.name.split(" ")[0];
   const speakingOnly = isSpeakingGoal(goal);
   // English-only exams skip the language step.
-  const chosenLanguage = speakingOnly ? "English" : language === "__custom" ? formatLanguageName(customLanguage) : language;
+  const chosenLanguage = speakingOnly ? "English" : language;
   const totalSteps = speakingOnly ? 2 : TOTAL_STEPS;
   const visibleStep = speakingOnly && step === 3 ? 2 : step;
 
@@ -180,26 +179,7 @@ export function WelcomeFlow() {
                   {option.name}
                 </button>
               ))}
-              <button
-                type="button"
-                onClick={() => setLanguage("__custom")}
-                className={cn(
-                  "rounded-xl border-2 px-3 py-3 text-left text-sm font-semibold transition-colors",
-                  language === "__custom" ? "border-ink" : "border-transparent bg-gray-50 hover:bg-gray-100",
-                )}
-              >
-                Something else
-              </button>
             </div>
-            {language === "__custom" ? (
-              <input
-                autoFocus
-                value={customLanguage}
-                onChange={(event) => setCustomLanguage(event.target.value)}
-                placeholder="e.g. Amharic"
-                className="mt-3 h-12 rounded-xl bg-gray-100 px-4 text-base outline-none focus:ring-2 focus:ring-live"
-              />
-            ) : null}
             <Button
               size="lg"
               className="mt-8"
@@ -209,7 +189,6 @@ export function WelcomeFlow() {
                   step: "language",
                   goal: goal ?? undefined,
                   language: chosenLanguage ?? undefined,
-                  custom_language: language === "__custom",
                 });
                 setStep(3);
               }}

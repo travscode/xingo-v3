@@ -46,7 +46,7 @@ const faqs = [
   },
   {
     q: "Can I practise the CCL in my language on XINGO?",
-    a: "Yes. Pick your language when you sign up, or type it in if it isn't listed. The professional always speaks English. AI voice quality is better in widely spoken languages, so try a free dialogue first.",
+    a: "Yes. If your language is on the list, pick it when you sign up. The professional always speaks English. AI voice quality is better in widely spoken languages, so try a free dialogue first.",
   },
 ];
 

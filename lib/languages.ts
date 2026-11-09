@@ -1,6 +1,6 @@
 /**
- * Languages offered in the pair picker. English is the default "other side";
- * learners can still type any language not listed here.
+ * Languages learners can choose. English is the default "other side". Learners
+ * pick from this list only; a pair saved earlier with another language keeps working.
  *
  * `nativeName` is the language's name in its own script. `flag` is an ISO 3166
  * country code used only for a decorative emoji; the pair picker shows no flags,
@@ -13,6 +13,7 @@ export const practiceLanguages = [
   { name: "Dari", nativeName: "دری", flag: "AF" },
   { name: "Filipino", nativeName: "Wikang Filipino", flag: "PH" },
   { name: "French", nativeName: "Français", flag: "FR" },
+  { name: "German", nativeName: "Deutsch", flag: "DE" },
   { name: "Greek", nativeName: "Ελληνικά", flag: "GR" },
   { name: "Gujarati", nativeName: "ગુજરાતી", flag: "IN" },
   { name: "Haitian Creole", nativeName: "Kreyòl ayisyen", flag: "HT" },
@@ -79,7 +80,7 @@ const nativeNameByName = new Map<string, string>(
   practiceLanguages.map((language) => [language.name.toLowerCase(), language.nativeName]),
 );
 
-/** "Spanish · Español". Languages typed in by the learner keep just their name. */
+/** "Spanish · Español". A language outside the list keeps just its name. */
 export function languageLabel(languageName: string) {
   const name = formatLanguageName(languageName);
   const nativeName = nativeNameByName.get(name.toLowerCase());

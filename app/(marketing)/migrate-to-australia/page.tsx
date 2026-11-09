@@ -142,7 +142,7 @@ const features = [
   },
   {
     title: "Your language pair",
-    body: `For interpreting practice, pick English and one of ${practiceLanguages.length} listed languages, or type another.`,
+    body: `For interpreting practice, pick English and one of ${practiceLanguages.length} listed languages.`,
   },
   {
     title: "Practice mode, then assessed",

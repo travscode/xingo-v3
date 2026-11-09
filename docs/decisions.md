@@ -241,3 +241,8 @@ Format: **ID — title** · date · status. Context → Decision → Consequence
 **Context.** Client feedback: the app showed "English - german". Listed languages were fine, but a language typed by the learner was saved and shown exactly as typed.
 **Decision.** `formatLanguageName` (`lib/languages.ts`) capitalises names when pairs are created, labelled and saved, so existing lower-case values display correctly without a data migration. Listed languages use their listed spelling. A name typed in deliberate mixed case that we don't list ("isiZulu") is left alone. Only letter case changes, so pair keys and saved progress are unaffected.
 **Consequences.** Values already stored in lower case stay that way in the database until the learner next saves their languages; everything that displays them goes through the formatter.
+
+### D-048 — Learners choose from the language list only · 2026-11-09 · accepted
+**Context.** Travis: remove the option to type your own language. Typed names were the source of the lower-case problem in D-047.
+**Decision.** The header picker, onboarding and Account offer only `practiceLanguages`. German joins the list, since it already had a name bank (D-045) and learners were typing it.
+**Consequences.** Pairs saved earlier with an unlisted language keep working and stay on the learner's Account page. Convex doesn't reject them, so those learners aren't locked out. Marketing copy no longer offers typing a language.

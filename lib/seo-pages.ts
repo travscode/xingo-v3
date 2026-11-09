@@ -359,7 +359,7 @@ export const topicPages: TopicPage[] = [
       },
       {
         q: "Which languages can I practise?",
-        a: "The clinician always speaks English; the patient speaks the language you choose, from 30+ options or any language you type in.",
+        a: "The clinician always speaks English; the patient speaks the language you choose, from 30+ options.",
       },
     ],
     goal: "medical",
@@ -478,7 +478,7 @@ export const topicPages: TopicPage[] = [
     faqs: [
       { q: "Is XINGO part of my course?", a: "No — it's independent extra practice. Many students use it alongside their course role-plays." },
       { q: "Can my trainer see my results?", a: "Not yet. Team access for trainers is on the way — contact us if your provider is interested." },
-      { q: "Which languages are supported?", a: "30+ languages are listed and you can type in another. The other participant always speaks English." },
+      { q: "Which languages are supported?", a: "30+ languages are listed. The other participant always speaks English." },
     ],
     goal: "naati_cpi",
   },

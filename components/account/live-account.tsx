@@ -127,18 +127,21 @@ export function LiveAccount() {
               setAdding("");
             }}
           >
-            <input
-              list="xingo-languages"
+            <select
               value={adding}
               onChange={(event) => setAdding(event.target.value)}
-              placeholder="Add a language…"
+              aria-label="Add a language"
               className="h-10 min-w-0 flex-1 rounded-lg bg-gray-100 px-3 text-sm outline-none focus:ring-2 focus:ring-live"
-            />
-            <datalist id="xingo-languages">
-              {practiceLanguages.map((language) => (
-                <option key={language.name} value={language.name} />
-              ))}
-            </datalist>
+            >
+              <option value="">Add a language…</option>
+              {practiceLanguages
+                .filter((language) => !pairs.some((pair) => pair.targetLanguage === language.name))
+                .map((language) => (
+                  <option key={language.name} value={language.name}>
+                    {language.name}
+                  </option>
+                ))}
+            </select>
             <Button type="submit" variant="secondary">
               Add
             </Button>

@@ -134,7 +134,7 @@ const faqs = [
   },
   {
     q: "Which languages can staff practise in?",
-    a: `English only, or English and another language. The language picker lists ${practiceLanguages.length} languages and staff can type any other. In a one-on-one role-play the AI character speaks the chosen language. In the interpreter format, one person speaks English, the other speaks the second language, and your staff member interprets both ways.`,
+    a: `English only, or English and another language. The language picker lists ${practiceLanguages.length} languages. In a one-on-one role-play the AI character speaks the chosen language. In the interpreter format, one person speaks English, the other speaks the second language, and your staff member interprets both ways.`,
   },
   {
     q: "How is each session scored?",
@@ -371,7 +371,7 @@ export default function StaffTrainingPage() {
             </div>
           </div>
           <p className="mt-8 text-sm font-semibold">
-            English only, or English and one of {practiceLanguages.length} listed languages (or type another):
+            English only, or English and one of {practiceLanguages.length} listed languages:
           </p>
           <ul className="mt-3 flex flex-wrap gap-2">
             <li className="rounded-lg border border-ink px-2.5 py-1 text-sm font-semibold">

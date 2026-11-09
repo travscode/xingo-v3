@@ -127,7 +127,7 @@ describe("language name capitals", () => {
     const pair = createLanguagePair("english", "german");
     expect(pair).toEqual({ key: "english::german", sourceLanguage: "English", targetLanguage: "German" });
     expect(pair.key).toBe(createLanguagePair("English", "German").key);
-    expect(pairLabel({ sourceLanguage: "english", targetLanguage: "german" })).toBe("English ⇄ German");
+    expect(pairLabel({ sourceLanguage: "english", targetLanguage: "swiss german" })).toBe("English ⇄ Swiss German");
     expect(languageLabel("spanish")).toBe("Spanish · Español");
   });
 

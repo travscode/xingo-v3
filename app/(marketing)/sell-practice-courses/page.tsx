@@ -211,7 +211,7 @@ const faqs = [
   },
   {
     q: "What languages can my course be practised in?",
-    a: `You write your scenarios in English. Learners choose how they practise: English only, or English and one of ${languageCount} listed languages, or another language they type. In an interpreting course, one AI person speaks English and the other speaks the learner's other language.`,
+    a: `You write your scenarios in English. Learners choose how they practise: English only, or English and one of ${languageCount} listed languages. In an interpreting course, one AI person speaks English and the other speaks the learner's other language.`,
   },
   {
     q: "How do payouts work?",

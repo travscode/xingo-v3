@@ -94,7 +94,7 @@ export default function NaatiCpiPage() {
         faqs={[
           { q: "Is XINGO affiliated with NAATI?", a: "No. XINGO is independent practice software modelled on the public test format." },
           { q: "Do I need to finish the Diploma of Interpreting first?", a: "NAATI sets the eligibility rules for the CPI test — check their website. XINGO is useful practice whether you're studying or already eligible." },
-          { q: "Can I practise in my language?", a: "Choose from 30+ listed languages or type in another. The other participant always speaks English." },
+          { q: "Can I practise in my language?", a: "Choose from 30+ listed languages. The other participant always speaks English." },
           { q: "How long is a session?", a: "Most dialogues take 5–12 minutes. You're only charged practice minutes while a session is live." },
         ]}
       />

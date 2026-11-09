@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useMutation } from "convex/react";
 import { Check, ChevronDown } from "lucide-react";
 import { api } from "@/convex/_generated/api";
@@ -25,7 +24,6 @@ export function LanguagePairPicker({ variant = "pair" }: { variant?: "pair" | "s
   const single = variant === "single";
   const { activePair, setActivePair, savedPairs } = useActiveLanguagePair();
   const updatePreferences = useMutation(api.users.updateLanguagePreferences);
-  const [custom, setCustom] = useState("");
 
   const choose = (pair: LanguagePair) => {
     if (pair.key !== activePair.key) {
@@ -82,27 +80,6 @@ export function LanguagePairPicker({ variant = "pair" }: { variant?: "pair" | "s
             {option.key === activePair.key ? <Check className="h-4 w-4" /> : null}
           </DropdownMenuItem>
         ))}
-        <form
-          className="mt-1 flex gap-1 border-t border-gray-200 p-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (custom.trim()) {
-              choose(createLanguagePair("English", custom.trim()));
-              setCustom("");
-            }
-          }}
-        >
-          <input
-            value={custom}
-            onChange={(event) => setCustom(event.target.value)}
-            onKeyDown={(event) => event.stopPropagation()}
-            placeholder="Another language…"
-            className="h-9 min-w-0 flex-1 rounded-lg bg-gray-100 px-2 text-sm outline-none focus:ring-2 focus:ring-live"
-          />
-          <button type="submit" className="rounded-lg bg-ink px-3 text-sm font-semibold text-paper">
-            Use
-          </button>
-        </form>
       </DropdownMenuContent>
     </DropdownMenu>
   );
