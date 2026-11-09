@@ -41,7 +41,8 @@ export const dispatch = internalMutation({
     let queued = 0;
 
     for (const user of recent) {
-      if (user.emailOptOut || user.role === "platform_admin" || !user.email) continue;
+      // Beta testers (D-049) don't get the sales-led series.
+      if (user.emailOptOut || user.role === "platform_admin" || !user.email || user.betaCohort) continue;
 
       const day = dueOnboardingDay(Math.floor((now - Date.parse(user.createdAt)) / DAY_MS));
       if (day === null) continue;

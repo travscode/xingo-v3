@@ -15,6 +15,7 @@ import {
 } from "./model/auth";
 import { getEntitlement } from "./model/entitlements";
 import { activateInvitesForUser } from "./model/orgs";
+import { applyBetaInviteForEmail } from "./model/beta";
 import { queueEmail } from "./model/notify";
 import { marketplaceOpenFor } from "./model/courses";
 
@@ -163,6 +164,7 @@ export const syncCurrentUser = mutation({
       if (verifiedEmail) {
         await applyPendingInvite(ctx, clerkId, verifiedEmail);
         await activateInvitesForUser(ctx, clerkId, verifiedEmail);
+        if (!existing.betaCohort) await applyBetaInviteForEmail(ctx, clerkId, verifiedEmail);
       }
 
       return { created: false };
@@ -184,6 +186,7 @@ export const syncCurrentUser = mutation({
     if (verifiedEmail) {
       await applyPendingInvite(ctx, clerkId, verifiedEmail);
       await activateInvitesForUser(ctx, clerkId, verifiedEmail);
+      await applyBetaInviteForEmail(ctx, clerkId, verifiedEmail);
     }
 
     await queueEmail(ctx, { clerkId, email: { kind: "welcome" }, dedupeKey: `welcome-${clerkId}` });

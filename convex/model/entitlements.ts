@@ -7,6 +7,7 @@ import {
   plans,
   type PlanId,
 } from "../../lib/plans";
+import { isBetaActive } from "../../lib/beta";
 import type { PreviewAs } from "../../lib/preview";
 import { previewOf } from "./auth";
 
@@ -23,7 +24,7 @@ export type Entitlement = {
   packMinutesUsed: number;
   packMinutesRemaining: number;
   remainingMinutes: number;
-  /** Premium modules unlock with a paid plan or any purchased pack. */
+  /** Premium modules unlock with a paid plan, any purchased pack or the private beta. */
   premiumAccess: boolean;
 };
 
@@ -61,7 +62,7 @@ function previewEntitlement(previewAs: PreviewAs, now: Date): Entitlement {
 
 export async function getEntitlement(
   ctx: Ctx,
-  user: Pick<Doc<"users">, "clerkId" | "subscriptionStatus"> & Partial<Pick<Doc<"users">, "role" | "previewAs">>,
+  user: Pick<Doc<"users">, "clerkId" | "subscriptionStatus"> & Partial<Pick<Doc<"users">, "role" | "previewAs" | "betaCohort" | "betaEndedAt">>,
   now = new Date(),
 ): Promise<Entitlement> {
   const previewAs = previewOf(user);
@@ -109,7 +110,7 @@ export async function getEntitlement(
     packMinutesRemaining,
     remainingMinutes: allowanceRemaining + packMinutesRemaining,
     premiumAccess:
-      plan.premiumAccess || grants.some((grant) => grant.source === "pack"),
+      plan.premiumAccess || isBetaActive(user) || grants.some((grant) => grant.source === "pack"),
   };
 }
 

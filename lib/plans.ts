@@ -71,6 +71,9 @@ export const plans: Record<PlanId, PlanConfig> = {
   },
 };
 
+/** Practice minutes given once to each private beta tester (D-049). */
+export const BETA_MINUTES = 60;
+
 export const packs: Record<PackId, PackConfig> = {
   starter: {
     id: "starter",

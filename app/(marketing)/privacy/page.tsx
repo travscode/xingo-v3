@@ -52,6 +52,11 @@ const sections: LegalSection[] = [
           <strong>not</strong> store recordings of your voice.
         </li>
         <li>
+          <strong>Private beta feedback:</strong> if you join a private beta, we keep the comments and survey answers you send, with
+          your name, email, the time and the page you were on. If you dictate a comment, the audio goes to our AI provider to be turned
+          into text and is <strong>not</strong> stored.
+        </li>
+        <li>
           <strong>Camera:</strong> if you turn on the optional self-view, the video stays in your browser. It is not recorded or sent
           to us.
         </li>

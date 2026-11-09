@@ -15,10 +15,12 @@ import { MinutesMeter } from "@/components/dashboard/minutes-meter";
 import { XingoMark } from "@/components/ui/logo";
 import { TermsGate } from "@/components/auth/terms-gate";
 import { PreviewBanner } from "@/components/admin/preview-as";
+import { FeedbackWidget } from "@/components/beta/feedback-widget";
+import { isBetaActive } from "@/lib/beta";
 
 /** Routes that render full-screen, without app chrome. */
 function isFocusRoute(pathname: string) {
-  return pathname.startsWith("/practice/") || pathname === "/welcome";
+  return pathname.startsWith("/practice/") || pathname === "/welcome" || pathname.startsWith("/beta/");
 }
 
 export function DashboardShell({ children }: { children: ReactNode }) {
@@ -37,7 +39,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   // First-run: everyone goes through the welcome flow once.
   useEffect(() => {
-    if (me?.user && !me.user.onboardedAt && pathname !== "/welcome") {
+    // The beta link claims the invite first, then goes to the welcome flow itself.
+    if (me?.user && !me.user.onboardedAt && pathname !== "/welcome" && !pathname.startsWith("/beta/")) {
       router.replace(`/welcome?next=${encodeURIComponent(pathname)}`);
     }
   }, [me, pathname, router]);
@@ -164,6 +167,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </div>
       </div>
       <TermsGate />
+      {isBetaActive(me?.user) ? <FeedbackWidget /> : null}
     </LanguagePairProvider>
   );
 }

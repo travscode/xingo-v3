@@ -32,6 +32,8 @@ export const protectedRoutePatterns = [
   "/billing(.*)",
   "/account(.*)",
   "/help(.*)",
+  // Private beta: /beta/<token> stays public so invitees can read it first.
+  "/beta/(.*)/start",
   // The marketplace is public; creating and managing courses needs an account.
   // Exact paths plus sub-paths, so course slugs like /marketplace/new-starter-training stay public.
   "/marketplace/new",

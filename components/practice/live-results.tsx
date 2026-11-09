@@ -12,6 +12,7 @@ import { rubricForModule } from "@/lib/rubrics";
 import { Badge, Card, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { BetaSurvey } from "@/components/beta/beta-survey";
 
 export function LiveResults({ attemptId }: { attemptId: string }) {
   const result = useQuery(api.sessions.resultForCurrentUser, { attemptId });
@@ -193,6 +194,8 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
           </Button>
         </div>
       </Card>
+
+      <BetaSurvey attemptId={attemptId} />
 
       {unfinished && completion ? (
         <Card className="flex gap-4 p-6">

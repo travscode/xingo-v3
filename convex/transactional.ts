@@ -32,6 +32,7 @@ const email = v.union(
     inviterName: v.string(),
     url: v.string(),
   }),
+  v.object({ kind: v.literal("beta_invite"), url: v.string(), hadAccount: v.boolean(), reminder: v.boolean() }),
   v.object({ kind: v.literal("org_team_invite"), orgName: v.string(), role: v.string(), inviterName: v.string(), url: v.string() }),
   v.object({ kind: v.literal("org_access_approved"), orgName: v.string(), collectionTitle: v.string(), url: v.string() }),
   v.object({
@@ -65,7 +66,14 @@ function firstName(name: string) {
 }
 
 export const send = internalAction({
-  args: { clerkId: v.optional(v.string()), toEmail: v.optional(v.string()), email, dedupeKey: v.string() },
+  args: {
+    clerkId: v.optional(v.string()),
+    toEmail: v.optional(v.string()),
+    email,
+    dedupeKey: v.string(),
+    /** For emails to people who may not have an account, so /account can't help them. */
+    unsubscribeUrl: v.optional(v.string()),
+  },
   handler: async (ctx, args): Promise<{ sent: boolean; reason?: string }> => {
     const apiKey = process.env.RESEND_API_KEY;
     const fromAddress = process.env.EMAIL_FROM_ADDRESS;
@@ -85,7 +93,7 @@ export const send = internalAction({
       siteUrl: site,
       recipient: person,
       // Service emails: the footer link goes to email preferences rather than a one-click unsubscribe.
-      unsubscribeUrl: `${site}/account`,
+      unsubscribeUrl: args.unsubscribeUrl ?? `${site}/account`,
       senderName,
       senderAddress: process.env.EMAIL_POSTAL_ADDRESS ?? "Australia",
     });
@@ -106,6 +114,9 @@ export const send = internalAction({
         html,
         text,
         tags: [{ name: "type", value: args.email.kind }],
+        headers: args.unsubscribeUrl
+          ? { "List-Unsubscribe": `<${args.unsubscribeUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
+          : undefined,
       }),
     });
 

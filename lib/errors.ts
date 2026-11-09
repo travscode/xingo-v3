@@ -32,9 +32,21 @@ export type AppErrorCode =
   | "ORG_MINUTES_INVALID"
   | "HANDLE_INVALID"
   | "HANDLE_TAKEN"
-  | "FEATURE_INVALID";
+  | "FEATURE_INVALID"
+  | "BETA_ONLY"
+  | "BETA_INVITE_INVALID"
+  | "BETA_INVITE_USED"
+  | "FEEDBACK_EMPTY"
+  | "DICTATION_FAILED"
+  | "SURVEY_INVALID";
 
 const messages: Record<AppErrorCode, string> = {
+  BETA_ONLY: "This is only available to private beta testers.",
+  BETA_INVITE_INVALID: "This invite link isn't valid. Check you used the full link from your email.",
+  BETA_INVITE_USED: "This invite has already been used by another account. Sign in with that account, or ask us for a new invite.",
+  FEEDBACK_EMPTY: "Write or say something first.",
+  DICTATION_FAILED: "We couldn't turn that into text. Please try again, or type your feedback.",
+  SURVEY_INVALID: "Please answer all five questions.",
   COURSE_UNAVAILABLE: "This course isn't available right now. It may have been unpublished by its creator.",
   COURSE_COMING_SOON: "This course is coming soon. For now you can practise NAATI CCL.",
   MARKETPLACE_CLOSED: "The marketplace isn't open yet.",

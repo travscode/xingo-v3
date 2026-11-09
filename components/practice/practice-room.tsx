@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAction, useMutation } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { RealtimeAgent, tool } from "@openai/agents/realtime";
 import { ArrowLeft, Clock, Lock } from "lucide-react";
 import { api } from "@/convex/_generated/api";
@@ -21,6 +21,7 @@ import { friendlyError, getErrorCode } from "@/lib/errors";
 import { flagEmoji, isEnglishOnly } from "@/lib/languages";
 import { isCommunityRoleplayId } from "@/lib/marketplace";
 import { LanguagePairPicker } from "@/components/dashboard/language-pair-picker";
+import { isBetaActive } from "@/lib/beta";
 import { HEARTBEAT_INTERVAL_MS, scenarioTimeLimitMinutes, STALL_END_MS, STALL_WARNING_MS, formatMinuteCount } from "@/lib/plans";
 import type { EndReason } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
@@ -1413,6 +1414,7 @@ function SetupPanel({
   const { scenario, access } = data;
   const { activePair } = useActiveLanguagePair();
   const outOfMinutes = access.remainingMinutes < 1;
+  const me = useQuery(api.users.me, {});
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-8 lg:grid-cols-[1.1fr_1fr]">
@@ -1530,7 +1532,11 @@ function SetupPanel({
 
         {error ? <p className="mt-5 rounded-lg bg-record/10 px-3 py-2 text-sm text-record">{error}</p> : null}
 
-        {outOfMinutes ? (
+        {outOfMinutes && isBetaActive(me?.user) ? (
+          <p className="mt-6 rounded-lg bg-gray-100 px-3 py-3 text-sm">
+            You&apos;ve used your beta minutes. Go back and use the feedback button to ask us for more.
+          </p>
+        ) : outOfMinutes ? (
           <Button asChild size="lg" block className="mt-6">
             <Link href="/billing">Get more minutes</Link>
           </Button>

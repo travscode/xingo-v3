@@ -519,7 +519,18 @@ export const unsubscribe = internalMutation({
             .withIndex("by_emailToken", (q) => q.eq("emailToken", args.token))
             .unique()
         : null;
-      if (!owner) return { ok: false };
+      if (!owner) {
+        // Beta invites go to people who may not have an account yet (D-049).
+        const invite = args.token
+          ? await ctx.db
+              .query("betaInvites")
+              .withIndex("by_token", (q) => q.eq("token", args.token))
+              .unique()
+          : null;
+        if (!invite) return { ok: false };
+        if (invite.status === "invited") await ctx.db.patch(invite._id, { status: "unsubscribed" });
+        return { ok: true };
+      }
       if (!owner.emailOptOut) {
         await ctx.db.patch(owner._id, { emailOptOut: true, emailOptOutAt: new Date().toISOString() });
       }

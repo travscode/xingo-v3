@@ -13,6 +13,8 @@ import { ContentIndex } from "@/components/admin/content/content-index";
 import { EmailList } from "@/components/admin/email/email-list";
 import { MarketplaceAdmin, ReportsAdmin } from "@/components/admin/marketplace-admin";
 import { UsageAdmin } from "@/components/admin/usage-admin";
+import { BetaAdmin } from "@/components/admin/beta-admin";
+import { FeedbackAdmin } from "@/components/admin/feedback-admin";
 import { PreviewAsMenu } from "@/components/admin/preview-as";
 import { Badge, Card, EmptyState, PageHeader, SectionTitle, Skeleton, Stat } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,8 @@ const tabs = [
   { id: "usage", label: "Usage" },
   { id: "users", label: "Users" },
   { id: "invites", label: "Invites" },
+  { id: "beta", label: "Beta" },
+  { id: "feedback", label: "Feedback" },
   { id: "email", label: "Email" },
   { id: "content", label: "Content" },
   { id: "marketplace", label: "Marketplace" },
@@ -112,6 +116,8 @@ export function AdminConsole() {
       {tab === "usage" ? <UsageAdmin /> : null}
       {tab === "users" ? <UsersTab myClerkId={me.user.clerkId} /> : null}
       {tab === "invites" ? <InvitesTab /> : null}
+      {tab === "beta" ? <BetaAdmin /> : null}
+      {tab === "feedback" ? <FeedbackAdmin /> : null}
       {tab === "content" ? <ContentIndex /> : null}
       {tab === "email" ? <EmailList /> : null}
       {tab === "marketplace" ? <MarketplaceAdmin /> : null}

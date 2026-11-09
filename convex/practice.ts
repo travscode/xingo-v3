@@ -186,7 +186,7 @@ async function closeAndCharge(
       await recordCreatorEarning(ctx, attempt, user, entitlement, split, new Date(endMs).toISOString());
 
       // This session used the last of their minutes: tell them once per month.
-      if (user.role !== "platform_admin" && split.charged >= entitlement.remainingMinutes) {
+      if (user.role !== "platform_admin" && !user.betaCohort && split.charged >= entitlement.remainingMinutes) {
         const month = getBillingMonthKey(new Date(endMs));
         const [year, monthNumber] = month.split("-").map(Number);
         await queueEmail(ctx, {

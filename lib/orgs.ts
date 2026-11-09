@@ -24,7 +24,7 @@ export const HANDLE_PATTERN = /^[a-z0-9][a-z0-9._-]{2,29}$/;
  */
 export const RESERVED_HANDLES = new Set([
   // Site pages
-  "about", "account", "admin", "api", "billing", "blog", "contact", "courses", "creator-terms", "credentials",
+  "about", "account", "admin", "api", "beta", "billing", "blog", "contact", "courses", "creator-terms", "credentials",
   "dashboard", "exams", "for-interpreters", "for-organizations", "help", "how-it-works", "interpreting", "invite",
   "jobs", "join", "login", "logout", "marketplace", "migrate-to-australia", "naati", "org", "orgs", "organisation",
   "organisations", "organization", "organizations", "practice", "pricing", "privacy", "progress", "results",

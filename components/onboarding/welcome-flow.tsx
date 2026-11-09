@@ -35,7 +35,8 @@ export function WelcomeFlow() {
   const presetLanguage = practiceLanguages.find(
     (option) => option.name.toLowerCase() === (searchParams.get("language") ?? "").toLowerCase(),
   )?.name ?? null;
-  const [step, setStep] = useState(1);
+  // Beta invites (D-049) already know the goal, so they start at the language step.
+  const [step, setStep] = useState(presetGoal && searchParams.get("beta") ? 2 : 1);
   const [pickedGoal, setGoal] = useState<PracticeGoalId | null>(presetGoal);
   const [language, setLanguage] = useState<string | null>(presetLanguage);
   const [saving, setSaving] = useState(false);

@@ -6,7 +6,7 @@
 
 import type { EmailContent, EmailTemplateId } from "./render";
 import { EARNINGS_HOLD_DAYS, formatAud, PAYOUT_THRESHOLD_CENTS } from "../marketplace";
-import { packs, plans, isPackId } from "../plans";
+import { BETA_MINUTES, packs, plans, isPackId } from "../plans";
 
 export type TransactionalEmail =
   | { kind: "welcome" }
@@ -21,6 +21,7 @@ export type TransactionalEmail =
   | { kind: "course_removed"; courseTitle: string; reason: string }
   | { kind: "minutes_used_up"; resetsOn: string }
   | { kind: "org_collection_invite"; orgName: string; collectionTitle: string; inviterName: string; url: string }
+  | { kind: "beta_invite"; url: string; hadAccount: boolean; reminder: boolean }
   | { kind: "org_team_invite"; orgName: string; role: string; inviterName: string; url: string }
   | { kind: "org_access_approved"; orgName: string; collectionTitle: string; url: string }
   | { kind: "org_access_requested"; requesterName: string; requesterEmail: string; collectionTitle: string; url: string };
@@ -232,6 +233,29 @@ export function buildTransactionalEmail(email: TransactionalEmail, siteUrl: stri
             "Open the link below and sign in or create a free account with this email address. The courses will be waiting in your library.",
           ].join("\n\n"),
           ctaLabel: "Open my invitation",
+          ctaUrl: email.url,
+          signature,
+        },
+      };
+
+    case "beta_invite":
+      return {
+        subject: email.reminder ? "Your XINGO private beta invite is still waiting" : "You're invited to the XINGO private beta",
+        preheader: "Practise the NAATI CCL out loud with AI, free, and tell us what to improve.",
+        templateId: "letter",
+        content: {
+          body: [
+            "Hi {{firstName}},",
+            email.reminder
+              ? "A quick reminder that your place in the XINGO private beta is still open."
+              : "We'd like to invite you to a small private beta of XINGO, where you practise the NAATI CCL out loud with AI and get a score and feedback.",
+            `You'll get the full NAATI CCL course and ${BETA_MINUTES} practice minutes, free. No card needed.`,
+            email.hadAccount
+              ? "You already have a XINGO account, so just sign in with the link below."
+              : "Create your free account with the link below, choose your language, and you'll go straight to your first dialogue.",
+            "Please complete at least two dialogues, then tell us how it went. There's a feedback button on every page, and your comments will shape what we build.",
+          ].join("\n\n"),
+          ctaLabel: email.hadAccount ? "Open the beta" : "Join the beta",
           ctaUrl: email.url,
           signature,
         },

@@ -246,3 +246,13 @@ Format: **ID — title** · date · status. Context → Decision → Consequence
 **Context.** Travis: remove the option to type your own language. Typed names were the source of the lower-case problem in D-047.
 **Decision.** The header picker, onboarding and Account offer only `practiceLanguages`. German joins the list, since it already had a name bank (D-045) and learners were typing it.
 **Consequences.** Pairs saved earlier with an unlisted language keep working and stay on the learner's Account page. Convex doesn't reject them, so those learners aren't locked out. Marketing copy no longer offers typing a language.
+
+### D-049 — Private beta for 2M testers · 2026-11-09 · accepted
+**Context.** Travis and 2M want 20 to 50 invited people to try NAATI CCL and tell us what to improve, without overloading them with forms.
+**Decision.**
+- Admin → Beta takes a pasted list, shows what will happen to each address, then sends a personal link (`/beta/<token>`). The link works for one account. Signing up with a verified invited address also joins the beta, and an existing verified account joins when invited.
+- Beta is its own field (`users.betaCohort`), not a role. It unlocks premium courses and grants `BETA_MINUTES` once. Admin → Beta → End beta stops access and keeps all history.
+- Beta testers don't get the sales-led onboarding series or the minutes-used-up email, and aren't sent to billing when their minutes run out.
+- The feedback button shows on every page for beta testers except the practice room and first-run screens, so it can't clash with push-to-talk. Dictated audio goes to Whisper and is never stored; the tester can correct the text before sending.
+- The survey is a card on the results page, offered after a scored CCL dialogue and again when the course is finished. Dismissing brings it back once, on a later dialogue. Difficulty uses a Very easy to Very hard scale, because more stars there wouldn't mean better. The server works out which survey is due.
+**Consequences.** Invite emails go to people without accounts, so each has its own unsubscribe link and invited people must have agreed to hear from us. To test as a tester, invite your own address. Admin → Feedback holds comments and survey answers, with CSV export.

@@ -161,6 +161,11 @@ export default defineSchema({
     practicePausedReason: v.optional(v.string()),
     /** Platform admins only: browse the app as this kind of member (D-044). */
     previewAs: v.optional(v.union(v.literal("free"), v.literal("pack"), v.literal("professional"))),
+    /** Private beta group this person joined (D-049). */
+    betaCohort: v.optional(v.string()),
+    betaJoinedAt: v.optional(v.string()),
+    /** Set when the beta is ended from Admin: beta access stops, history stays. */
+    betaEndedAt: v.optional(v.string()),
     createdAt: v.string(),
     updatedAt: v.string(),
   })
@@ -628,6 +633,56 @@ export default defineSchema({
   })
     .index("by_email", ["email"])
     .index("by_status", ["status"]),
+
+  /** Private beta invitations (D-049). `token` is the secret in the invite link. */
+  betaInvites: defineTable({
+    email: v.string(),
+    cohort: v.string(),
+    token: v.string(),
+    status: v.union(v.literal("invited"), v.literal("accepted"), v.literal("unsubscribed")),
+    hadAccount: v.boolean(),
+    invitedByClerkId: v.string(),
+    clerkId: v.optional(v.string()),
+    sentAt: v.optional(v.string()),
+    sendError: v.optional(v.string()),
+    remindedAt: v.optional(v.string()),
+    acceptedAt: v.optional(v.string()),
+    createdAt: v.string(),
+  })
+    .index("by_email", ["email"])
+    .index("by_token", ["token"]),
+
+  /** Comments from the beta feedback button: who, when, on which page, and what. */
+  betaFeedback: defineTable({
+    clerkId: v.string(),
+    name: v.string(),
+    email: v.string(),
+    page: v.string(),
+    comment: v.string(),
+    source: v.union(v.literal("typed"), v.literal("voice")),
+    createdAt: v.string(),
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_createdAt", ["createdAt"]),
+
+  /** One row per tester per survey moment: dismissals now, answers once given. */
+  betaSurveys: defineTable({
+    clerkId: v.string(),
+    name: v.string(),
+    email: v.string(),
+    trigger: v.union(v.literal("first_dialogue"), v.literal("course_finished")),
+    dismissCount: v.number(),
+    lastDismissedAttemptId: v.optional(v.string()),
+    attemptId: v.optional(v.string()),
+    scenarioId: v.optional(v.string()),
+    overall: v.optional(v.number()),
+    helpful: v.optional(v.number()),
+    worked: v.optional(v.number()),
+    fair: v.optional(v.number()),
+    difficulty: v.optional(v.number()),
+    suggestions: v.optional(v.string()),
+    answeredAt: v.optional(v.string()),
+  }).index("by_clerk_trigger", ["clerkId", "trigger"]),
 
   /** Admin email campaigns (docs/runbooks/email-setup.md). */
   emailCampaigns: defineTable({
