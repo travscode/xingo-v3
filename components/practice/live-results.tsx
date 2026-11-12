@@ -99,10 +99,15 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
             body: "Practice sessions aren't scored. When you're ready, run the same dialogue as an assessed session.",
           }
         : reason === "too_short"
-          ? {
-              title: "Not enough to score",
-              body: "We need at least a few interpreted turns to give useful feedback. Try again and keep going until the conversation wraps up.",
-            }
+          ? transcript.some((entry) => entry.role === "user")
+            ? {
+                title: "Not enough to score",
+                body: "We need at least a few interpreted turns to give useful feedback. Try again and keep going until the conversation wraps up.",
+              }
+            : {
+                title: "We couldn't hear you",
+                body: "None of your speech came through, so there was nothing to score. Check that the right microphone is selected in your browser, and hold the talk button the whole time you're speaking.",
+              }
           : reason === "grading_failed"
             ? { title: "Scoring didn't finish", body: "Something went wrong while scoring. You can try again — you won't be charged twice." }
             : { title: "Session ended early", body: "This session ended before it could be scored." };

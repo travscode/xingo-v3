@@ -43,6 +43,8 @@ import type { TranscriptEntry } from "@/types/session";
 import { deriveInterpretingSteps, taskItems, type CoachResult, type Party } from "@/components/practice/session-guide";
 import { StepGuide, TaskChecklist, TranscriptSection } from "@/components/practice/session-panel";
 import { localizeScenarioNames } from "@/lib/agent-names";
+import { judgeHeldTurn, turnNotHeardMessage } from "@/lib/mic-check";
+import { startMicTurnMeter, type MicTurnMeter } from "@/components/practice/mic-turn-meter";
 
 type AgentKey = "agent_a" | "agent_b";
 type Phase = "setup" | "countdown" | "connecting" | "live" | "finishing";
@@ -140,6 +142,7 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
   const readyRef = useRef<Record<AgentKey, boolean>>({ agent_a: false, agent_b: false });
   const activeAgentRef = useRef<AgentKey | null>(null);
   const recordingRef = useRef(false);
+  const micMeterRef = useRef<MicTurnMeter | null>(null);
   const lastActivityRef = useRef(0);
   const lastAgentHeardRef = useRef(0);
   /** Silences a participant who starts talking over another (set once sessions exist). */
@@ -546,6 +549,8 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
   }, [bundleFor]);
 
   const disconnectAll = useCallback(() => {
+    micMeterRef.current?.finish();
+    micMeterRef.current = null;
     agentASession.disconnect();
     agentBSession.disconnect();
     connectedAgentsRef.current.clear();
@@ -830,8 +835,10 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     }
 
     // The learner takes the floor: everyone else stops talking.
+    setError(null);
     silenceAgents(activeAgent);
     bundleFor(activeAgent).session.startPushToTalk();
+    micMeterRef.current = startMicTurnMeter(bundleFor(activeAgent).session.getMicTrack(), audioContextRef.current);
     setIsRecording(true);
     recordingRef.current = true;
     lastActivityRef.current = Date.now();
@@ -843,10 +850,22 @@ export function PracticeRoom({ data }: { data: PracticeRoomData }) {
     }
 
     const bundle = bundleFor(activeAgent);
-    bundle.session.stopPushToTalk();
+    const heldTurn = micMeterRef.current?.finish();
+    micMeterRef.current = null;
+    const verdict = heldTurn ? judgeHeldTurn(heldTurn) : "send";
     setIsRecording(false);
     recordingRef.current = false;
     lastActivityRef.current = Date.now();
+
+    // Nothing to hear: drop the turn, or the agent would reply to nothing (D-050).
+    if (verdict !== "send") {
+      bundle.session.cancelPushToTalk();
+      setError(turnNotHeardMessage[verdict]);
+      track("practice_turn_not_heard", { reason: verdict, held_ms: Math.round(heldTurn?.heldMs ?? 0) });
+      return;
+    }
+
+    bundle.session.stopPushToTalk();
     turnsRef.current = { ...turnsRef.current, [activeAgent]: turnsRef.current[activeAgent] + 1 };
     setTurns(turnsRef.current);
     // Only the person just addressed may answer.

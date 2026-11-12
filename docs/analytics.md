@@ -24,6 +24,7 @@ GA4 property `G-J7M1JVS5HM` (override with `NEXT_PUBLIC_GA4_MEASUREMENT_ID`). Al
 | | `practice_start` | Attempt started | `scenario_id`, `module_id`, `mode` |
 | | `practice_error` | Session couldn't start (other than paywall) | `code` (e.g. `MIC_BLOCKED`), `scenario_id`, `module_id`, `mode` |
 | | `practice_abandon` | Learner left a live session | `scenario_id`, `module_id`, `mode`, `turns` |
+| | `practice_turn_not_heard` | A held turn was dropped because nothing could be heard | `reason` (`too_short` or `silent`), `held_ms` |
 | | `practice_finish` | Learner pressed Finish or time ran out | `scenario_id`, `mode`, `reason`, `turns` |
 | | `results_view` | Scored result shown | `score`, `module_id` |
 | Money | `paywall_view` | Locked dialogue / out of minutes | `reason`, `scenario_id` |

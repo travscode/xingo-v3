@@ -57,6 +57,11 @@ export function retargetLanguage(text: string | undefined, from: string | undefi
 
 export const END_CONVERSATION_TOOL = "end_conversation";
 
+/** Stops an agent inventing the conversation when it heard nothing usable (D-050). */
+function unclearSpeechRule(language: string, listener: string) {
+  return `- If you can't clearly hear or understand what the ${listener} said, say one short line in ${language} asking them to repeat it, then stop. Never guess what was said, never carry the conversation on by yourself, and never answer your own question.`;
+}
+
 export function buildRealtimeAgentInstructions(args: {
   scenario: Scenario;
   agent: VoiceAgent;
@@ -86,6 +91,9 @@ export function buildRealtimeAgentInstructions(args: {
     counterpart
       ? `The other participant is ${counterpart.name}, the ${counterpart.role}. You cannot hear them directly; a human interpreter relays everything between you.`
       : "A human interpreter relays everything between you and the other party.",
+    counterpart
+      ? `Only ever speak as ${agent.name}. What the interpreter relays comes from ${counterpart.name} and is meant for you, so respond from your own point of view. Never ask ${counterpart.name}'s questions, never speak for them, and never report what they said.`
+      : "",
     "",
     "How the conversation starts:",
     isProfessional
@@ -99,6 +107,7 @@ export function buildRealtimeAgentInstructions(args: {
     "- Speak in short, natural turns of one to three sentences, then stop and wait for the interpreter.",
     "- Never interpret, translate or summarise for anyone. Never act as the interpreter.",
     "- If the interpreter is silent, stay silent.",
+    unclearSpeechRule(language ?? "the language you are speaking", "interpreter"),
     "- Stay in character. Do not mention that this is a simulation or training.",
     isProfessional
       ? `- When you have what you need (${endCondition}) and the other party has no outstanding questions, give a brief closing line, then call the ${END_CONVERSATION_TOOL} tool with reason "objective_met". Do not prolong the conversation after that.`
@@ -186,6 +195,7 @@ export function buildRoleplayInstructions(args: { scenario: Scenario; agent: Voi
     "- Stay in character the whole time. Never mention that this is practice, an exam or AI.",
     "- Never coach, hint, praise or evaluate the learner, and never take over their task.",
     "- Speak naturally in short turns, then wait. If the learner is silent, stay silent.",
+    unclearSpeechRule(agent.language || "English", "learner"),
     "- Reveal details from your card only when the learner asks about them or it would be natural to mention them.",
     "- If the learner uses jargon you wouldn't understand, ask what it means.",
     runtime.learnerOpens === false

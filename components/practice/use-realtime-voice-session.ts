@@ -462,8 +462,27 @@ export function useRealtimeVoiceSession(
     session.transport.sendEvent({ type: "response.create" } as never);
   }, [ensureConnected]);
 
+  /** Ends a held turn without sending it, so the agent doesn't reply to nothing. */
+  const cancelPushToTalk = useCallback(() => {
+    ensureConnected().transport.sendEvent({ type: "input_audio_buffer.clear" } as never);
+  }, [ensureConnected]);
+
+  /** The microphone track this session is actually sending. */
+  const getMicTrack = useCallback(() => {
+    const transport = sessionRef.current?.transport;
+    if (!(transport instanceof OpenAIRealtimeWebRTC)) return null;
+
+    return (
+      transport.connectionState.peerConnection
+        ?.getSenders()
+        .find((sender) => sender.track?.kind === "audio")?.track ?? null
+    );
+  }, []);
+
   return {
     status,
+    cancelPushToTalk,
+    getMicTrack,
     connect,
     disconnect,
     mute,

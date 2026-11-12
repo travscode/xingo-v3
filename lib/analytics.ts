@@ -28,6 +28,7 @@ export type AnalyticsEvent =
   | "practice_error"
   | "practice_abandon"
   | "practice_finish"
+  | "practice_turn_not_heard"
   | "results_view"
   // Money
   | "paywall_view"
