@@ -106,6 +106,12 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             <Link href="/privacy" className="hover:text-paper">Privacy</Link>
             <Link href="/creator-terms" className="hover:text-paper">Creator terms</Link>
           </span>
+          <span className="w-full">
+            Website design by{" "}
+            <a href="https://travis.work" target="_blank" rel="noopener" className="hover:text-paper">
+              Travis Weerts Creative
+            </a>
+          </span>
         </div>
       </footer>
     </div>
