@@ -7,6 +7,7 @@ import { action, internalAction, type ActionCtx } from "./_generated/server";
 import { getClerkIdFromIdentity } from "./model/auth";
 import { isPackId, type PackId } from "../lib/plans";
 import { LEGAL_VERSION } from "../lib/legal";
+import { safeReturnPath } from "../lib/return-path";
 
 /**
  * Stripe configuration lives in Convex environment variables:
@@ -92,6 +93,8 @@ export const createCheckout = action({
   args: {
     kind: v.union(v.literal("subscription"), v.literal("pack")),
     packId: v.optional(v.string()),
+    /** Same-site path to return to if the learner backs out of Checkout, e.g. the course they came from. */
+    cancelPath: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ url: string }> => {
     const user = await requireUser(ctx);
@@ -105,6 +108,7 @@ export const createCheckout = action({
     const stripe = getStripe();
     const customer = await ensureCustomer(ctx, stripe, user);
     const base = siteUrl();
+    const cancelUrl = `${base}${safeReturnPath(args.cancelPath) ?? "/billing"}?status=cancelled`;
 
     if (args.kind === "subscription") {
       if (user.subscriptionStatus !== "free") {
@@ -121,7 +125,7 @@ export const createCheckout = action({
         subscription_data: { metadata: { clerkId: user.clerkId } },
         // Stripe fills in the session id; the billing page reports it to GA as the transaction id.
         success_url: `${base}/billing?status=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${base}/billing?status=cancelled`,
+        cancel_url: cancelUrl,
       });
 
       return { url: session.url! };
@@ -140,7 +144,7 @@ export const createCheckout = action({
       metadata: { clerkId: user.clerkId, kind: "pack", packId: args.packId },
       payment_intent_data: { metadata: { clerkId: user.clerkId, packId: args.packId } },
       success_url: `${base}/billing?status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${base}/billing?status=cancelled`,
+      cancel_url: cancelUrl,
     });
 
     return { url: session.url! };

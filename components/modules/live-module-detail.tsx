@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { ArrowLeft, Check, Clock } from "lucide-react";
@@ -11,6 +11,7 @@ import { displayPassMark, displayMaxScore, isCclModule } from "@/lib/scoring";
 import { Badge, Card, EmptyState, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { ScenarioRow } from "@/components/modules/scenario-row";
+import { UnlockDialog } from "@/components/billing/unlock-dialog";
 import { FreeBadge, IndustryIcon, PremiumBadge } from "@/components/ui/badges";
 
 export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
@@ -18,6 +19,8 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
   const me = useQuery(api.users.me, {});
   const viewed = catalog?.modules.find((m) => m.id === moduleId);
   const viewedRef = useRef<string | null>(null);
+  const [unlockOpen, setUnlockOpen] = useState(false);
+  const closeUnlock = useCallback(() => setUnlockOpen(false), []);
 
   useEffect(() => {
     if (!viewed || me === undefined || viewedRef.current === moduleId) return;
@@ -105,8 +108,8 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
             </Button>
           ) : null}
           {locked ? (
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/billing">Unlock all dialogues</Link>
+            <Button size="lg" variant="secondary" onClick={() => setUnlockOpen(true)}>
+              Unlock all dialogues
             </Button>
           ) : null}
         </div>
@@ -148,6 +151,9 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
           </Card>
         </aside>
       </div>
+      {locked ? (
+        <UnlockDialog open={unlockOpen} onClose={closeUnlock} returnPath={`/courses/${learningModule.id}`} source="course_page" />
+      ) : null}
     </div>
   );
 }

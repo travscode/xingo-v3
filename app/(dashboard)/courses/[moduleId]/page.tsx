@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LiveModuleDetail } from "@/components/modules/live-module-detail";
 
 export default async function ModuleDetailPage({
@@ -6,5 +7,10 @@ export default async function ModuleDetailPage({
   params: Promise<{ moduleId: string }>;
 }) {
   const { moduleId } = await params;
-  return <LiveModuleDetail moduleId={moduleId} />;
+  return (
+    // The unlock dialog reads ?status= when Stripe Checkout sends the learner back.
+    <Suspense fallback={null}>
+      <LiveModuleDetail moduleId={moduleId} />
+    </Suspense>
+  );
 }

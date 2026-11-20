@@ -1,88 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { useAction, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { Check, Clock, Crown, Package } from "lucide-react";
 import { api } from "@/convex/_generated/api";
-import { rememberCheckout, takePendingCheckout, track, type AnalyticsItem } from "@/lib/analytics";
-import { friendlyError } from "@/lib/errors";
-import { CURRENCY_LABEL, approxCclDialogues, packList, packs, plans, type PackId, formatMinuteCount } from "@/lib/plans";
+import { CURRENCY_LABEL, approxCclDialogues, packList, plans, formatMinuteCount } from "@/lib/plans";
+import { useCheckout } from "@/components/billing/use-checkout";
+import { Price } from "@/components/billing/price";
 import { cn } from "@/lib/utils";
 import { Badge, Card, PageHeader, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 
 export function LiveBilling() {
   const summary = useQuery(api.usage.summaryForCurrentUser, {});
-  const createCheckout = useAction(api.billing.createCheckout);
-  const createPortal = useAction(api.billing.createPortal);
-  const searchParams = useSearchParams();
-  const status = searchParams.get("status");
-  const [pending, setPending] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const reportedReturnRef = useRef(false);
-
-  // Back from Stripe Checkout: report the purchase (or the cancel) once.
-  useEffect(() => {
-    if (reportedReturnRef.current || (status !== "success" && status !== "cancelled")) return;
-    reportedReturnRef.current = true;
-    const item = takePendingCheckout();
-
-    if (status === "cancelled") {
-      track("checkout_cancel", { kind: item?.item_category, item_id: item?.item_id });
-      return;
-    }
-    if (!item) return; // Refreshed the page, or a different tab started checkout.
-
-    track("purchase", {
-      transaction_id: searchParams.get("session_id") ?? undefined,
-      value: item.price,
-      currency: CURRENCY_LABEL,
-      kind: item.item_category,
-      items: [item],
-    });
-  }, [searchParams, status]);
-
-  const go = async (key: string, run: () => Promise<{ url: string }>) => {
-    setPending(key);
-    setError(null);
-
-    try {
-      const { url } = await run();
-      window.location.assign(url);
-    } catch (checkoutError) {
-      setError(friendlyError(checkoutError));
-      setPending(null);
-    }
-  };
-
-  const startCheckout = (item: AnalyticsItem) => {
-    rememberCheckout(item);
-    track("checkout_start", {
-      kind: item.item_category,
-      pack_id: item.item_category === "pack" ? item.item_id : undefined,
-      value: item.price,
-      currency: CURRENCY_LABEL,
-      items: [item],
-    });
-  };
-
-  const buyPack = (packId: PackId) => {
-    const pack = packs[packId];
-    startCheckout({ item_id: pack.id, item_name: pack.label, item_category: "pack", price: pack.priceCents / 100, quantity: 1 });
-    void go(packId, () => createCheckout({ kind: "pack", packId }));
-  };
-
-  const subscribe = () => {
-    const pro = plans.professional;
-    startCheckout({ item_id: pro.id, item_name: pro.label, item_category: "subscription", price: pro.priceCents / 100, quantity: 1 });
-    void go("pro", () => createCheckout({ kind: "subscription" }));
-  };
-
-  const openPortal = () => {
-    track("billing_portal_open");
-    void go("portal", () => createPortal({}));
-  };
+  const { status, pending, error, buyPack, subscribe, openPortal } = useCheckout();
 
   if (!summary) {
     return (
@@ -166,7 +96,7 @@ export function LiveBilling() {
       <section>
         <SectionTitle>Minute packs</SectionTitle>
         <p className="-mt-1 mb-4 text-sm text-gray-500">
-          One-off payment, no subscription. Minutes never expire and work on every open course. Prices in {CURRENCY_LABEL}.
+          One-off payment, no subscription. Minutes never expire and work on every open course. Prices in {CURRENCY_LABEL}. Have a promo code? Add it at checkout.
         </p>
         <div className="grid gap-4 md:grid-cols-3">
           {packList.map((pack) => (
@@ -175,7 +105,7 @@ export function LiveBilling() {
                 <Package className="h-4 w-4" aria-hidden />
                 {pack.label}
               </p>
-              <p className="mt-2 text-3xl font-bold tracking-[-0.03em]">{pack.priceLabel}</p>
+              <Price className="mt-2" priceLabel={pack.priceLabel} regularPriceLabel={pack.regularPriceLabel} />
               <p className="mt-1 flex items-center gap-1 text-sm font-semibold">
                 <Clock className="h-3.5 w-3.5" aria-hidden /> {pack.minutes} minutes · about {approxCclDialogues(pack.minutes)} CCL dialogues
               </p>
@@ -202,7 +132,7 @@ export function LiveBilling() {
                   </p>
                   {current ? <Badge tone="dark">Current</Badge> : null}
                 </div>
-                <p className="mt-2 text-3xl font-bold tracking-[-0.03em]">{plan.priceLabel}</p>
+                <Price className="mt-2" priceLabel={plan.priceLabel} regularPriceLabel={plan.regularPriceLabel} />
                 <ul className="mt-4 flex-1 space-y-2 text-sm">
                   <li className="flex gap-2">
                     <Check className="h-4 w-4 shrink-0" /> {plan.monthlyMinutes} practice minutes every month

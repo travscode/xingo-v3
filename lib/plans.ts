@@ -26,6 +26,8 @@ export type PlanConfig = {
   priceLabel: string;
   /** Monthly price in AUD cents incl. GST (0 when not self-serve). */
   priceCents: number;
+  /** Set only during a sale: the usual price, shown struck through next to `priceLabel`. */
+  regularPriceLabel?: string;
   tagline: string;
 };
 
@@ -36,6 +38,8 @@ export type PackConfig = {
   priceLabel: string;
   /** AUD cents incl. GST. */
   priceCents: number;
+  /** Set only during a sale: the usual price, shown struck through next to `priceLabel`. */
+  regularPriceLabel?: string;
   description: string;
 };
 
