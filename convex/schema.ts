@@ -147,6 +147,8 @@ export default defineSchema({
     subscriptionCancelAt: v.optional(v.string()),
     languagePreferences: v.optional(v.array(languagePreference)),
     practiceGoal: v.optional(v.string()),
+    /** Where they heard about XINGO, picked once in onboarding (lib/heard-about.ts, D-051). */
+    heardAbout: v.optional(v.string()),
     onboardedAt: v.optional(v.string()),
     /** Terms of Service + Privacy Policy acceptance (lib/legal.ts LEGAL_VERSION). */
     termsVersion: v.optional(v.string()),

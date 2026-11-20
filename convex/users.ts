@@ -18,6 +18,7 @@ import { activateInvitesForUser } from "./model/orgs";
 import { applyBetaInviteForEmail } from "./model/beta";
 import { queueEmail } from "./model/notify";
 import { marketplaceOpenFor } from "./model/courses";
+import { isHeardAboutId } from "../lib/heard-about";
 
 const languagePreference = v.object({
   sourceLanguage: v.string(),
@@ -216,6 +217,7 @@ export const completeOnboarding = mutation({
   args: {
     practiceGoal: v.string(),
     languagePair: languagePreference,
+    heardAbout: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
@@ -236,6 +238,8 @@ export const completeOnboarding = mutation({
       practiceGoal: args.practiceGoal.trim().slice(0, 60),
       languagePreferences: [pair, ...otherPairs].slice(0, 10),
       onboardedAt: user.onboardedAt ?? now,
+      // First answer wins; unknown values are ignored rather than stored.
+      ...(args.heardAbout && isHeardAboutId(args.heardAbout) && !user.heardAbout ? { heardAbout: args.heardAbout } : {}),
       updatedAt: now,
     });
 

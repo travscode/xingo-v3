@@ -32,6 +32,7 @@ export type AnalyticsEvent =
   | "results_view"
   // Money
   | "paywall_view"
+  | "out_of_minutes_offer_click"
   | "checkout_start"
   | "checkout_cancel"
   | "purchase"

@@ -12,6 +12,8 @@ import { rubricForModule } from "@/lib/rubrics";
 import { Badge, Card, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { isBetaActive } from "@/lib/beta";
+import { approxCclDialogues, packs } from "@/lib/plans";
 import { BetaSurvey } from "@/components/beta/beta-survey";
 
 export function LiveResults({ attemptId }: { attemptId: string }) {
@@ -22,6 +24,7 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
   const [retrying, setRetrying] = useState(false);
   const trackedRef = useRef(false);
   const [showTranscript, setShowTranscript] = useState(false);
+  const me = useQuery(api.users.me, {});
 
   useEffect(() => {
     if (result?.session.assessment && !trackedRef.current) {
@@ -69,6 +72,7 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
       <p className="eyebrow">{moduleTitle}</p>
       <h1 className="mt-1 text-3xl font-bold tracking-[-0.035em] sm:text-4xl">{scenarioTitle}</h1>
       {endReason && endNote[endReason] ? <p className="mt-2 text-sm text-gray-500">{endNote[endReason]}</p> : null}
+      {endReason === "out_of_minutes" && me && !isBetaActive(me.user) ? <OutOfMinutesOffer /> : null}
     </div>
   );
 
@@ -299,6 +303,25 @@ function Transcript({
           </div>
         ))}
       </div>
+    </Card>
+  );
+}
+
+/** Shown when a session ran out of minutes: the moment a learner is most likely to top up (D-051). */
+function OutOfMinutesOffer() {
+  const starter = packs.starter;
+  return (
+    <Card className="mt-4 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="font-bold">Keep practising</p>
+        <p className="mt-1 text-sm text-gray-500">
+          {starter.label} is {starter.priceLabel} for {starter.minutes} minutes, about {approxCclDialogues(starter.minutes)}{" "}
+          CCL dialogues. One-off payment, minutes never expire, and they work on every open course.
+        </p>
+      </div>
+      <Button asChild className="shrink-0" onClick={() => track("out_of_minutes_offer_click", {})}>
+        <Link href="/billing">See packs</Link>
+      </Button>
     </Card>
   );
 }

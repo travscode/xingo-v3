@@ -7,7 +7,7 @@ import { Check, Clock, Crown, Package } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { rememberCheckout, takePendingCheckout, track, type AnalyticsItem } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errors";
-import { CURRENCY_LABEL, packList, packs, plans, type PackId, formatMinuteCount } from "@/lib/plans";
+import { CURRENCY_LABEL, approxCclDialogues, packList, packs, plans, type PackId, formatMinuteCount } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import { Badge, Card, PageHeader, ProgressBar, SectionTitle, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
@@ -164,6 +164,31 @@ export function LiveBilling() {
       </Card>
 
       <section>
+        <SectionTitle>Minute packs</SectionTitle>
+        <p className="-mt-1 mb-4 text-sm text-gray-500">
+          One-off payment, no subscription. Minutes never expire and work on every open course. Prices in {CURRENCY_LABEL}.
+        </p>
+        <div className="grid gap-4 md:grid-cols-3">
+          {packList.map((pack) => (
+            <Card key={pack.id} className="flex flex-col p-6">
+              <p className="flex items-center gap-1.5 font-bold">
+                <Package className="h-4 w-4" aria-hidden />
+                {pack.label}
+              </p>
+              <p className="mt-2 text-3xl font-bold tracking-[-0.03em]">{pack.priceLabel}</p>
+              <p className="mt-1 flex items-center gap-1 text-sm font-semibold">
+                <Clock className="h-3.5 w-3.5" aria-hidden /> {pack.minutes} minutes · about {approxCclDialogues(pack.minutes)} CCL dialogues
+              </p>
+              <p className="mt-2 flex-1 text-sm text-gray-500">{pack.description}</p>
+              <Button className="mt-5" variant="secondary" disabled={pending === pack.id} onClick={() => buyPack(pack.id)}>
+                {pending === pack.id ? "Opening checkout…" : "Buy"}
+              </Button>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <section>
         <SectionTitle>Plans</SectionTitle>
         <div className="grid gap-4 md:grid-cols-2">
           {[plans.free, plans.professional].map((plan) => {
@@ -205,31 +230,6 @@ export function LiveBilling() {
               </Card>
             );
           })}
-        </div>
-      </section>
-
-      <section>
-        <SectionTitle>Minute packs</SectionTitle>
-        <p className="-mt-1 mb-4 text-sm text-gray-500">
-          One-off top-ups. Any pack also unlocks every module. Prices in {CURRENCY_LABEL}.
-        </p>
-        <div className="grid gap-4 md:grid-cols-3">
-          {packList.map((pack) => (
-            <Card key={pack.id} className="flex flex-col p-6">
-              <p className="flex items-center gap-1.5 font-bold">
-                <Package className="h-4 w-4" aria-hidden />
-                {pack.label}
-              </p>
-              <p className="mt-2 text-3xl font-bold tracking-[-0.03em]">{pack.priceLabel}</p>
-              <p className="mt-1 flex items-center gap-1 text-sm font-semibold">
-                <Clock className="h-3.5 w-3.5" aria-hidden /> {pack.minutes} minutes
-              </p>
-              <p className="mt-2 flex-1 text-sm text-gray-500">{pack.description}</p>
-              <Button className="mt-5" variant="secondary" disabled={pending === pack.id} onClick={() => buyPack(pack.id)}>
-                {pending === pack.id ? "Opening checkout…" : "Buy"}
-              </Button>
-            </Card>
-          ))}
         </div>
       </section>
 

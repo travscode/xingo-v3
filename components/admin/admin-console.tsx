@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
 import { friendlyError } from "@/lib/errors";
 import { getGoal } from "@/lib/goals";
+import { heardAboutLabel } from "@/lib/heard-about";
 import { cn } from "@/lib/utils";
 import { ContentIndex } from "@/components/admin/content/content-index";
 import { EmailList } from "@/components/admin/email/email-list";
@@ -249,6 +250,20 @@ function OverviewTab() {
               {getGoal(goal)?.label ?? goal}: {count}
             </Badge>
           ))}
+        </div>
+        <p className="mt-4 text-xs font-semibold text-gray-500">Heard about us (asked since 20 Nov 2026)</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {Object.entries(overview.users.byHeardAbout).length === 0 ? (
+            <span className="text-sm text-gray-500">No answers yet.</span>
+          ) : (
+            Object.entries(overview.users.byHeardAbout)
+              .sort((a, b) => b[1] - a[1])
+              .map(([source, count]) => (
+                <Badge key={source}>
+                  {heardAboutLabel(source)}: {count}
+                </Badge>
+              ))
+          )}
         </div>
       </section>
 

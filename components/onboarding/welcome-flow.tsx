@@ -6,6 +6,7 @@ import { useConvex, useMutation, useQuery } from "convex/react";
 import { ArrowLeft, Check, Mic, Repeat, Trophy, Users } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { track } from "@/lib/analytics";
+import { heardAboutOptions, type HeardAboutId } from "@/lib/heard-about";
 import { isGoalComingSoon, isSpeakingGoal, practiceGoals, type PracticeGoalId } from "@/lib/goals";
 import { createLanguagePair, flagEmoji, practiceLanguages } from "@/lib/languages";
 import { plans } from "@/lib/plans";
@@ -39,6 +40,7 @@ export function WelcomeFlow() {
   const [step, setStep] = useState(presetGoal && searchParams.get("beta") ? 2 : 1);
   const [pickedGoal, setGoal] = useState<PracticeGoalId | null>(presetGoal);
   const [language, setLanguage] = useState<string | null>(presetLanguage);
+  const [heardAbout, setHeardAbout] = useState<HeardAboutId | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,9 +68,10 @@ export function WelcomeFlow() {
       await completeOnboarding({
         practiceGoal: goal,
         languagePair: { sourceLanguage: pair.sourceLanguage, targetLanguage: pair.targetLanguage },
+        heardAbout: heardAbout ?? undefined,
       });
       setActivePair(pair);
-      track("onboarding_complete", { goal, language: chosenLanguage });
+      track("onboarding_complete", { goal, language: chosenLanguage, heard_about: heardAbout ?? undefined });
 
       const next = searchParams.get("next");
       if (next && next.startsWith("/") && !next.startsWith("//") && next !== "/dashboard" && next !== "/welcome") {
@@ -247,6 +250,27 @@ export function WelcomeFlow() {
             <div className="mt-8 space-y-5 rounded-xl border border-gray-200 p-5">
               <HeadphonesTip />
               <MicCheck />
+            </div>
+
+            <div className="mt-8">
+              <p className="font-bold">How did you hear about XINGO?</p>
+              <p className="mt-0.5 text-sm text-gray-500">Optional. It helps us reach more people like you.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {heardAboutOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    aria-pressed={heardAbout === option.id}
+                    onClick={() => setHeardAbout(heardAbout === option.id ? null : option.id)}
+                    className={cn(
+                      "rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors",
+                      heardAbout === option.id ? "border-ink bg-paper" : "border-transparent bg-gray-50 hover:bg-gray-100",
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {error ? <p className="mt-4 text-sm text-record">{error}</p> : null}

@@ -94,6 +94,11 @@ export const overview = query({
           acc[key] = (acc[key] ?? 0) + 1;
           return acc;
         }, {}),
+        byHeardAbout: users.reduce<Record<string, number>>((acc, user) => {
+          if (!user.heardAbout) return acc;
+          acc[user.heardAbout] = (acc[user.heardAbout] ?? 0) + 1;
+          return acc;
+        }, {}),
       },
       practice: {
         attemptsLast30Days: recent30.length,

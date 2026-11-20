@@ -7,13 +7,13 @@ import { SALES_EMAIL, SUPPORT_EMAIL } from "@/components/marketing/catalogue";
 import { ScenePhoto } from "@/components/marketing/people";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
-import { CURRENCY_LABEL, MAX_ATTEMPT_MINUTES, packList, plans } from "@/lib/plans";
+import { CURRENCY_LABEL, MAX_ATTEMPT_MINUTES, approxCclDialogues, packList, plans } from "@/lib/plans";
 import { pageMetadata } from "@/lib/seo-metadata";
 
 export const metadata: Metadata = pageMetadata({
   title: "Pricing — Free Minutes, Pro Plan and Minute Packs",
   description:
-    "Free practice minutes every month, a Pro plan with full NAATI CCL practice, or one-off minute packs that never expire. Scoring and feedback included. Prices in AUD.",
+    "One-off NAATI CCL practice packs with no subscription, minutes that never expire, and scoring included. Or start free, or go Pro. Prices in AUD.",
   path: "/pricing",
 });
 
@@ -65,35 +65,8 @@ export default function PricingPage() {
       <MarketingIntro
         eyebrow="Pricing"
         title="Pay for practice time. Scoring is included."
-        description={`Start free. Upgrade to Pro for full NAATI CCL practice, or buy a one-off pack before your test. Prices in ${CURRENCY_LABEL}.`}
+        description={`Buy a one-off pack before your test, or start free. Prices in ${CURRENCY_LABEL}.`}
       />
-
-      {/* Plans */}
-      <section className="grid gap-4 md:grid-cols-2">
-        <PlanCard
-          name={plans.free.label}
-          price={plans.free.priceLabel}
-          tagline={plans.free.tagline}
-          features={freeFeatures}
-          cta={
-            <Button asChild variant="outline" block size="lg">
-              <Link href="/sign-up">Start free</Link>
-            </Button>
-          }
-        />
-        <PlanCard
-          name={plans.professional.label}
-          price={plans.professional.priceLabel}
-          tagline={plans.professional.tagline}
-          features={proFeatures}
-          highlight
-          cta={
-            <Button asChild variant="accent" block size="lg">
-              <Link href="/sign-up?redirect=%2Fbilling">Get Pro</Link>
-            </Button>
-          }
-        />
-      </section>
 
       {/* Packs */}
       <section id="packs" className="scroll-mt-24">
@@ -102,8 +75,8 @@ export default function PricingPage() {
             <p className="eyebrow">Minute packs</p>
             <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Preparing for a test date?</h2>
             <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
-              One-off payment, no subscription. Pack minutes never expire, and every open course is unlocked while you
-              have them.
+              One-off payment, no subscription and nothing to cancel. Pack minutes never expire, and every open course
+              is unlocked while you have them.
             </p>
           </div>
           <ScenePhoto
@@ -120,13 +93,49 @@ export default function PricingPage() {
               <div className="mt-4 flex items-baseline gap-2">
                 <span className="text-4xl font-bold tracking-[-0.03em]">{pack.priceLabel}</span>
               </div>
-              <div className="mt-1 text-sm font-semibold">{pack.minutes} practice minutes</div>
+              <div className="mt-1 text-sm font-semibold">
+                {pack.minutes} practice minutes · about {approxCclDialogues(pack.minutes)} CCL dialogues
+              </div>
               <p className="mt-3 flex-1 text-sm leading-6 text-gray-500">{pack.description}</p>
               <Button asChild variant="secondary" block className="mt-6">
                 <Link href="/sign-up?redirect=%2Fbilling">Buy {pack.label}</Link>
               </Button>
             </article>
           ))}
+        </div>
+      </section>
+
+      {/* Plans */}
+      <section>
+        <p className="eyebrow">Monthly</p>
+        <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Practising every week?</h2>
+        <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
+          Start free, or go Pro for a fresh allowance every month.
+        </p>
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          <PlanCard
+            name={plans.free.label}
+            price={plans.free.priceLabel}
+            tagline={plans.free.tagline}
+            features={freeFeatures}
+            cta={
+              <Button asChild variant="outline" block size="lg">
+                <Link href="/sign-up">Start free</Link>
+              </Button>
+            }
+          />
+          <PlanCard
+            name={plans.professional.label}
+            price={plans.professional.priceLabel}
+            tagline={plans.professional.tagline}
+            features={proFeatures}
+            highlight
+            cta={
+              <Button asChild variant="accent" block size="lg">
+                <Link href="/sign-up?redirect=%2Fbilling">Get Pro</Link>
+              </Button>
+            }
+          />
         </div>
       </section>
 

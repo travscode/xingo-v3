@@ -81,7 +81,7 @@ export const packs: Record<PackId, PackConfig> = {
     minutes: 30,
     priceLabel: "A$19",
     priceCents: 1900,
-    description: "Try the full CCL course. About 6 timed dialogues.",
+    description: "Try the full CCL course before you book.",
   },
   plus: {
     id: "plus",
@@ -104,6 +104,17 @@ export const packs: Record<PackId, PackConfig> = {
 export const packList = [packs.starter, packs.plus, packs.sprint] as const;
 
 /** Pack minutes never expire (see docs/decisions.md, D-008). */
+
+/**
+ * Typical billed minutes for one graded NAATI CCL dialogue, measured on live
+ * sessions in Nov 2026 (median 5). Used only to say "about N dialogues" (D-051).
+ */
+export const TYPICAL_CCL_DIALOGUE_MINUTES = 5;
+
+/** Roughly how many CCL dialogues a minute balance buys, never below 1. */
+export function approxCclDialogues(minutes: number) {
+  return Math.max(1, Math.floor(minutes / TYPICAL_CCL_DIALOGUE_MINUTES));
+}
 
 /** A user needs at least this many minutes left to start a new attempt. */
 export const MIN_MINUTES_TO_START = 1;

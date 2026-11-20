@@ -18,7 +18,7 @@ GA4 property `G-J7M1JVS5HM` (override with `NEXT_PUBLIC_GA4_MEASUREMENT_ID`). Al
 | | `login` | A new Clerk session is seen (once per sign-in) | `method` |
 | | `terms_accept` | Terms gate accepted | `version`, `updated` |
 | | `onboarding_step` | Welcome flow step completed | `step` (goal / language), `goal`, `language`, `preset`, `custom_language` |
-| | `onboarding_complete` | Welcome flow finished | `goal`, `language` |
+| | `onboarding_complete` | Welcome flow finished | `goal`, `language`, `heard_about` |
 | | `language_pair_change` | Practice language switched | `language`, `pair`, `from` |
 | Learning | `course_view` | Course page opened in the app | `module_id`, `course_title`, `free`, `locked` |
 | | `practice_start` | Attempt started | `scenario_id`, `module_id`, `mode` |
@@ -28,6 +28,7 @@ GA4 property `G-J7M1JVS5HM` (override with `NEXT_PUBLIC_GA4_MEASUREMENT_ID`). Al
 | | `practice_finish` | Learner pressed Finish or time ran out | `scenario_id`, `mode`, `reason`, `turns` |
 | | `results_view` | Scored result shown | `score`, `module_id` |
 | Money | `paywall_view` | Locked dialogue / out of minutes | `reason`, `scenario_id` |
+| Money | `out_of_minutes_offer_click` | "See packs" on a results page after minutes ran out | — |
 | | `checkout_start` | Pro or pack checkout opened | `kind`, `pack_id`, `value`, `currency`, `items` |
 | | `checkout_cancel` | Back from Stripe without paying | `kind`, `item_id` |
 | | `purchase` | Back from Stripe after paying | `transaction_id` (Stripe session), `value`, `currency`, `kind`, `items` |
