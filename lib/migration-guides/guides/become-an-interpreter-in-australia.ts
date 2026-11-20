@@ -161,7 +161,7 @@ export const guide: MigrationGuide = {
   related: ["jobs-for-bilingual-migrants", "community-language-points", "free-interpreter-services", "translating-documents-for-a-visa"],
   cta: {
     title: "Practise CPI-style dialogues",
-    body: "Two AI speakers, you in the middle, with scored feedback after each assessed session. Free practice minutes every month.",
+    body: "Two AI speakers, you in the middle, with scored feedback after each assessed session. Free practice minutes to start.",
     goal: "naati_cpi",
   },
 };

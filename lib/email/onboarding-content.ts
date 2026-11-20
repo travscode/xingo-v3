@@ -159,7 +159,7 @@ function minutesNote(h: Helpers) {
   if (h.ctx.isPro) {
     return `A note on minutes: your ${pro.label} plan gives you **${pro.monthlyMinutes} practice minutes** each month, and any pack minutes you've bought stay on your account and never expire.`;
   }
-  return `A note on minutes: the Free plan gives you **${free} practice minutes** each month, which is enough for a short session or two. If you want more, minute packs never expire, and ${pro.label} gives you ${pro.monthlyMinutes} minutes a month plus every course. No pressure either way. Everything is under ${h.link("Plan & minutes", "/billing")}.`;
+  return `A note on minutes: your free account comes with **${free} practice minutes**, which is enough for a short session or two. If you want more, minute packs never expire, and ${pro.label} gives you ${pro.monthlyMinutes} minutes a month plus every course. No pressure either way. Everything is under ${h.link("Plan & minutes", "/billing")}.`;
 }
 
 const replyInvite = "If you have a question about your preparation, or something in XINGO isn't working for you, just reply to this email.";

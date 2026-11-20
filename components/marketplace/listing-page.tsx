@@ -379,7 +379,7 @@ export function CourseListingPage({ slug }: { slug: string }) {
           <Card tone="muted" className="p-5 text-sm">
             <p className="font-bold">How practice works</p>
             <p className="mt-1 text-gray-700">
-              Sessions use your XINGO practice minutes, including the free minutes every account gets each month.
+              Sessions use your XINGO practice minutes, including the free minutes every account starts with.
             </p>
           </Card>
         </aside>

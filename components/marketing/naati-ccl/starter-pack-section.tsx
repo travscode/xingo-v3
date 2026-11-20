@@ -11,8 +11,8 @@ export function NaatiCclStarterPackSection() {
       <div className="max-w-xl">
         <h2 className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">Try a free CCL dialogue</h2>
         <p className="mt-3 text-[15px] leading-6 text-gray-500">
-          Every free account includes one preview dialogue from the CCL course and {plans.free.monthlyMinutes} practice
-          minutes a month. No card needed.
+          Every free account includes one preview dialogue from the CCL course and {plans.free.monthlyMinutes} free practice
+          minutes. No card needed.
         </p>
       </div>
       <Button asChild size="lg">

@@ -351,7 +351,7 @@ export const topicPages: TopicPage[] = [
     faqs: [
       {
         q: "Is the medical course free?",
-        a: "Yes. The emergency and hospital dialogues are part of the free plan, which includes practice minutes every month.",
+        a: "Yes. The emergency and hospital dialogues are part of the free plan, which includes free practice minutes to start.",
       },
       {
         q: "How is my interpreting scored?",
@@ -388,7 +388,7 @@ export const topicPages: TopicPage[] = [
       },
       {
         q: "Can I try an NDIS scenario for free?",
-        a: "Not yet. NDIS interpreting practice is coming soon. NAATI CCL practice is open now, with free practice minutes every month.",
+        a: "Not yet. NDIS interpreting practice is coming soon. NAATI CCL practice is open now, with free practice minutes to start.",
       },
       {
         q: "Do I need to know NDIS terms first?",
@@ -451,7 +451,7 @@ export const topicPages: TopicPage[] = [
     skills: ["First-person rendition", "Formal register", "Legal terminology", "Preserving hesitation and exact answers"],
     faqs: [
       { q: "Are these real court transcripts?", a: "No — they're realistic role-plays written for practice. Nothing is taken from real proceedings." },
-      { q: "Can I practise legal interpreting now?", a: "Not yet. Legal interpreting practice is coming soon. NAATI CCL practice is open now, with free practice minutes every month." },
+      { q: "Can I practise legal interpreting now?", a: "Not yet. Legal interpreting practice is coming soon. NAATI CCL practice is open now, with free practice minutes to start." },
       { q: "Is this legal advice?", a: "No. The content is for interpreting practice only." },
     ],
     goal: "legal",

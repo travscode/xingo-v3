@@ -185,14 +185,18 @@ async function closeAndCharge(
       await bumpUsage(ctx, attempt.clerkId, new Date(endMs).toISOString(), { minutes: split.charged });
       await recordCreatorEarning(ctx, attempt, user, entitlement, split, new Date(endMs).toISOString());
 
-      // This session used the last of their minutes: tell them once per month.
+      // This session used the last of their minutes: tell them once per month
+      // (once ever on Free, whose minutes don't come back, D-052).
       if (user.role !== "platform_admin" && !user.betaCohort && split.charged >= entitlement.remainingMinutes) {
         const month = getBillingMonthKey(new Date(endMs));
         const [year, monthNumber] = month.split("-").map(Number);
         await queueEmail(ctx, {
           clerkId: attempt.clerkId,
-          email: { kind: "minutes_used_up", resetsOn: new Date(Date.UTC(year, monthNumber, 1)).toISOString() },
-          dedupeKey: `minutes_used_up-${attempt.clerkId}-${month}`,
+          email: {
+            kind: "minutes_used_up",
+            resetsOn: entitlement.allowanceRenews ? new Date(Date.UTC(year, monthNumber, 1)).toISOString() : undefined,
+          },
+          dedupeKey: `minutes_used_up-${attempt.clerkId}-${entitlement.allowanceRenews ? month : "free"}`,
         });
       }
     }

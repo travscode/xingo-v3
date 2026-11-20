@@ -18,6 +18,8 @@ export type Entitlement = {
   planLabel: string;
   billingMonth: string;
   monthlyMinutes: number;
+  /** False on Free: the allowance is given once per account, not every month (D-052). */
+  allowanceRenews: boolean;
   allowanceUsed: number;
   allowanceRemaining: number;
   packMinutesPurchased: number;
@@ -50,6 +52,7 @@ function previewEntitlement(previewAs: PreviewAs, now: Date): Entitlement {
     planLabel: plan.label,
     billingMonth: getBillingMonthKey(now),
     monthlyMinutes: plan.monthlyMinutes,
+    allowanceRenews: plan.allowanceRenews,
     allowanceUsed: 0,
     allowanceRemaining: plan.monthlyMinutes,
     packMinutesPurchased: packMinutes,
@@ -71,7 +74,7 @@ export async function getEntitlement(
   const isAdmin = user.role === "platform_admin";
   const basePlan = getPlan(user.subscriptionStatus);
   const plan = isAdmin
-    ? { ...basePlan, label: "Admin", monthlyMinutes: ADMIN_MONTHLY_MINUTES, premiumAccess: true }
+    ? { ...basePlan, label: "Admin", monthlyMinutes: ADMIN_MONTHLY_MINUTES, allowanceRenews: true, premiumAccess: true }
     : basePlan;
   const billingMonth = getBillingMonthKey(now);
 
@@ -92,7 +95,9 @@ export async function getEntitlement(
       .collect(),
   ]);
 
-  const allowanceUsed = monthCharges.reduce((sum, c) => sum + c.fromAllowance, 0);
+  // Free minutes are once per account, so every allowance minute ever used counts (D-052).
+  const allowanceCharges = plan.allowanceRenews ? monthCharges : allCharges;
+  const allowanceUsed = allowanceCharges.reduce((sum, c) => sum + c.fromAllowance, 0);
   const allowanceRemaining = Math.max(0, plan.monthlyMinutes - allowanceUsed);
   const packMinutesPurchased = grants.reduce((sum, g) => sum + g.minutes, 0);
   const packMinutesUsed = allCharges.reduce((sum, c) => sum + c.fromPacks, 0);
@@ -103,6 +108,7 @@ export async function getEntitlement(
     planLabel: plan.label,
     billingMonth,
     monthlyMinutes: plan.monthlyMinutes,
+    allowanceRenews: plan.allowanceRenews,
     allowanceUsed,
     allowanceRemaining,
     packMinutesPurchased,

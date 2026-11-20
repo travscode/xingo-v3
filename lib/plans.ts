@@ -19,8 +19,13 @@ export type PackId = "starter" | "plus" | "sprint";
 export type PlanConfig = {
   id: PlanId;
   label: string;
-  /** Minutes granted every calendar month (UTC). Unused minutes do not roll over. */
+  /**
+   * The plan's included minutes. When `allowanceRenews` they come back every calendar
+   * month (UTC) and don't roll over; otherwise they're given once per account (D-052).
+   */
   monthlyMinutes: number;
+  /** False for Free: its minutes are a one-time allowance, not monthly (D-052). */
+  allowanceRenews: boolean;
   /** Whether premium (non-free) modules are unlocked by the plan itself. */
   premiumAccess: boolean;
   priceLabel: string;
@@ -50,6 +55,7 @@ export const plans: Record<PlanId, PlanConfig> = {
     id: "free",
     label: "Free",
     monthlyMinutes: 10,
+    allowanceRenews: false,
     premiumAccess: false,
     priceLabel: "A$0",
     priceCents: 0,
@@ -59,6 +65,7 @@ export const plans: Record<PlanId, PlanConfig> = {
     id: "professional",
     label: "Pro",
     monthlyMinutes: 150,
+    allowanceRenews: true,
     premiumAccess: true,
     priceLabel: "A$29 / month",
     priceCents: 2900,
@@ -68,6 +75,7 @@ export const plans: Record<PlanId, PlanConfig> = {
     id: "organization",
     label: "Team",
     monthlyMinutes: 600,
+    allowanceRenews: true,
     premiumAccess: true,
     priceLabel: "Contact us",
     priceCents: 0,

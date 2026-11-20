@@ -152,7 +152,7 @@ export const guide: MigrationGuide = {
   related: ["nurses-moving-to-australia", "ielts-vs-pte-vs-oet", "english-test-for-australian-pr", "first-weeks-in-australia"],
   cta: {
     title: "Rehearse AMC stations out loud",
-    body: "Eight-minute stations with an AI patient or relative, then feedback on structure and communication. Free practice minutes every month.",
+    body: "Eight-minute stations with an AI patient or relative, then feedback on structure and communication. Free practice minutes to start.",
     goal: "amc",
   },
 };

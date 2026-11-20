@@ -173,7 +173,7 @@ export const guide: MigrationGuide = {
   related: ["skilled-migration-points-test", "translating-documents-for-a-visa", "english-test-for-australian-pr", "first-weeks-in-australia"],
   cta: {
     title: "Prepare the parts that are up to you",
-    body: "Practise IELTS Speaking or CCL-style dialogues out loud while your agent handles the application. Free practice minutes every month.",
+    body: "Practise IELTS Speaking or CCL-style dialogues out loud while your agent handles the application. Free practice minutes to start.",
     goal: "ielts",
   },
 };

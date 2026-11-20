@@ -116,7 +116,7 @@ export default function HomePage() {
             </Button>
           </div>
           <p className="mk-rise mk-delay-4 mt-4 text-sm text-gray-500">
-            {plans.free.monthlyMinutes} free practice minutes every month. No card needed.
+            {plans.free.monthlyMinutes} free practice minutes to start. No card needed.
           </p>
         </div>
         <HeroStory className="mk-rise mk-delay-2 mx-auto max-w-md" />
@@ -337,7 +337,7 @@ export default function HomePage() {
           <PriceTile
             label={plans.free.label}
             price={plans.free.priceLabel}
-            note={`${plans.free.monthlyMinutes} min / month`}
+            note={`${plans.free.monthlyMinutes} min to start`}
           />
           <PriceTile
             label={plans.professional.label}
@@ -356,7 +356,7 @@ export default function HomePage() {
         secondary={
           <ul className="flex flex-col gap-1 text-sm text-gray-300 sm:ml-4">
             <li className="flex items-center gap-2">
-              <Check size={14} /> {plans.free.monthlyMinutes} free minutes every month
+              <Check size={14} /> {plans.free.monthlyMinutes} free minutes to start
             </li>
             <li className="flex items-center gap-2">
               <Check size={14} /> No card needed

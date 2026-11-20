@@ -151,7 +151,7 @@ export const guide: MigrationGuide = {
   related: ["become-an-interpreter-in-australia", "community-language-points", "free-interpreter-services", "first-weeks-in-australia"],
   cta: {
     title: "See if interpreting suits you",
-    body: "Interpret dialogues between two AI speakers in your language pair, with scored feedback. Free practice minutes every month.",
+    body: "Interpret dialogues between two AI speakers in your language pair, with scored feedback. Free practice minutes to start.",
     goal: "naati_cpi",
   },
 };

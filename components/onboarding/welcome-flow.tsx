@@ -242,7 +242,7 @@ export function WelcomeFlow() {
               />
               <HowItWorksRow
                 icon={<Repeat className="h-5 w-5" />}
-                title={`${plans.free.monthlyMinutes} free minutes every month`}
+                title={`${plans.free.monthlyMinutes} free minutes to start`}
                 body="Minutes count only while a session is live. Free dialogues are marked in the library."
               />
             </div>

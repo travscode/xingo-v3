@@ -165,6 +165,38 @@ describe("metering", () => {
     ).rejects.toThrow("OUT_OF_MINUTES");
   });
 
+  test("free minutes are given once and don't come back next month (D-052)", async () => {
+    const t = setup();
+    await seedCatalog(t);
+    const asFree = await seedUser(t, "user_free_once");
+    const asPro = await seedUser(t, "user_pro_monthly", { subscriptionStatus: "professional" });
+    await t.run(async (ctx) => {
+      for (const clerkId of ["user_free_once", "user_pro_monthly"]) {
+        await ctx.db.insert("usageCharges", {
+          clerkId,
+          attemptId: `sep-${clerkId}`,
+          minutes: 10,
+          fromAllowance: 10,
+          fromPacks: 0,
+          billingMonth: "2026-09",
+          createdAt: "2026-09-15T00:00:00.000Z",
+        });
+      }
+    });
+
+    const free = await asFree.query(api.users.me, {});
+    expect(free?.entitlement.allowanceRenews).toBe(false);
+    expect(free?.entitlement.remainingMinutes).toBe(0);
+    await expect(
+      asFree.mutation(api.practice.startAttempt, { scenarioId: "free-scn", ...pair }),
+    ).rejects.toThrow("OUT_OF_MINUTES");
+
+    // Pro still gets a fresh allowance each calendar month.
+    const pro = await asPro.query(api.users.me, {});
+    expect(pro?.entitlement.allowanceRenews).toBe(true);
+    expect(pro?.entitlement.allowanceUsed).toBe(0);
+  });
+
   test("allowance is spent before packs and never overdrawn", async () => {
     const t = setup();
     await seedCatalog(t);

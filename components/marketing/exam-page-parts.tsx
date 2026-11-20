@@ -123,7 +123,7 @@ export function ExamHeroFootnote({ visual, partners }: { visual: ExamVisual; par
       <p className="text-sm leading-5 text-gray-500">
         <span className="font-semibold text-ink">{partners}</span>, played by AI.
         <br />
-        {plans.free.monthlyMinutes} free minutes every month. No card needed.
+        {plans.free.monthlyMinutes} free minutes to start. No card needed.
       </p>
     </div>
   );
@@ -317,7 +317,7 @@ export function ExamClosingCta({
         </h2>
         <p className="mt-3 max-w-md text-[15px] leading-6 text-paper/60">
           {comingSoon ? `${openAlternativeFor(page.goal).name} practice is open now. ` : ""}
-          {plans.free.monthlyMinutes} free practice minutes every month. No card needed. Prices are in AUD.
+          {plans.free.monthlyMinutes} free practice minutes to start. No card needed. Prices are in AUD.
         </p>
         <div className="mt-8">
           <Button asChild variant="accent" size="lg">

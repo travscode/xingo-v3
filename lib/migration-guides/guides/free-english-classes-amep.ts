@@ -161,7 +161,7 @@ export const guide: MigrationGuide = {
   related: ["first-weeks-in-australia", "free-interpreter-services", "english-test-for-australian-pr", "ielts-vs-pte-vs-oet"],
   cta: {
     title: "Preparing for a speaking test?",
-    body: "When you're ready, practise IELTS Speaking out loud with an AI examiner, on real timings, with an estimated band. Free practice minutes every month.",
+    body: "When you're ready, practise IELTS Speaking out loud with an AI examiner, on real timings, with an estimated band. Free practice minutes to start.",
     goal: "ielts",
   },
 };

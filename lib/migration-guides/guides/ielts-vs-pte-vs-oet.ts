@@ -154,7 +154,7 @@ export const guide: MigrationGuide = {
   related: ["english-test-for-australian-pr", "nurses-moving-to-australia", "doctors-moving-to-australia", "skilled-migration-points-test"],
   cta: {
     title: "Bilingual? Work on 5 more points",
-    body: `Practise for the NAATI CCL in your language with CCL-style dialogues, scored out of ${CCL_MAX_SCORE}. Free practice minutes every month, no card needed.`,
+    body: `Practise for the NAATI CCL in your language with CCL-style dialogues, scored out of ${CCL_MAX_SCORE}. Free practice minutes to start, no card needed.`,
     goal: "naati_ccl",
     buttonLabel: "Try a free CCL dialogue",
   },

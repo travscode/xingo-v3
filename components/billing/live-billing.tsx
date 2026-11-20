@@ -68,14 +68,16 @@ export function LiveBilling() {
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
           <div>
             <div className="flex justify-between text-sm">
-              <span className="font-semibold">Monthly allowance</span>
+              <span className="font-semibold">{summary.allowanceRenews ? "Monthly allowance" : "Free minutes"}</span>
               <span className="text-paper/60">
                 {formatMinuteCount(summary.allowanceRemaining)} / {formatMinuteCount(summary.monthlyMinutes)} min
               </span>
             </div>
             <ProgressBar value={allowanceRatio} tone="accent" className="mt-2 bg-paper/20" />
             <p className="mt-2 text-xs text-paper/60">
-              Resets {resetDate.toLocaleDateString(undefined, { day: "numeric", month: "long" })}
+              {summary.allowanceRenews
+                ? `Resets ${resetDate.toLocaleDateString(undefined, { day: "numeric", month: "long" })}`
+                : "One-time. These don't reset."}
             </p>
           </div>
           <div>
@@ -88,7 +90,7 @@ export function LiveBilling() {
               tone="accent"
               className="mt-2 bg-paper/20"
             />
-            <p className="mt-2 text-xs text-paper/60">Never expire. Used after your monthly allowance.</p>
+            <p className="mt-2 text-xs text-paper/60">Never expire. Used after your {summary.allowanceRenews ? "monthly allowance" : "free minutes"}.</p>
           </div>
         </div>
       </Card>
@@ -135,7 +137,7 @@ export function LiveBilling() {
                 <Price className="mt-2" priceLabel={plan.priceLabel} regularPriceLabel={plan.regularPriceLabel} />
                 <ul className="mt-4 flex-1 space-y-2 text-sm">
                   <li className="flex gap-2">
-                    <Check className="h-4 w-4 shrink-0" /> {plan.monthlyMinutes} practice minutes every month
+                    <Check className="h-4 w-4 shrink-0" /> {plan.monthlyMinutes} practice minutes {plan.allowanceRenews ? "every month" : "to start, once"}
                   </li>
                   <li className="flex gap-2">
                     <Check className="h-4 w-4 shrink-0" />

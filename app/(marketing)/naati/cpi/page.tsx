@@ -103,7 +103,7 @@ export default function NaatiCpiPage() {
       {comingSoon ? (
         <ComingSoonCtaBand name="NAATI CPI" />
       ) : (
-        <CtaBand title="Try a CPI-style dialogue free." description="Free practice minutes every month. No card needed." href={href} label="Start free" />
+        <CtaBand title="Try a CPI-style dialogue free." description="Free practice minutes to start. No card needed." href={href} label="Start free" />
       )}
     </main>
   );

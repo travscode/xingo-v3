@@ -194,7 +194,7 @@ export const guide: MigrationGuide = {
   related: ["english-test-for-australian-pr", "community-language-points", "find-a-registered-migration-agent", "translating-documents-for-a-visa"],
   cta: {
     title: "Work on your 5 community language points",
-    body: `Practise CCL-style dialogues in your language, scored out of ${CCL_MAX_SCORE} like the real test. Free practice minutes every month, no card needed.`,
+    body: `Practise CCL-style dialogues in your language, scored out of ${CCL_MAX_SCORE} like the real test. Free practice minutes to start, no card needed.`,
     goal: "naati_ccl",
     buttonLabel: "Try a free CCL dialogue",
   },

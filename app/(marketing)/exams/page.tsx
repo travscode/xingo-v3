@@ -97,7 +97,7 @@ export default function ExamsHubPage() {
         </section>
       ))}
 
-      <CtaBand title="Try your first practice session free." description="Free practice minutes every month. No card needed." />
+      <CtaBand title="Try your first practice session free." description="Free practice minutes to start. No card needed." />
     </main>
   );
 }

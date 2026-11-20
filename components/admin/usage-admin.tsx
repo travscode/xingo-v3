@@ -288,7 +288,7 @@ function UserUsageDetail({ clerkId }: { clerkId: string }) {
               {ent.planLabel}
               {detail.stripeSubscriptionStatus ? <span className="text-gray-500"> · Stripe {detail.stripeSubscriptionStatus}</span> : null}
             </dd>
-            <dt className="text-gray-500">This month</dt>
+            <dt className="text-gray-500">{ent.allowanceRenews ? "This month" : "Free minutes"}</dt>
             <dd className="tabular-nums">
               {formatMinuteCount(ent.allowanceUsed)} of {formatMinuteCount(ent.monthlyMinutes)} used
             </dd>

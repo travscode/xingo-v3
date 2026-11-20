@@ -69,7 +69,7 @@ export default function BlogIndexPage() {
 
       <CtaBand
         title="Reading helps. Speaking is what counts."
-        description="Practise your test out loud with AI role-players and get scored feedback. Free minutes every month."
+        description="Practise your test out loud with AI role-players and get scored feedback. Free minutes to start."
       />
 
       <JsonLd data={itemListJsonLd(posts.map((post) => ({ name: post.title, path: blogPostPath(post.slug) })))} />

@@ -18,7 +18,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 const freeFeatures = [
-  `${plans.free.monthlyMinutes} practice minutes every month`,
+  `${plans.free.monthlyMinutes} free practice minutes, once`,
   "Full access to the free course",
   "Free preview dialogues in NAATI CCL",
   "Scoring and feedback included",
@@ -110,7 +110,7 @@ export default function PricingPage() {
         <p className="eyebrow">Monthly</p>
         <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Practising every week?</h2>
         <p className="mt-3 max-w-2xl text-[15px] leading-6 text-gray-500">
-          Start free, or go Pro for a fresh allowance every month.
+          Start with free minutes, or go Pro for a fresh allowance every month.
         </p>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           <PlanCard
@@ -178,7 +178,7 @@ export default function PricingPage() {
 
       <CtaBand
         title="Try it before you pay."
-        description={`${plans.free.monthlyMinutes} free practice minutes every month, plus free preview dialogues in NAATI CCL.`}
+        description={`${plans.free.monthlyMinutes} free practice minutes to start, plus free preview dialogues in NAATI CCL.`}
       />
     </main>
   );

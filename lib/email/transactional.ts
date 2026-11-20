@@ -19,7 +19,7 @@ export type TransactionalEmail =
   | { kind: "payout_sent"; amountCents: number }
   | { kind: "payout_account_ready" }
   | { kind: "course_removed"; courseTitle: string; reason: string }
-  | { kind: "minutes_used_up"; resetsOn: string }
+  | { kind: "minutes_used_up"; /** Unset on Free, whose minutes don't come back (D-052). */ resetsOn?: string }
   | { kind: "org_collection_invite"; orgName: string; collectionTitle: string; inviterName: string; url: string }
   | { kind: "beta_invite"; url: string; hadAccount: boolean; reminder: boolean }
   | { kind: "org_team_invite"; orgName: string; role: string; inviterName: string; url: string }
@@ -49,7 +49,7 @@ export function buildTransactionalEmail(email: TransactionalEmail, siteUrl: stri
           body: [
             "Hi {{firstName}},",
             "Welcome to XINGO. You can now practise spoken interpreting and speaking exams out loud, with AI role-players and a score at the end of every assessed session.",
-            `You have **${free.monthlyMinutes} free practice minutes** every month. Here's how to make the most of them:`,
+            `You have **${free.monthlyMinutes} free practice minutes** to start. Here's how to make the most of them:`,
             "- **Pick a course** for the test you're preparing for, or try one from the marketplace.\n- **Use headphones** and hold Space (or the mic button) while you talk.\n- **Start in Practice mode** to see the transcript and tips, then switch to Assessed for a score.",
             "If anything isn't clear, just reply to this email.",
           ].join("\n\n"),
@@ -70,7 +70,7 @@ export function buildTransactionalEmail(email: TransactionalEmail, siteUrl: stri
           body: [
             "Hi {{firstName}},",
             `Thanks for your purchase. **${minutes}** have been added to your account${pack ? ` (${pack.label}, ${pack.priceLabel})` : ""}.`,
-            "Pack minutes never expire. Any monthly minutes you have are used first, then pack minutes.",
+            "Pack minutes never expire. Any free or monthly minutes you have are used first, then pack minutes.",
             `Your receipt is in **Plan & minutes → Invoices & payment**.`,
           ].join("\n\n"),
           ctaLabel: "Start practising",
@@ -107,7 +107,7 @@ export function buildTransactionalEmail(email: TransactionalEmail, siteUrl: stri
           body: [
             "Hi {{firstName}},",
             `We've cancelled your ${pro.label} subscription as requested. You won't be charged again, and you keep everything in ${pro.label} until **${longDate(email.endsAt)}**.`,
-            `After that you'll move to the Free plan (${free.monthlyMinutes} minutes a month). Any pack minutes you've bought stay on your account and never expire.`,
+            `After that you'll move to the Free plan. Any pack minutes you've bought stay on your account and never expire.`,
             "Changed your mind? You can resume from **Plan & minutes → Invoices & payment** before then.",
           ].join("\n\n"),
           ctaLabel: "Manage my plan",
@@ -119,12 +119,12 @@ export function buildTransactionalEmail(email: TransactionalEmail, siteUrl: stri
     case "pro_ended":
       return {
         subject: `Your ${pro.label} plan has ended`,
-        preheader: `You're now on the Free plan with ${free.monthlyMinutes} minutes a month.`,
+        preheader: `You're now on the Free plan.`,
         templateId: "letter",
         content: {
           body: [
             "Hi {{firstName}},",
-            `Your ${pro.label} plan has ended and your account is now on the Free plan, with **${free.monthlyMinutes} practice minutes** each month. Your results and progress are all still there, and any pack minutes you've bought stay on your account.`,
+            `Your ${pro.label} plan has ended and your account is now on the Free plan. Your results and progress are all still there, and any pack minutes you've bought stay on your account.`,
             "Whenever you're ready for more practice, you can go Pro again or buy a minute pack.",
           ].join("\n\n"),
           ctaLabel: "See plans",
@@ -312,9 +312,26 @@ export function buildTransactionalEmail(email: TransactionalEmail, siteUrl: stri
       };
 
     case "minutes_used_up":
+      if (!email.resetsOn) {
+        return {
+          subject: "You've used your free practice minutes",
+          preheader: "Keep practising with a minute pack. They never expire.",
+          templateId: "letter",
+          content: {
+            body: [
+              "Hi {{firstName}},",
+              `Nice work: you've used your ${free.monthlyMinutes} free practice minutes.`,
+              `If your test is coming up, you can keep practising with a minute pack (no subscription, and the minutes never expire) or ${pro.label}, which includes ${pro.monthlyMinutes} minutes a month.`,
+            ].join("\n\n"),
+            ctaLabel: "Get more minutes",
+            ctaUrl: `${siteUrl}/billing`,
+            signature,
+          },
+        };
+      }
       return {
         subject: "You've used this month's practice minutes",
-        preheader: `Your free minutes come back on ${longDate(email.resetsOn)}, or keep going now.`,
+        preheader: `Your monthly minutes come back on ${longDate(email.resetsOn)}, or keep going now.`,
         templateId: "letter",
         content: {
           body: [

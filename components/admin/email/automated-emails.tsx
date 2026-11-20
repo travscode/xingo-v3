@@ -12,7 +12,7 @@ const customerEmails = [
   "Pro cancelled (ends on date)",
   "Pro ended",
   "Payment failed",
-  "Out of minutes (once a month)",
+  "Out of minutes (monthly; once on Free)",
   "Creator: course published",
   "Creator: course removed",
   "Creator: payouts set up",

@@ -94,7 +94,7 @@ export default function ForInterpretersPage() {
 
       <CtaBand
         title="Start with a free course."
-        description="Free practice minutes every month. Upgrade only if you need more."
+        description="Free practice minutes to start. Upgrade only if you need more."
         label="Start practising free"
       />
     </main>

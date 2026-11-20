@@ -181,7 +181,7 @@ export default function NaatiLanguagesPage() {
 
       <CtaBand
         title="Found your language? Start practising."
-        description={`CCL-style dialogues with two AI speakers, scored out of ${CCL_MAX_SCORE}. Free practice minutes every month, no card needed.`}
+        description={`CCL-style dialogues with two AI speakers, scored out of ${CCL_MAX_SCORE}. Free practice minutes to start, no card needed.`}
         href={href}
         label="Try a free CCL dialogue"
       />

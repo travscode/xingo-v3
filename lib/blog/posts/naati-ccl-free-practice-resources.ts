@@ -53,7 +53,7 @@ export const post: BlogPost = {
         },
         {
           type: "p",
-          text: `If you don't have a partner available, XINGO's [CCL practice](/naati/ccl) gives you two AI speakers — an English-speaking professional and a community member in your language — and scores each assessed attempt out of ${CCL_MAX_SCORE}. There are ${plans.free.monthlyMinutes} free practice minutes each month and a free CCL dialogue; it's independent practice, not an official NAATI score.`,
+          text: `If you don't have a partner available, XINGO's [CCL practice](/naati/ccl) gives you two AI speakers — an English-speaking professional and a community member in your language — and scores each assessed attempt out of ${CCL_MAX_SCORE}. There are ${plans.free.monthlyMinutes} free practice minutes to start and a free CCL dialogue; it's independent practice, not an official NAATI score.`,
         },
       ],
     },

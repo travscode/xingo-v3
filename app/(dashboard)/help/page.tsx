@@ -30,7 +30,7 @@ const faqs: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: "What counts as a practice minute?",
-    a: `Time while a session is live, rounded up to the minute. Briefings, results and browsing are free. The Free plan includes ${plans.free.monthlyMinutes} minutes a month; Pro includes ${plans.professional.monthlyMinutes}. A single session can run up to ${MAX_ATTEMPT_MINUTES} minutes.`,
+    a: `Time while a session is live, rounded up to the minute. Briefings, results and browsing are free. Every account gets ${plans.free.monthlyMinutes} free minutes once; Pro includes ${plans.professional.monthlyMinutes} a month. A single session can run up to ${MAX_ATTEMPT_MINUTES} minutes.`,
   },
   {
     q: "Billing and refunds",

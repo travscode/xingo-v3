@@ -59,7 +59,7 @@ export default async function ExamPage({ params }: { params: Promise<{ slug: str
       ? [
           {
             q: `Can I practise for the ${page.shortName} on XINGO?`,
-            a: `Not yet. ${page.shortName} practice is coming soon. ${alternative.name} practice is open now, with free practice minutes every month.`,
+            a: `Not yet. ${page.shortName} practice is coming soon. ${alternative.name} practice is open now, with free practice minutes to start.`,
           },
           ...page.faqs,
         ]

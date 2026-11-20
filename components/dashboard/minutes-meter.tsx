@@ -39,7 +39,7 @@ export function MinutesMeter() {
           {entitlement.plan !== "free" ? <Crown className="h-3.5 w-3.5" aria-hidden /> : null}
           {beta ? "Beta" : entitlement.planLabel}
         </span>
-        {beta ? null : <span className="text-xs text-gray-500">this month</span>}
+        {beta || !entitlement.allowanceRenews ? null : <span className="text-xs text-gray-500">this month</span>}
       </div>
       <p className="mt-2 flex items-baseline gap-1.5 text-2xl font-bold tabular-nums tracking-[-0.03em]">
         <Clock className="h-4 w-4 self-center text-gray-500" aria-hidden />

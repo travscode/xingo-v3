@@ -24,7 +24,7 @@ const email = v.union(
   v.object({ kind: v.literal("payout_sent"), amountCents: v.number() }),
   v.object({ kind: v.literal("payout_account_ready") }),
   v.object({ kind: v.literal("course_removed"), courseTitle: v.string(), reason: v.string() }),
-  v.object({ kind: v.literal("minutes_used_up"), resetsOn: v.string() }),
+  v.object({ kind: v.literal("minutes_used_up"), resetsOn: v.optional(v.string()) }),
   v.object({
     kind: v.literal("org_collection_invite"),
     orgName: v.string(),

@@ -79,7 +79,7 @@ export default async function MigrationGuidePage({ params }: { params: Promise<{
   const cta = ctaComingSoon
     ? {
         title: `${goalDisplayName(guide.cta.goal)} practice is coming soon`,
-        body: `${alternative.name} practice is open now, with free practice minutes every month. No card needed.`,
+        body: `${alternative.name} practice is open now, with free practice minutes to start. No card needed.`,
         href: alternative.href,
         label: alternative.label,
       }

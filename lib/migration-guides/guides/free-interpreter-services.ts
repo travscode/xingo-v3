@@ -152,7 +152,7 @@ export const guide: MigrationGuide = {
   related: ["first-weeks-in-australia", "free-english-classes-amep", "become-an-interpreter-in-australia", "translating-documents-for-a-visa"],
   cta: {
     title: "Bilingual? Practise interpreting",
-    body: "Interpret medical and phone dialogues between two AI speakers, with scored feedback. Free practice minutes every month.",
+    body: "Interpret medical and phone dialogues between two AI speakers, with scored feedback. Free practice minutes to start.",
     goal: "medical",
   },
 };

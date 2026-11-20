@@ -219,7 +219,7 @@ const faqs = [
   },
   {
     q: "How much does it cost to start practising?",
-    a: `It's free to start. Every account gets ${plans.free.monthlyMinutes} free practice minutes each month, free courses, and one preview dialogue in every premium course. No card needed.`,
+    a: `It's free to start. Every account gets ${plans.free.monthlyMinutes} free practice minutes to start, free courses, and one preview dialogue in every premium course. No card needed.`,
   },
 ];
 
@@ -290,7 +290,7 @@ export default function MigrateToAustraliaPage() {
               test for your visa, community language points, registration in your profession and, later, work as an
               interpreter. Practise the speaking parts out loud before they count.
               <span className="mt-4 block text-sm leading-6">
-                {plans.free.monthlyMinutes} free practice minutes every month. No card needed.
+                {plans.free.monthlyMinutes} free practice minutes to start. No card needed.
               </span>
             </>
           }
@@ -539,7 +539,7 @@ export default function MigrateToAustraliaPage() {
             ))}
           </ul>
           <p className="mt-6 text-sm leading-6 text-gray-500">
-            Free to start: {plans.free.monthlyMinutes} practice minutes every month, plus one preview dialogue in every
+            Free to start: {plans.free.monthlyMinutes} practice minutes, plus one preview dialogue in every
             premium course. Sessions run in your browser and each is capped at {MAX_ATTEMPT_MINUTES} minutes. XINGO is
             independent practice and doesn&apos;t award any credential.
           </p>
@@ -740,7 +740,7 @@ export default function MigrateToAustraliaPage() {
 
       <CtaBand
         title="Start practising for your next step."
-        description={`${plans.free.monthlyMinutes} free practice minutes every month. IELTS, OET, CCL and more. No card needed.`}
+        description={`${plans.free.monthlyMinutes} free practice minutes to start. IELTS, OET, CCL and more. No card needed.`}
         href="/sign-up"
         label="Start practising free"
       />

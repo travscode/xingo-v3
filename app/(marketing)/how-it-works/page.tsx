@@ -136,7 +136,7 @@ export default function HowItWorksPage() {
 
       <CtaBand
         title="Try your first session free."
-        description="Free courses are open to everyone, with practice minutes every month."
+        description="Free courses are open to everyone, with free practice minutes to start."
         label="Start practising free"
       />
     </main>

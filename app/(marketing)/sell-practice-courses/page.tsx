@@ -187,7 +187,7 @@ const faqs = [
   },
   {
     q: "How much do I earn?",
-    a: `You earn ${share}% of XINGO's net revenue (after GST and card fees) from paid minutes practised in your course. That's about ${proMinute} for each minute a Pro learner practises and about ${packMinute} for each minute paid for with a minute pack. For example, a Pro learner practising your course for ${EXAMPLE_MINUTES} minutes earns you about ${exampleSession}. Minutes from the free monthly allowance and your own practice don't earn.`,
+    a: `You earn ${share}% of XINGO's net revenue (after GST and card fees) from paid minutes practised in your course. That's about ${proMinute} for each minute a Pro learner practises and about ${packMinute} for each minute paid for with a minute pack. For example, a Pro learner practising your course for ${EXAMPLE_MINUTES} minutes earns you about ${exampleSession}. Free minutes and your own practice don't earn.`,
   },
   {
     q: "Is it free to create a course?",
@@ -454,7 +454,7 @@ export default function SellPracticeCoursesPage() {
           <p className="mt-4 text-[15px] leading-7 text-gray-300">
             Learners pay XINGO for practice minutes, through the Pro plan or a minute pack. When they practise in your
             course, you get {share}% of XINGO&apos;s net revenue from those minutes, after GST and card fees. Minutes from
-            the free monthly allowance don&apos;t earn, and neither does your own practice.
+            free minutes don&apos;t earn, and neither does your own practice.
           </p>
           <p className="mt-6 rounded-xl bg-paper/10 p-4 text-[15px] leading-6">
             <span className="font-semibold text-accent">Example:</span> a Pro learner practises your course for{" "}

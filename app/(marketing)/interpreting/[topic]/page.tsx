@@ -80,7 +80,7 @@ export default async function TopicPage({ params }: { params: Promise<{ topic: s
       ) : (
         <CtaBand
           title="Try a dialogue free."
-          description="Free practice minutes every month. No card needed."
+          description="Free practice minutes to start. No card needed."
           href={href}
           label="Start free"
         />

@@ -85,10 +85,10 @@ const sections: LegalSection[] = [
         </p>
         <ul>
           <li>
-            The Free plan includes {plans.free.monthlyMinutes} practice minutes each calendar month, and the{" "}
-            {plans.professional.label} plan includes {plans.professional.monthlyMinutes}. Monthly minutes don&apos;t roll over.
+            Each account gets {plans.free.monthlyMinutes} free practice minutes once. The {plans.professional.label} plan includes{" "}
+            {plans.professional.monthlyMinutes} practice minutes each calendar month. Monthly minutes don&apos;t roll over.
           </li>
-          <li>Minute packs add minutes that don&apos;t expire. Monthly minutes are used before pack minutes.</li>
+          <li>Minute packs add minutes that don&apos;t expire. Free and monthly minutes are used before pack minutes.</li>
           <li>When you run out of minutes, a session in progress ends and you can&apos;t start a new one until you have more.</li>
           <li>
             Sessions where the voice connection never started aren&apos;t charged. Sessions you leave early still use the minutes

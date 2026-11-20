@@ -26,7 +26,7 @@ export function ComingSoonCtaBand({ name, goal }: { name: string; goal?: string 
   return (
     <CtaBand
       title={`${name} practice is coming soon.`}
-      description={`${alternative.name} practice is open now, with free practice minutes every month. No card needed.`}
+      description={`${alternative.name} practice is open now, with free practice minutes to start. No card needed.`}
       href={alternative.href}
       label={alternative.label}
     />
