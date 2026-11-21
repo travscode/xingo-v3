@@ -21,6 +21,7 @@ export type AnalyticsEvent =
   | "terms_accept"
   | "onboarding_step"
   | "onboarding_complete"
+  | "onboarding_heard_about"
   | "language_pair_change"
   // Learning
   | "course_view"

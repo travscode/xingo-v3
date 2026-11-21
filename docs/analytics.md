@@ -17,8 +17,9 @@ GA4 property `G-J7M1JVS5HM` (override with `NEXT_PUBLIC_GA4_MEASUREMENT_ID`). Al
 | Account | `sign_up` | Convex profile created for the first time | `method` |
 | | `login` | A new Clerk session is seen (once per sign-in) | `method` |
 | | `terms_accept` | Terms gate accepted | `version`, `updated` |
-| | `onboarding_step` | Welcome flow step completed | `step` (goal / language), `goal`, `language`, `preset`, `custom_language` |
-| | `onboarding_complete` | Welcome flow finished | `goal`, `language`, `heard_about` |
+| | `onboarding_step` | Welcome flow step completed | `step` (goal / language / how / setup), `goal`, `language`, `preset`, `custom_language` |
+| | `onboarding_complete` | Welcome flow finished (setup saved, before the setting-up question) | `goal`, `language` |
+| | `onboarding_heard_about` | Setting-up screen closed (D-055) | `heard_about`, `suggested`, `how` (`picked` / `timeout` / `skipped`) |
 | | `language_pair_change` | Practice language switched | `language`, `pair`, `from` |
 | Learning | `course_view` | Course page opened in the app | `module_id`, `course_title`, `free`, `locked` |
 | | `practice_start` | Attempt started | `scenario_id`, `module_id`, `mode` |

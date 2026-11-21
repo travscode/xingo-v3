@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import { GA4Analytics } from "@/components/providers/ga4-analytics";
+import { FirstTouchCapture } from "@/components/providers/first-touch";
 import { GA4_MEASUREMENT_ID } from "@/lib/analytics";
 import "./globals.css";
 
@@ -60,6 +61,7 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <GA4Analytics />
         </Suspense>
+        <FirstTouchCapture />
         {children}
       </body>
     </html>

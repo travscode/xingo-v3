@@ -247,6 +247,20 @@ export const completeOnboarding = mutation({
   },
 });
 
+/**
+ * "How did you hear about XINGO?", asked on the setting-up screen after onboarding
+ * (D-055). First answer wins; unknown values are ignored.
+ */
+export const setHeardAbout = mutation({
+  args: { heardAbout: v.string() },
+  handler: async (ctx, args) => {
+    const user = await requireUser(ctx);
+    if (!isHeardAboutId(args.heardAbout) || user.heardAbout) return { saved: false };
+    await ctx.db.patch(user._id, { heardAbout: args.heardAbout, updatedAt: new Date().toISOString() });
+    return { saved: true };
+  },
+});
+
 /** Records that the user read and accepted the current Terms and Privacy Policy. */
 export const acceptTerms = mutation({
   args: { version: v.string() },

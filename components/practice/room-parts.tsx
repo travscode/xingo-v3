@@ -219,7 +219,11 @@ export function CoachBar({
 }
 
 /** Live microphone level so learners can confirm they're heard before starting. */
-export function MicCheck({ onStatusChange }: { onStatusChange?: (ok: boolean) => void }) {
+/**
+ * `prominent` (welcome flow setup step, D-055) makes it the obvious thing to do:
+ * a big lime button until the mic is heard, red while it's open.
+ */
+export function MicCheck({ onStatusChange, prominent = false }: { onStatusChange?: (ok: boolean) => void; prominent?: boolean }) {
   const [status, setStatus] = useState<"idle" | "testing" | "ok" | "denied">("idle");
   const [level, setLevel] = useState(0);
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -270,6 +274,52 @@ export function MicCheck({ onStatusChange }: { onStatusChange?: (ok: boolean) =>
       onStatusChange?.(false);
     }
   }, [onStatusChange]);
+
+  if (prominent) {
+    return (
+      <button
+        type="button"
+        onClick={() => (status === "idle" || status === "denied" ? void start() : stop())}
+        aria-label="Test microphone"
+        className={cn(
+          "flex w-full items-center gap-4 rounded-2xl border-2 p-4 text-left transition-colors",
+          status === "ok" ? "border-accent bg-accent/15" : status === "testing" ? "border-record" : "border-ink",
+        )}
+      >
+        <span
+          className={cn(
+            "flex h-14 w-14 shrink-0 items-center justify-center rounded-full",
+            status === "ok" && "bg-accent text-accent-ink",
+            status === "testing" && "bg-record text-paper",
+            status === "idle" && "animate-pulse bg-accent text-accent-ink",
+            status === "denied" && "bg-gray-100 text-ink",
+          )}
+        >
+          {status === "denied" ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-bold">
+            {status === "idle" && "Tap to test your microphone"}
+            {status === "testing" && "Say something…"}
+            {status === "ok" && "We can hear you"}
+            {status === "denied" && "Microphone blocked"}
+          </span>
+          <span className="mt-0.5 block text-sm text-gray-500">
+            {status === "idle" && "Your browser will ask for permission. Allow it."}
+            {status === "testing" && "Say hello. The bar moves when we hear you."}
+            {status === "ok" && "You're ready."}
+            {status === "denied" && "Allow the microphone in your browser's address bar, then tap to try again."}
+          </span>
+          <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-gray-200">
+            <span
+              className={cn("block h-full rounded-full transition-[width] duration-75", status === "ok" ? "bg-accent" : "bg-record")}
+              style={{ width: `${status === "idle" ? 0 : status === "ok" ? 100 : level * 100}%` }}
+            />
+          </span>
+        </span>
+      </button>
+    );
+  }
 
   return (
     <div className="flex items-center gap-4">
