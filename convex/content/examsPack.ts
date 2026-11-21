@@ -6,6 +6,8 @@
  * Seed: `npx convex run content:seedExamPack '{"dryRun":true}'` (insert-only).
  */
 
+import { IELTS_FREE_MOCK_MINUTES } from "../../lib/plans";
+
 type Difficulty = "beginner" | "intermediate" | "advanced";
 
 type RoleplayInput = {
@@ -672,18 +674,24 @@ const ielts = ieltsTests.map((test) =>
     isFreePreview: test.free,
     learnerRole: "IELTS Speaking candidate",
     learnerOpens: false,
-    timeLimitMinutes: 14,
+    timeLimitMinutes: test.free ? IELTS_FREE_MOCK_MINUTES : 14,
     taskCard: [
-      "The examiner will lead you through three parts:",
-      "Part 1 (4–5 min): questions about you and familiar topics.",
+      test.free
+        ? `The examiner will lead you through a shorter test of all three parts, ${IELTS_FREE_MOCK_MINUTES} minutes in total:`
+        : "The examiner will lead you through three parts:",
+      test.free ? "Part 1 (about 3 min): questions about you and familiar topics." : "Part 1 (4–5 min): questions about you and familiar topics.",
       "Part 2 (3–4 min): you'll be given a topic. You have 1 minute to think, then speak for 1–2 minutes.",
-      "Part 3 (4–5 min): a discussion of wider issues linked to your Part 2 topic.",
+      test.free
+        ? "Part 3 (about 3 min): a discussion of wider issues linked to your Part 2 topic."
+        : "Part 3 (4–5 min): a discussion of wider issues linked to your Part 2 topic.",
       "",
       `Your Part 2 topic: ${test.cueCard}`,
       "",
       "Tip: extend your answers with reasons and examples. The examiner won't give feedback during the test.",
     ].join("\n"),
-    briefing: "IELTS Speaking mock test, 11–14 minutes. Answer fully; you'll get an estimated band afterwards.",
+    briefing: test.free
+      ? `Free IELTS Speaking mock test, a shorter ${IELTS_FREE_MOCK_MINUTES}-minute version of all three parts. Answer fully; you'll get an estimated band afterwards.`
+      : "IELTS Speaking mock test, 11–14 minutes. Answer fully; you'll get an estimated band afterwards.",
     assessmentFocus: ["Fluency & coherence", "Lexical resource", "Grammatical range & accuracy", "Developing answers"],
     expectedSkills: ["Extended speaking", "Paraphrasing", "Complex sentences"],
     other: {
@@ -693,9 +701,16 @@ const ielts = ieltsTests.map((test) =>
       goal: "Run a standard three-part IELTS Speaking test fairly and on time.",
       demeanor: "Neutral, polite, professional; never gives feedback or opinions",
       openingLine: "Good morning. My name is Sarah and I'll be your examiner today. Can you tell me your full name, please?",
-      endCondition: "you have finished Part 3 (or about 13 minutes have passed)",
+      endCondition: test.free
+        ? `you have finished Part 3 (or about ${IELTS_FREE_MOCK_MINUTES - 1} minutes have passed)`
+        : "you have finished Part 3 (or about 13 minutes have passed)",
       card: [
         "Follow the IELTS Speaking structure exactly and keep your own turns brief and scripted-sounding.",
+        ...(test.free
+          ? [
+              `This is a shorter ${IELTS_FREE_MOCK_MINUTES}-minute test: keep Part 1 to about 3 minutes and Part 3 to about 3 minutes, and skip any question you don't have time for.`,
+            ]
+          : []),
         `Part 1: after the name, ask 'Do you work or are you a student?' and one follow-up. Then say 'Now let's talk about ${test.part1Topic}.' and ask these one at a time: ${test.part1.join(" | ")}`,
         `Part 2: say 'Now I'm going to give you a topic and I'd like you to talk about it for one to two minutes. You have one minute to think about what you're going to say. Your topic is: ${test.cueCard}' Then say 'Your one minute starts now' and stay silent until the candidate starts speaking. Let them talk for up to two minutes without interrupting; if they stop early, ask one short rounding-off question.`,
         `Part 3: say 'We've been talking about this topic. Now I'd like to discuss some more general questions.' Then ask, one at a time, adding a short follow-up such as 'Why do you think that is?': ${test.part3.join(" | ")}`,

@@ -145,7 +145,7 @@ export const post: BlogPost = {
         },
         {
           type: "p",
-          text: "Speaking to a real listener matters, because an examiner's silence feels different from talking to your phone. Practise with a friend or tutor who plays the examiner and keeps time. XINGO's [IELTS Speaking practice](/exams/ielts-speaking), with an AI examiner on the real timings, is coming soon.",
+          text: "Speaking to a real listener matters, because an examiner's silence feels different from talking to your phone. Practise with a friend or tutor who plays the examiner and keeps time. Or try XINGO's [IELTS Speaking practice](/exams/ielts-speaking), with an AI examiner on the real timings. The first mock test is free.",
         },
         {
           type: "callout",

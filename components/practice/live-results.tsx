@@ -13,7 +13,9 @@ import { Badge, Card, ProgressBar, SectionTitle, Skeleton } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { isBetaActive } from "@/lib/beta";
-import { approxCclDialogues, packs } from "@/lib/plans";
+import { approxSessionsLabel, packs } from "@/lib/plans";
+import { IELTS_COURSE_ID } from "@/lib/course-status";
+import { UnlockDialog } from "@/components/billing/unlock-dialog";
 import { BetaSurvey } from "@/components/beta/beta-survey";
 
 export function LiveResults({ attemptId }: { attemptId: string }) {
@@ -53,7 +55,7 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
     );
   }
 
-  const { session, scenarioTitle, moduleTitle, previousScore } = result;
+  const { session, scenarioTitle, scenarioIsFreePreview, moduleTitle, previousScore } = result;
   const practiceAgainHref = `/practice/${session.scenarioId}`;
   const reason = session.ungradedReason;
   const transcript = session.transcriptEntries ?? [];
@@ -61,6 +63,10 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
   const endReason: EndReason | null =
     session.endReason ??
     (endedParam === "time" ? "time_up" : endReasons.find((value) => value === endedParam) ?? null);
+  // D-053: a free learner who finished (or was cut off in) the free IELTS mock is asked
+  // whether they want to keep going with the full-length tests.
+  const freeIeltsTaster =
+    session.moduleId === IELTS_COURSE_ID && scenarioIsFreePreview && me !== undefined && me !== null && !me.entitlement.premiumAccess;
   const endNote: Partial<Record<EndReason, string>> = {
     time_up: "The session ended because the time limit ran out.",
     stalled: "The session ended because nobody spoke for a while.",
@@ -72,7 +78,9 @@ export function LiveResults({ attemptId }: { attemptId: string }) {
       <p className="eyebrow">{moduleTitle}</p>
       <h1 className="mt-1 text-3xl font-bold tracking-[-0.035em] sm:text-4xl">{scenarioTitle}</h1>
       {endReason && endNote[endReason] ? <p className="mt-2 text-sm text-gray-500">{endNote[endReason]}</p> : null}
-      {endReason === "out_of_minutes" && me && !isBetaActive(me.user) ? <OutOfMinutesOffer /> : null}
+      {me && !isBetaActive(me.user) && (endReason === "out_of_minutes" || freeIeltsTaster) ? (
+        <KeepPractisingOffer moduleId={session.moduleId} freeIeltsTaster={freeIeltsTaster} attemptId={session.id} />
+      ) : null}
     </div>
   );
 
@@ -307,21 +315,40 @@ function Transcript({
   );
 }
 
-/** Shown when a session ran out of minutes: the moment a learner is most likely to top up (D-051). */
-function OutOfMinutesOffer() {
+/**
+ * Shown when a session ran out of minutes (D-051), or after the free IELTS mock (D-053):
+ * the moment a learner is most likely to top up. Opens the unlock dialog straight to checkout.
+ */
+function KeepPractisingOffer({ moduleId, freeIeltsTaster, attemptId }: { moduleId: string; freeIeltsTaster: boolean; attemptId: string }) {
+  const [open, setOpen] = useState(false);
   const starter = packs.starter;
+  const ielts = moduleId === IELTS_COURSE_ID;
   return (
     <Card className="mt-4 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p className="font-bold">Keep practising</p>
+        <p className="font-bold">{freeIeltsTaster ? "Want to see how you go in a full test?" : "Keep practising"}</p>
         <p className="mt-1 text-sm text-gray-500">
-          {starter.label} is {starter.priceLabel} for {starter.minutes} minutes, about {approxCclDialogues(starter.minutes)}{" "}
-          CCL dialogues. One-off payment, minutes never expire, and they work on every open course.
+          {freeIeltsTaster ? "That was the shorter free mock. Unlock every full-length IELTS mock test, timed like the real one. " : ""}
+          {starter.label} is {starter.priceLabel} for {starter.minutes} minutes, {approxSessionsLabel(starter.minutes, moduleId)}. One-off
+          payment, minutes never expire, and they work on every open course.
         </p>
       </div>
-      <Button asChild className="shrink-0" onClick={() => track("out_of_minutes_offer_click", {})}>
-        <Link href="/billing">See packs</Link>
+      <Button
+        className="shrink-0"
+        onClick={() => {
+          track("out_of_minutes_offer_click", { module_id: moduleId });
+          setOpen(true);
+        }}
+      >
+        {ielts ? "Keep going" : "See packs"}
       </Button>
+      <UnlockDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        returnPath={`/results/${attemptId}`}
+        source={freeIeltsTaster ? "results_free_ielts" : "results_out_of_minutes"}
+        moduleId={moduleId}
+      />
     </Card>
   );
 }

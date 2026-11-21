@@ -6,7 +6,8 @@ import { useCheckout } from "@/components/billing/use-checkout";
 import { Price } from "@/components/billing/price";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/analytics";
-import { CURRENCY_LABEL, approxCclDialogues, packList, plans, type PackId } from "@/lib/plans";
+import { CURRENCY_LABEL, approxSessionsLabel, packList, plans, type PackId } from "@/lib/plans";
+import { IELTS_COURSE_ID } from "@/lib/course-status";
 import { cn } from "@/lib/utils";
 
 type Tab = "packs" | "plans";
@@ -21,12 +22,15 @@ export function UnlockDialog({
   onClose,
   returnPath,
   source,
+  moduleId,
 }: {
   open: boolean;
   onClose: () => void;
   returnPath: string;
   /** Analytics label for where the dialog was opened from. */
   source: string;
+  /** The course it was opened from, for the title and "about N …" counts. */
+  moduleId?: string;
 }) {
   const { pending, error, buyPack, subscribe } = useCheckout({ cancelPath: returnPath });
   const [tab, setTab] = useState<Tab>("packs");
@@ -75,7 +79,7 @@ export function UnlockDialog({
         <header className="flex items-start gap-3 p-5 pb-0 sm:p-6 sm:pb-0">
           <div className="min-w-0 flex-1">
             <h2 id="unlock-title" className="text-xl font-bold tracking-[-0.02em]">
-              Unlock every CCL dialogue
+              {moduleId === IELTS_COURSE_ID ? "Unlock every IELTS mock test" : "Unlock every CCL dialogue"}
             </h2>
             <p className="mt-1 text-sm text-gray-500">Any pack or plan opens every dialogue in every open course.</p>
           </div>
@@ -118,7 +122,7 @@ export function UnlockDialog({
                       <Package className="h-4 w-4" aria-hidden /> {pack.label}
                     </p>
                     <p className="mt-1 flex items-center gap-1 text-sm text-gray-500">
-                      <Clock className="h-3.5 w-3.5" aria-hidden /> {pack.minutes} min · about {approxCclDialogues(pack.minutes)} CCL dialogues
+                      <Clock className="h-3.5 w-3.5" aria-hidden /> {pack.minutes} min · {approxSessionsLabel(pack.minutes, moduleId)}
                     </p>
                   </div>
                   <Price priceLabel={pack.priceLabel} regularPriceLabel={pack.regularPriceLabel} className="flex-col items-end gap-0 text-xl" />

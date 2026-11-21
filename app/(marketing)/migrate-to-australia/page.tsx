@@ -138,7 +138,7 @@ const features = [
   },
   {
     title: "Scored feedback after assessed sessions",
-    body: `CCL-style dialogues are scored out of ${CCL_MAX_SCORE}, with feedback on what to fix. IELTS, OET, AMC and OSCE practice is coming soon. Scores are estimates, not official results.`,
+    body: `CCL-style dialogues are scored out of ${CCL_MAX_SCORE}, with feedback on what to fix. IELTS Speaking mock tests are open too, with an estimated band. OET, AMC and OSCE practice is coming soon. Scores are estimates, not official results.`,
   },
   {
     title: "Your language pair",

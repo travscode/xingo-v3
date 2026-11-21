@@ -12,6 +12,7 @@ import { Badge, Card, EmptyState, ProgressBar, SectionTitle, Skeleton } from "@/
 import { Button } from "@/components/ui/button";
 import { ScenarioRow } from "@/components/modules/scenario-row";
 import { UnlockDialog } from "@/components/billing/unlock-dialog";
+import { IELTS_COURSE_ID } from "@/lib/course-status";
 import { FreeBadge, IndustryIcon, PremiumBadge } from "@/components/ui/badges";
 
 export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
@@ -61,7 +62,7 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
     return (
       <EmptyState
         title={`${learningModule.title} is coming soon`}
-        description="For now you can practise for the NAATI CCL test."
+        description="For now you can practise for the NAATI CCL test or IELTS Speaking."
         action={
           <Button asChild>
             <Link href="/courses">Back to practice</Link>
@@ -109,7 +110,7 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
           ) : null}
           {locked ? (
             <Button size="lg" variant="secondary" onClick={() => setUnlockOpen(true)}>
-              Unlock all dialogues
+              {learningModule.id === IELTS_COURSE_ID ? "Unlock all mock tests" : "Unlock all dialogues"}
             </Button>
           ) : null}
         </div>
@@ -152,7 +153,7 @@ export function LiveModuleDetail({ moduleId }: { moduleId: string }) {
         </aside>
       </div>
       {locked ? (
-        <UnlockDialog open={unlockOpen} onClose={closeUnlock} returnPath={`/courses/${learningModule.id}`} source="course_page" />
+        <UnlockDialog open={unlockOpen} onClose={closeUnlock} returnPath={`/courses/${learningModule.id}`} source="course_page" moduleId={learningModule.id} />
       ) : null}
     </div>
   );

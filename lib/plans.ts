@@ -128,6 +128,30 @@ export function approxCclDialogues(minutes: number) {
   return Math.max(1, Math.floor(minutes / TYPICAL_CCL_DIALOGUE_MINUTES));
 }
 
+/**
+ * IELTS Speaking (D-053). A full mock test is timed at 14 minutes; the free mock is
+ * cut to the Free plan's one-time minutes so a free learner can finish it.
+ */
+export const IELTS_MOCK_MINUTES = 14;
+export const IELTS_FREE_MOCK_MINUTES = plans.free.monthlyMinutes;
+
+/** Roughly how many full IELTS mock tests a minute balance buys, never below 1. */
+export function approxIeltsMocks(minutes: number) {
+  return Math.max(1, Math.floor(minutes / IELTS_MOCK_MINUTES));
+}
+
+/**
+ * "about 6 CCL dialogues", or "about 2 IELTS mock tests" on the IELTS course.
+ * Courses without their own measure fall back to CCL dialogues, the main course.
+ */
+export function approxSessionsLabel(minutes: number, moduleId?: string | null) {
+  if (moduleId === "ielts-speaking") {
+    const count = approxIeltsMocks(minutes);
+    return `about ${count} IELTS mock ${count === 1 ? "test" : "tests"}`;
+  }
+  return `about ${approxCclDialogues(minutes)} CCL dialogues`;
+}
+
 /** A user needs at least this many minutes left to start a new attempt. */
 export const MIN_MINUTES_TO_START = 1;
 

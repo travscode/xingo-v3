@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
-import { LAUNCH_AVAILABLE_COURSE_IDS, LAUNCH_CCL_FREE_PREVIEW_IDS } from "../lib/course-status";
+import { IELTS_COURSE_ID, IELTS_FREE_MOCK_ID, LAUNCH_AVAILABLE_COURSE_IDS, LAUNCH_CCL_FREE_PREVIEW_IDS } from "../lib/course-status";
+import { examScenarios } from "./content/examsPack";
 import { genderForVoice, languagesNameSuits, suggestLocalizedNames, type Gender } from "../lib/agent-names";
 
 /**
@@ -226,6 +227,68 @@ export const applyCclLaunchStatuses = internalMutation({
     }
 
     return { dryRun: args.dryRun, available, comingSoon, freePreviews: previews };
+  },
+});
+
+/**
+ * Opens IELTS Speaking (D-053): the course becomes available, Mock Test 1 is the only
+ * free preview, and it gets the shorter 10-minute examiner script and task card from
+ * the content pack so a free learner can finish it on the Free minutes. Only the
+ * timing fields are replaced; voice, photo and everything else stay as they are.
+ */
+export const openIeltsSpeaking = internalMutation({
+  args: { dryRun: v.boolean() },
+  handler: async (ctx, args) => {
+    const course = await ctx.db
+      .query("modules")
+      .withIndex("by_public_id", (q) => q.eq("id", IELTS_COURSE_ID))
+      .unique();
+    if (!course) throw new Error(`${IELTS_COURSE_ID} not found`);
+
+    const seed = examScenarios.find((scenario) => scenario.id === IELTS_FREE_MOCK_ID);
+    const seedRuntime = seed?.practiceRuntime;
+    if (!seed || !seedRuntime || !("taskCard" in seedRuntime)) throw new Error(`${IELTS_FREE_MOCK_ID} missing from the content pack`);
+
+    const scenarios = await ctx.db
+      .query("scenarios")
+      .withIndex("by_moduleId", (q) => q.eq("moduleId", IELTS_COURSE_ID))
+      .collect();
+    const freeMock = scenarios.find((scenario) => scenario.id === IELTS_FREE_MOCK_ID);
+    if (!freeMock?.practiceRuntime) throw new Error(`${IELTS_FREE_MOCK_ID} not found`);
+
+    const otherFreePreviews = scenarios.filter((scenario) => scenario.id !== IELTS_FREE_MOCK_ID && scenario.isFreePreview);
+
+    if (!args.dryRun) {
+      if (course.status !== "available") await ctx.db.patch(course._id, { status: "available" });
+      await ctx.db.patch(freeMock._id, {
+        isFreePreview: true,
+        practiceRuntime: {
+          ...freeMock.practiceRuntime,
+          timeLimitMinutes: seedRuntime.timeLimitMinutes,
+          taskCard: seedRuntime.taskCard,
+          briefing: seedRuntime.briefing,
+        },
+        aiAgentA: {
+          ...freeMock.aiAgentA,
+          instructions: seed.aiAgentA.instructions,
+          endCondition: seed.aiAgentA.endCondition,
+        },
+      });
+      for (const scenario of otherFreePreviews) {
+        await ctx.db.patch(scenario._id, { isFreePreview: false });
+      }
+    }
+
+    return {
+      dryRun: args.dryRun,
+      courseStatus: { from: course.status ?? "available", to: "available" },
+      freeMock: {
+        id: IELTS_FREE_MOCK_ID,
+        timeLimitMinutes: { from: freeMock.practiceRuntime.timeLimitMinutes ?? null, to: seedRuntime.timeLimitMinutes },
+      },
+      noLongerFree: otherFreePreviews.map((scenario) => scenario.id),
+      mockTests: scenarios.length,
+    };
   },
 });
 

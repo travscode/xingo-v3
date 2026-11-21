@@ -649,6 +649,7 @@ export const resultForCurrentUser = query({
     return {
       session,
       scenarioTitle: scenario?.title ?? "Practice",
+      scenarioIsFreePreview: Boolean(scenario?.isFreePreview),
       moduleTitle: learningModule?.title ?? "",
       previousScore: earlier[0]?.score ?? null,
       bestPreviousScore: earlier.length ? Math.max(...earlier.map((s) => s.score)) : null,

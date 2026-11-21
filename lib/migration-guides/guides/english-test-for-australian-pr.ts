@@ -171,7 +171,7 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "XINGO's IELTS and OET Speaking practice is coming soon. If you speak a language other than English, you can work on the other language claim today: practise CCL-style dialogues in your language pair with two AI speakers, scored out of " + `${CCL_MAX_SCORE}, with feedback on what to fix.`,
+      "You can practise IELTS Speaking on XINGO with [AI mock tests](/exams/ielts-speaking) and an estimated band; OET Speaking practice is coming soon. If you speak a language other than English, you can work on the other language claim today: practise CCL-style dialogues in your language pair with two AI speakers, scored out of " + `${CCL_MAX_SCORE}, with feedback on what to fix.`,
       "Our scores are estimates to guide your practice, not official results, and XINGO isn't affiliated with any test provider, NAATI or Home Affairs.",
     ],
     links: [

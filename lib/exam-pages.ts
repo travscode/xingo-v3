@@ -110,10 +110,10 @@ export const examPages: ExamPage[] = [
     goal: "ielts",
     title: "IELTS Speaking Test: Format, Bands and AI Practice",
     metaDescription:
-      "The IELTS Speaking test explained: three parts in 11–14 minutes, the four band criteria, and the scores Australian visas and Ahpra ask for. AI mock tests soon.",
+      "The IELTS Speaking test explained: three parts in 11–14 minutes, the four band criteria, and the scores Australian visas and Ahpra ask for. Try an AI mock test free.",
     headline: "The IELTS Speaking test: format, band criteria and how to practise.",
     intro:
-      "IELTS Speaking is a face-to-face English speaking test with an examiner, the same for Academic and General Training. Here's how the three parts run, what the examiner listens for and the scores Australia asks for. An IELTS Speaking mock test with an AI examiner is coming soon on XINGO.",
+      "IELTS Speaking is a face-to-face English speaking test with an examiner, the same for Academic and General Training. Here's how the three parts run, what the examiner listens for and the scores Australia asks for. Then practise with an AI examiner on XINGO: your first mock test is free.",
     format: [
       { title: "11–14 minutes", body: "A one-to-one conversation with an examiner, the same for Academic and General Training." },
       { title: "Part 1 · 4–5 min", body: "Questions about you and familiar topics." },
@@ -152,7 +152,7 @@ export const examPages: ExamPage[] = [
       },
       {
         q: "Can I take an English speaking test with AI on XINGO?",
-        a: "Not yet. An IELTS Speaking mock test with an AI examiner is coming soon. It will give an estimated band, not an official result, and XINGO isn't affiliated with IELTS.",
+        a: "Yes. XINGO has six IELTS Speaking mock tests with an AI examiner, and the first one is free: a shorter 10-minute version of all three parts. You get an estimated band, not an official result, and XINGO isn't affiliated with IELTS.",
       },
     ],
     sources: [

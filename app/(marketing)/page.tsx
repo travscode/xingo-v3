@@ -53,7 +53,7 @@ const practiceModes: Array<{
     people: ["examiner"],
     title: "Talk one-on-one",
     description:
-      "One AI character plays the patient, relative, colleague or examiner, and you play yourself. For OET, IELTS, AMC and OSCE role-plays, coming soon.",
+      "One AI character plays the patient, relative, colleague or examiner, and you play yourself. IELTS Speaking mock tests are open now; OET, AMC and OSCE role-plays are coming soon.",
     href: "/how-it-works#roleplay",
     link: "How role-play practice works",
   },

@@ -108,7 +108,7 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "XINGO doesn't offer CELPIP practice, and our IELTS and OET Speaking practice is coming soon. If you speak a language other than English, you can work on a separate 5-point claim today: practise for the NAATI CCL with CCL-style dialogues in your language pair, scored out of " +
+      "XINGO doesn't offer CELPIP practice. You can practise [IELTS Speaking](/exams/ielts-speaking) with AI mock tests, and OET Speaking practice is coming soon. If you speak a language other than English, you can work on a separate 5-point claim today: practise for the NAATI CCL with CCL-style dialogues in your language pair, scored out of " +
         `${CCL_MAX_SCORE}.`,
       "XINGO is independent and isn't affiliated with CELPIP, NAATI or Home Affairs.",
     ],

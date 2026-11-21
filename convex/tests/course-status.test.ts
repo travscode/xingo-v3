@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "../_generated/api";
 import { seedCatalog, seedUser, setup } from "./setup.helpers";
-import { LAUNCH_AVAILABLE_COURSE_IDS, LAUNCH_CCL_FREE_PREVIEW_IDS } from "../../lib/course-status";
+import { IELTS_COURSE_ID, IELTS_FREE_MOCK_ID, LAUNCH_AVAILABLE_COURSE_IDS, LAUNCH_CCL_FREE_PREVIEW_IDS } from "../../lib/course-status";
 import { MARKETPLACE_OPEN } from "../../lib/marketplace";
 import { isGoalComingSoonOnSite } from "../../lib/goals";
 import { trackForGoal } from "../../lib/email/onboarding-types";
+import { openAlternativeFor } from "../../lib/site-status";
+import { IELTS_FREE_MOCK_MINUTES, approxSessionsLabel, plans } from "../../lib/plans";
+import { examScenarios } from "../content/examsPack";
 
 const pair = { sourceLanguage: "English", targetLanguage: "Arabic" };
 
@@ -152,7 +155,7 @@ describe("coming-soon courses (D-043)", () => {
     const t = setup();
     const agent = { role: "Officer", voice: "cedar", goal: "Help" };
     await t.run(async (ctx) => {
-      for (const id of [...LAUNCH_AVAILABLE_COURSE_IDS, "ielts-speaking"]) {
+      for (const id of [...LAUNCH_AVAILABLE_COURSE_IDS, "oet-speaking-nursing"]) {
         await ctx.db.insert("modules", {
           id,
           title: id,
@@ -182,7 +185,7 @@ describe("coming-soon courses (D-043)", () => {
     await seedCommunityCourse(t, "learner");
 
     const dry = await t.mutation(internal.migrations.applyCclLaunchStatuses, { dryRun: true });
-    expect(dry.comingSoon).toEqual(["ielts-speaking"]);
+    expect(dry.comingSoon).toEqual(["oet-speaking-nursing"]);
     expect(dry.freePreviews).toEqual([...LAUNCH_CCL_FREE_PREVIEW_IDS]);
     const untouched = await t.run((ctx) => ctx.db.query("modules").collect());
     expect(untouched.every((course) => course.status === undefined)).toBe(true);
@@ -195,7 +198,8 @@ describe("coming-soon courses (D-043)", () => {
     expect(Object.fromEntries(after.modules.map((course) => [course.id, course.status]))).toEqual({
       "naati-certification-practice-ccl": "available",
       "medical-er-intake": "available",
-      "ielts-speaking": "coming_soon",
+      "ielts-speaking": "available",
+      "oet-speaking-nursing": "coming_soon",
       "rp-retail": undefined,
     });
     expect(after.scenarios.filter((s) => s.isFreePreview).map((s) => s.id).sort()).toEqual(
@@ -207,13 +211,109 @@ describe("coming-soon courses (D-043)", () => {
     expect(isGoalComingSoonOnSite("naati_ccl")).toBe(false);
     expect(isGoalComingSoonOnSite("medical")).toBe(false);
     expect(isGoalComingSoonOnSite("general")).toBe(false);
-    expect(isGoalComingSoonOnSite("ielts")).toBe(true);
+    expect(isGoalComingSoonOnSite("ielts")).toBe(false);
+    expect(isGoalComingSoonOnSite("oet")).toBe(true);
     expect(isGoalComingSoonOnSite("naati_cpi")).toBe(true);
 
     expect(trackForGoal("naati_ccl")).toBe("ccl");
     expect(trackForGoal("medical")).toBe("interpreter");
-    expect(trackForGoal("ielts")).toBe("general");
+    expect(trackForGoal("ielts")).toBe("ielts");
+    expect(trackForGoal("oet")).toBe("general");
     expect(trackForGoal("naati_cpi")).toBe("general");
+  });
+});
+
+describe("IELTS Speaking opens with one free 10-minute mock (D-053)", () => {
+  test("the free mock fits the Free plan's one-time minutes; full mocks stay 14 minutes", () => {
+    const ielts = examScenarios.filter((scenario) => scenario.moduleId === IELTS_COURSE_ID);
+    expect(ielts.filter((scenario) => scenario.isFreePreview).map((scenario) => scenario.id)).toEqual([IELTS_FREE_MOCK_ID]);
+    const free = ielts.find((scenario) => scenario.id === IELTS_FREE_MOCK_ID)!;
+    expect(free.practiceRuntime?.timeLimitMinutes).toBe(IELTS_FREE_MOCK_MINUTES);
+    expect(IELTS_FREE_MOCK_MINUTES).toBeLessThanOrEqual(plans.free.monthlyMinutes);
+    expect(free.aiAgentA.instructions).toContain(`${IELTS_FREE_MOCK_MINUTES}-minute`);
+    for (const scenario of ielts.filter((s) => !s.isFreePreview)) {
+      expect(scenario.practiceRuntime?.timeLimitMinutes).toBe(14);
+    }
+  });
+
+  test("speaking-exam pages that are coming soon point at IELTS; interpreting ones at CCL", () => {
+    expect(openAlternativeFor("oet").goal).toBe("ielts");
+    expect(openAlternativeFor("amc").href).toBe("/exams/ielts-speaking");
+    expect(openAlternativeFor("naati_cpi").goal).toBe("naati_ccl");
+    expect(openAlternativeFor("us_medical_oral").goal).toBe("medical");
+  });
+
+  test("pack counts are in mock tests on the IELTS course", () => {
+    expect(approxSessionsLabel(30, IELTS_COURSE_ID)).toBe("about 2 IELTS mock tests");
+    expect(approxSessionsLabel(14, IELTS_COURSE_ID)).toBe("about 1 IELTS mock test");
+    expect(approxSessionsLabel(30)).toBe("about 6 CCL dialogues");
+  });
+
+  test("the migration opens the course and shortens only the free mock", async () => {
+    const t = setup();
+    const agent = { role: "Examiner", voice: "marin", goal: "Run the test", demeanor: "Neutral", instructions: "old", endCondition: "old" };
+    const runtime = {
+      practiceType: "roleplay" as const,
+      timeLimitMinutes: 14,
+      taskCard: "old",
+      briefing: "old",
+      learnerRole: "Candidate",
+      interpreterRole: "Candidate",
+      sourceLanguage: "English",
+      targetLanguage: "English",
+      openingSpeaker: "agent_a" as const,
+      assessmentFocus: [],
+    };
+    await t.run(async (ctx) => {
+      await ctx.db.insert("modules", {
+        id: IELTS_COURSE_ID,
+        title: "IELTS",
+        description: "",
+        industryCategory: "community",
+        durationMinutes: 14,
+        difficultyLevel: "intermediate",
+        learningObjectives: [],
+        isFree: false,
+        isAccredited: false,
+        badgeIcon: "",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        status: "coming_soon",
+      });
+      for (const [id, free] of [[IELTS_FREE_MOCK_ID, false], ["ielts-mock-learning", true]] as const) {
+        await ctx.db.insert("scenarios", {
+          id,
+          moduleId: IELTS_COURSE_ID,
+          title: id,
+          description: "",
+          aiAgentA: agent,
+          practiceRuntime: runtime,
+          expectedSkills: [],
+          difficultyLevel: "intermediate",
+          isFreePreview: free,
+        });
+      }
+    });
+
+    const dry = await t.mutation(internal.migrations.openIeltsSpeaking, { dryRun: true });
+    expect(dry.noLongerFree).toEqual(["ielts-mock-learning"]);
+    expect(dry.freeMock.timeLimitMinutes).toEqual({ from: 14, to: IELTS_FREE_MOCK_MINUTES });
+    expect((await t.run((ctx) => ctx.db.query("modules").first()))?.status).toBe("coming_soon");
+
+    await t.mutation(internal.migrations.openIeltsSpeaking, { dryRun: false });
+    const after = await t.run(async (ctx) => ({
+      course: await ctx.db.query("modules").first(),
+      scenarios: await ctx.db.query("scenarios").collect(),
+    }));
+    expect(after.course?.status).toBe("available");
+    const free = after.scenarios.find((s) => s.id === IELTS_FREE_MOCK_ID)!;
+    const full = after.scenarios.find((s) => s.id === "ielts-mock-learning")!;
+    expect(free.isFreePreview).toBe(true);
+    expect(free.practiceRuntime?.timeLimitMinutes).toBe(IELTS_FREE_MOCK_MINUTES);
+    expect(free.practiceRuntime?.learnerRole).toBe("Candidate");
+    expect(free.aiAgentA.demeanor).toBe("Neutral");
+    expect(free.aiAgentA.instructions).toContain(`${IELTS_FREE_MOCK_MINUTES}-minute`);
+    expect(full.isFreePreview).toBe(false);
+    expect(full.practiceRuntime?.timeLimitMinutes).toBe(14);
   });
 });
 

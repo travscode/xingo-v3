@@ -116,7 +116,7 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "XINGO's IELTS Speaking and OET Speaking practice is coming soon. Our exam pages already explain each speaking format and what's assessed.",
+      "You can practise IELTS Speaking on XINGO now: [AI mock tests](/exams/ielts-speaking) with an estimated band, and the first one is free. OET Speaking practice is coming soon. Our exam pages explain each speaking format and what's assessed.",
       "If you speak another language, you can practise for the NAATI CCL today: CCL-style dialogues in your language pair, scored out of " + `${CCL_MAX_SCORE}. A pass can add 5 points on top of your English points. We don't offer PTE practice, and XINGO isn't affiliated with IELTS, Pearson, OET or NAATI.`,
     ],
     links: [
