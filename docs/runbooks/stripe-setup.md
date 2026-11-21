@@ -32,7 +32,7 @@ Created via the Stripe CLI in **live mode** (no test sandbox was available). Old
 | What | ID | Convex env |
 |---|---|---|
 | XINGO Pro, A$29/month (GST-inclusive), lookup `xingo_pro_monthly` | `price_1UMOUV8VZhRrFpFv1O3VfFmO` | `STRIPE_PRO_PRICE_ID` |
-| CCL Starter 30 min, A$19, lookup `xingo_pack_starter` | `price_1UMOUY8VZhRrFpFveraqZMv5` | `STRIPE_PACK_STARTER_PRICE_ID` |
+| Starter pack 30 min, A$19, lookup `xingo_pack_starter` | `price_1UMOUY8VZhRrFpFveraqZMv5` | `STRIPE_PACK_STARTER_PRICE_ID` |
 | Practice Plus 80 min, A$39, lookup `xingo_pack_plus` | `price_1UMOUc8VZhRrFpFvKv19MQtc` | `STRIPE_PACK_PLUS_PRICE_ID` |
 | Exam Sprint 160 min, A$69, lookup `xingo_pack_sprint` | `price_1UMOUf8VZhRrFpFvkc9FXoHM` | `STRIPE_PACK_SPRINT_PRICE_ID` |
 | Payments webhook → `deafening-cow-810.convex.site/stripe/webhook` (5 events) | `we_1UMOVE8VZhRrFpFv6EHKofNN` | `STRIPE_WEBHOOK_SECRET` (set) |
@@ -55,7 +55,7 @@ Toggle **Test mode** on (top right). Products → **+ Add product**, four times:
 | Product name | Pricing | Price | Env var for its **price** ID |
 |---|---|---|---|
 | XINGO Pro | Recurring, monthly | A$29.00 | `STRIPE_PRO_PRICE_ID` |
-| CCL Starter (30 minutes) | One-off | A$19.00 | `STRIPE_PACK_STARTER_PRICE_ID` |
+| Starter pack (30 minutes) | One-off | A$19.00 | `STRIPE_PACK_STARTER_PRICE_ID` |
 | Practice Plus (80 minutes) | One-off | A$39.00 | `STRIPE_PACK_PLUS_PRICE_ID` |
 | Exam Sprint (160 minutes) | One-off | A$69.00 | `STRIPE_PACK_SPRINT_PRICE_ID` |
 
@@ -112,7 +112,7 @@ Use card `4242 4242 4242 4242`, any future expiry, any CVC.
 
 | Test | Expected |
 |---|---|
-| Free user → Plan & minutes → **Buy** CCL Starter | Redirects to Stripe → pay → back to `/billing?status=success`; within seconds "Pack minutes" shows 30 and premium courses unlock |
+| Free user → Plan & minutes → **Buy** Starter pack | Redirects to Stripe → pay → back to `/billing?status=success`; within seconds "Pack minutes" shows 30 and premium courses unlock |
 | **Upgrade to Pro** | Badge becomes "Pro plan", monthly allowance 150 |
 | **Invoices & payment** | Opens Stripe portal for that customer |
 | Cancel in portal ("at period end") | Stays Pro until period end. Stripe test clocks or **Cancel immediately** in the dashboard → plan returns to Free |
