@@ -10,7 +10,7 @@ export type PreviewAs = "free" | "pack" | "professional";
 
 export const previewOptions: Array<{ value: PreviewAs; label: string; description: string }> = [
   { value: "free", label: "Free member", description: "A new account on the Free plan." },
-  { value: "pack", label: "Free member with a minute pack", description: "Free plan plus the CCL Starter pack." },
+  { value: "pack", label: "Free member with a minute pack", description: "Free plan plus the Starter pack." },
   { value: "professional", label: "Pro member", description: "A new Pro subscriber." },
 ];
 

@@ -7,7 +7,7 @@ import { SALES_EMAIL, SUPPORT_EMAIL } from "@/components/marketing/catalogue";
 import { ScenePhoto } from "@/components/marketing/people";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
-import { CURRENCY_LABEL, MAX_ATTEMPT_MINUTES, approxCclDialogues, packList, plans } from "@/lib/plans";
+import { CURRENCY_LABEL, MAX_ATTEMPT_MINUTES, packCopy, packList, plans } from "@/lib/plans";
 import { pageMetadata } from "@/lib/seo-metadata";
 
 export const metadata: Metadata = pageMetadata({
@@ -94,11 +94,14 @@ export default function PricingPage() {
                 <span className="text-4xl font-bold tracking-[-0.03em]">{pack.priceLabel}</span>
               </div>
               <div className="mt-1 text-sm font-semibold">
-                {pack.minutes} practice minutes · about {approxCclDialogues(pack.minutes)} CCL dialogues
+                {pack.minutes} practice minutes
+              </div>
+              <div className="mt-1 text-sm text-gray-500">
+                {packCopy(pack, "ccl").sessions} or {packCopy(pack, "ielts").sessions.replace(/^about /, "")}
               </div>
               <p className="mt-3 flex-1 text-sm leading-6 text-gray-500">{pack.description}</p>
               <Button asChild variant="secondary" block className="mt-6">
-                <Link href="/sign-up?redirect=%2Fbilling">Buy {pack.label}</Link>
+                <Link href="/sign-up?redirect=%2Fbilling">Buy the {pack.label} pack</Link>
               </Button>
             </article>
           ))}

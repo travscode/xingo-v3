@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
-import { CURRENCY_LABEL, packList, plans } from "@/lib/plans";
+import { CURRENCY_LABEL, packCopy, packList, plans } from "@/lib/plans";
 import { cclSignUpHref } from "./content";
 
 export function NaatiCclPricingSection() {
@@ -33,12 +33,14 @@ export function NaatiCclPricingSection() {
               <div className="mt-4 flex items-baseline gap-2">
                 <span className="text-4xl font-bold tracking-[-0.03em]">{pack.priceLabel}</span>
               </div>
-              <div className="mt-1 text-sm font-semibold">{pack.minutes} practice minutes</div>
+              <div className="mt-1 text-sm font-semibold">
+                {pack.minutes} practice minutes · {packCopy(pack, "ccl").sessions}
+              </div>
               <p className={featured ? "mt-3 flex-1 text-sm leading-6 text-gray-300" : "mt-3 flex-1 text-sm leading-6 text-gray-500"}>
-                {pack.description}
+                {packCopy(pack, "ccl").description}
               </p>
               <Button asChild variant={featured ? "accent" : "secondary"} block className="mt-6">
-                <Link href={cclSignUpHref}>Start with {pack.label}</Link>
+                <Link href={cclSignUpHref}>Start with the {pack.label} pack</Link>
               </Button>
             </article>
           );

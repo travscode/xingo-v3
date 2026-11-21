@@ -13,7 +13,7 @@ import { Badge, Card, ProgressBar, SectionTitle, Skeleton } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { isBetaActive } from "@/lib/beta";
-import { approxSessionsLabel, packs } from "@/lib/plans";
+import { packContextFor, packCopy, packs } from "@/lib/plans";
 import { IELTS_COURSE_ID } from "@/lib/course-status";
 import { UnlockDialog } from "@/components/billing/unlock-dialog";
 import { BetaSurvey } from "@/components/beta/beta-survey";
@@ -329,8 +329,8 @@ function KeepPractisingOffer({ moduleId, freeIeltsTaster, attemptId }: { moduleI
         <p className="font-bold">{freeIeltsTaster ? "Want to see how you go in a full test?" : "Keep practising"}</p>
         <p className="mt-1 text-sm text-gray-500">
           {freeIeltsTaster ? "That was the shorter free mock. Unlock every full-length IELTS mock test, timed like the real one. " : ""}
-          {starter.label} is {starter.priceLabel} for {starter.minutes} minutes, {approxSessionsLabel(starter.minutes, moduleId)}. One-off
-          payment, minutes never expire, and they work on every open course.
+          The {starter.label} pack is {starter.priceLabel} for {starter.minutes} minutes, {packCopy(starter, packContextFor(moduleId)).sessions}.
+          One-off payment, no subscription, and minutes never expire.
         </p>
       </div>
       <Button

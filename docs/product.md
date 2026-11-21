@@ -81,7 +81,7 @@ Unit: the **practice minute** — wall-clock time while a session is live, measu
 |---|---|---|---|
 | Free | A$0 | 10 / month | Free modules + 1 preview dialogue per premium module |
 | Pro | A$29 / month | 150 / month | Every module |
-| CCL Starter pack | A$19 one-off | 30 | Every module (any pack unlocks premium) |
+| Starter pack | A$19 one-off | 30 | Every module (any pack unlocks premium) |
 | Practice Plus pack | A$39 one-off | 80 | 〃 |
 | Exam Sprint pack | A$69 one-off | 160 | 〃 |
 | Team | Contact us | — | Not self-serve yet |

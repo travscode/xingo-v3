@@ -89,11 +89,11 @@ export const BETA_MINUTES = 60;
 export const packs: Record<PackId, PackConfig> = {
   starter: {
     id: "starter",
-    label: "CCL Starter",
+    label: "Starter",
     minutes: 30,
     priceLabel: "A$19",
     priceCents: 1900,
-    description: "Try the full CCL course before you book.",
+    description: "Try a full course before you book.",
   },
   plus: {
     id: "plus",
@@ -147,7 +147,7 @@ export function approxIeltsMocks(minutes: number) {
 export function approxSessionsLabel(minutes: number, moduleId?: string | null) {
   if (moduleId === "ielts-speaking") {
     const count = approxIeltsMocks(minutes);
-    return `about ${count} IELTS mock ${count === 1 ? "test" : "tests"}`;
+    return `about ${count} full IELTS mock ${count === 1 ? "test" : "tests"}`;
   }
   return `about ${approxCclDialogues(minutes)} CCL dialogues`;
 }
@@ -249,4 +249,43 @@ export function formatMinuteCount(value: number) {
 
 export function formatMinutes(value: number) {
   return `${formatMinuteCount(value)} min`;
+}
+
+/**
+ * Packs are course-agnostic (any pack unlocks every open course), but they're pitched
+ * in the terms of the course the learner came from, so they know they're buying the
+ * right thing (D-054). IELTS learners see IELTS copy; everyone else sees NAATI CCL,
+ * the main course.
+ */
+export type PackContext = "ccl" | "ielts";
+
+/** From a course id ("ielts-speaking") or a practice goal ("ielts"). */
+export function packContextFor(courseOrGoal?: string | null): PackContext {
+  return courseOrGoal === "ielts-speaking" || courseOrGoal === "ielts" ? "ielts" : "ccl";
+}
+
+const packPitch: Record<PackId, Record<PackContext, string>> = {
+  starter: {
+    ccl: "Try the full CCL course before you book.",
+    ielts: "Sit full mock tests and find your band before test day.",
+  },
+  plus: {
+    ccl: "Steady weekly practice through every CCL dialogue.",
+    ielts: "Steady weekly practice across every IELTS mock test.",
+  },
+  sprint: {
+    ccl: "Daily mock dialogues in the weeks before your test.",
+    ielts: "A mock test most days in the weeks before your test.",
+  },
+};
+
+export function packCopy(pack: PackConfig, context: PackContext) {
+  const moduleId = context === "ielts" ? "ielts-speaking" : null;
+  return {
+    /** "Great for IELTS Speaking" */
+    fit: context === "ielts" ? "Great for IELTS Speaking" : "Great for NAATI CCL",
+    /** "about 2 full IELTS mock tests" */
+    sessions: approxSessionsLabel(pack.minutes, moduleId),
+    description: packPitch[pack.id][context],
+  };
 }

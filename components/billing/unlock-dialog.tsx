@@ -6,7 +6,7 @@ import { useCheckout } from "@/components/billing/use-checkout";
 import { Price } from "@/components/billing/price";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/analytics";
-import { CURRENCY_LABEL, approxSessionsLabel, packList, plans, type PackId } from "@/lib/plans";
+import { CURRENCY_LABEL, packContextFor, packCopy, packList, plans, type PackId } from "@/lib/plans";
 import { IELTS_COURSE_ID } from "@/lib/course-status";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +58,7 @@ export function UnlockDialog({
   };
 
   const pro = plans.professional;
+  const context = packContextFor(moduleId);
   const selectedPack = packList.find((pack) => pack.id === choice);
   const payLabel = selectedPack ? selectedPack.priceLabel : pro.priceLabel;
   const busy = pending !== null;
@@ -114,20 +115,27 @@ export function UnlockDialog({
         <div role="radiogroup" aria-label={tab === "packs" ? "Minute packs" : "Plans"} className="flex-1 space-y-3 overflow-y-auto p-5 sm:p-6">
           {tab === "packs" ? (
             <>
-              <p className="text-sm text-gray-500">One-off payment, no subscription. Minutes never expire.</p>
-              {packList.map((pack) => (
+              <p className="text-sm text-gray-500">
+                <span className="font-semibold text-ink">{packCopy(packList[0], context).fit}.</span> One-off payment, no
+                subscription. Minutes never expire.
+              </p>
+              {packList.map((pack) => {
+                const copy = packCopy(pack, context);
+                return (
                 <Option key={pack.id} selected={choice === pack.id} onSelect={() => setChoice(pack.id)}>
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-1.5 font-bold">
                       <Package className="h-4 w-4" aria-hidden /> {pack.label}
                     </p>
-                    <p className="mt-1 flex items-center gap-1 text-sm text-gray-500">
-                      <Clock className="h-3.5 w-3.5" aria-hidden /> {pack.minutes} min · {approxSessionsLabel(pack.minutes, moduleId)}
+                    <p className="mt-1 flex items-center gap-1 text-sm font-semibold">
+                      <Clock className="h-3.5 w-3.5" aria-hidden /> {pack.minutes} min · {copy.sessions}
                     </p>
+                    <p className="mt-0.5 text-sm text-gray-500">{copy.description}</p>
                   </div>
                   <Price priceLabel={pack.priceLabel} regularPriceLabel={pack.regularPriceLabel} className="flex-col items-end gap-0 text-xl" />
                 </Option>
-              ))}
+                );
+              })}
             </>
           ) : (
             <>

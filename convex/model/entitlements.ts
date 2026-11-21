@@ -41,7 +41,7 @@ const ADMIN_MONTHLY_MINUTES = 100_000;
 
 /**
  * What a brand-new member of this kind would have (D-044 "Preview as"): the plan's full
- * allowance, plus the CCL Starter pack for "pack". The admin's own usage is ignored.
+ * allowance, plus the Starter pack for "pack". The admin's own usage is ignored.
  */
 function previewEntitlement(previewAs: PreviewAs, now: Date): Entitlement {
   const plan = plans[previewAs === "professional" ? "professional" : "free"];

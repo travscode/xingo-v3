@@ -329,7 +329,7 @@ export const configStatus = query({
       check("STRIPE_SECRET_KEY", "Payments", false),
       check("STRIPE_WEBHOOK_SECRET", "Applying purchases after payment", false),
       check("STRIPE_PRO_PRICE_ID", "Pro subscription checkout", false),
-      check("STRIPE_PACK_STARTER_PRICE_ID", "CCL Starter pack checkout", false),
+      check("STRIPE_PACK_STARTER_PRICE_ID", "Starter pack checkout", false),
       check("STRIPE_PACK_PLUS_PRICE_ID", "Practice Plus pack checkout", false),
       check("STRIPE_PACK_SPRINT_PRICE_ID", "Exam Sprint pack checkout", false),
     ];

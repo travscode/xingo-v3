@@ -6,7 +6,7 @@ import { MARKETPLACE_OPEN } from "../../lib/marketplace";
 import { isGoalComingSoonOnSite } from "../../lib/goals";
 import { trackForGoal } from "../../lib/email/onboarding-types";
 import { openAlternativeFor } from "../../lib/site-status";
-import { IELTS_FREE_MOCK_MINUTES, approxSessionsLabel, plans } from "../../lib/plans";
+import { IELTS_FREE_MOCK_MINUTES, approxSessionsLabel, packContextFor, packCopy, packs, plans } from "../../lib/plans";
 import { examScenarios } from "../content/examsPack";
 
 const pair = { sourceLanguage: "English", targetLanguage: "Arabic" };
@@ -244,9 +244,24 @@ describe("IELTS Speaking opens with one free 10-minute mock (D-053)", () => {
   });
 
   test("pack counts are in mock tests on the IELTS course", () => {
-    expect(approxSessionsLabel(30, IELTS_COURSE_ID)).toBe("about 2 IELTS mock tests");
-    expect(approxSessionsLabel(14, IELTS_COURSE_ID)).toBe("about 1 IELTS mock test");
+    expect(approxSessionsLabel(30, IELTS_COURSE_ID)).toBe("about 2 full IELTS mock tests");
+    expect(approxSessionsLabel(14, IELTS_COURSE_ID)).toBe("about 1 full IELTS mock test");
     expect(approxSessionsLabel(30)).toBe("about 6 CCL dialogues");
+  });
+
+  test("packs are pitched in the terms of the course or goal the learner came from (D-054)", () => {
+    expect(packs.starter.label).not.toMatch(/CCL|IELTS/);
+    expect(packContextFor("ielts-speaking")).toBe("ielts");
+    expect(packContextFor("ielts")).toBe("ielts");
+    expect(packContextFor("naati-certification-practice-ccl")).toBe("ccl");
+    expect(packContextFor(undefined)).toBe("ccl");
+    const ielts = packCopy(packs.starter, "ielts");
+    expect(ielts.fit).toBe("Great for IELTS Speaking");
+    expect(ielts.sessions).toBe("about 2 full IELTS mock tests");
+    expect(ielts.description).not.toMatch(/CCL/);
+    const ccl = packCopy(packs.starter, "ccl");
+    expect(ccl.fit).toBe("Great for NAATI CCL");
+    expect(ccl.description).not.toMatch(/IELTS/);
   });
 
   test("the migration opens the course and shortens only the free mock", async () => {

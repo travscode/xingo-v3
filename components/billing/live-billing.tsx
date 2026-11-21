@@ -3,7 +3,7 @@
 import { useQuery } from "convex/react";
 import { Check, Clock, Crown, Package } from "lucide-react";
 import { api } from "@/convex/_generated/api";
-import { CURRENCY_LABEL, approxCclDialogues, packList, plans, formatMinuteCount } from "@/lib/plans";
+import { CURRENCY_LABEL, packContextFor, packCopy, packList, plans, formatMinuteCount } from "@/lib/plans";
 import { useCheckout } from "@/components/billing/use-checkout";
 import { Price } from "@/components/billing/price";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/button";
 
 export function LiveBilling() {
   const summary = useQuery(api.usage.summaryForCurrentUser, {});
+  const me = useQuery(api.users.me, {});
+  // Packs are pitched in the terms of what the learner is preparing for (D-054).
+  const context = packContextFor(me?.user.practiceGoal);
   const { status, pending, error, buyPack, subscribe, openPortal } = useCheckout();
 
   if (!summary) {
@@ -101,22 +104,26 @@ export function LiveBilling() {
           One-off payment, no subscription. Minutes never expire and work on every open course. Prices in {CURRENCY_LABEL}. Have a promo code? Add it at checkout.
         </p>
         <div className="grid gap-4 md:grid-cols-3">
-          {packList.map((pack) => (
+          {packList.map((pack) => {
+            const copy = packCopy(pack, context);
+            return (
             <Card key={pack.id} className="flex flex-col p-6">
               <p className="flex items-center gap-1.5 font-bold">
                 <Package className="h-4 w-4" aria-hidden />
                 {pack.label}
               </p>
+              <p className="mt-1 text-xs font-semibold text-gray-500">{copy.fit}</p>
               <Price className="mt-2" priceLabel={pack.priceLabel} regularPriceLabel={pack.regularPriceLabel} />
               <p className="mt-1 flex items-center gap-1 text-sm font-semibold">
-                <Clock className="h-3.5 w-3.5" aria-hidden /> {pack.minutes} minutes · about {approxCclDialogues(pack.minutes)} CCL dialogues
+                <Clock className="h-3.5 w-3.5" aria-hidden /> {pack.minutes} minutes · {copy.sessions}
               </p>
-              <p className="mt-2 flex-1 text-sm text-gray-500">{pack.description}</p>
+              <p className="mt-2 flex-1 text-sm text-gray-500">{copy.description}</p>
               <Button className="mt-5" variant="secondary" disabled={pending === pack.id} onClick={() => buyPack(pack.id)}>
                 {pending === pack.id ? "Opening checkout…" : "Buy"}
               </Button>
             </Card>
-          ))}
+            );
+          })}
         </div>
       </section>
 
