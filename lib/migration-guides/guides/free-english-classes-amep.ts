@@ -2,13 +2,13 @@ import type { MigrationGuide } from "../types";
 
 export const guide: MigrationGuide = {
   slug: "free-english-classes-amep",
-  title: "Free English classes for migrants: the Adult Migrant English Program (AMEP)",
-  metaTitle: "Free English Classes for Migrants: AMEP Guide",
+  title: "Free English classes and courses for migrants: the Adult Migrant English Program (AMEP)",
+  metaTitle: "Free English Classes for Migrants: AMEP Courses",
   description:
     "Free English classes for migrants in Australia: who can join the AMEP (including permanent residents), time limits, AMEPOnline levels 1–5 and the SEE program.",
   excerpt: "Who can join the AMEP, the deadlines to register, AMEPOnline's five levels, and free help for job seekers through SEE.",
   group: "Language & tests",
-  keywords: ["free english classes for migrants", "adult migrant english program", "amep eligibility", "amep time limits", "free english courses for permanent residents", "amep online levels", "english course for migrants", "see program english"],
+  keywords: ["free english classes for migrants", "adult migrant english program", "amep eligibility", "amep time limits", "free english courses for permanent residents", "amep online levels", "amep course", "amep class", "amep certificate", "english for migrants", "see program english"],
   published: "2026-10-03",
   updated: "2026-11-25",
   image: {
@@ -183,6 +183,10 @@ export const guide: MigrationGuide = {
     {
       q: "Are there free English courses for permanent residents?",
       a: "Yes. If you're 18 or over, speak little or no English and hold a permanent visa, you can generally join the AMEP for free. If your visa started after 1 October 2020, the time limits to register, start and finish apply.",
+    },
+    {
+      q: "Do AMEP courses give you a certificate?",
+      a: "On AMEPOnline, levels 3 to 5 are named after accredited English as an Additional Language certificates: Certificate I, II and III in EAL (Access). Whether your class leads to a formal certificate depends on the course your provider runs, so ask your AMEP provider when you enrol.",
     },
     {
       q: "Can I do the AMEP and the SEE program together?",

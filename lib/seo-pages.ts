@@ -187,7 +187,20 @@ export const cclLanguagePages: CclLanguagePage[] = [
     nativeName: "മലയാളം",
     flag: "IN",
     voiceNote: true,
+    seoTitle: "NAATI CCL Malayalam Practice & Mock Test Online",
+    seoDescription:
+      "NAATI CCL Malayalam mock test practice online: interpret English ⇄ Malayalam mock dialogues with two AI speakers, then get a score and feedback. Try one free.",
     tips: [englishLoanwordsTip("Malayalam"), { title: "Respectful address", body: "Use respectful forms such as നിങ്ങൾ / താങ്കൾ consistently." }, numbersTip],
+    faqs: [
+      {
+        q: "Is XINGO a NAATI CCL Malayalam coaching centre?",
+        a: "No. XINGO is online practice you do on your own, at any time: you interpret CCL-style English ⇄ Malayalam dialogues out loud and get a score and feedback after each assessed session. Many people use it alongside a coaching class to get more speaking practice, or on its own if a class doesn't suit them. It's independent practice, and XINGO isn't affiliated with NAATI.",
+      },
+      {
+        q: "Can I do a NAATI CCL Malayalam mock test online?",
+        a: "Yes. XINGO gives you CCL-style English ⇄ Malayalam mock dialogues online, scored on the CCL marking scale with specific feedback, so you can see how close you are to the pass mark before test day. Your first dialogue is free.",
+      },
+    ],
   },
   {
     slug: "sinhala",

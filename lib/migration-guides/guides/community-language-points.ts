@@ -3,8 +3,8 @@ import { CCL_MAX_SCORE, CCL_PASS_SCORE } from "../../scoring";
 
 export const guide: MigrationGuide = {
   slug: "community-language-points",
-  title: "Credentialed community language points: which NAATI test counts for PR",
-  metaTitle: "Credentialed Community Language: Which NAATI Test?",
+  title: "Which NAATI test for PR? Credentialed community language points explained",
+  metaTitle: "Which NAATI Test for PR? Community Language Points",
   description:
     "Credentialed (credentialled) community language points explained: which NAATI test to take for PR, what the CCL test involves, and CCL vs certification.",
   excerpt: "Which NAATI test earns the 5 credentialed community language points, and why the CCL isn't a licence to interpret.",
@@ -19,7 +19,7 @@ export const guide: MigrationGuide = {
     "is ccl a certification",
   ],
   published: "2026-10-03",
-  updated: "2026-10-22",
+  updated: "2026-11-25",
   image: {
     src: "/images/scenes/interpreter-desk.webp",
     alt: "A woman wearing headphones speaks while taking notes beside her laptop, practising an interpreting dialogue.",

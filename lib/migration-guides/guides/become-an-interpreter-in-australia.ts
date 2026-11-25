@@ -3,14 +3,14 @@ import type { MigrationGuide } from "../types";
 export const guide: MigrationGuide = {
   slug: "become-an-interpreter-in-australia",
   title: "How to become an interpreter in Australia: NAATI certification to work",
-  metaTitle: "How to Become an Interpreter in Australia",
+  metaTitle: "How to Become a NAATI Interpreter in Australia",
   description:
     "The path to working as an interpreter in Australia: NAATI credentials, CPI eligibility and the test, recertification, and applying for interpreting work.",
   excerpt: "NAATI credentials, CPI eligibility and the test, staying certified, and applying for interpreting work.",
   group: "Work",
-  keywords: ["how to become an interpreter in australia", "naati certified provisional interpreter", "naati cpi eligibility", "interpreter jobs australia naati", "tis national interpreter requirements"],
+  keywords: ["how to become an interpreter in australia", "naati interpreter", "naati certification", "naati certified provisional interpreter", "naati cpi eligibility", "interpreter jobs australia naati", "tis national interpreter requirements"],
   published: "2026-10-03",
-  updated: "2026-10-03",
+  updated: "2026-11-25",
   image: {
     src: "/images/scenes/clinic-interpreter.webp",
     alt: "An interpreter with a lanyard and notepad interprets between a doctor and an older couple in a community health clinic.",
