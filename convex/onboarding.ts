@@ -4,8 +4,8 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { getEntitlement } from "./model/entitlements";
 import { siteUrlFromEnv } from "./emails";
-import { renderEmail } from "../lib/email/render";
-import { buildOnboardingEmail } from "../lib/email/onboarding-content";
+import { collectLinks, renderEmail } from "../lib/email/render";
+import { buildOnboardingEmail, buildOnboardingFromOverride } from "../lib/email/onboarding-content";
 import { ONBOARDING_DAYS, trackForGoal, type OnboardingDay } from "../lib/email/onboarding-types";
 import { getGoal } from "../lib/goals";
 import { formatLanguageName } from "../lib/languages";
@@ -61,6 +61,7 @@ export const dispatch = internalMutation({
         track: trackForGoal(user.practiceGoal),
         status: "queued",
         createdAt: new Date(now).toISOString(),
+        token: crypto.randomUUID(),
       });
       // Spread sends a little so Resend's rate limit is never hit.
       await ctx.scheduler.runAfter(queued * 600, internal.onboarding.send, { rowId });
@@ -99,8 +100,16 @@ export const context = internalQuery({
     const pair = user.languagePreferences?.[0];
     const language = pair && pair.targetLanguage.toLowerCase() !== "english" ? formatLanguageName(pair.targetLanguage) : null;
 
+    const override = await ctx.db
+      .query("onboardingOverrides")
+      .withIndex("by_track_day", (q) => q.eq("track", row.track).eq("day", row.day))
+      .unique();
+
     return {
       row,
+      override: override
+        ? { subject: override.subject, preheader: override.preheader, body: override.body, ctaLabel: override.ctaLabel, ctaUrl: override.ctaUrl }
+        : null,
       to: { email: user.email, name: user.name, token: user.emailToken ?? null, optedOut: Boolean(user.emailOptOut) },
       ctx: {
         goalLabel: getGoal(user.practiceGoal)?.label ?? null,
@@ -121,12 +130,16 @@ export const markResult = internalMutation({
     rowId: v.id("onboardingEmails"),
     status: v.union(v.literal("sent"), v.literal("skipped"), v.literal("failed")),
     error: v.optional(v.string()),
+    links: v.optional(v.array(v.string())),
+    edited: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.rowId, {
       status: args.status,
       sentAt: args.status === "sent" ? new Date().toISOString() : undefined,
       error: args.error?.slice(0, 300),
+      ...(args.links ? { links: args.links } : {}),
+      ...(args.edited ? { edited: true } : {}),
     });
   },
 });
@@ -150,7 +163,12 @@ export const send = internalAction({
 
     const site = siteUrlFromEnv();
     const firstName = data.to.name.trim().split(/\s+/)[0] || "there";
-    const built = buildOnboardingEmail(data.row.day as OnboardingDay, trackForGoal(data.ctx.goalId), { ...data.ctx, siteUrl: site });
+    // An admin's edit for this pathway and day replaces the automatic email.
+    const built = data.override
+      ? buildOnboardingFromOverride(data.override, site)
+      : buildOnboardingEmail(data.row.day as OnboardingDay, trackForGoal(data.ctx.goalId), { ...data.ctx, siteUrl: site });
+    const token = data.row.token;
+    const links = token ? collectLinks(built.templateId, built.content, site) : [];
     const unsubscribeUrl = `${site}/e/u/${data.to.token}`;
     const senderName = process.env.EMAIL_SENDER_NAME ?? "XINGO";
     const { html, text } = renderEmail(built.templateId, built.content, { preheader: built.preheader }, {
@@ -159,6 +177,13 @@ export const send = internalAction({
       unsubscribeUrl,
       senderName,
       senderAddress: process.env.EMAIL_POSTAL_ADDRESS ?? "Australia",
+      trackLink: token
+        ? (url) => {
+            const index = links.indexOf(url);
+            return index === -1 ? url : `${site}/e/c/${token}/${index}`;
+          }
+        : undefined,
+      openPixelUrl: token ? `${site}/e/o/${token}.gif` : undefined,
     });
 
     const response = await fetch("https://api.resend.com/emails", {
@@ -188,7 +213,7 @@ export const send = internalAction({
     });
 
     if (response.ok || response.status === 409) {
-      await ctx.runMutation(internal.onboarding.markResult, { rowId: args.rowId, status: "sent" });
+      await ctx.runMutation(internal.onboarding.markResult, { rowId: args.rowId, status: "sent", links, edited: Boolean(data.override) });
     } else {
       const detail = (await response.text()).slice(0, 300);
       console.error("[onboarding] Resend error", response.status, detail);

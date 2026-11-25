@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { buildOnboardingEmail } from "./onboarding-content";
-import { ONBOARDING_DAYS, type OnboardingContext, type OnboardingTrack } from "./onboarding-types";
+import { buildOnboardingEmail, buildOnboardingFromOverride, onboardingOverrideFrom, sampleOnboardingContext } from "./onboarding-content";
+import { ONBOARDING_DAYS, ONBOARDING_TRACKS, type OnboardingContext, type OnboardingTrack } from "./onboarding-types";
 import { getAllPosts } from "../blog";
 import { examPages } from "../exam-pages";
 import { practiceGoals } from "../goals";
@@ -183,5 +183,32 @@ describe("onboarding emails", () => {
   test("2M Language Services is named exactly and linked", () => {
     const body = buildOnboardingEmail(9, "interpreter", ctxVariants("naati_cpi")[0][1]).content.body;
     expect(body).toContain("[2M Language Services](https://www.2m.com.au/)");
+  });
+});
+
+describe("admin preview and edits", () => {
+  const site = "https://www.xingo.ai";
+
+  test("every pathway and day previews, and opening it in the editor doesn't change it", () => {
+    for (const { id } of ONBOARDING_TRACKS) {
+      for (const day of ONBOARDING_DAYS) {
+        for (const stage of ["new", "practised"] as const) {
+          const built = buildOnboardingEmail(day, id, sampleOnboardingContext(id, stage, site, 5));
+          const roundTrip = buildOnboardingFromOverride(onboardingOverrideFrom(built, site), site);
+          expect(roundTrip.subject).toBe(built.subject);
+          expect(roundTrip.content.body).toBe(built.content.body);
+          expect(roundTrip.content.ctaUrl).toBe(built.content.ctaUrl);
+        }
+      }
+    }
+  });
+
+  test("site paths in edits become full links", () => {
+    const built = buildOnboardingFromOverride(
+      { subject: "s", preheader: "", body: "See [courses](/courses).", ctaLabel: "Go", ctaUrl: "/progress" },
+      site,
+    );
+    expect(built.content.body).toBe("See [courses](https://www.xingo.ai/courses).");
+    expect(built.content.ctaUrl).toBe("https://www.xingo.ai/progress");
   });
 });

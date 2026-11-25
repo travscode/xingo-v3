@@ -14,7 +14,8 @@
 import { getGoal } from "../goals";
 import { packs, plans } from "../plans";
 import { cclLanguagePages } from "../seo-pages";
-import type { OnboardingContext, OnboardingDay, OnboardingTrack } from "./onboarding-types";
+import type { OnboardingContext, OnboardingDay, OnboardingOverride, OnboardingTrack } from "./onboarding-types";
+import { rubricForModule } from "../rubrics";
 import type { BuiltEmail } from "./transactional";
 import { MARKETPLACE_OPEN } from "../marketplace";
 
@@ -1342,5 +1343,63 @@ export function buildOnboardingEmail(day: OnboardingDay, track: OnboardingTrack,
       ctaUrl: draft.ctaUrl,
       signature,
     },
+  };
+}
+
+/** Site paths ("/courses") become absolute; the renderer only links https URLs. */
+function absolutePaths(text: string, siteUrl: string) {
+  const base = siteUrl.replace(/\/+$/, "");
+  return text.replace(/\]\((\/(?!\/)[^)\s]*)\)/g, (_match, path: string) => `](${base}${path})`);
+}
+
+/** An admin's edited version, in the same shape as the automatic one. */
+export function buildOnboardingFromOverride(edit: OnboardingOverride, siteUrl: string): BuiltEmail {
+  const base = siteUrl.replace(/\/+$/, "");
+  const ctaUrl = edit.ctaUrl.trim();
+  return {
+    subject: edit.subject,
+    preheader: edit.preheader,
+    templateId: "letter",
+    content: {
+      body: absolutePaths(edit.body, base),
+      ctaLabel: edit.ctaLabel.trim() || undefined,
+      ctaUrl: ctaUrl ? (ctaUrl.startsWith("/") ? `${base}${ctaUrl}` : ctaUrl) : undefined,
+      signature,
+    },
+  };
+}
+
+/** The automatic email as an editable starting point (site links shown as paths). */
+export function onboardingOverrideFrom(built: BuiltEmail, siteUrl: string): OnboardingOverride {
+  const base = siteUrl.replace(/\/+$/, "");
+  const toPath = (url: string) => (url.startsWith(`${base}/`) ? url.slice(base.length) : url === base ? "/" : url);
+  return {
+    subject: built.subject,
+    preheader: built.preheader,
+    body: built.content.body.replace(/\]\(([^)\s]+)\)/g, (_match, url: string) => `](${toPath(url)})`),
+    ctaLabel: built.content.ctaLabel ?? "",
+    ctaUrl: built.content.ctaUrl ? toPath(built.content.ctaUrl) : "",
+  };
+}
+
+/**
+ * A made-up learner for admin previews. "new" hasn't practised yet; "practised"
+ * has three scored sessions. Some emails change depending on which.
+ */
+export function sampleOnboardingContext(track: OnboardingTrack, stage: "new" | "practised", siteUrl: string, freeMonthlyMinutes: number): OnboardingContext {
+  const goal = getGoal(tracks[track].fallbackGoal ?? undefined);
+  const firstCourse = goal?.moduleOrder[0];
+  const shown = firstCourse ? rubricForModule(firstCourse).display(72) : null;
+  const interpreting = track === "ccl" || track === "interpreter" || track === "us_interpreter";
+  return {
+    siteUrl,
+    goalLabel: goal?.label ?? null,
+    goalId: goal?.id ?? null,
+    language: interpreting ? "Spanish" : null,
+    sessions: stage === "new" ? 0 : 3,
+    bestScore: stage === "new" || !shown ? null : shown.max ? `${shown.value}/${shown.max}` : shown.value,
+    minutesLeft: stage === "new" ? freeMonthlyMinutes : 2,
+    freeMonthlyMinutes,
+    isPro: false,
   };
 }

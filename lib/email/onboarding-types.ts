@@ -60,3 +60,42 @@ export type OnboardingContext = {
 };
 
 export type OnboardingEmailBuilder = (ctx: OnboardingContext) => BuiltEmail;
+
+/** Pathways in the order the admin screen lists them. */
+export const ONBOARDING_TRACKS: Array<{ id: OnboardingTrack; label: string }> = [
+  { id: "ccl", label: "NAATI CCL" },
+  { id: "interpreter", label: "Interpreting (NAATI CPI, medical, NDIS, legal)" },
+  { id: "ielts", label: "IELTS Speaking" },
+  { id: "oet", label: "OET Speaking" },
+  { id: "clinical", label: "Clinical exams (AMC, NMBA OSCE)" },
+  { id: "us_interpreter", label: "US medical interpreting" },
+  { id: "general", label: "General (no goal, or a course that's coming soon)" },
+];
+
+export function isOnboardingTrack(value: string): value is OnboardingTrack {
+  return ONBOARDING_TRACKS.some((track) => track.id === value);
+}
+
+export function isOnboardingDay(value: number): value is OnboardingDay {
+  return (ONBOARDING_DAYS as readonly number[]).includes(value);
+}
+
+/** An admin's replacement for one email. Links may be site paths ("/courses") or https URLs. */
+export type OnboardingOverride = {
+  subject: string;
+  preheader: string;
+  body: string;
+  ctaLabel: string;
+  ctaUrl: string;
+};
+
+/** Returns an error code, or null when the edit can be saved. */
+export function onboardingOverrideProblem(edit: OnboardingOverride): "EMAIL_SUBJECT_REQUIRED" | "EMAIL_BODY_REQUIRED" | "EMAIL_LINK_INVALID" | "EMAIL_TOO_LONG" | null {
+  if (!edit.subject.trim()) return "EMAIL_SUBJECT_REQUIRED";
+  if (!edit.body.trim()) return "EMAIL_BODY_REQUIRED";
+  if (edit.subject.length > 200 || edit.preheader.length > 300 || edit.body.length > 20_000 || edit.ctaLabel.length > 80) return "EMAIL_TOO_LONG";
+  const url = edit.ctaUrl.trim();
+  if (edit.ctaLabel.trim() && !url) return "EMAIL_LINK_INVALID";
+  if (url && !/^(\/(?!\/)|https:\/\/)/.test(url)) return "EMAIL_LINK_INVALID";
+  return null;
+}

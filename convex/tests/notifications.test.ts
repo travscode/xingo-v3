@@ -93,4 +93,84 @@ describe("onboarding series", () => {
     const user = await t.run((ctx) => ctx.db.query("users").withIndex("by_clerkId", (q) => q.eq("clerkId", "unsub")).unique());
     expect(user?.emailOptOut).toBe(true);
   });
+
+  async function queuedRow(t: ReturnType<typeof setup>) {
+    await seedUser(t, "learner", { createdAt: new Date(Date.now() - 3 * 86_400_000 - 60_000).toISOString(), practiceGoal: "naati_ccl" });
+    await t.mutation(internal.onboarding.dispatch, {});
+    const [row] = await t.run((ctx) => ctx.db.query("onboardingEmails").collect());
+    return row;
+  }
+
+  function stubResend() {
+    const sent: Array<{ subject: string; html: string }> = [];
+    vi.stubEnv("RESEND_API_KEY", "re_test");
+    vi.stubEnv("EMAIL_FROM_ADDRESS", "hello@example.com");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: RequestInit) => {
+        sent.push(JSON.parse(String(init.body)) as { subject: string; html: string });
+        return new Response("{}", { status: 200 });
+      }),
+    );
+    return sent;
+  }
+
+  test("sent emails are tracked: opens, and clicks only to the email's own links", async () => {
+    const t = setup();
+    const sent = stubResend();
+    const row = await queuedRow(t);
+    expect(row.token).toBeTruthy();
+
+    await t.action(internal.onboarding.send, { rowId: row._id });
+    expect(sent[0].html).toContain(`/e/o/${row.token}.gif`);
+    expect(sent[0].html).toContain(`/e/c/${row.token}/0`);
+
+    const afterSend = await t.run((ctx) => ctx.db.get(row._id));
+    expect(afterSend?.links?.length).toBeGreaterThan(0);
+
+    await t.mutation(internal.emails.recordOpen, { token: row.token! });
+    expect((await t.run((ctx) => ctx.db.get(row._id)))?.firstOpenedAt).toBeTruthy();
+
+    const destination = await t.mutation(internal.emails.recordClick, { token: row.token!, linkIndex: 0 });
+    expect(destination).toBe(afterSend!.links![0]);
+    expect((await t.run((ctx) => ctx.db.get(row._id)))?.firstClickedAt).toBeTruthy();
+
+    const unknown = await t.mutation(internal.emails.recordClick, { token: row.token!, linkIndex: 999 });
+    expect(unknown).toMatch(/^https:\/\/www\.xingo\.ai\/?$/); // unknown link index goes home
+
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  test("an admin's edit replaces that pathway's email; only admins can edit, and links must be safe", async () => {
+    const t = setup();
+    const admin = await seedUser(t, "admin", { role: "platform_admin" });
+    const plain = await seedUser(t, "plain");
+    const edit = {
+      track: "ccl",
+      day: 3,
+      subject: "Hi {{firstName}}, a quick CCL tip",
+      preheader: "One thing to try",
+      body: "Hi {{firstName}},\n\nTry a [dialogue](/courses) today.",
+      ctaLabel: "Practise now",
+      ctaUrl: "/courses",
+    };
+
+    await expect(plain.mutation(api.emails.saveOnboardingOverride, edit)).rejects.toThrow("Not authorized");
+    await expect(admin.mutation(api.emails.saveOnboardingOverride, { ...edit, ctaUrl: "javascript:alert(1)" })).rejects.toThrow("EMAIL_LINK_INVALID");
+    await expect(admin.mutation(api.emails.saveOnboardingOverride, { ...edit, subject: " " })).rejects.toThrow("EMAIL_SUBJECT_REQUIRED");
+    await admin.mutation(api.emails.saveOnboardingOverride, edit);
+
+    const sent = stubResend();
+    const row = await queuedRow(t);
+    await t.action(internal.onboarding.send, { rowId: row._id });
+    expect(sent[0].subject).toMatch(/a quick CCL tip$/);
+    expect((await t.run((ctx) => ctx.db.get(row._id)))?.edited).toBe(true);
+
+    await admin.mutation(api.emails.resetOnboardingOverride, { track: "ccl", day: 3 });
+    expect((await admin.query(api.emails.onboardingReport, {})).overrides).toEqual([]);
+
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
 });

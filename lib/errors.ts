@@ -38,6 +38,10 @@ export type AppErrorCode =
   | "BETA_INVITE_USED"
   | "FEEDBACK_EMPTY"
   | "DICTATION_FAILED"
+  | "EMAIL_SUBJECT_REQUIRED"
+  | "EMAIL_BODY_REQUIRED"
+  | "EMAIL_LINK_INVALID"
+  | "EMAIL_TOO_LONG"
   | "SURVEY_INVALID";
 
 const messages: Record<AppErrorCode, string> = {
@@ -46,6 +50,10 @@ const messages: Record<AppErrorCode, string> = {
   BETA_INVITE_USED: "This invite has already been used by another account. Sign in with that account, or ask us for a new invite.",
   FEEDBACK_EMPTY: "Write or say something first.",
   DICTATION_FAILED: "We couldn't turn that into text. Please try again, or type your feedback.",
+  EMAIL_SUBJECT_REQUIRED: "Add a subject line.",
+  EMAIL_BODY_REQUIRED: "The email needs some text.",
+  EMAIL_LINK_INVALID: "The button needs a link that starts with / (a XINGO page) or https://.",
+  EMAIL_TOO_LONG: "That's too long. Shorten the subject, preview text, button or body.",
   SURVEY_INVALID: "Please answer all five questions.",
   COURSE_UNAVAILABLE: "This course isn't available right now. It may have been unpublished by its creator.",
   COURSE_COMING_SOON: "This course is coming soon. For now you can practise NAATI CCL.",

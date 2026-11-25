@@ -1,9 +1,10 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation, internalQuery, mutation, query, type QueryCtx } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { requirePlatformAdmin } from "./model/auth";
 import { collectLinks } from "../lib/email/render";
+import { isOnboardingDay, isOnboardingTrack, onboardingOverrideProblem } from "../lib/email/onboarding-types";
 
 /**
  * Admin email campaigns: drafts, audience, queued sending, tracking and reports.
@@ -446,6 +447,13 @@ export const finishCampaign = internalMutation({
 
 // ---- Internal: tracking (called from http.ts) ----------------------------------------------
 
+function onboardingRowByToken(ctx: MutationCtx, token: string) {
+  return ctx.db
+    .query("onboardingEmails")
+    .withIndex("by_token", (q) => q.eq("token", token))
+    .unique();
+}
+
 export const recordOpen = internalMutation({
   args: { token: v.string() },
   handler: async (ctx, args) => {
@@ -459,6 +467,13 @@ export const recordOpen = internalMutation({
         openCount: recipient.openCount + 1,
         firstOpenedAt: recipient.firstOpenedAt ?? new Date().toISOString(),
       });
+      return;
+    }
+
+    // Onboarding-series emails carry their own row's token.
+    const onboarding = args.token ? await onboardingRowByToken(ctx, args.token) : null;
+    if (onboarding && !onboarding.firstOpenedAt) {
+      await ctx.db.patch(onboarding._id, { firstOpenedAt: new Date().toISOString() });
     }
   },
 });
@@ -474,7 +489,15 @@ export const recordClick = internalMutation({
       .unique();
 
     if (!recipient) {
-      return fallback;
+      const onboarding = args.token ? await onboardingRowByToken(ctx, args.token) : null;
+      const url = onboarding?.links?.[args.linkIndex];
+      if (!onboarding || !url) return fallback;
+      const now = new Date().toISOString();
+      if (!onboarding.firstClickedAt) {
+        // A click implies the email was opened even if images were blocked.
+        await ctx.db.patch(onboarding._id, { firstClickedAt: now, firstOpenedAt: onboarding.firstOpenedAt ?? now });
+      }
+      return url;
     }
 
     const campaign = await ctx.db.get(recipient.campaignId);
@@ -621,11 +644,17 @@ export const automationStats = query({
     const rows = await ctx.db.query("onboardingEmails").collect();
     const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
     const recent = rows.filter((row) => row.createdAt >= since);
-    const byDay = new Map<number, { sent: number; skipped: number; failed: number }>();
+    const byDay = new Map<number, { sent: number; skipped: number; failed: number; tracked: number; opened: number; clicked: number }>();
     for (const row of recent) {
-      const entry = byDay.get(row.day) ?? { sent: 0, skipped: 0, failed: 0 };
-      if (row.status === "sent") entry.sent += 1;
-      else if (row.status === "skipped") entry.skipped += 1;
+      const entry = byDay.get(row.day) ?? { sent: 0, skipped: 0, failed: 0, tracked: 0, opened: 0, clicked: 0 };
+      if (row.status === "sent") {
+        entry.sent += 1;
+        if (row.token) {
+          entry.tracked += 1;
+          if (row.firstOpenedAt) entry.opened += 1;
+          if (row.firstClickedAt) entry.clicked += 1;
+        }
+      } else if (row.status === "skipped") entry.skipped += 1;
       else if (row.status === "failed") entry.failed += 1;
       byDay.set(row.day, entry);
     }
@@ -634,5 +663,92 @@ export const automationStats = query({
       failed30d: recent.filter((row) => row.status === "failed").length,
       byDay: [...byDay.entries()].sort((a, b) => a[0] - b[0]).map(([day, counts]) => ({ day, ...counts })),
     };
+  },
+});
+
+/** Admin → Email → Onboarding series: results per pathway and day, plus any edits. All time. */
+export const onboardingReport = query({
+  args: {},
+  handler: async (ctx) => {
+    await requirePlatformAdmin(ctx);
+    const rows = await ctx.db.query("onboardingEmails").collect();
+    const stats: Record<string, { sent: number; tracked: number; opened: number; clicked: number }> = {};
+    let trackingSince: string | null = null;
+    for (const row of rows) {
+      if (row.status !== "sent") continue;
+      if (row.token && row.sentAt && (!trackingSince || row.sentAt < trackingSince)) trackingSince = row.sentAt;
+      const key = `${row.track}:${row.day}`;
+      const entry = (stats[key] ??= { sent: 0, tracked: 0, opened: 0, clicked: 0 });
+      entry.sent += 1;
+      if (row.token) {
+        entry.tracked += 1;
+        if (row.firstOpenedAt) entry.opened += 1;
+        if (row.firstClickedAt) entry.clicked += 1;
+      }
+    }
+    const overrides = await ctx.db.query("onboardingOverrides").collect();
+    return {
+      stats,
+      trackingSince,
+      overrides: overrides.map((o) => ({
+        track: o.track,
+        day: o.day,
+        subject: o.subject,
+        preheader: o.preheader,
+        body: o.body,
+        ctaLabel: o.ctaLabel,
+        ctaUrl: o.ctaUrl,
+        updatedAt: o.updatedAt,
+      })),
+    };
+  },
+});
+
+const overrideArgs = {
+  track: v.string(),
+  day: v.number(),
+  subject: v.string(),
+  preheader: v.string(),
+  body: v.string(),
+  ctaLabel: v.string(),
+  ctaUrl: v.string(),
+};
+
+/** Replaces one onboarding email (pathway × day) for every future send. */
+export const saveOnboardingOverride = mutation({
+  args: overrideArgs,
+  handler: async (ctx, args) => {
+    const admin = await requirePlatformAdmin(ctx);
+    if (!isOnboardingTrack(args.track) || !isOnboardingDay(args.day)) throw new Error("Unknown onboarding email");
+    const edit = {
+      subject: args.subject.trim(),
+      preheader: args.preheader.trim(),
+      body: args.body.trim(),
+      ctaLabel: args.ctaLabel.trim(),
+      ctaUrl: args.ctaUrl.trim(),
+    };
+    const problem = onboardingOverrideProblem(edit);
+    if (problem) throw new ConvexError(problem);
+
+    const existing = await ctx.db
+      .query("onboardingOverrides")
+      .withIndex("by_track_day", (q) => q.eq("track", args.track).eq("day", args.day))
+      .unique();
+    const fields = { ...edit, updatedAt: new Date().toISOString(), updatedBy: admin.clerkId };
+    if (existing) await ctx.db.patch(existing._id, fields);
+    else await ctx.db.insert("onboardingOverrides", { track: args.track, day: args.day, ...fields });
+  },
+});
+
+/** Goes back to the automatic, personalised version. */
+export const resetOnboardingOverride = mutation({
+  args: { track: v.string(), day: v.number() },
+  handler: async (ctx, args) => {
+    await requirePlatformAdmin(ctx);
+    const existing = await ctx.db
+      .query("onboardingOverrides")
+      .withIndex("by_track_day", (q) => q.eq("track", args.track).eq("day", args.day))
+      .unique();
+    if (existing) await ctx.db.delete(existing._id);
   },
 });

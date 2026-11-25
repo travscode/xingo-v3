@@ -287,7 +287,31 @@ export default defineSchema({
     createdAt: v.string(),
     sentAt: v.optional(v.string()),
     error: v.optional(v.string()),
-  }).index("by_clerk_day", ["clerkId", "day"]),
+    /** Random token in this email's open pixel and click links (unset on rows from before tracking). */
+    token: v.optional(v.string()),
+    /** Trackable URLs frozen at send, in render order; clicks redirect only to these. */
+    links: v.optional(v.array(v.string())),
+    /** True when an admin's edited version was sent instead of the automatic one. */
+    edited: v.optional(v.boolean()),
+    firstOpenedAt: v.optional(v.string()),
+    firstClickedAt: v.optional(v.string()),
+  })
+    .index("by_clerk_day", ["clerkId", "day"])
+    .index("by_token", ["token"]),
+
+  /** Admin edits that replace one onboarding email (track × day) for everyone on that pathway. */
+  onboardingOverrides: defineTable({
+    track: v.string(),
+    day: v.number(),
+    subject: v.string(),
+    preheader: v.string(),
+    /** Markdown-lite, including the greeting. */
+    body: v.string(),
+    ctaLabel: v.string(),
+    ctaUrl: v.string(),
+    updatedAt: v.string(),
+    updatedBy: v.string(),
+  }).index("by_track_day", ["track", "day"]),
 
   /** Marketplace page for a community course (one per course). */
   courseListings: defineTable({

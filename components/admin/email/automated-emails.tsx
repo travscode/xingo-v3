@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "convex/react";
-import { Mail, Repeat } from "lucide-react";
+import { ChevronRight, Mail, Repeat } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { Card } from "@/components/ui/primitives";
+import { Button } from "@/components/ui/button";
 
 const customerEmails = [
   "Welcome (on sign-up)",
@@ -54,13 +56,19 @@ export function AutomatedEmails() {
               <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
                 {stats.byDay.map((row) => (
                   <span key={row.day} className="rounded-md bg-gray-100 px-2 py-1 tabular-nums">
-                    Day {row.day}: {row.sent}
+                    Day {row.day}: {row.sent} sent
+                    {row.tracked > 0 ? ` · ${Math.round((row.opened / row.tracked) * 100)}% opened` : ""}
                   </span>
                 ))}
               </div>
             ) : null}
           </>
         ) : null}
+        <Button asChild variant="outline" size="sm" className="mt-4">
+          <Link href="/admin/email/onboarding">
+            See, edit and track each email <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Button>
       </Card>
     </div>
   );
