@@ -15,6 +15,7 @@ import {
 import {
   ONBOARDING_DAYS,
   ONBOARDING_TRACKS,
+  type OnboardingContext,
   type OnboardingDay,
   type OnboardingOverride,
   type OnboardingTrack,
@@ -42,14 +43,16 @@ export function OnboardingSeries({ adminName, adminEmail }: { adminName: string;
   const [track, setTrack] = useState<OnboardingTrack>("ccl");
   const [day, setDay] = useState<OnboardingDay>(1);
   const [stage, setStage] = useState<Stage>("new");
+  const [language, setLanguage] = useState<string>("Spanish");
   const [editing, setEditing] = useState<OnboardingOverride | null>(null);
 
   const overrideFor = (t: OnboardingTrack, d: OnboardingDay) => report?.overrides.find((o) => o.track === t && o.day === d) ?? null;
 
-  const automatic = useMemo(
-    () => buildOnboardingEmail(day, track, sampleOnboardingContext(track, stage, siteUrl(), plans.free.monthlyMinutes)),
-    [day, stage, track],
+  const sample = useMemo<OnboardingContext>(
+    () => ({ ...sampleOnboardingContext(track, stage, siteUrl(), plans.free.monthlyMinutes), language: language || null }),
+    [language, stage, track],
   );
+  const automatic = useMemo(() => buildOnboardingEmail(day, track, sample), [day, sample, track]);
   const saved = overrideFor(track, day);
   const shown = editing ?? saved;
   const email = shown ? buildOnboardingFromOverride(shown, siteUrl()) : automatic;
@@ -172,6 +175,10 @@ export function OnboardingSeries({ adminName, adminEmail }: { adminName: string;
               edited={Boolean(saved)}
               stage={stage}
               onStage={setStage}
+              sample={sample}
+              firstName={adminName.split(" ")[0] || "there"}
+              language={language}
+              onLanguage={setLanguage}
               onEdit={() => setEditing(saved ?? onboardingOverrideFrom(automatic, siteUrl()))}
             />
           )}
@@ -212,6 +219,10 @@ function Details({
   edited,
   stage,
   onStage,
+  sample,
+  firstName,
+  language,
+  onLanguage,
   onEdit,
 }: {
   track: OnboardingTrack;
@@ -219,6 +230,10 @@ function Details({
   edited: boolean;
   stage: Stage;
   onStage: (stage: Stage) => void;
+  sample: OnboardingContext;
+  firstName: string;
+  language: string;
+  onLanguage: (language: string) => void;
   onEdit: () => void;
 }) {
   const label = ONBOARDING_TRACKS.find((t) => t.id === track)?.label ?? track;
@@ -255,7 +270,43 @@ function Details({
               ))}
             </div>
           </Field>
-          <p className="text-xs leading-5 text-gray-500">The preview uses a sample learner. Your name stands in for theirs.</p>
+          <Field
+            label="Their other language"
+            htmlFor="ob-language"
+            hint="From the language pair they chose. If they practise English only, the email leaves the language out."
+          >
+            <Select
+              id="ob-language"
+              value={language}
+              onChange={(event) => onLanguage(event.target.value)}
+              options={[
+                { value: "Spanish", label: "Spanish" },
+                { value: "Mandarin", label: "Mandarin" },
+                { value: "Arabic", label: "Arabic" },
+                { value: "", label: "English only (no other language)" },
+              ]}
+            />
+          </Field>
+          <div className="rounded-lg bg-gray-100 p-4 text-sm">
+            <p className="font-semibold">Filled in for each learner</p>
+            <p className="mt-1 text-xs leading-5 text-gray-500">
+              This preview uses a made-up learner. Real emails use each person&apos;s own details.
+            </p>
+            <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+              <dt className="text-gray-500">First name</dt>
+              <dd>{firstName} (yours, for the preview)</dd>
+              <dt className="text-gray-500">Goal</dt>
+              <dd>{sample.goalLabel ?? "None chosen"}</dd>
+              <dt className="text-gray-500">Other language</dt>
+              <dd>{sample.language ?? "None (English only)"}</dd>
+              <dt className="text-gray-500">Scored sessions</dt>
+              <dd className="tabular-nums">{sample.sessions}</dd>
+              <dt className="text-gray-500">Best score</dt>
+              <dd>{sample.bestScore ?? "None yet"}</dd>
+              <dt className="text-gray-500">Minutes left</dt>
+              <dd className="tabular-nums">{sample.minutesLeft}</dd>
+            </dl>
+          </div>
         </>
       )}
       <div>
