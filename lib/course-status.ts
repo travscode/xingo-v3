@@ -19,13 +19,24 @@ export function isComingSoon(course: { status?: CourseStatus }) {
 
 /**
  * Launch line-up: NAATI CCL plus one free course opened in Oct 2026 (D-043), IELTS
- * Speaking in Nov 2026 (D-053); every other XINGO course is "coming soon". Applied by
- * `migrations:applyCclLaunchStatuses` and `migrations:openIeltsSpeaking`; after that
+ * Speaking (D-053) and NAATI CPI (D-056) in Nov 2026; every other XINGO course is "coming soon". Applied by
+ * `migrations:applyCclLaunchStatuses`, `migrations:openIeltsSpeaking` and
+ * `migrations:openNaatiCpi`; after that
  * admins change statuses in the content studio.
  */
-export const LAUNCH_AVAILABLE_COURSE_IDS = ["naati-certification-practice-ccl", "medical-er-intake", "ielts-speaking"] as const;
+export const LAUNCH_AVAILABLE_COURSE_IDS = [
+  "naati-certification-practice-ccl",
+  "medical-er-intake",
+  "ielts-speaking",
+  "naati-certification-practice-cpi",
+] as const;
 
 export const IELTS_COURSE_ID = "ielts-speaking";
+
+export const CPI_COURSE_ID = "naati-certification-practice-cpi";
+
+/** The one CPI dialogue playable on the Free plan (D-056). */
+export const CPI_FREE_PREVIEW_ID = "cpi-gp-clinic-registration";
 
 /** The one IELTS mock test playable on the Free plan, cut to the Free minutes (D-053). */
 export const IELTS_FREE_MOCK_ID = "ielts-mock-neighbourhood";

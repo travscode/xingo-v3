@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "../_generated/api";
 import { seedCatalog, seedUser, setup } from "./setup.helpers";
 import { LEGAL_VERSION } from "../../lib/legal";
+import { packs, plans } from "../../lib/plans";
+
+/** Free is a one-time allowance (D-052), 5 minutes since D-056. */
+const FREE_MINUTES = plans.free.monthlyMinutes;
 import * as billingData from "../billingData";
 import * as practice from "../practice";
 import * as seed from "../seed";
@@ -81,7 +85,7 @@ describe("paywall", () => {
 
     await expect(
       asUser.mutation(api.practice.startAttempt, { scenarioId: "free-scn", ...pair }),
-    ).resolves.toMatchObject({ remainingMinutes: 10 });
+    ).resolves.toMatchObject({ remainingMinutes: FREE_MINUTES });
     await expect(
       asUser.mutation(api.practice.startAttempt, { scenarioId: "preview-scn", ...pair }),
     ).resolves.toBeTruthy();
@@ -106,7 +110,7 @@ describe("paywall", () => {
     });
     await expect(
       asBuyer.mutation(api.practice.startAttempt, { scenarioId: "paid-scn", ...pair }),
-    ).resolves.toMatchObject({ remainingMinutes: 40 });
+    ).resolves.toMatchObject({ remainingMinutes: FREE_MINUTES + packs.starter.minutes });
   });
 });
 
@@ -121,7 +125,8 @@ describe("metering", () => {
     });
     await t.mutation(internal.practice.reserveRealtimeKey, { attemptId, clerkId: "user_m" });
 
-    vi.advanceTimersByTime(4 * 60_000 + 5_000);
+    // 2 min 5 s bills as 3 whole minutes.
+    vi.advanceTimersByTime(2 * 60_000 + 5_000);
     await t.mutation(internal.practice.closeForGrading, {
       attemptId,
       clerkId: "user_m",
@@ -129,8 +134,8 @@ describe("metering", () => {
     });
 
     const me = await asUser.query(api.users.me, {});
-    expect(me?.entitlement.allowanceUsed).toBe(5);
-    expect(me?.entitlement.remainingMinutes).toBe(5);
+    expect(me?.entitlement.allowanceUsed).toBe(3);
+    expect(me?.entitlement.remainingMinutes).toBe(FREE_MINUTES - 3);
 
     // Closing twice must not double-charge.
     await expect(
@@ -141,7 +146,7 @@ describe("metering", () => {
       }),
     ).rejects.toThrow();
     const after = await asUser.query(api.users.me, {});
-    expect(after?.entitlement.allowanceUsed).toBe(5);
+    expect(after?.entitlement.allowanceUsed).toBe(3);
   });
 
   test("users with no minutes left cannot start", async () => {
@@ -220,9 +225,9 @@ describe("metering", () => {
     });
 
     const me = await asUser.query(api.users.me, {});
-    expect(me?.entitlement.allowanceUsed).toBe(10);
-    expect(me?.entitlement.packMinutesUsed).toBe(4);
-    expect(me?.entitlement.packMinutesRemaining).toBe(26);
+    expect(me?.entitlement.allowanceUsed).toBe(FREE_MINUTES);
+    expect(me?.entitlement.packMinutesUsed).toBe(14 - FREE_MINUTES);
+    expect(me?.entitlement.packMinutesRemaining).toBe(packs.starter.minutes - (14 - FREE_MINUTES));
   });
 
   test("heartbeat tells the client to stop when time runs out", async () => {

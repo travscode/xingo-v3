@@ -255,7 +255,7 @@ export default function HomePage() {
           Practising for a different test?
         </h2>
         <p className="mt-2 text-[15px] text-gray-500">
-          NAATI CCL and medical interpreting are open now. Practice for the other tests is coming soon.
+          NAATI CCL, NAATI CPI, IELTS Speaking and medical interpreting are open now. Practice for the other tests is coming soon.
         </p>
         <ul className="mt-4 flex flex-wrap gap-2">
           {examLinks.map((link) => (

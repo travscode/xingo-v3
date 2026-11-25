@@ -6,7 +6,7 @@
 
 import { examPages } from "./exam-pages";
 import { getGoal, isGoalComingSoonOnSite, isSpeakingGoal } from "./goals";
-import { topicPages } from "./seo-pages";
+import { signUpHref, topicPages } from "./seo-pages";
 
 export const OPEN_COURSE_HREF = "/naati/ccl";
 export const MEDICAL_PRACTICE_HREF = "/interpreting/medical-interpreting-practice";
@@ -34,15 +34,19 @@ export const IELTS_PRACTICE_HREF = "/exams/ielts-speaking";
  * Where to send someone whose goal is coming soon: the open course that fits best.
  * US medical interpreters get the free medical course, other English speaking exams
  * get IELTS Speaking (D-053), and everyone else gets NAATI CCL.
+ *
+ * `href` goes straight to sign-up and then into that course's free dialogue (D-056),
+ * never to another marketing page, so a visitor clicks once. `pageHref` is the open
+ * course's public page, for "read more" links.
  */
-export function openAlternativeFor(goal: string | undefined): { href: string; label: string; goal: string; name: string } {
+export function openAlternativeFor(goal: string | undefined): { href: string; pageHref: string; label: string; goal: string; name: string } {
   if (goal === "us_medical_oral") {
-    return { href: MEDICAL_PRACTICE_HREF, label: "Practise medical interpreting free", goal: "medical", name: "Medical interpreting" };
+    return { href: signUpHref("medical"), pageHref: MEDICAL_PRACTICE_HREF, label: "Practise medical interpreting free", goal: "medical", name: "Medical interpreting" };
   }
   if (isSpeakingGoal(goal) && !isGoalComingSoonOnSite("ielts")) {
-    return { href: IELTS_PRACTICE_HREF, label: "Try an IELTS mock test", goal: "ielts", name: "IELTS Speaking" };
+    return { href: signUpHref("ielts"), pageHref: IELTS_PRACTICE_HREF, label: "Try a free IELTS mock test", goal: "ielts", name: "IELTS Speaking" };
   }
-  return { href: OPEN_COURSE_HREF, label: "Practise NAATI CCL", goal: "naati_ccl", name: "NAATI CCL" };
+  return { href: signUpHref("naati_ccl"), pageHref: OPEN_COURSE_HREF, label: "Try a free CCL dialogue", goal: "naati_ccl", name: "NAATI CCL" };
 }
 
 /** Short name for a goal in "… practice is coming soon" copy. */

@@ -1,11 +1,19 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "../_generated/api";
 import { seedCatalog, seedUser, setup } from "./setup.helpers";
-import { IELTS_COURSE_ID, IELTS_FREE_MOCK_ID, LAUNCH_AVAILABLE_COURSE_IDS, LAUNCH_CCL_FREE_PREVIEW_IDS } from "../../lib/course-status";
+import {
+  CPI_COURSE_ID,
+  CPI_FREE_PREVIEW_ID,
+  IELTS_COURSE_ID,
+  IELTS_FREE_MOCK_ID,
+  LAUNCH_AVAILABLE_COURSE_IDS,
+  LAUNCH_CCL_FREE_PREVIEW_IDS,
+} from "../../lib/course-status";
 import { MARKETPLACE_OPEN } from "../../lib/marketplace";
 import { isGoalComingSoonOnSite } from "../../lib/goals";
 import { trackForGoal } from "../../lib/email/onboarding-types";
 import { openAlternativeFor } from "../../lib/site-status";
+import { signUpHref } from "../../lib/seo-pages";
 import { IELTS_FREE_MOCK_MINUTES, approxSessionsLabel, packContextFor, packCopy, packs, plans } from "../../lib/plans";
 import { examScenarios } from "../content/examsPack";
 
@@ -199,6 +207,7 @@ describe("coming-soon courses (D-043)", () => {
       "naati-certification-practice-ccl": "available",
       "medical-er-intake": "available",
       "ielts-speaking": "available",
+      "naati-certification-practice-cpi": "available",
       "oet-speaking-nursing": "coming_soon",
       "rp-retail": undefined,
     });
@@ -213,23 +222,25 @@ describe("coming-soon courses (D-043)", () => {
     expect(isGoalComingSoonOnSite("general")).toBe(false);
     expect(isGoalComingSoonOnSite("ielts")).toBe(false);
     expect(isGoalComingSoonOnSite("oet")).toBe(true);
-    expect(isGoalComingSoonOnSite("naati_cpi")).toBe(true);
+    expect(isGoalComingSoonOnSite("naati_cpi")).toBe(false);
 
     expect(trackForGoal("naati_ccl")).toBe("ccl");
     expect(trackForGoal("medical")).toBe("interpreter");
     expect(trackForGoal("ielts")).toBe("ielts");
     expect(trackForGoal("oet")).toBe("general");
-    expect(trackForGoal("naati_cpi")).toBe("general");
+    expect(trackForGoal("naati_cpi")).toBe("interpreter");
   });
 });
 
 describe("IELTS Speaking opens with one free 10-minute mock (D-053)", () => {
-  test("the free mock fits the Free plan's one-time minutes; full mocks stay 14 minutes", () => {
+  test("the free mock is a shorter 10-minute test; full mocks stay 14 minutes", () => {
     const ielts = examScenarios.filter((scenario) => scenario.moduleId === IELTS_COURSE_ID);
     expect(ielts.filter((scenario) => scenario.isFreePreview).map((scenario) => scenario.id)).toEqual([IELTS_FREE_MOCK_ID]);
     const free = ielts.find((scenario) => scenario.id === IELTS_FREE_MOCK_ID)!;
     expect(free.practiceRuntime?.timeLimitMinutes).toBe(IELTS_FREE_MOCK_MINUTES);
-    expect(IELTS_FREE_MOCK_MINUTES).toBeLessThanOrEqual(plans.free.monthlyMinutes);
+    // D-056: Free has fewer minutes than the free mock, so free learners get a taster and then the offer.
+    expect(IELTS_FREE_MOCK_MINUTES).toBe(10);
+    expect(plans.free.monthlyMinutes).toBeLessThan(IELTS_FREE_MOCK_MINUTES);
     expect(free.aiAgentA.instructions).toContain(`${IELTS_FREE_MOCK_MINUTES}-minute`);
     for (const scenario of ielts.filter((s) => !s.isFreePreview)) {
       expect(scenario.practiceRuntime?.timeLimitMinutes).toBe(14);
@@ -238,7 +249,10 @@ describe("IELTS Speaking opens with one free 10-minute mock (D-053)", () => {
 
   test("speaking-exam pages that are coming soon point at IELTS; interpreting ones at CCL", () => {
     expect(openAlternativeFor("oet").goal).toBe("ielts");
-    expect(openAlternativeFor("amc").href).toBe("/exams/ielts-speaking");
+    expect(openAlternativeFor("amc").pageHref).toBe("/exams/ielts-speaking");
+    // D-056: coming-soon buttons go straight to sign-up for the open course, not another page.
+    expect(openAlternativeFor("amc").href).toBe(signUpHref("ielts"));
+    expect(openAlternativeFor("ndis").href).toBe(signUpHref("naati_ccl"));
     expect(openAlternativeFor("naati_cpi").goal).toBe("naati_ccl");
     expect(openAlternativeFor("us_medical_oral").goal).toBe("medical");
   });
@@ -329,6 +343,70 @@ describe("IELTS Speaking opens with one free 10-minute mock (D-053)", () => {
     expect(free.aiAgentA.instructions).toContain(`${IELTS_FREE_MOCK_MINUTES}-minute`);
     expect(full.isFreePreview).toBe(false);
     expect(full.practiceRuntime?.timeLimitMinutes).toBe(14);
+  });
+});
+
+describe("NAATI CPI opens, Free drops to 5 minutes (D-056)", () => {
+  test("Free is a one-time 5 minutes", () => {
+    expect(plans.free.monthlyMinutes).toBe(5);
+    expect(plans.free.allowanceRenews).toBe(false);
+  });
+
+  test("CPI is in the launch line-up and gets CPI pack copy", () => {
+    expect(LAUNCH_AVAILABLE_COURSE_IDS).toContain(CPI_COURSE_ID);
+    expect(packContextFor(CPI_COURSE_ID)).toBe("cpi");
+    expect(packContextFor("naati_cpi")).toBe("cpi");
+    const cpi = packCopy(packs.starter, "cpi");
+    expect(cpi.fit).toBe("Great for NAATI CPI");
+    expect(cpi.sessions).toBe("about 2 CPI dialogues");
+    expect(cpi.description).not.toMatch(/CCL|IELTS/);
+  });
+
+  test("the migration opens CPI with exactly one free dialogue", async () => {
+    const t = setup();
+    const agent = { role: "Receptionist", voice: "cedar", goal: "Register the patient" };
+    await t.run(async (ctx) => {
+      await ctx.db.insert("modules", {
+        id: CPI_COURSE_ID,
+        title: "CPI",
+        description: "",
+        industryCategory: "community",
+        durationMinutes: 12,
+        difficultyLevel: "intermediate",
+        learningObjectives: [],
+        isFree: false,
+        isAccredited: false,
+        badgeIcon: "",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        status: "coming_soon",
+      });
+      for (const [id, free] of [[CPI_FREE_PREVIEW_ID, false], ["cpi-school-enrolment-meeting", true], ["cpi-rental-repair-request", false]] as const) {
+        await ctx.db.insert("scenarios", {
+          id,
+          moduleId: CPI_COURSE_ID,
+          title: id,
+          description: "",
+          aiAgentA: agent,
+          expectedSkills: [],
+          difficultyLevel: "beginner",
+          isFreePreview: free,
+        });
+      }
+    });
+
+    const dry = await t.mutation(internal.migrations.openNaatiCpi, { dryRun: true });
+    expect(dry.courseStatus).toEqual({ from: "coming_soon", to: "available" });
+    expect(dry.noLongerFree).toEqual(["cpi-school-enrolment-meeting"]);
+    expect(dry.dialogues).toBe(3);
+    expect((await t.run((ctx) => ctx.db.query("modules").first()))?.status).toBe("coming_soon");
+
+    await t.mutation(internal.migrations.openNaatiCpi, { dryRun: false });
+    const after = await t.run(async (ctx) => ({
+      course: await ctx.db.query("modules").first(),
+      scenarios: await ctx.db.query("scenarios").collect(),
+    }));
+    expect(after.course?.status).toBe("available");
+    expect(after.scenarios.filter((s) => s.isFreePreview).map((s) => s.id)).toEqual([CPI_FREE_PREVIEW_ID]);
   });
 });
 

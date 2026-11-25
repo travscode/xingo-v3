@@ -138,7 +138,7 @@ export const post: BlogPost = {
         },
         {
           type: "p",
-          text: "XINGO's [CPI practice](/naati/cpi) and audio-only [telephone dialogues](/interpreting/telephone-interpreting-practice) are coming soon. The CCL-style dialogues in XINGO's [CCL practice](/naati/ccl) are open now and work the same core skill, short consecutive turns in both directions, with feedback on accuracy, terminology and delivery. It's independent practice and doesn't replace NAATI's assessment.",
+          text: "XINGO's [CPI practice](/naati/cpi) is open now: CPI-style role-plays with two AI speakers, consecutive in both directions, with feedback on accuracy, terminology and delivery, and your first dialogue is free. Audio-only [telephone dialogues](/interpreting/telephone-interpreting-practice) are coming soon. It's independent practice and doesn't replace NAATI's assessment.",
         },
         {
           type: "callout",

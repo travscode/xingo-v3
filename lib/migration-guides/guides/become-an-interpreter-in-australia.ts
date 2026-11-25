@@ -119,7 +119,7 @@ export const guide: MigrationGuide = {
   ],
   xingo: {
     text: [
-      "XINGO's CPI-style practice, including phone-style calls and specialist legal, NDIS and telephone courses, is coming soon. Today you can practise the core skill with CCL-style dialogues: two AI speakers, you in the middle, interpreting consecutively in both directions. There's also a free emergency department course for medical interpreting. Assessed sessions end with scored feedback on accuracy, terminology and delivery.",
+      "You can practise CPI-style role-plays on XINGO now: two AI speakers, you in the middle, interpreting consecutively in both directions, in community and health settings such as a GP clinic, a school enrolment and a rental repair. Your first CPI dialogue is free. Phone-style calls and specialist legal and NDIS courses are coming soon. Assessed sessions end with scored feedback on accuracy, terminology and delivery.",
       "It's independent practice, not a NAATI course, and XINGO isn't affiliated with NAATI. When you're certified, 2M Language Services is a partner you can apply to.",
     ],
     links: [

@@ -48,11 +48,8 @@ export default function NaatiCpiPage() {
           <>
             <Button asChild size="lg">
               <Link href={href}>
-                Start free <ArrowRight className="h-4 w-4" />
+                Try a free CPI dialogue <ArrowRight className="h-4 w-4" />
               </Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/interpreting/telephone-interpreting-practice">Practise the phone task</Link>
             </Button>
           </>
         )}
@@ -82,7 +79,6 @@ export default function NaatiCpiPage() {
           { title: "Rental repair request", description: "An urgent repair and a tenant's rights." },
           { title: "Employment services intake", description: "Work history, mutual obligations and next steps." },
           { title: "Police property damage report", description: "Sequence of events and evidence." },
-          { title: "Centrelink payment call (phone)", description: "Audio-only, with reference numbers and amounts." },
         ]}
       />
       <CheckList
@@ -96,6 +92,7 @@ export default function NaatiCpiPage() {
           { q: "Do I need to finish the Diploma of Interpreting first?", a: "NAATI sets the eligibility rules for the CPI test — check their website. XINGO is useful practice whether you're studying or already eligible." },
           { q: "Can I practise in my language?", a: "Choose from 30+ listed languages. The other participant always speaks English." },
           { q: "How long is a session?", a: "Most dialogues take 5–12 minutes. You're only charged practice minutes while a session is live." },
+          { q: "Can I try a CPI dialogue free?", a: "Yes. Sign up and you go straight into the GP clinic registration dialogue, using your free practice minutes. If they run out before the end, a one-off pack lets you finish it and unlocks every CPI dialogue." },
         ]}
       />
       <GuideLinks slugs={["naati-cpi-test-preparation", "telephone-interpreting-tips", "naati-ccl-note-taking"]} />
@@ -103,7 +100,7 @@ export default function NaatiCpiPage() {
       {comingSoon ? (
         <ComingSoonCtaBand name="NAATI CPI" />
       ) : (
-        <CtaBand title="Try a CPI-style dialogue free." description="Free practice minutes to start. No card needed." href={href} label="Start free" />
+        <CtaBand title="Try a CPI-style dialogue free." description="Free practice minutes to start. No card needed." href={href} label="Try a free CPI dialogue" />
       )}
     </main>
   );

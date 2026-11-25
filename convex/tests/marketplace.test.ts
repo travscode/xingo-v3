@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "../_generated/api";
+import { plans } from "../../lib/plans";
 import { seedUser, setup } from "./setup.helpers";
 
 // These tests cover the marketplace while it's open. It's closed for the CCL-first launch
@@ -106,7 +107,7 @@ describe("marketplace", () => {
     await learner.mutation(api.marketplace.addToLibrary, { moduleId });
     await t.mutation(internal.billingData.grantPack, { clerkId: "payer", packId: "starter", stripeCheckoutSessionId: "cs_1" });
 
-    // 14 minutes: 10 from the free allowance (no earnings), 4 from the pack.
+    // 14 minutes: the free allowance first (no earnings), the rest from the pack.
     const { attemptId } = await learner.mutation(api.practice.startAttempt, { scenarioId, ...pair });
     await t.mutation(internal.practice.reserveRealtimeKey, { attemptId, clerkId: "payer" });
     vi.advanceTimersByTime(14 * 60_000);
@@ -120,7 +121,7 @@ describe("marketplace", () => {
 
     const earnings = await t.run((ctx) => ctx.db.query("creatorEarnings").collect());
     expect(earnings).toHaveLength(1);
-    expect(earnings[0]).toMatchObject({ ownerClerkId: "creator", minutes: 14, paidMinutes: 4 });
+    expect(earnings[0]).toMatchObject({ ownerClerkId: "creator", minutes: 14, paidMinutes: 14 - plans.free.monthlyMinutes });
     expect(earnings[0].amountCents).toBeGreaterThan(0);
 
     const summary = await creator.query(api.marketplace.creatorSummary, {});

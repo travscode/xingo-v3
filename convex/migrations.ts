@@ -1,6 +1,13 @@
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
-import { IELTS_COURSE_ID, IELTS_FREE_MOCK_ID, LAUNCH_AVAILABLE_COURSE_IDS, LAUNCH_CCL_FREE_PREVIEW_IDS } from "../lib/course-status";
+import {
+  CPI_COURSE_ID,
+  CPI_FREE_PREVIEW_ID,
+  IELTS_COURSE_ID,
+  IELTS_FREE_MOCK_ID,
+  LAUNCH_AVAILABLE_COURSE_IDS,
+  LAUNCH_CCL_FREE_PREVIEW_IDS,
+} from "../lib/course-status";
 import { examScenarios } from "./content/examsPack";
 import { genderForVoice, languagesNameSuits, suggestLocalizedNames, type Gender } from "../lib/agent-names";
 
@@ -288,6 +295,46 @@ export const openIeltsSpeaking = internalMutation({
       },
       noLongerFree: otherFreePreviews.map((scenario) => scenario.id),
       mockTests: scenarios.length,
+    };
+  },
+});
+
+/**
+ * Opens NAATI CPI (D-056): the course becomes available and GP Clinic Registration Desk
+ * (`CPI_FREE_PREVIEW_ID`) is its only free preview. Dialogue content is untouched. A free
+ * learner's session stops when the Free minutes run out and the results page offers a pack.
+ */
+export const openNaatiCpi = internalMutation({
+  args: { dryRun: v.boolean() },
+  handler: async (ctx, args) => {
+    const course = await ctx.db
+      .query("modules")
+      .withIndex("by_public_id", (q) => q.eq("id", CPI_COURSE_ID))
+      .unique();
+    if (!course) throw new Error(`${CPI_COURSE_ID} not found`);
+
+    const scenarios = await ctx.db
+      .query("scenarios")
+      .withIndex("by_moduleId", (q) => q.eq("moduleId", CPI_COURSE_ID))
+      .collect();
+    const freeDialogue = scenarios.find((scenario) => scenario.id === CPI_FREE_PREVIEW_ID);
+    if (!freeDialogue) throw new Error(`${CPI_FREE_PREVIEW_ID} not found`);
+    const otherFreePreviews = scenarios.filter((scenario) => scenario.id !== CPI_FREE_PREVIEW_ID && scenario.isFreePreview);
+
+    if (!args.dryRun) {
+      if (course.status !== "available") await ctx.db.patch(course._id, { status: "available" });
+      if (!freeDialogue.isFreePreview) await ctx.db.patch(freeDialogue._id, { isFreePreview: true });
+      for (const scenario of otherFreePreviews) {
+        await ctx.db.patch(scenario._id, { isFreePreview: false });
+      }
+    }
+
+    return {
+      dryRun: args.dryRun,
+      courseStatus: { from: course.status ?? "available", to: "available" },
+      freeDialogue: { id: CPI_FREE_PREVIEW_ID, wasFree: Boolean(freeDialogue.isFreePreview) },
+      noLongerFree: otherFreePreviews.map((scenario) => scenario.id),
+      dialogues: scenarios.length,
     };
   },
 });

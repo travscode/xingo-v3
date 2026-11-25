@@ -152,7 +152,7 @@ export const examPages: ExamPage[] = [
       },
       {
         q: "Can I take an English speaking test with AI on XINGO?",
-        a: "Yes. XINGO has six IELTS Speaking mock tests with an AI examiner, and the first one is free: a shorter 10-minute version of all three parts. You get an estimated band, not an official result, and XINGO isn't affiliated with IELTS.",
+        a: "Yes. XINGO has six IELTS Speaking mock tests with an AI examiner, and you can start the first one free: a shorter 10-minute version of all three parts. Your free practice minutes cover the start of it, and a one-off pack lets you finish it and sit the full tests. You get an estimated band, not an official result, and XINGO isn't affiliated with IELTS.",
       },
     ],
     sources: [

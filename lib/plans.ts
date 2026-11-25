@@ -12,6 +12,8 @@
  * Re-check them once real realtime cost-per-minute data is in `aiUsageEvents`.
  */
 
+import { CPI_COURSE_ID } from "./course-status";
+
 export type PlanId = "free" | "professional" | "organization";
 
 export type PackId = "starter" | "plus" | "sprint";
@@ -54,12 +56,12 @@ export const plans: Record<PlanId, PlanConfig> = {
   free: {
     id: "free",
     label: "Free",
-    monthlyMinutes: 10,
+    monthlyMinutes: 5,
     allowanceRenews: false,
     premiumAccess: false,
     priceLabel: "A$0",
     priceCents: 0,
-    tagline: "The free course plus free preview dialogues in NAATI CCL.",
+    tagline: "The free course plus a free dialogue or mock test in each open course.",
   },
   professional: {
     id: "professional",
@@ -129,11 +131,19 @@ export function approxCclDialogues(minutes: number) {
 }
 
 /**
- * IELTS Speaking (D-053). A full mock test is timed at 14 minutes; the free mock is
- * cut to the Free plan's one-time minutes so a free learner can finish it.
+ * NAATI CPI (D-056). No live measurement yet, so this uses the default two-speaker
+ * time limit (12 min; NAATI describes each CPI role-play as about 10–12 minutes).
+ * Used only to say "about N CPI dialogues". Re-check once CPI sessions are graded.
+ */
+export const TYPICAL_CPI_DIALOGUE_MINUTES = 12;
+
+/**
+ * IELTS Speaking (D-053). A full mock test is timed at 14 minutes; the free mock is a
+ * shorter 10-minute version. Since D-056 Free has only 5 minutes, so a free learner
+ * gets the first half of it and then the upgrade offer (a deliberate taster).
  */
 export const IELTS_MOCK_MINUTES = 14;
-export const IELTS_FREE_MOCK_MINUTES = plans.free.monthlyMinutes;
+export const IELTS_FREE_MOCK_MINUTES = 10;
 
 /** Roughly how many full IELTS mock tests a minute balance buys, never below 1. */
 export function approxIeltsMocks(minutes: number) {
@@ -141,13 +151,17 @@ export function approxIeltsMocks(minutes: number) {
 }
 
 /**
- * "about 6 CCL dialogues", or "about 2 IELTS mock tests" on the IELTS course.
- * Courses without their own measure fall back to CCL dialogues, the main course.
+ * "about 6 CCL dialogues", "about 2 IELTS mock tests" on the IELTS course, or "about 2
+ * CPI dialogues" on the CPI course. Others fall back to CCL dialogues, the main course.
  */
 export function approxSessionsLabel(minutes: number, moduleId?: string | null) {
   if (moduleId === "ielts-speaking") {
     const count = approxIeltsMocks(minutes);
     return `about ${count} full IELTS mock ${count === 1 ? "test" : "tests"}`;
+  }
+  if (moduleId === CPI_COURSE_ID) {
+    const count = Math.max(1, Math.floor(minutes / TYPICAL_CPI_DIALOGUE_MINUTES));
+    return `about ${count} CPI ${count === 1 ? "dialogue" : "dialogues"}`;
   }
   return `about ${approxCclDialogues(minutes)} CCL dialogues`;
 }
@@ -257,33 +271,39 @@ export function formatMinutes(value: number) {
  * right thing (D-054). IELTS learners see IELTS copy; everyone else sees NAATI CCL,
  * the main course.
  */
-export type PackContext = "ccl" | "ielts";
+export type PackContext = "ccl" | "ielts" | "cpi";
 
 /** From a course id ("ielts-speaking") or a practice goal ("ielts"). */
 export function packContextFor(courseOrGoal?: string | null): PackContext {
-  return courseOrGoal === "ielts-speaking" || courseOrGoal === "ielts" ? "ielts" : "ccl";
+  if (courseOrGoal === "ielts-speaking" || courseOrGoal === "ielts") return "ielts";
+  if (courseOrGoal === CPI_COURSE_ID || courseOrGoal === "naati_cpi") return "cpi";
+  return "ccl";
 }
 
 const packPitch: Record<PackId, Record<PackContext, string>> = {
   starter: {
     ccl: "Try the full CCL course before you book.",
     ielts: "Sit full mock tests and find your band before test day.",
+    cpi: "Work through full CPI-style role-plays before you book.",
   },
   plus: {
     ccl: "Steady weekly practice through every CCL dialogue.",
     ielts: "Steady weekly practice across every IELTS mock test.",
+    cpi: "Steady weekly practice through every CPI dialogue.",
   },
   sprint: {
     ccl: "Daily mock dialogues in the weeks before your test.",
     ielts: "A mock test most days in the weeks before your test.",
+    cpi: "A CPI role-play most days in the weeks before your test.",
   },
 };
 
 export function packCopy(pack: PackConfig, context: PackContext) {
-  const moduleId = context === "ielts" ? "ielts-speaking" : null;
+  const moduleId = context === "ielts" ? "ielts-speaking" : context === "cpi" ? CPI_COURSE_ID : null;
+  const fit = { ccl: "Great for NAATI CCL", ielts: "Great for IELTS Speaking", cpi: "Great for NAATI CPI" } as const;
   return {
     /** "Great for IELTS Speaking" */
-    fit: context === "ielts" ? "Great for IELTS Speaking" : "Great for NAATI CCL",
+    fit: fit[context],
     /** "about 2 full IELTS mock tests" */
     sessions: approxSessionsLabel(pack.minutes, moduleId),
     description: packPitch[pack.id][context],
