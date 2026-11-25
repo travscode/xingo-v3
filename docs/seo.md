@@ -21,7 +21,7 @@ Traffic rose after the NAATI CCL page went up. Competitors already rank for gene
 | `/staff-training` | AI role-play training for staff, customer service training simulation, multilingual staff and volunteer training | Scenario builder, scoring, practice/assessed modes; team view, invites and private courses shown as **pilot** (D-021), demo labelled illustrative |
 | `/sell-practice-courses` | sell practice courses online, monetise your expertise, create AI role-play training, sell practice exams, earn money teaching | Marketplace landing (header "Marketplace" link); creator wizard, page tools, insights and the 25% share (D-031) are built; team-only courses shown as **pilot**; hero mock labelled illustrative. Cross-links /marketplace, /marketplace/create, /staff-training |
 | `/migrate-to-australia` | migrate to Australia English test, CCL points for PR, IELTS/OET for Australian visa, how to become an interpreter in Australia | Pathway hub linking IELTS, OET, CCL, AMC, OSCE, CPI pages + 2M partnership. General information only (registered migration agents give advice); facts sourced from Home Affairs/NAATI/Ahpra, re-check the points table before big promotion |
-| `/migrate-to-australia/[guide]` (14 guides; guides.test.ts caps the cluster at 14, so raise the cap deliberately before adding more) | Topic cluster around the hub — see table below | Typed data in `lib/migration-guides/guides/*.ts`, one route (`[guide]/page.tsx`). Each guide: at-a-glance box, migration disclaimer, "How XINGO helps", FAQ, official sources, related guides, back link to the hub. Article + BreadcrumbList + FAQPage JSON-LD |
+| `/migrate-to-australia/[guide]` (15 guides; guides.test.ts caps the cluster at 15, so raise the cap deliberately before adding more) | Topic cluster around the hub — see table below | Typed data in `lib/migration-guides/guides/*.ts`, one route (`[guide]/page.tsx`). Each guide: at-a-glance box, migration disclaimer, "How XINGO helps", FAQ, official sources, related guides, back link to the hub. Article + BreadcrumbList + FAQPage JSON-LD |
 
 Every page: one `h1`, unique title/description, canonical URL, FAQ with `FAQPage` JSON-LD, links to sibling pages, and a sign-up CTA that lands in the welcome flow with **goal and language preselected** (`signUpHref`).
 
@@ -42,7 +42,7 @@ Hub: `/migrate-to-australia` ("Migration guides" section, anchor `#guides`, grou
 | Language & tests | `english-test-for-australian-pr` | english proficiency test, english (language) tests for australia, english test for australian pr, competent/proficient/superior english points |
 | Language & tests | `celpip-for-australian-pr` | celpip australia, celpip australia points test, celpip for australian pr |
 | Language & tests | `ielts-vs-pte-vs-oet` | ielts vs pte for australia pr, oet or ielts for nurses, ahpra accepted tests |
-| Language & tests | `free-english-classes-amep` | free english classes for migrants, AMEP eligibility/time limits, SEE program |
+| Language & tests | `free-english-classes-amep` | free english classes for migrants, english course for migrants, free english courses for permanent residents, AMEP eligibility/time limits, AMEPOnline levels 1–5, SEE program (refreshed 2026-11-25: top long-tail page, 95 impressions at ~28) |
 | Points & visas | `skilled-migration-points-test` | australian pr points test, pr test, points test guide, points table 189, 65 points, SkillSelect EOI (has the points estimator) |
 | Points & visas | `community-language-points` | credentialed/credentialled community language, which naati test for pr, naati ccl points, ccl vs cpi (complements the blog's CCL 5-points article — keep them distinct) |
 | Points & visas | `find-a-registered-migration-agent` | registered migration agent, check MARN, OMARA register, visa scams |
@@ -52,6 +52,7 @@ Hub: `/migrate-to-australia` ("Migration guides" section, anchor `#guides`, grou
 | Settling in | `first-weeks-in-australia` | new migrant checklist, Medicare enrolment, TFN, work rights |
 | Settling in | `free-interpreter-services` | free interpreter australia, TIS National 131 450, free interpreting at GP |
 | Work | `become-an-interpreter-in-australia` | how to become an interpreter in australia, CPI eligibility, TIS panel; 2M partnership |
+| Work | `become-a-translator-in-australia` | how to become a translator in australia, how to become a naati translator, naati certified translator, CT eligibility routes and online test (added 2026-11-25 from GSC long-tail: ~15 impressions across 7 wordings landing on the interpreter guide at 50–74) |
 | Work | `jobs-for-bilingual-migrants` | bilingual jobs, NAATI CLA test, bilingual worker vs interpreter; 2M partnership |
 
 Links into the cluster: `MigrationGuidesCallout` ("Moving to Australia?", 1–2 guides, mapping in `lib/migration-guides/index.ts`) on `/naati/ccl`, every `/naati/ccl/[language]`, `/naati/cpi`, `/interpreting`, and the IELTS, OET, AMC and NMBA OSCE exam pages; a "Moving to Australia?" callout in six blog posts (CCL 5 points, CPI prep, IELTS Part 2, OET role-play, AMC, NMBA OSCE).

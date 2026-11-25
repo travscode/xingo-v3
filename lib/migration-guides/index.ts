@@ -8,6 +8,7 @@
 import { plainText } from "../blog/utils";
 import type { BlogBlock } from "../blog/types";
 import type { MigrationGuide, MigrationGuideGroup } from "./types";
+import { guide as becomeTranslator } from "./guides/become-a-translator-in-australia";
 import { guide as becomeInterpreter } from "./guides/become-an-interpreter-in-australia";
 import { guide as celpip } from "./guides/celpip-for-australian-pr";
 import { guide as communityLanguagePoints } from "./guides/community-language-points";
@@ -55,7 +56,7 @@ export const migrationGuideGroups: Array<{ group: MigrationGuideGroup; descripti
   {
     group: "Work",
     description: "Putting your languages to work.",
-    guides: [becomeInterpreter, bilingualJobs],
+    guides: [becomeInterpreter, becomeTranslator, bilingualJobs],
   },
 ];
 

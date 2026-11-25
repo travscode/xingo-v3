@@ -111,7 +111,7 @@ export const guide: MigrationGuide = {
       blocks: [
         {
           type: "p",
-          text: "Translators work with written text; interpreters work with spoken language. NAATI certifies them separately. If you need someone to help you speak with a doctor, Centrelink or a lawyer, you need an interpreter, and in many cases you can get one free. See [free interpreter services](/migrate-to-australia/free-interpreter-services).",
+          text: "Translators work with written text; interpreters work with spoken language. NAATI certifies them separately (if you'd like to do this work yourself, see [how to become a translator in Australia](/migrate-to-australia/become-a-translator-in-australia)). If you need someone to help you speak with a doctor, Centrelink or a lawyer, you need an interpreter, and in many cases you can get one free. See [free interpreter services](/migrate-to-australia/free-interpreter-services).",
         },
       ],
     },
@@ -150,7 +150,7 @@ export const guide: MigrationGuide = {
     { label: "TIS National — Before you apply", url: "https://www.tisnational.gov.au/en/Our-services/Free-Translating-Service/Before-you-apply" },
     { label: "NAATI — Online directory", url: "https://www.naati.com.au/online-directory/" },
   ],
-  related: ["find-a-registered-migration-agent", "first-weeks-in-australia", "free-interpreter-services", "become-an-interpreter-in-australia"],
+  related: ["find-a-registered-migration-agent", "first-weeks-in-australia", "free-interpreter-services", "become-an-interpreter-in-australia", "become-a-translator-in-australia"],
   cta: {
     title: "Bilingual? Try interpreting out loud",
     body: "Practise NAATI-style dialogues with two AI speakers in your language pair. Your first CCL dialogue is free.",

@@ -24,7 +24,7 @@ export const guide: MigrationGuide = {
   ],
   intro: [
     "Interpreters help people use hospitals, courts, Centrelink, schools and other services in their own language. If you speak English and another language well, interpreting can turn a skill you already have into work, often in your own community.",
-    "In Australia, the credential that matters is from NAATI, the National Accreditation Authority for Translators and Interpreters. This guide walks through the usual path to an entry-level NAATI interpreting certification and then into work. It's general information based on NAATI's and TIS National's websites, checked in October 2026; NAATI's own pages are the final word on eligibility.",
+    "In Australia, the credential that matters is from NAATI, the National Accreditation Authority for Translators and Interpreters. This guide walks through the usual path to an entry-level NAATI interpreting certification and then into work. It's general information based on NAATI's and TIS National's websites, checked in October 2026; NAATI's own pages are the final word on eligibility. Working with written text instead? See [how to become a translator in Australia](/migrate-to-australia/become-a-translator-in-australia).",
   ],
   sections: [
     {
@@ -158,7 +158,7 @@ export const guide: MigrationGuide = {
     { label: "TIS National — Your career as an interpreter", url: "https://www.tisnational.gov.au/en/Interpreting-for-TIS-National/Your-career-as-an-interpreter" },
     { label: "TIS National — NAATI credentials explained", url: "https://www.tisnational.gov.au/en/Interpreting-for-TIS-National/NAATI-credentials-explained" },
   ],
-  related: ["jobs-for-bilingual-migrants", "community-language-points", "free-interpreter-services", "translating-documents-for-a-visa"],
+  related: ["become-a-translator-in-australia", "jobs-for-bilingual-migrants", "community-language-points", "free-interpreter-services", "translating-documents-for-a-visa"],
   cta: {
     title: "Practise CPI-style dialogues",
     body: "Two AI speakers, you in the middle, with scored feedback after each assessed session. Free practice minutes to start.",

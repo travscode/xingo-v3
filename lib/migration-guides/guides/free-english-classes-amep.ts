@@ -5,12 +5,12 @@ export const guide: MigrationGuide = {
   title: "Free English classes for migrants: the Adult Migrant English Program (AMEP)",
   metaTitle: "Free English Classes for Migrants: AMEP Guide",
   description:
-    "Free English classes for migrants in Australia: who can join the Adult Migrant English Program (AMEP), the time limits, ways to study, and the SEE program.",
-  excerpt: "Who can join the AMEP, the deadlines to register, ways to learn, and free help for job seekers through SEE.",
+    "Free English classes for migrants in Australia: who can join the AMEP (including permanent residents), time limits, AMEPOnline levels 1–5 and the SEE program.",
+  excerpt: "Who can join the AMEP, the deadlines to register, AMEPOnline's five levels, and free help for job seekers through SEE.",
   group: "Language & tests",
-  keywords: ["free english classes for migrants", "adult migrant english program", "amep eligibility", "amep time limits", "see program english"],
+  keywords: ["free english classes for migrants", "adult migrant english program", "amep eligibility", "amep time limits", "free english courses for permanent residents", "amep online levels", "english course for migrants", "see program english"],
   published: "2026-10-03",
-  updated: "2026-10-03",
+  updated: "2026-11-25",
   image: {
     src: "/images/scenes/tutor-session.webp",
     alt: "A tutor and an adult student sit side by side at a table looking at a tablet together, the tutor explaining.",
@@ -19,11 +19,11 @@ export const guide: MigrationGuide = {
     "The **Adult Migrant English Program (AMEP)** offers free English tuition for eligible migrants and humanitarian entrants, run by the Department of Home Affairs.",
     "It's generally for people **18 and over** who speak **little or no English** and hold a permanent or eligible temporary visa.",
     "If your visa started **after 1 October 2020**, you need to register within 6 months, start within 12 months and finish within 5 years (extensions are sometimes possible).",
-    "Study in class, by distance, online or with a volunteer tutor. Free child care may be available while you're in face-to-face classes.",
+    "Study in class, online, by distance or with a volunteer tutor. **AMEPOnline** is free for anyone and has **five levels**, from Course in Initial EAL to Certificate III in EAL.",
   ],
   intro: [
     "English opens doors in Australia: to work, study, health care and your local community. If you're new and still learning, you may be able to study English for free through the Adult Migrant English Program.",
-    "This guide explains who can join, the deadlines, the ways to learn and other free options, based on the [AMEP pages](https://immi.homeaffairs.gov.au/settling-in-australia/amep) on the Home Affairs website, checked in October 2026.",
+    "This guide explains who can join, the deadlines, the ways to learn (including the levels on AMEPOnline) and other free options, based on the [AMEP pages](https://immi.homeaffairs.gov.au/settling-in-australia/amep) on the Home Affairs website and [AMEPOnline](https://ameponline.homeaffairs.gov.au/), checked in November 2026.",
   ],
   sections: [
     {
@@ -53,6 +53,11 @@ export const guide: MigrationGuide = {
             "Hold an **eligible temporary visa** (Home Affairs publishes the list, which includes some partner, skilled regional and humanitarian visas), or",
             "Are an **Australian citizen** who previously held an eligible visa.",
           ],
+        },
+        {
+          type: "callout",
+          title: "Permanent residents",
+          text: "Holding a permanent visa doesn't mean you've missed out. If you're 18 or over and still speak little or no English, permanent residents are among the people Home Affairs lists as eligible, subject to the time limits below.",
         },
         {
           type: "p",
@@ -88,15 +93,44 @@ export const guide: MigrationGuide = {
         {
           type: "ul",
           items: [
-            "**Face-to-face classes** at hundreds of locations, full-time, part-time, in the evening or at weekends.",
-            "**Distance learning**, delivered by TAFE NSW, if you can't get to a class.",
-            "**AMEPOnline**, a free website and app that anyone can use.",
+            "**Face-to-face classes** at around 300 locations, full-time, part-time, in the evening or at weekends. Home Affairs says you can also join your class online.",
+            "**Distance learning**, delivered by TAFE NSW, if you live more than 50 kilometres from an AMEP site or can't attend classes for physical, cultural, religious, caring or other reasons.",
+            "**AMEPOnline**, a free website and app that anyone can use, in Australia or overseas (see the levels below).",
             "**Volunteer tutors** through the Volunteer Tutor Scheme.",
           ],
         },
         {
           type: "p",
           text: "Mixing them works well: classes for structure, a volunteer tutor for conversation, and online study when you have spare time.",
+        },
+      ],
+    },
+    {
+      heading: "AMEPOnline levels 1 to 5",
+      blocks: [
+        {
+          type: "p",
+          text: "[AMEPOnline](https://ameponline.homeaffairs.gov.au/) is the Australian Government's free English learning site and app (on the App Store and Google Play). You don't need to be enrolled in the AMEP to use it. At the time of writing, its English as an Additional Language (EAL) courses are organised in five levels:",
+        },
+        {
+          type: "table",
+          head: ["Level", "Course on AMEPOnline"],
+          rows: [
+            ["Level 1", "Course in Initial EAL"],
+            ["Level 2", "Course in EAL"],
+            ["Level 3", "Certificate I in EAL (Access)"],
+            ["Level 4", "Certificate II in EAL (Access)"],
+            ["Level 5", "Certificate III in EAL (Access)"],
+          ],
+        },
+        {
+          type: "p",
+          text: "Level 1 starts from the very beginning and level 5 is the highest. AMEPOnline has a **Find Your Level** section to help you choose, and if you're in an AMEP class, your teacher can tell you which level matches your course. There are also courses about life in Australia, including **Stay Safe** (level 3), **My Story, My Settlement Goals** (levels 3–5) and **English for the Australian citizenship test** (levels 3–5).",
+        },
+        {
+          type: "callout",
+          title: "Online study isn't the same as enrolling",
+          text: "Using AMEPOnline on your own doesn't register you with an AMEP provider. If your visa started after 1 October 2020, register with a provider within your time limit, even if you mostly plan to study online.",
         },
       ],
     },
@@ -144,16 +178,23 @@ export const guide: MigrationGuide = {
     },
     {
       q: "Can I study AMEP online?",
-      a: "Yes. There's distance learning through TAFE NSW, and AMEPOnline is a free website and app that anyone can use.",
+      a: "Yes. AMEPOnline is a free website and app that anyone can use, with courses in five levels, from Course in Initial EAL (level 1) to Certificate III in EAL (level 5). There's also distance learning through TAFE NSW, and some providers let you join your class online.",
+    },
+    {
+      q: "Are there free English courses for permanent residents?",
+      a: "Yes. If you're 18 or over, speak little or no English and hold a permanent visa, you can generally join the AMEP for free. If your visa started after 1 October 2020, the time limits to register, start and finish apply.",
     },
     {
       q: "Can I do the AMEP and the SEE program together?",
       a: "No. At the time of writing, you can't do SEE and the AMEP at the same time.",
     },
+
   ],
   sources: [
     { label: "Home Affairs — Adult Migrant English Program", url: "https://immi.homeaffairs.gov.au/settling-in-australia/amep" },
     { label: "Home Affairs — About the AMEP", url: "https://immi.homeaffairs.gov.au/settling-in-australia/amep/about-the-program" },
+    { label: "Home Affairs — AMEP resources and AMEPOnline", url: "https://immi.homeaffairs.gov.au/settling-in-australia/amep/resources" },
+    { label: "AMEPOnline — free English courses, levels 1 to 5", url: "https://ameponline.homeaffairs.gov.au/" },
     { label: "Home Affairs — AMEP distance learning", url: "https://immi.homeaffairs.gov.au/settling-in-australia/amep/find-a-class/distance-learning" },
     { label: "Home Affairs — AMEP eligible temporary visas (PDF)", url: "https://immi.homeaffairs.gov.au/amep-subsite/Files/amep-eligible-temporary-visas.pdf" },
     { label: "DEWR — Skills for Education and Employment: participants", url: "https://www.dewr.gov.au/skills-education-and-employment/participants" },

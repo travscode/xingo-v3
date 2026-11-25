@@ -66,9 +66,9 @@ function linkedText(guide: (typeof guides)[number]) {
 }
 
 describe("migration guides", () => {
-  test("has 10–14 guides with unique slugs and titles, all grouped once", () => {
+  test("has 10–15 guides with unique slugs and titles, all grouped once", () => {
     expect(guides.length).toBeGreaterThanOrEqual(10);
-    expect(guides.length).toBeLessThanOrEqual(14);
+    expect(guides.length).toBeLessThanOrEqual(15);
     expect(new Set(guides.map((guide) => guide.slug)).size).toBe(guides.length);
     expect(new Set(guides.map((guide) => guide.title)).size).toBe(guides.length);
     expect(new Set(guides.map((guide) => guide.metaTitle)).size).toBe(guides.length);
