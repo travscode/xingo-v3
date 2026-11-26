@@ -53,6 +53,28 @@ function shortDate(iso: string | null) {
   return iso ? new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "2-digit" }) : "—";
 }
 
+/** "today", "yesterday", "3 days ago", "last week", "2 months ago"… by calendar day. */
+function relativeDate(iso: string | null) {
+  if (!iso) return "—";
+  const then = new Date(iso);
+  const now = new Date();
+  const days = Math.round(
+    (new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() -
+      new Date(then.getFullYear(), then.getMonth(), then.getDate()).getTime()) /
+      86_400_000,
+  );
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 7) return `${days} days ago`;
+  if (days < 14) return "last week";
+  if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+  const months = Math.floor(days / 30);
+  if (months <= 1) return "last month";
+  if (months < 12) return `${months} months ago`;
+  const years = Math.floor(days / 365);
+  return years <= 1 ? "last year" : `${years} years ago`;
+}
+
 export function AdminConsole() {
   const me = useQuery(api.users.me, {});
   const router = useRouter();
@@ -402,7 +424,9 @@ function UsersTab({ myClerkId }: { myClerkId: string }) {
                   <p className="font-semibold">{user.name}</p>
                   <p className="text-gray-500">{user.email}</p>
                 </td>
-                <td className="px-4 py-3 text-gray-500">{shortDate(user.createdAt)}</td>
+                <td className="px-4 py-3 text-gray-500 first-letter:uppercase" title={shortDate(user.createdAt)}>
+                  {relativeDate(user.createdAt)}
+                </td>
                 <td className="px-4 py-3 text-gray-500">
                   {getGoal(user.practiceGoal ?? undefined)?.label ?? "—"}
                   {user.languages.length ? ` · ${user.languages.join(", ")}` : ""}
