@@ -119,7 +119,14 @@ export function TimeChart({
             ))}
             {labels.map((label, i) =>
               (n - 1 - i) % every === 0 ? (
-                <text key={i} x={x(i)} y={height - 6} textAnchor="middle" fontSize={11} fill="var(--gray-500)">
+                <text
+                  key={i}
+                  x={i === n - 1 ? Math.min(x(i), width - 2) : x(i)}
+                  y={height - 6}
+                  textAnchor={i === n - 1 && x(i) + 24 > width ? "end" : "middle"}
+                  fontSize={11}
+                  fill="var(--gray-500)"
+                >
                   {label}
                 </text>
               ) : null,
