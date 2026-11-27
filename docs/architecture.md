@@ -67,7 +67,8 @@ Legacy fields on `aiUsageEvents` (`usageCredits`, `overage*`, `stripeCharge*`) a
 | `billing.ts` (node) | `createCheckout`, `createPortal`; internal `handleWebhook` |
 | `billingData.ts` | internal `grantPack`, `claimStripeEvent`, `grantMinutes` |
 | `usage.ts` | `summaryForCurrentUser`, `reportRealtimeUsage`; internal `recordAiUsage`, `monthlyReport` |
-| `admin.ts` / `adminActions.ts` | `overview`, `listUsers`, `setUserRole`, `grantMinutes`, `listInvites`, `revokeInvite`, `inviteUser`, `financeSnapshot` |
+| `admin.ts` / `adminActions.ts` | `overview`, `listUsers`, `setUserRole`, `grantMinutes`, `listInvites`, `revokeInvite`, `inviteUser`, `financeSnapshot`, `revenueSeries` |
+| `adminAnalytics.ts` | `dashboard`: Admin → Analytics time series and breakdowns (D-057) |
 | `sessions.ts` | Progress queries, `resultForCurrentUser` |
 | `modules.ts` / `scenarios.ts` | Catalog reads + admin-guarded writes |
 | `migrations.ts`, `seed.ts` | Internal one-off data operations (CLI only) |

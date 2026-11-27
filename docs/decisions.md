@@ -306,3 +306,13 @@ Format: **ID — title** · date · status. Context → Decision → Consequence
 - **Pack copy for CPI.** `packContextFor` returns `cpi` for the CPI course or goal: "Great for NAATI CPI", "about N CPI dialogues" (`TYPICAL_CPI_DIALOGUE_MINUTES` = 12, the default two-speaker time limit, until real sessions are measured).
 - **No double click on coming-soon pages.** `openAlternativeFor().href` is now the sign-up link for the open course (`signUpHref`), so every coming-soon hero, CTA band, blog and guide button goes straight to sign-up; `pageHref` keeps the course's public page.
 **Consequences.** The free IELTS mock's estimated band now comes from about 5 minutes of a 10-minute test, so it's a rough guide at best. A free learner who already used minutes elsewhere gets an even shorter taster. Re-check `TYPICAL_CPI_DIALOGUE_MINUTES` once CPI sessions are graded.
+
+### D-057 — Admin Analytics tab · 2026-11-27 · accepted
+**Context.** Travis wants one place in Admin that shows how XINGO is being used over time (sign-ups, active learners, sessions, minutes, AI cost, revenue) to see whether it's growing and what matters.
+**Decision.**
+- **Admin → Analytics** (`components/admin/analytics/`), backed by `adminAnalytics:dashboard` (platform admins only) and `adminActions:revenueSeries` (Stripe charges, read only, latest 2,000 at most).
+- **Ranges:** 30 days by day, 90 days by week (from Monday), 12 months and all time by month. Buckets are Australian Eastern Standard Time (UTC+10, no daylight-saving shift) and shared by Convex and the UI through `lib/admin-analytics.ts`. Headline numbers compare with the equally long period before.
+- **Admin accounts are left out by default** (toggle to include), so our own testing doesn't skew the numbers.
+- **Live from raw tables,** bounded by `_creationTime` to the range plus the period before. No new rollup table or backfill. At today's size (about 110 users, a few hundred sessions) that's well inside Convex's read limits; "All time" reads every session, so add a daily rollup if sessions grow into the thousands.
+- **Website traffic stays in GA4 / Search Console** (docs/analytics.md); the tab links there rather than copying it.
+**Consequences.** AI cost is the token estimate from `lib/costs.ts` in USD; revenue is Stripe's charged amount in AUD, so the two are shown side by side, never on one axis. "First time" learners outside All time means no session in the period before, not first session ever.

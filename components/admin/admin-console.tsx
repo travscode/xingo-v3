@@ -14,6 +14,7 @@ import { ContentIndex } from "@/components/admin/content/content-index";
 import { EmailList } from "@/components/admin/email/email-list";
 import { MarketplaceAdmin, ReportsAdmin } from "@/components/admin/marketplace-admin";
 import { UsageAdmin } from "@/components/admin/usage-admin";
+import { AnalyticsAdmin } from "@/components/admin/analytics/analytics-admin";
 import { BetaAdmin } from "@/components/admin/beta-admin";
 import { FeedbackAdmin } from "@/components/admin/feedback-admin";
 import { PreviewAsMenu } from "@/components/admin/preview-as";
@@ -23,6 +24,7 @@ import { formatMinuteCount } from "@/lib/plans";
 
 const tabs = [
   { id: "overview", label: "Overview" },
+  { id: "analytics", label: "Analytics" },
   { id: "usage", label: "Usage" },
   { id: "users", label: "Users" },
   { id: "invites", label: "Invites" },
@@ -136,6 +138,7 @@ export function AdminConsole() {
         ))}
       </div>
       {tab === "overview" ? <OverviewTab /> : null}
+      {tab === "analytics" ? <AnalyticsAdmin /> : null}
       {tab === "usage" ? <UsageAdmin /> : null}
       {tab === "users" ? <UsersTab myClerkId={me.user.clerkId} /> : null}
       {tab === "invites" ? <InvitesTab /> : null}

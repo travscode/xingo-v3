@@ -5,6 +5,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { action, type ActionCtx } from "./_generated/server";
 import { getClerkIdFromIdentity } from "./model/auth";
+import { analyticsWindow, bucketKey } from "../lib/admin-analytics";
 
 const platformRole = v.union(
   v.literal("interpreter"),
@@ -169,6 +170,81 @@ export const financeSnapshot = action({
         status: charge.refunded ? "refunded" : charge.status,
         createdAt: new Date(charge.created * 1000).toISOString(),
       })),
+    };
+  },
+});
+
+type RevenueSeries =
+  | { configured: false }
+  | {
+      configured: true;
+      livemode: boolean;
+      currency: string;
+      keys: string[];
+      grossCents: number[];
+      refundedCents: number[];
+      payments: number[];
+      totalGrossCents: number;
+      totalRefundedCents: number;
+      totalPayments: number;
+      /** True when there were more charges than we read (oldest left out). */
+      truncated: boolean;
+    };
+
+/** Stripe charges bucketed like the Analytics tab (lib/admin-analytics.ts). Read only. */
+export const revenueSeries = action({
+  args: { range: v.union(v.literal("30d"), v.literal("90d"), v.literal("12m"), v.literal("all")) },
+  handler: async (ctx, args): Promise<RevenueSeries> => {
+    await requireAdmin(ctx);
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) return { configured: false };
+
+    const stripe = new Stripe(key);
+    const now = Date.now();
+    const limit = 2000;
+    let window = analyticsWindow(args.range, now);
+    const created = args.range === "all" ? undefined : { gte: Math.floor(Date.parse(window.start) / 1000) };
+
+    const charges: Stripe.Charge[] = [];
+    for await (const charge of stripe.charges.list({ limit: 100, ...(created ? { created } : {}) })) {
+      charges.push(charge);
+      if (charges.length >= limit) break;
+    }
+
+    if (args.range === "all") {
+      const first = charges.reduce<number | null>((min, c) => (min === null || c.created < min ? c.created : min), null);
+      window = analyticsWindow("all", now, first ? new Date(first * 1000).toISOString() : null);
+    }
+
+    const index = new Map(window.keys.map((k, i) => [k, i]));
+    const zeros = () => window.keys.map(() => 0);
+    const grossCents = zeros();
+    const refundedCents = zeros();
+    const payments = zeros();
+    let currency = "aud";
+    for (const charge of charges) {
+      if (charge.status !== "succeeded") continue;
+      const i = index.get(bucketKey(charge.created * 1000, window.granularity));
+      if (i === undefined) continue;
+      grossCents[i] += charge.amount;
+      refundedCents[i] += charge.amount_refunded;
+      payments[i]++;
+      currency = charge.currency;
+    }
+
+    const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
+    return {
+      configured: true,
+      livemode: !key.startsWith("sk_test"),
+      currency,
+      keys: window.keys,
+      grossCents,
+      refundedCents,
+      payments,
+      totalGrossCents: sum(grossCents),
+      totalRefundedCents: sum(refundedCents),
+      totalPayments: sum(payments),
+      truncated: charges.length >= limit,
     };
   },
 });
